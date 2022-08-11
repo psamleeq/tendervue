@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const PCIRouter = {
     path: '/PCI',
     component: Layout,
-    redirect: '/PCI/createRoom',
+    redirect: '/PCI/report',
     name: 'PCI',
     meta: {
       title: 'PCI數據',
@@ -37,6 +37,12 @@ const PCIRouter = {
 				name: 'share',
 				meta: { title: '每月份額', isNew: true }
 			},
+			{
+				path: 'caseReport',
+				component: () => import('@/views/PCI/caseReport'),
+				name: 'caseReport',
+				meta: { title: '派工和PCI分析', isNew: true }
+			}
     ]
   }
   export default PCIRouter

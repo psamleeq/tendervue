@@ -1,6 +1,6 @@
 <template>
-  <div class="app-container PCI-average" v-loading="loading">
-    <h2>PCI平均</h2>
+  <div class="app-container case-ratio" v-loading="loading">
+    <h2>交辦案件百分比</h2>
     <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -47,7 +47,6 @@
 import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
-require('echarts/lib/chart/line');
 require('echarts/lib/chart/bar');
 // import { getActivReportMJ } from "@/api/analysis";
 import TimePicker from '@/components/TimePicker';
@@ -55,40 +54,48 @@ import TimePicker from '@/components/TimePicker';
 const data = [
 	{
 		month: "2021/03",
-		PCIAverage: 86.19
+		implement: 2322424,
+		assign: 741804
 	},
 	{
 		month: "2021/04",
-		PCIAverage: 88.48
+		implement: 4187141,
+		assign: 673560
 	},
 	{
 		month: "2021/05",
-		PCIAverage: 95.8
+		implement: 1777412,
+		assign: 93600
 	},
 	{
 		month: "2021/06",
-		PCIAverage: 86.6
+		implement: 1775372,
+		assign: 0
 	},
 	{
 		month: "2021/07",
-		PCIAverage: 83.53
+		implement: 834835,
+		assign: 164513
 	},
 	{
 		month: "2021/08",
-		PCIAverage: 82.1
+		implement: 810918,
+		assign: 0
 	},
 	{
 		month: "2021/09",
-		PCIAverage: 81.43
+		implement: 2220959,
+		assign: 26915
 	},
 	{
 		month: "2021/10",
-		PCIAverage: 78.35
+		implement: 4800973,
+		assign: 0
 	}
 ]
 
 export default {
-  name: "PCIAverage",
+  name: "caseRatio",
 	components: { TimePicker },
   data() {
     return {
@@ -103,15 +110,20 @@ export default {
 					name: "月份",
 					sortable: false
 				},
-        PCIAverage: {
-					name: "PCI平均",
+				implement: {
+					name: "聖東執行金額",
 					sortable: false,
 					chartType: 'bar'
 				},
-				variation: {
-					name: "變動量",
+				assign: {
+					name: "機關交辦金額",
 					sortable: false,
-					chartType: 'line'
+					chartType: 'bar'
+				},
+				ratio: {
+					name: "交辦金額百分比 (%)",
+					sortable: false,
+					chartType: null
 				}
       },
       list: [],
@@ -129,8 +141,7 @@ export default {
     getList() {
 			this.list = data;
 			this.list.forEach((l, i) => {
-				if(i == 0) this.$set(l, 'variation', 0);
-				else this.$set(l, 'variation', Math.round((this.list[i].PCIAverage - this.list[i-1].PCIAverage) * 100) / 100);
+				this.$set(l, 'ratio', Math.round((l.assign / l.implement) * 10000) / 100);
 			})
 			this.setChartOptions();
       // this.loading = true;
@@ -163,7 +174,7 @@ export default {
       // });
     },
 		setChartOptions() {
-			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "month"));
+			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "type"));
 			let legend = [];
 			let series = [];
 
@@ -174,9 +185,17 @@ export default {
 					type: headerFilter[key].chartType,
 					name: headerFilter[key].name,
 					data: this.list.map(l=>l[key]),
-					yAxisIndex: headerFilter[key].chartType == "bar" ? 0 : 1,
+					stack: '金額',
 					barWidth: '40%',
-					smooth: false
+					offset: [0, 20],
+					label: {
+						show: (key == 'assign'),
+						precision: 2,
+						position: 'top',
+						formatter: (params) => {
+							return `${this.list[params.dataIndex].ratio} %`
+						}
+					}
 				});
 			}
 
@@ -189,33 +208,25 @@ export default {
             alignWithLabel: true
           }
 				},
-				yAxis: [
-					{
-						name: 'PCI平均',
-						type: 'value',
-						axisTick: {
-							show: false
-						}
-					},
-					{
-						name: '變動量',
-						type: 'value',
-						axisTick: {
-							show: false
-						}
-					},
-				],
+				yAxis: {
+					name: '金額',
+					type: 'value',
+					axisTick: {
+						show: false
+					}
+				},
 				tooltip: {
           trigger: 'axis',
           axisPointer: {
-            type: 'shadow'
-          }
+            type: 'cross'
+          },
+          padding: [5, 10]
         },
 				grid: {
-          top: 55,
+					top: 55,
 					bottom: 20,
           left: 30,
-          right: 30,
+          right: 100,
           containLabel: true
         },
 				legend: { data: legend },
@@ -252,7 +263,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PCI-average
+.case-ratio
 	.chart
 		height: 400px
 </style>

@@ -1,6 +1,6 @@
 <template>
-  <div class="app-container PCI-average" v-loading="loading">
-    <h2>PCI平均</h2>
+  <div class="app-container case-statics" v-loading="loading">
+    <h2>維護數量</h2>
     <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -47,48 +47,31 @@
 import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
-require('echarts/lib/chart/line');
 require('echarts/lib/chart/bar');
 // import { getActivReportMJ } from "@/api/analysis";
 import TimePicker from '@/components/TimePicker';
 
 const data = [
 	{
-		month: "2021/03",
-		PCIAverage: 86.19
+		type: "人行道(m2)",
+		total: 258
 	},
 	{
-		month: "2021/04",
-		PCIAverage: 88.48
+		type: "水溝(m)",
+		total: 1119
 	},
 	{
-		month: "2021/05",
-		PCIAverage: 95.8
+		type: "AC鉋鋪(m2)",
+		total: 25489
 	},
 	{
-		month: "2021/06",
-		PCIAverage: 86.6
-	},
-	{
-		month: "2021/07",
-		PCIAverage: 83.53
-	},
-	{
-		month: "2021/08",
-		PCIAverage: 82.1
-	},
-	{
-		month: "2021/09",
-		PCIAverage: 81.43
-	},
-	{
-		month: "2021/10",
-		PCIAverage: 78.35
+		type: "熱再生修復(m2)",
+		total: 2405
 	}
 ]
 
 export default {
-  name: "PCIAverage",
+  name: "caseStatics",
 	components: { TimePicker },
   data() {
     return {
@@ -99,19 +82,14 @@ export default {
       daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
       searchRange: "",
       headers: {
-				month: {
-					name: "月份",
+				type: {
+					name: "類型",
 					sortable: false
 				},
-        PCIAverage: {
-					name: "PCI平均",
+        total: {
+					name: "區塊數量",
 					sortable: false,
 					chartType: 'bar'
-				},
-				variation: {
-					name: "變動量",
-					sortable: false,
-					chartType: 'line'
 				}
       },
       list: [],
@@ -128,10 +106,6 @@ export default {
   methods: {
     getList() {
 			this.list = data;
-			this.list.forEach((l, i) => {
-				if(i == 0) this.$set(l, 'variation', 0);
-				else this.$set(l, 'variation', Math.round((this.list[i].PCIAverage - this.list[i-1].PCIAverage) * 100) / 100);
-			})
 			this.setChartOptions();
       // this.loading = true;
       // if (moment(this.daterange[1]).isAfter(moment())) {
@@ -163,7 +137,7 @@ export default {
       // });
     },
 		setChartOptions() {
-			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "month"));
+			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "type"));
 			let legend = [];
 			let series = [];
 
@@ -174,48 +148,39 @@ export default {
 					type: headerFilter[key].chartType,
 					name: headerFilter[key].name,
 					data: this.list.map(l=>l[key]),
-					yAxisIndex: headerFilter[key].chartType == "bar" ? 0 : 1,
-					barWidth: '40%',
-					smooth: false
+					barWidth: '40%'
 				});
 			}
 
 			const options = {
 				xAxis: {
-					name: '月份',
-					type: 'category',
-					data: this.list.map(l=>l.month),
+					name: "區塊數量",
+					type: 'value',
+					boundaryGap: false,
           axisTick: {
             alignWithLabel: true
           }
 				},
-				yAxis: [
-					{
-						name: 'PCI平均',
-						type: 'value',
-						axisTick: {
-							show: false
-						}
-					},
-					{
-						name: '變動量',
-						type: 'value',
-						axisTick: {
-							show: false
-						}
-					},
-				],
+				yAxis: {
+					name: '類型',
+					type: 'category',
+					data: this.list.map(l => l.type),
+					axisTick: {
+            show: false
+					}
+				},
 				tooltip: {
           trigger: 'axis',
           axisPointer: {
-            type: 'shadow'
-          }
+            type: 'cross'
+          },
+          padding: [5, 10]
         },
 				grid: {
-          top: 55,
+					top: 55,
 					bottom: 20,
           left: 30,
-          right: 30,
+          right: 100,
           containLabel: true
         },
 				legend: { data: legend },
@@ -252,7 +217,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PCI-average
+.case-statics
 	.chart
 		height: 400px
 </style>

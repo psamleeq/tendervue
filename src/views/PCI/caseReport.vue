@@ -1,6 +1,6 @@
 <template>
-  <div class="app-container PCI-average" v-loading="loading">
-    <h2>PCI平均</h2>
+  <div class="app-container case-report" v-loading="loading">
+    <h2>派工和PCI分析</h2>
     <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -55,40 +55,64 @@ import TimePicker from '@/components/TimePicker';
 const data = [
 	{
 		month: "2021/03",
+		inspect: 11082,
+		"1999Report": 4,
+		dispatch: 34,
 		PCIAverage: 86.19
 	},
 	{
 		month: "2021/04",
+		inspect: 9063,
+		"1999Report": 4,
+		dispatch: 93,
 		PCIAverage: 88.48
 	},
 	{
 		month: "2021/05",
-		PCIAverage: 95.8
+		inspect: 12462,
+		"1999Report": 4,
+		dispatch: 26,
+		PCIAverage: 95.80
 	},
 	{
 		month: "2021/06",
+		inspect: 12927,
+		"1999Report": 3,
+		dispatch: 78,
 		PCIAverage: 86.6
 	},
 	{
 		month: "2021/07",
+		inspect: 12984,
+		"1999Report": 3,
+		dispatch: 28,
 		PCIAverage: 83.53
 	},
 	{
 		month: "2021/08",
+		inspect: 15182,
+		"1999Report": 7,
+		dispatch: 62,
 		PCIAverage: 82.1
 	},
 	{
 		month: "2021/09",
+		inspect: 20392,
+		"1999Report": 6,
+		dispatch: 38,
 		PCIAverage: 81.43
 	},
 	{
 		month: "2021/10",
+		inspect: 14771,
+		"1999Report":33,
+		dispatch: 71,
 		PCIAverage: 78.35
 	}
 ]
 
 export default {
-  name: "PCIAverage",
+  name: "caseReport",
 	components: { TimePicker },
   data() {
     return {
@@ -103,16 +127,26 @@ export default {
 					name: "月份",
 					sortable: false
 				},
-        PCIAverage: {
-					name: "PCI平均",
+				inspect: {
+					name: "聖東巡查",
 					sortable: false,
 					chartType: 'bar'
 				},
-				variation: {
-					name: "變動量",
+				"1999Report": {
+					name: "1999查報",
+					sortable: false,
+					chartType: 'bar'
+				},
+        dispatch: {
+					name: "派工",
+					sortable: false,
+					chartType: 'bar'
+				},
+				PCIAverage: {
+					name: "PCI平均",
 					sortable: false,
 					chartType: 'line'
-				}
+				},
       },
       list: [],
 			chart: null
@@ -128,10 +162,6 @@ export default {
   methods: {
     getList() {
 			this.list = data;
-			this.list.forEach((l, i) => {
-				if(i == 0) this.$set(l, 'variation', 0);
-				else this.$set(l, 'variation', Math.round((this.list[i].PCIAverage - this.list[i-1].PCIAverage) * 100) / 100);
-			})
 			this.setChartOptions();
       // this.loading = true;
       // if (moment(this.daterange[1]).isAfter(moment())) {
@@ -163,58 +193,68 @@ export default {
       // });
     },
 		setChartOptions() {
+			const colors = ["#e5cf0d","#8d98b3","#7eb00a","#ffb980","#95706d","#b6a2de","#2ec7c9","#5ab1ef","#d87a80","#97b552","#dc69aa","#07a2a4","#9a7fd1","#588dd5","#f5994e","#c05050","#59678c","#c9ab00","#6f5553","#c14089"];
 			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "month"));
 			let legend = [];
 			let series = [];
 
 			for(const key in headerFilter) {
-				if(headerFilter[key].chartType == null) continue;
 				legend.push(headerFilter[key].name);
 				series.push({
 					type: headerFilter[key].chartType,
 					name: headerFilter[key].name,
 					data: this.list.map(l=>l[key]),
-					yAxisIndex: headerFilter[key].chartType == "bar" ? 0 : 1,
-					barWidth: '40%',
+					yAxisIndex: headerFilter[key].chartType == "line" ? 2 : key == "inspect" ? 0 : 1,
 					smooth: false
 				});
 			}
 
 			const options = {
+				color: colors,
 				xAxis: {
-					name: '月份',
+					name: "月份",
 					type: 'category',
 					data: this.list.map(l=>l.month),
           axisTick: {
-            alignWithLabel: true
+            show: false
           }
 				},
 				yAxis: [
 					{
-						name: 'PCI平均',
+						name: '案件數(聖東)',
 						type: 'value',
+						position: 'left',
+						offset: 80,
 						axisTick: {
 							show: false
-						}
+						},
+						axisLine: { lineStyle: { color: colors[0] } }
 					},
 					{
-						name: '變動量',
+						name: '案件數(其他)',
 						type: 'value',
-						axisTick: {
-							show: false
-						}
+						position: 'left',
+						axisTick: { show: false }
 					},
+					{
+						name: 'PCI平均',
+						type: 'value',
+						position: 'right',
+						axisTick: { show: false },
+						axisLine: { lineStyle: { color: colors[3] } }
+					}
 				],
 				tooltip: {
           trigger: 'axis',
           axisPointer: {
-            type: 'shadow'
-          }
+            type: 'cross'
+          },
+          padding: [5, 10]
         },
 				grid: {
-          top: 55,
+					top: 55,
 					bottom: 20,
-          left: 30,
+          left: 80,
           right: 30,
           containLabel: true
         },
@@ -252,7 +292,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PCI-average
+.case-report
 	.chart
 		height: 400px
 </style>

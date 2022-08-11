@@ -8,6 +8,7 @@ import Layout from '@/layout'
 
 /* Router Modules */
 import PCIRouter from './modules/PCI'
+import caseRouter from './modules/case'
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -90,7 +91,8 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
 	PCIRouter,
-
+	caseRouter,
+	
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]
