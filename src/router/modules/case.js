@@ -2,10 +2,10 @@
 
 import Layout from '@/layout'
 
-const PCIRouter = {
+const caseRouter = {
     path: '/case',
     component: Layout,
-    redirect: '/case/createRoom',
+		redirect: '/case/statics',
     name: 'case',
     meta: {
       title: '道路銑鋪',
@@ -39,4 +39,4 @@ const PCIRouter = {
 			// },
     ]
   }
-  export default PCIRouter
+  export default caseRouter
