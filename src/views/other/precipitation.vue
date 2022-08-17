@@ -124,8 +124,7 @@ export default {
 				const nowMonth = moment(precipitation[lastIndex].dataDate).get("month") + 1;
 
 				this.list = [ precipitation.reduce((init, curr) => {
-					init[nowMonth] = 0;
-					const month = moment(curr.dataDate).get('month');
+					const month = moment(curr.dataDate).get('month') + 1;
 					const precipitationSpec = curr.weatherElements.precipitation;
 					if(Number(precipitationSpec) > 0) {
 						if(init[month] == undefined) init[month] = 0;
@@ -133,6 +132,8 @@ export default {
 					}
 					return init;
 				}, {})];
+
+				if(this.list[0][nowMonth] == undefined) this.list[0][nowMonth] = 0;
 			});
 
 			// this.list = data;
