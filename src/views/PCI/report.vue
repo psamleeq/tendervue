@@ -1,8 +1,22 @@
 <template>
   <div class="app-container PCI-report" v-loading="loading">
     <h2>PCI報表</h2>
+		<aside>資料初始為2022年6月</aside>
     <div class="filter-container">
-			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			<el-select class="filter-item" v-model="listQuery.dist">
+				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
+			<el-button-group>
+				<el-button
+					v-for="(t, i) in yearShortcuts"
+					:key="i"
+					type="primary"
+					:plain="i != timeTabId"
+					size="mini"
+					@click="dateShortcuts(i)"
+				>{{ i }}</el-button>
+			</el-button-group>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
       <el-button
         class="filter-item"
@@ -29,7 +43,7 @@
         v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
       align="center" fixed/>-->
       <el-table-column
-        v-for="(value, key) in headers"
+        v-for="(value, key) in { ...headers, ...headers_PCI}"
         :key="key"
         :prop="key"
         :label="value.name"
@@ -37,25 +51,33 @@
         :sortable="value.sortable"
       />
     </el-table>
+
+		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
   </div>
 </template>
 
 <script>
 import moment from "moment";
-// import { getActivReportMJ } from "@/api/analysis";
+import { getPCIList } from "@/api/pci";
 import TimePicker from '@/components/TimePicker';
-import { data } from "../../../public/assets/json/pci.json"
+import Pagination from '@/components/Pagination';
+// import { data } from "../../../public/assets/json/pci.json"
 
 export default {
   name: "PCIReport",
-	components: { TimePicker },
+	components: { TimePicker, Pagination },
   data() {
     return {
       loading: false,
-      timeTabId: -1,
+      timeTabId: moment().year(),
       dateTimePickerVisible: false,
       screenWidth: window.innerWidth,
-      daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
+      daterange: [moment().startOf("y").toDate(), moment().endOf("y").toDate()],
+			listQuery: {
+				dist: 104,
+        pageCurrent: 1,
+        pageSize: 20,
+      },
       searchRange: "",
       headers: {
         id: {
@@ -78,90 +100,202 @@ export default {
 					name: "道路面積",
 					sortable: false
 				},
-				PCIValue_2103: {
-					name: "PCI_2021/03",
-					sortable: true
-				},
-				PCIValue_2104: {
-					name: "PCI_2021/04",
-					sortable: true
-				},
-				PCIValue_2105: {
-					name: "PCI_2021/05",
-					sortable: true
-				},
-				PCIValue_2106: {
-					name: "PCI_2021/06",
-					sortable: true
-				},
-				PCIValue_2107:{
-					name: "PCI_2021/07",
-					sortable: true
-				},
-				PCIValue_2108: {
-					name: "PCI_2021/08",
-					sortable: true
-				},
-				PCIValue_2109: {
-					name: "PCI_2021/09",
-					sortable: true
-				},
-				PCIValue_2110: {
-					name: "PCI_2021/10",
-					sortable: true
-				}
+			},
+			headers_PCI: {
+				// PCIValue_06: {
+				// 	name: "PCI_2206",
+				// 	sortable: false
+				// },
+				// PCIValue_07:{
+				// 	name: "PCI_2207",
+				// 	sortable: false
+				// }
       },
+			total: 0,
       list: [],
+			roadIdMap: {
+				0: "路口",
+				1: "順向",
+				2: "逆向"
+			},
+			"districtList": {
+				// 100: {
+				// 	"name": "中正區",
+				// 	"engName": "Zhongzheng"
+				// },
+				// 103: {
+				// 	"name": "大同區",
+				// 	"engName": "Datong"
+				// },
+				104: {
+					"name": "中山區",
+					"engName": "Zhongshan"
+				},
+				// 105: {
+				// 	"name": "松山區",
+				// 	"engName": "Songshan"
+				// },
+				// 106: {
+				// 	"name": "大安區",
+				// 	"engName": "Da’an"
+				// },
+				// 108: {
+				// 	"name": "萬華區",
+				// 	"engName": "Wanhua",
+				// },
+				// 110: {
+				// 	"name": "信義區",
+				// 	"engName": "Xinyi"
+				// },
+				// 111: {
+				// 	"name": "士林區",
+				// 	"engName": "Shilin"
+				// },
+				// 112: {
+				// 	"name": "北投區",
+				// 	"engName": "Beitou"
+				// },
+				// 114: {
+				// 	"name": "內湖區",
+				// 	"engName": "Neihu"
+				// },
+				// 115: {
+				// 	"name": "南港區",
+				// 	"engName": "Nangang"
+				// },
+				// 116: {
+				// 	"name": "文山區",
+				// 	"engName": "Wenshan"
+				// }
+			},
+			yearShortcuts: {
+				2022: {
+					dateStart: "2022/6/1",
+					// dateEnd: "2022/12/31"
+				}
+			}
     };
   },
+	created() {
+		this.getList();
+	},
   methods: {
-    getList() {
-			this.list = data;
-      // this.loading = true;
-      // if (moment(this.daterange[1]).isAfter(moment())) {
-      //   this.daterange[1] = moment().endOf("d").toDate();
-      // }
+		async dateWatcher() {
+			const dateStart = this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().startOf("y");
+			let dateEnd = this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().endOf("y");
+			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().endOf("d").toDate();
+      this.daterange = [ dateStart, dateEnd ];
 
-      // let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-      // let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-      // this.searchRange = startDate + " - " + endDate;
+			return new Promise(resolve => resolve());
+		},
+    async getList() {
+      this.loading = true;
+			await this.dateWatcher();
 
-      // this.list = [];
-      // getActivReportMJ({
-      //   timeStart: startDate,
-      //   timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-      // }).then((response) => {
-      //   if (response.data.list.length == 0) {
-      //     this.$message({
-      //       message: "查無資料",
-      //       type: "error",
-      //     });
-      //   } else {
-      //     this.list = response.data.list;
-      //     this.list.map(l=>{
-      //       l.Innings = Number(l.Innings)
-      //       l.Rounds = Number(l.Rounds)
-      //     })
-      //   }
-      //   this.loading = false;
-      // });
+      let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+      let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+      this.searchRange = startDate + " - " + endDate;
+
+      this.list = [];
+      getPCIList({
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: this.listQuery.pageSize,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+			}).then(response => {
+        if (response.data.list.length == 0) {
+          this.$message({
+            message: "查無資料",
+            type: "error",
+          });
+        } else {
+					this.total = response.data.total;
+					this.list = response.data.list;
+					this.headers_PCI = {};
+          this.list = this.list.reduce((curr, prev) => {
+						const createMonth = String(prev.createMonth).padStart(2, 0);
+						if(curr.length == 0 || prev.id != curr[curr.length - 1].id) {
+							prev[`PCIValue_${createMonth}`] = prev.PCI_value;
+							prev.createMonth = [ prev.createMonth ];
+							curr.push(prev);
+						} else {
+							curr[curr.length - 1][`PCIValue_${createMonth}`] = prev.PCI_value;
+							curr[curr.length - 1].createMonth.push(prev.createMonth);
+						}
+						return curr;
+					}, []);
+					this.list.forEach(l => {
+						for(const month of l.createMonth) {
+							const createMonth = String(month).padStart(2, 0);
+
+							if(!this.headers_PCI.hasOwnProperty(`PCIValue_${createMonth}`)) {
+								this.$set(this.headers_PCI, `PCIValue_${createMonth}`, {name: `PCI_22${createMonth}`, sortable: false });
+							}
+						}	
+						this.$set(l, "roadId", `${this.roadIdMap[l.id.slice(-1)]}-${l.id.slice(-4, -1)}`);
+					});
+        }
+        this.loading = false;
+      }).catch(err => { this.loading = false; });
+    },
+		async dateShortcuts(index) {
+      this.timeTabId = index;
+			await this.dateWatcher();
+			this.pageCurrent = 1;
+			this.getList();
     },
     formatTime(time) {
       return moment(time).utc().format("YYYY-MM-DD");
     },
-    handleDownload() {
-      let tHeader = Object.values(this.headers);
-      let filterVal = Object.keys(this.headers);
-      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-      let data = this.formatJson(filterVal, this.list);
+    async handleDownload() {
+			await this.dateWatcher();
 
-      import("@/vendor/Export2Excel").then((excel) => {
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-        });
-      });
+			const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+      const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+
+			getPCIList({
+				pageCurrent: 1,
+				pageSize: this.total,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+			}).then(response => {
+				let list = response.data.list;
+				list = list.reduce((curr, prev) => {
+					const createMonth = String(prev.createMonth).padStart(2, 0);
+					if(curr.length == 0 || prev.id != curr[curr.length - 1].id) {
+						prev[`PCIValue_${createMonth}`] = prev.PCI_value;
+						prev.createMonth = [ prev.createMonth ];
+						curr.push(prev);
+					} else {
+						curr[curr.length - 1][`PCIValue_${createMonth}`] = prev.PCI_value;
+						curr[curr.length - 1].createMonth.push(prev.createMonth);
+					}
+					return curr;
+				}, []);
+
+				list.forEach(l => {
+					for(const month of l.createMonth) {
+						const createMonth = String(month).padStart(2, 0);
+
+						if(!this.headers_PCI.hasOwnProperty(`PCIValue_${createMonth}`)) {
+							this.$set(this.headers_PCI, `PCIValue_${createMonth}`, {name: `PCI_22${createMonth}`, sortable: false });
+						}
+					}	
+					this.$set(l, "roadId", `${this.roadIdMap[l.id.slice(-1)]}-${l.id.slice(-4, -1)}`);
+				});
+				let tHeader = Object.values({...this.headers, ...this.headers_PCI}).map(h => h.name);
+				let filterVal = Object.keys({...this.headers, ...this.headers_PCI});
+				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+				let data = this.formatJson(filterVal, list);
+
+				import("@/vendor/Export2Excel").then((excel) => {
+					excel.export_json_to_excel({
+						header: tHeader,
+						data,
+					});
+				});
+			});
     },
     formatJson(filterVal, jsonData) {
       return jsonData.map((v) => filterVal.map((j) => v[j]));
@@ -174,4 +308,15 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
+
+.PCI-report
+	.filter-container 
+		.el-select
+			width: 105px
+		.el-input__inner
+			padding-left: 5px
+			text-align: center
+	.filter-item
+		margin-right: 5px
+	
 </style>
