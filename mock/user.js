@@ -35,13 +35,13 @@ module.exports = [
       // mock error
       if (!token) {
         return {
-          code: 60204,
+					statusCode: 60204,
           message: 'Account and password are incorrect.'
         }
       }
 
       return {
-        code: 20000,
+				statusCode: 20000,
         data: token
       }
     }
@@ -58,13 +58,13 @@ module.exports = [
       // mock error
       if (!info) {
         return {
-          code: 50008,
+					statusCode: 50008,
           message: 'Login failed, unable to get user details.'
         }
       }
 
       return {
-        code: 20000,
+				statusCode: 20000,
         data: info
       }
     }

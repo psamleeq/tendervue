@@ -46,15 +46,15 @@ service.interceptors.response.use(
     const res = response.data
 
     // if the custom code is not 20000, it is judged as an error.
-    if (res.code !== 20000) {
+		if (res.statusCode !== 20000) {
       Message({
         message: res.message || 'Error',
         type: 'error',
-        duration: 5 * 1000
+        duration: 10000
       })
 
       // 50008: Illegal token; 50012: Other clients logged in; 50014: Token expired;
-      if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
+			if (res.statusCode === 50008 || res.statusCode === 50012 || res.statusCode === 50014) {
         // to re-login
         MessageBox.confirm('You have been logged out, you can cancel to stay on this page, or log in again', 'Confirm logout', {
           confirmButtonText: 'Re-Login',
@@ -73,6 +73,57 @@ service.interceptors.response.use(
   },
   error => {
     console.log('err' + error) // for debug
+		if (error && error.response) {
+			switch (error.response.status) {
+				case 400:
+					error.message = '請求錯誤'
+					break
+				case 401:
+					error.message = '驗證失敗'
+
+					// 跳至登入頁
+					store.dispatch('user/resetToken')
+					localStorage.clear();
+					let fullPath = router.currentRoute.fullPath
+					let query = fullPath.indexOf('login') == -1 ? { redirect: fullPath } : {}
+
+					router.push({
+						path: "/login",
+						query: query
+					})
+					resetRouter();
+					break
+				case 403:
+					error.message = '拒絕訪問'
+					break
+				case 404:
+					error.message = `請求位址錯誤: ${error.response.config.url}`
+					break
+				case 406:
+					error.message = '無法接受請求'
+					break
+				case 408:
+					error.message = '請求超時'
+					break
+				case 500:
+					error.message = '伺服器錯誤'
+					break
+				case 502:
+					error.message = '網路錯誤'
+					break
+				case 503:
+					error.message = '服務不可用'
+					break
+				case 504:
+					error.message = '網路超時'
+					break
+				default: error.message = `連接錯誤`
+			}
+		}
+		else {
+			error.message = `連接錯誤`
+		}
+
     Message({
       message: error.message,
       type: 'error',
