@@ -1,19 +1,20 @@
 <template>
   <div class="app-container case-report" v-loading="loading">
     <h2>派工和PCI分析</h2>
-    <div class="filter-container">
+		<aside>資料初始為2022年6月</aside>
+    <!-- <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-      <!-- <el-button
+      <el-button
         class="filter-item"
         type="info"
         icon="el-icon-document"
         :circle="screenWidth<567"
         @click="handleDownload"
-      >輸出報表</el-button> -->
+      >輸出報表</el-button>
     </div>
     
-    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
 		<div class="chart" ref="chart" />
 
@@ -49,67 +50,67 @@ import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/line');
 require('echarts/lib/chart/bar');
-// import { getActivReportMJ } from "@/api/analysis";
+import { getCaseAndPCI } from "@/api/pci";
 import TimePicker from '@/components/TimePicker';
 
-const data = [
-	{
-		month: "2021/03",
-		inspect: 11082,
-		"1999Report": 4,
-		dispatch: 34,
-		PCIAverage: 86.19
-	},
-	{
-		month: "2021/04",
-		inspect: 9063,
-		"1999Report": 4,
-		dispatch: 93,
-		PCIAverage: 88.48
-	},
-	{
-		month: "2021/05",
-		inspect: 12462,
-		"1999Report": 4,
-		dispatch: 26,
-		PCIAverage: 95.80
-	},
-	{
-		month: "2021/06",
-		inspect: 12927,
-		"1999Report": 3,
-		dispatch: 78,
-		PCIAverage: 86.6
-	},
-	{
-		month: "2021/07",
-		inspect: 12984,
-		"1999Report": 3,
-		dispatch: 28,
-		PCIAverage: 83.53
-	},
-	{
-		month: "2021/08",
-		inspect: 15182,
-		"1999Report": 7,
-		dispatch: 62,
-		PCIAverage: 82.1
-	},
-	{
-		month: "2021/09",
-		inspect: 20392,
-		"1999Report": 6,
-		dispatch: 38,
-		PCIAverage: 81.43
-	},
-	{
-		month: "2021/10",
-		inspect: 14771,
-		"1999Report":33,
-		dispatch: 71,
-		PCIAverage: 78.35
-	}
-]
+// const data = [
+// 	{
+// 		month: "2021/03",
+// 		bimInspect: 11082,
+// 		"1999Report": 4,
+// 		dispatch: 34,
+// 		PCIAverage: 86.19
+// 	},
+// 	{
+// 		month: "2021/04",
+// 		bimInspect: 9063,
+// 		"1999Report": 4,
+// 		dispatch: 93,
+// 		PCIAverage: 88.48
+// 	},
+// 	{
+// 		month: "2021/05",
+// 		bimInspect: 12462,
+// 		"1999Report": 4,
+// 		dispatch: 26,
+// 		PCIAverage: 95.80
+// 	},
+// 	{
+// 		month: "2021/06",
+// 		bimInspect: 12927,
+// 		"1999Report": 3,
+// 		dispatch: 78,
+// 		PCIAverage: 86.6
+// 	},
+// 	{
+// 		month: "2021/07",
+// 		bimInspect: 12984,
+// 		"1999Report": 3,
+// 		dispatch: 28,
+// 		PCIAverage: 83.53
+// 	},
+// 	{
+// 		month: "2021/08",
+// 		bimInspect: 15182,
+// 		"1999Report": 7,
+// 		dispatch: 62,
+// 		PCIAverage: 82.1
+// 	},
+// 	{
+// 		month: "2021/09",
+// 		bimInspect: 20392,
+// 		"1999Report": 6,
+// 		dispatch: 38,
+// 		PCIAverage: 81.43
+// 	},
+// 	{
+// 		month: "2021/10",
+// 		bimInspect: 14771,
+// 		"1999Report":33,
+// 		dispatch: 71,
+// 		PCIAverage: 78.35
+// 	}
+// ]
 
 export default {
   name: "caseReport",
@@ -117,18 +118,28 @@ export default {
   data() {
     return {
       loading: false,
-      timeTabId: -1,
-      dateTimePickerVisible: false,
+      // timeTabId: -1,
+      // dateTimePickerVisible: false,
       screenWidth: window.innerWidth,
-      daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
-      searchRange: "",
+      // daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
+      // searchRange: "",
       headers: {
 				month: {
 					name: "月份",
 					sortable: false
 				},
-				inspect: {
+				bimPothole: {
+					name: "聖東坑洞",
+					sortable: false,
+					chartType: 'bar'
+				},
+				bimInspect: {
 					name: "聖東巡查",
+					sortable: false,
+					chartType: 'bar'
+				},
+				"1999Pothole": {
+					name: "1999坑洞",
 					sortable: false,
 					chartType: 'bar'
 				},
@@ -137,11 +148,11 @@ export default {
 					sortable: false,
 					chartType: 'bar'
 				},
-        dispatch: {
-					name: "派工",
-					sortable: false,
-					chartType: 'bar'
-				},
+        // dispatch: {
+				// 	name: "派工",
+				// 	sortable: false,
+				// 	chartType: 'bar'
+				// },
 				PCIAverage: {
 					name: "PCI平均",
 					sortable: false,
@@ -157,13 +168,11 @@ export default {
 			width: 'auto',
 			height: 'auto'
 		});
-		this.setChartOptions();
+		this.getList();
 	},
   methods: {
     getList() {
-			this.list = data;
-			this.setChartOptions();
-      // this.loading = true;
+			this.loading = true;
       // if (moment(this.daterange[1]).isAfter(moment())) {
       //   this.daterange[1] = moment().endOf("d").toDate();
       // }
@@ -172,28 +181,25 @@ export default {
       // let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
       // this.searchRange = startDate + " - " + endDate;
 
-      // this.list = [];
-      // getActivReportMJ({
-      //   timeStart: startDate,
-      //   timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-      // }).then((response) => {
-      //   if (response.data.list.length == 0) {
-      //     this.$message({
-      //       message: "查無資料",
-      //       type: "error",
-      //     });
-      //   } else {
-      //     this.list = response.data.list;
-      //     this.list.map(l=>{
-      //       l.Innings = Number(l.Innings)
-      //       l.Rounds = Number(l.Rounds)
-      //     })
-      //   }
-      //   this.loading = false;
-      // });
+      this.list = [];
+      getCaseAndPCI().then(response => {
+        if (response.data.list.length == 0) {
+          this.$message({
+            message: "查無資料",
+            type: "error",
+          });
+        } else {
+          this.list = response.data.list;
+					this.list.forEach((l, i) => {
+						l.PCIAverage = Math.round((l.PCIAverage) * 100) / 100;
+					})
+					this.setChartOptions();
+        }
+        this.loading = false;
+      }).catch(err => { this.loading = false; });
     },
 		setChartOptions() {
-			const colors = ["#e5cf0d","#8d98b3","#7eb00a","#ffb980","#95706d","#b6a2de","#2ec7c9","#5ab1ef","#d87a80","#97b552","#dc69aa","#07a2a4","#9a7fd1","#588dd5","#f5994e","#c05050","#59678c","#c9ab00","#6f5553","#c14089"];
+			const colors = ["#7eb00a","#e5cf0d","#8d98b3","#95706d","#ffb980","#b6a2de","#2ec7c9","#5ab1ef","#d87a80","#97b552","#dc69aa","#07a2a4","#9a7fd1","#588dd5","#f5994e","#c05050","#59678c","#c9ab00","#6f5553","#c14089"];
 			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "month"));
 			let legend = [];
 			let series = [];
@@ -204,7 +210,7 @@ export default {
 					type: headerFilter[key].chartType,
 					name: headerFilter[key].name,
 					data: this.list.map(l=>l[key]),
-					yAxisIndex: headerFilter[key].chartType == "line" ? 2 : key == "inspect" ? 0 : 1,
+					yAxisIndex: headerFilter[key].chartType == "line" ? 1 : 0,
 					smooth: false
 				});
 			}
@@ -221,20 +227,13 @@ export default {
 				},
 				yAxis: [
 					{
-						name: '案件數(聖東)',
+						name: '案件數',
 						type: 'value',
 						position: 'left',
-						offset: 80,
 						axisTick: {
 							show: false
 						},
-						axisLine: { lineStyle: { color: colors[0] } }
-					},
-					{
-						name: '案件數(其他)',
-						type: 'value',
-						position: 'left',
-						axisTick: { show: false }
+						// axisLine: { lineStyle: { color: colors[0] } }
 					},
 					{
 						name: 'PCI平均',
@@ -254,7 +253,7 @@ export default {
 				grid: {
 					top: 55,
 					bottom: 20,
-          left: 80,
+          left: 30,
           right: 30,
           containLabel: true
         },

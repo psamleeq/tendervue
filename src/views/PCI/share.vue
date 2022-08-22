@@ -1,19 +1,20 @@
 <template>
   <div class="app-container PCI-trend" v-loading="loading">
     <h2>PCI每月份額</h2>
-    <div class="filter-container">
+		<aside>資料初始為2022年6月</aside>
+    <!-- <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-      <!-- <el-button
+      <el-button
         class="filter-item"
         type="info"
         icon="el-icon-document"
         :circle="screenWidth<567"
         @click="handleDownload"
-      >輸出報表</el-button> -->
+      >輸出報表</el-button>
     </div>
     
-    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
 		<!-- <div class="chart" ref="chart" /> -->
 		<el-row>
@@ -56,67 +57,67 @@ import PieChart from "@/components/Charts/PieChart";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/line');
-// import { getActivReportMJ } from "@/api/analysis";
+import { getPCIShare } from "@/api/pci";
 import TimePicker from '@/components/TimePicker';
 
-const data = [
-	{
-		month: "2021/03",
-		PCIUnder55: 206,
-		PCIUnder70: 417,
-		PCIUnder100: 604,
-		PCI100: 1280
-	},
-	{
-		month: "2021/04",
-		PCIUnder55: 367,
-		PCIUnder70: 762,
-		PCIUnder100: 997,
-		PCI100: 2223
-	},
-	{
-		month: "2021/05",
-		PCIUnder55: 522,
-		PCIUnder70: 871,
-		PCIUnder100: 1380,
-		PCI100: 3794
-	},
-	{
-		month: "2021/06",
-		PCIUnder55: 912,
-		PCIUnder70: 1375,
-		PCIUnder100: 2327,
-		PCI100: 5356
-	},
-	{
-		month: "2021/07",
-		PCIUnder55: 1237,
-		PCIUnder70: 1511,
-		PCIUnder100: 2835,
-		PCI100: 4387
-	},
-	{
-		month: "2021/08",
-		PCIUnder55: 1404,
-		PCIUnder70: 1576,
-		PCIUnder100: 3022,
-		PCI100: 3968
-	},
-	{
-		month: "2021/09",
-		PCIUnder55: 1416,
-		PCIUnder70: 1682,
-		PCIUnder100: 3125,
-		PCI100: 3747
-	},
-	{
-		month: "2021/10",
-		PCIUnder55: 1915,
-		PCIUnder70: 1759,
-		PCIUnder100: 2985,
-		PCI100: 3311
-	},
-]
+// const data = [
+// 	{
+// 		month: "2021/03",
+// 		PCIUnder55: 206,
+// 		PCIUnder70: 417,
+// 		PCIUnder100: 604,
+// 		PCI100: 1280
+// 	},
+// 	{
+// 		month: "2021/04",
+// 		PCIUnder55: 367,
+// 		PCIUnder70: 762,
+// 		PCIUnder100: 997,
+// 		PCI100: 2223
+// 	},
+// 	{
+// 		month: "2021/05",
+// 		PCIUnder55: 522,
+// 		PCIUnder70: 871,
+// 		PCIUnder100: 1380,
+// 		PCI100: 3794
+// 	},
+// 	{
+// 		month: "2021/06",
+// 		PCIUnder55: 912,
+// 		PCIUnder70: 1375,
+// 		PCIUnder100: 2327,
+// 		PCI100: 5356
+// 	},
+// 	{
+// 		month: "2021/07",
+// 		PCIUnder55: 1237,
+// 		PCIUnder70: 1511,
+// 		PCIUnder100: 2835,
+// 		PCI100: 4387
+// 	},
+// 	{
+// 		month: "2021/08",
+// 		PCIUnder55: 1404,
+// 		PCIUnder70: 1576,
+// 		PCIUnder100: 3022,
+// 		PCI100: 3968
+// 	},
+// 	{
+// 		month: "2021/09",
+// 		PCIUnder55: 1416,
+// 		PCIUnder70: 1682,
+// 		PCIUnder100: 3125,
+// 		PCI100: 3747
+// 	},
+// 	{
+// 		month: "2021/10",
+// 		PCIUnder55: 1915,
+// 		PCIUnder70: 1759,
+// 		PCIUnder100: 2985,
+// 		PCI100: 3311
+// 	},
+// ]
 
 export default {
   name: "PCITrend",
@@ -124,11 +125,11 @@ export default {
   data() {
     return {
       loading: false,
-      timeTabId: -1,
-      dateTimePickerVisible: false,
+      // timeTabId: -1,
+      // dateTimePickerVisible: false,
       screenWidth: window.innerWidth,
-      daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
-      searchRange: "",
+      // daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
+      // searchRange: "",
       headers: {
 				month: {
 					name: "月份",
@@ -143,7 +144,7 @@ export default {
 					sortable: false
 				},
         PCIUnder100: {
-					name: "70 < PCI <= 100",
+					name: "70 < PCI < 100",
 					sortable: false
 				},
 				PCI100: {
@@ -160,16 +161,18 @@ export default {
 			for(const detail of this.list) {
 				chartInfo[detail.month] = {
 					chartType: "pie",
-					data: Object.keys(detail).filter(key => key != 'month').map(key => ({ value: detail[key], name: this.headers[key].name }))
+					data: Object.keys(detail).filter(key => !['month', 'datestar'].includes(key)).map(key => ({ value: detail[key], name: this.headers[key].name }))
 				} 
 			}
 			return chartInfo;
 		}
 	},
+	mounted() {
+		this.getList();
+	},
   methods: {
     getList() {
-			this.list = data;
-      // this.loading = true;
+      this.loading = true;
       // if (moment(this.daterange[1]).isAfter(moment())) {
       //   this.daterange[1] = moment().endOf("d").toDate();
       // }
@@ -178,25 +181,20 @@ export default {
       // let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
       // this.searchRange = startDate + " - " + endDate;
 
-      // this.list = [];
-      // getActivReportMJ({
-      //   timeStart: startDate,
-      //   timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-      // }).then((response) => {
-      //   if (response.data.list.length == 0) {
-      //     this.$message({
-      //       message: "查無資料",
-      //       type: "error",
-      //     });
-      //   } else {
-      //     this.list = response.data.list;
-      //     this.list.map(l=>{
-      //       l.Innings = Number(l.Innings)
-      //       l.Rounds = Number(l.Rounds)
-      //     })
-      //   }
-      //   this.loading = false;
-      // });
+      this.list = [];
+      getPCIShare().then(response => {
+        if (response.data.list.length == 0) {
+          this.$message({
+            message: "查無資料",
+            type: "error",
+          });
+        } else {
+					this.list = response.data.list;
+					this.list.forEach((l, i) => l.month = moment(l.datestar).format("YYYY/MM"))
+					this.setChartOptions();
+        }
+        this.loading = false;
+      }).catch(err => { this.loading = false; });
     },
     formatTime(time) {
       return moment(time).utc().format("YYYY-MM-DD");
