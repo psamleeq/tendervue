@@ -37,6 +37,12 @@ const caseRouter = {
 			// 	name: 'share',
 			// 	meta: { title: '月執行圖表', isNew: true }
 			// },
+			{
+				path: 'inspectCase',
+				component: () => import('@/views/case/inspectCase'),
+				name: 'inspectCase',
+				meta: { title: '巡查統計', isNew: true }
+			},
     ]
   }
   export default caseRouter
