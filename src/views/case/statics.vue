@@ -1,6 +1,7 @@
 <template>
   <div class="app-container case-statics" v-loading="loading">
     <h2>維護數量</h2>
+		<aside>資料初始為2022年6月</aside>
     <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -48,27 +49,28 @@ import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/bar');
-// import { getActivReportMJ } from "@/api/analysis";
+import { getCaseReport } from "@/api/case";
 import TimePicker from '@/components/TimePicker';
+import { dateWatcher } from "@/utils/pickerOptions";
 
-const data = [
-	{
-		type: "人行道(m2)",
-		total: 258
-	},
-	{
-		type: "水溝(m)",
-		total: 1119
-	},
-	{
-		type: "AC鉋鋪(m2)",
-		total: 25489
-	},
-	{
-		type: "熱再生修復(m2)",
-		total: 2405
-	}
-]
+// const data = [
+// 	{
+// 		type: "人行道(m2)",
+// 		total: 258
+// 	},
+// 	{
+// 		type: "水溝(m)",
+// 		total: 1119
+// 	},
+// 	{
+// 		type: "AC鉋鋪(m2)",
+// 		total: 25489
+// 	},
+// 	{
+// 		type: "熱再生修復(m2)",
+// 		total: 2405
+// 	}
+// ]
 
 export default {
   name: "caseStatics",
@@ -87,12 +89,18 @@ export default {
 					sortable: false
 				},
         total: {
-					name: "區塊數量",
+					name: "數量",
 					sortable: false,
 					chartType: 'bar'
 				}
       },
       list: [],
+			typeMap: {
+				hotRepair: "熱再生修復(m2)",
+				AC: "AC鉋鋪(m2)",
+				ditch: "水溝(m)",
+				sidewalk: "人行道(m2)"
+			},
 			chart: null
     };
   },
@@ -101,40 +109,34 @@ export default {
 			width: 'auto',
 			height: 'auto'
 		});
-		this.setChartOptions();
+		this.getList();
 	},
   methods: {
     getList() {
-			this.list = data;
-			this.setChartOptions();
-      // this.loading = true;
-      // if (moment(this.daterange[1]).isAfter(moment())) {
-      //   this.daterange[1] = moment().endOf("d").toDate();
-      // }
+      this.loading = true;
+			dateWatcher(this.daterange);
 
-      // let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-      // let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-      // this.searchRange = startDate + " - " + endDate;
+      let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+      let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+      this.searchRange = startDate + " - " + endDate;
 
-      // this.list = [];
-      // getActivReportMJ({
-      //   timeStart: startDate,
-      //   timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-      // }).then((response) => {
-      //   if (response.data.list.length == 0) {
-      //     this.$message({
-      //       message: "查無資料",
-      //       type: "error",
-      //     });
-      //   } else {
-      //     this.list = response.data.list;
-      //     this.list.map(l=>{
-      //       l.Innings = Number(l.Innings)
-      //       l.Rounds = Number(l.Rounds)
-      //     })
-      //   }
-      //   this.loading = false;
-      // });
+      this.list = [];
+      getCaseReport({
+        timeStart: startDate,
+        timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+      }).then((response) => {
+        if (response.data.list.length == 0) {
+          this.$message({
+            message: "查無資料",
+            type: "error",
+          });
+        } else {
+					const obj = response.data.list[0];
+          this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], total: obj[key] }) );
+          this.setChartOptions();
+        }
+        this.loading = false;
+      }).catch(err => { this.loading = false; });
     },
 		setChartOptions() {
 			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "type"));
