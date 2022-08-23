@@ -1,6 +1,6 @@
 <template>
   <div class="app-container precipitation" v-loading="loading">
-    <h2>每月降雨天數</h2>
+    <h2>每月降雨天數(台北)</h2>
     <!-- <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>

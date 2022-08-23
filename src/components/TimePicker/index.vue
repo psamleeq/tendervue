@@ -34,11 +34,7 @@
 
 <script>
 import moment from 'moment'
-import {
-  pickerOptions,
-  dateShortcuts,
-  dateWatcher,
-} from "@/utils/pickerOptions";
+import { pickerOptions, dateShortcuts, dateWatcher } from "@/utils/pickerOptions";
 
 export default {
   name: 'time-picker',
@@ -50,6 +46,10 @@ export default {
     timeTabId: {
       required: true,
       type: Number
+    },
+		hasWeek: {
+      type: Boolean,
+      default: true
     },
     daterange: {
       required: true,
@@ -63,7 +63,7 @@ export default {
   data() {
     return {
       dateTimePickerVisible: false,
-      pickerOptions: pickerOptions(),
+      pickerOptions: pickerOptions(this.hasWeek),
     }
   },
   computed: {
@@ -92,7 +92,7 @@ export default {
   methods: {
     dateShortcuts(index) {
       this.timeTabIdProps = index;
-      this.daterangeProps = dateShortcuts(index);
+      this.daterangeProps = dateShortcuts(index, this.hasWeek);
       this.$emit('update:pageCurrent', 1);
       this.$emit('search');
     }

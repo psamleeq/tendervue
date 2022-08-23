@@ -3,7 +3,7 @@
     <h2>PCI報表</h2>
 		<aside>資料初始為2022年6月</aside>
     <div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist">
+			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
@@ -17,7 +17,7 @@
 					@click="dateShortcuts(i)"
 				>{{ i }}</el-button>
 			</el-button-group>
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+      <!-- <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button> -->
       <el-button
         class="filter-item"
         type="info"
@@ -73,12 +73,12 @@ export default {
       dateTimePickerVisible: false,
       screenWidth: window.innerWidth,
       daterange: [moment().startOf("y").toDate(), moment().endOf("y").toDate()],
+      searchRange: "",
 			listQuery: {
 				dist: 104,
         pageCurrent: 1,
         pageSize: 20,
       },
-      searchRange: "",
       headers: {
         id: {
 					name: "單元編號",
@@ -118,7 +118,7 @@ export default {
 				1: "順向",
 				2: "逆向"
 			},
-			"districtList": {
+			districtList: {
 				// 100: {
 				// 	"name": "中正區",
 				// 	"engName": "Zhongzheng"

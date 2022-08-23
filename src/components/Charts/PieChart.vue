@@ -9,7 +9,7 @@ require('echarts/lib/chart/pie');
 import resize from './mixins/resize'
 
 export default {
-  mixins: [resize],
+  mixins: [ resize ],
   props: {
     className: {
       type: String,
@@ -84,12 +84,14 @@ export default {
             formatter: '{b} : {d}%'
           },
           legend: {
-            width: '85%',
-            // orient: 'vertical',
+            // width: '85%',
+            orient: 'vertical',
             type: 'plain',
+						top: 'bottom',
+						left: 'left',
             // selectedMode: false,
-            right: 'center',
-            bottom: '10',
+            // right: 'center',
+            // bottom: '10',
             data: this.pieData.data.map(data=>data.name)
           },
           series: [

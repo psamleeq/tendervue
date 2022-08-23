@@ -2,8 +2,11 @@
   <div class="app-container case-report" v-loading="loading">
     <h2>派工和PCI分析</h2>
 		<aside>資料初始為2022年6月</aside>
-    <!-- <div class="filter-container">
-			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+    <div class="filter-container">
+			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
       <el-button
         class="filter-item"
@@ -11,10 +14,10 @@
         icon="el-icon-document"
         :circle="screenWidth<567"
         @click="handleDownload"
-      >輸出報表</el-button>
+      >輸出報表</el-button> -->
     </div>
     
-    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+    <!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
 		<div class="chart" ref="chart" />
 
@@ -123,6 +126,9 @@ export default {
       screenWidth: window.innerWidth,
       // daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
       // searchRange: "",
+			listQuery: {
+				dist: 104
+      },
       headers: {
 				month: {
 					name: "月份",
@@ -160,6 +166,56 @@ export default {
 				},
       },
       list: [],
+			districtList: {
+				// 100: {
+				// 	"name": "中正區",
+				// 	"engName": "Zhongzheng"
+				// },
+				// 103: {
+				// 	"name": "大同區",
+				// 	"engName": "Datong"
+				// },
+				104: {
+					"name": "中山區",
+					"engName": "Zhongshan"
+				},
+				// 105: {
+				// 	"name": "松山區",
+				// 	"engName": "Songshan"
+				// },
+				// 106: {
+				// 	"name": "大安區",
+				// 	"engName": "Da’an"
+				// },
+				// 108: {
+				// 	"name": "萬華區",
+				// 	"engName": "Wanhua",
+				// },
+				// 110: {
+				// 	"name": "信義區",
+				// 	"engName": "Xinyi"
+				// },
+				// 111: {
+				// 	"name": "士林區",
+				// 	"engName": "Shilin"
+				// },
+				// 112: {
+				// 	"name": "北投區",
+				// 	"engName": "Beitou"
+				// },
+				// 114: {
+				// 	"name": "內湖區",
+				// 	"engName": "Neihu"
+				// },
+				// 115: {
+				// 	"name": "南港區",
+				// 	"engName": "Nangang"
+				// },
+				// 116: {
+				// 	"name": "文山區",
+				// 	"engName": "Wenshan"
+				// }
+			},
 			chart: null
     };
   },
@@ -211,6 +267,11 @@ export default {
 					name: headerFilter[key].name,
 					data: this.list.map(l=>l[key]),
 					yAxisIndex: headerFilter[key].chartType == "line" ? 1 : 0,
+					label: {
+						show: true,
+						offset: [2, 2],
+						formatter: '{c}'
+					},
 					smooth: false
 				});
 			}
@@ -220,6 +281,8 @@ export default {
 				xAxis: {
 					name: "月份",
 					type: 'category',
+					nameLocation: 'middle',
+					nameGap: 25,
 					data: this.list.map(l=>l.month),
           axisTick: {
             show: false
@@ -252,7 +315,7 @@ export default {
         },
 				grid: {
 					top: 55,
-					bottom: 20,
+					bottom: 25,
           left: 30,
           right: 30,
           containLabel: true
@@ -292,6 +355,14 @@ export default {
 // 	border: 1px solid #000
 // 	box-sizing: border-box
 .case-report
+	.filter-container 
+		.el-select
+			width: 105px
+		.el-input__inner
+			padding-left: 5px
+			text-align: center
+	.filter-item
+		margin-right: 5px
 	.chart
 		height: 400px
 </style>
