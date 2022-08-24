@@ -37,14 +37,15 @@
       <!-- <el-table-column 
         v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
       align="center" fixed/>-->
-      <el-table-column
-        v-for="(value, key) in headers"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
-        :sortable="value.sortable"
-      />
+			<el-table-column
+				v-for="(value, key) in headers"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
+				:formatter="formatter"
+				:sortable="value.sortable"
+			/>
     </el-table>
 
   </div>
@@ -252,7 +253,7 @@ export default {
 					fontSize: 14,
 					// formatter: '{b}: {d}'
 					formatter: (e) => {
-						return `${e.data.name}: ${e.data.value} (${e.data.percent} %)`;
+						return `${e.data.name}: ${e.data.value.toLocaleString()} (${e.data.percent} %)`;
 					}
 				},
 				grid: {
@@ -268,6 +269,10 @@ export default {
 
 			this.chart.setOption(options);
 		},
+		formatter(row, column) {
+			if(Number(row[column.property])) return row[column.property].toLocaleString();
+			else return row[column.property];
+    },
     formatTime(time) {
       return moment(time).utc().format("YYYY-MM-DD");
     },

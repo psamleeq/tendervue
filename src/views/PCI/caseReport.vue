@@ -40,6 +40,7 @@
         :prop="key"
         :label="value.name"
         align="center"
+				:formatter="formatter"
         :sortable="value.sortable"
       />
     </el-table>
@@ -326,6 +327,10 @@ export default {
 
 			this.chart.setOption(options);
 		},
+		formatter(row, column) {
+      if(Number(row[column.property])) return row[column.property].toLocaleString();
+      else return row[column.property];
+    },
     formatTime(time) {
       return moment(time).utc().format("YYYY-MM-DD");
     },

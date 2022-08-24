@@ -318,5 +318,4 @@ export default {
 			text-align: center
 	.filter-item
 		margin-right: 5px
-	
 </style>
