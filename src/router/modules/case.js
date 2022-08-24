@@ -14,10 +14,16 @@ const caseRouter = {
     },
     children: [
 			{
-				path: 'statics',
-				component: () => import('@/views/case/statics'),
-				name: 'statics',
+				path: 'caseStatics',
+				component: () => import('@/views/case/caseStatics'),
+				name: 'caseStatics',
 				meta: { title: '維護數量統計', isNew: true }
+			},
+			{
+				path: 'caseList',
+				component: () => import('@/views/case/caseList'),
+				name: 'caseList',
+				meta: { title: '維護案件列表', isNew: true }
 			},
 			{
 				path: 'ratio',

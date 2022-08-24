@@ -1,10 +1,13 @@
 <template>
   <div class="app-container case-statics" v-loading="loading">
-    <h2>維護數量</h2>
+    <h2>維護案件</h2>
 		<aside>資料初始為2022年6月</aside>
     <div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
+			<el-select class="filter-item" v-model="listQuery.caseType" :disabled="Object.keys(caseType).length <= 1">
+				<el-option v-for="(name, type) in caseType" :key="type" :label="name" :value="Number(type)" />
 			</el-select>
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -18,8 +21,6 @@
     </div>
     
     <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
-
-		<div class="chart" ref="chart" />
 
     <el-table
       empty-text="目前沒有資料"
@@ -50,10 +51,7 @@
 
 <script>
 import moment from "moment";
-import echarts from 'echarts/lib/echarts';
-require('echarts/theme/macarons');
-require('echarts/lib/chart/bar');
-import { getCaseReport } from "@/api/case";
+import { getCaseList } from "@/api/case";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
@@ -88,17 +86,29 @@ export default {
       daterange: [moment().startOf("year").toDate(), moment().endOf("year").toDate()],
       searchRange: "",
 			listQuery: {
+				caseType: 1,
 				dist: 104
       },
       headers: {
-				type: {
-					name: "類型",
+				CaseNo: {
+					name: "案號",
 					sortable: false
 				},
-        total: {
-					name: "數量",
+				CaseName: {
+					name: "地址",
+					sortable: false
+				},
+        CType1NO: {
+					name: "派工單號",
 					sortable: false,
-					chartType: 'bar'
+				},
+				total: {
+					name: "面積",
+					sortable: false,
+				},
+				CloseDate: {
+					name: "完工日期",
+					sortable: false,
 				}
       },
       list: [],
@@ -158,15 +168,17 @@ export default {
 				// 	"engName": "Wenshan"
 				// }
 			},
+			caseType: {
+				1: "熱再生修復",
+				2: "AC鉋鋪",
+				3: "水溝",
+				4: "人行道"
+			},
 			chart: null
     };
   },
 	mounted() {
-		this.chart = echarts.init(this.$refs.chart, 'macarons', {
-			width: 'auto',
-			height: 'auto'
-		});
-		this.getList();
+		// this.getList();
 	},
   methods: {
     getList() {
@@ -178,7 +190,8 @@ export default {
       this.searchRange = startDate + " - " + endDate;
 
       this.list = [];
-      getCaseReport({
+      getCaseList({
+				caseType: this.listQuery.caseType,
         timeStart: startDate,
         timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
       }).then((response) => {
@@ -188,66 +201,11 @@ export default {
             type: "error",
           });
         } else {
-					const obj = response.data.list[0];
-          this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], total: obj[key] }) );
-          this.setChartOptions();
+          this.list = response.data.list;
         }
         this.loading = false;
       }).catch(err => { this.loading = false; });
     },
-		setChartOptions() {
-			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "type"));
-			let legend = [];
-			let series = [];
-
-			for(const key in headerFilter) {
-				if(headerFilter[key].chartType == null) continue;
-				legend.push(headerFilter[key].name);
-				series.push({
-					type: headerFilter[key].chartType,
-					name: headerFilter[key].name,
-					data: this.list.map(l=>l[key]),
-					barWidth: '40%'
-				});
-			}
-
-			const options = {
-				xAxis: {
-					name: "區塊數量",
-					type: 'value',
-					boundaryGap: false,
-          axisTick: {
-            alignWithLabel: true
-          }
-				},
-				yAxis: {
-					name: '類型',
-					type: 'category',
-					data: this.list.map(l => l.type),
-					axisTick: {
-            show: false
-					}
-				},
-				tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross'
-          },
-          padding: [5, 10]
-        },
-				grid: {
-					top: 55,
-					bottom: 20,
-          left: 30,
-          right: 100,
-          containLabel: true
-        },
-				legend: { data: legend },
-				series: series
-			};
-
-			this.chart.setOption(options);
-		},
 		formatter(row, column) {
       if(Number(row[column.property])) return row[column.property].toLocaleString();
       else return row[column.property];
@@ -283,7 +241,7 @@ export default {
 .case-statics
 	.filter-container 
 		.el-select
-			width: 105px
+			width: 110px
 		.el-input__inner
 			padding-left: 5px
 			text-align: center
