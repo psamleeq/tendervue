@@ -39,6 +39,7 @@
       stripe
       style="width: 100%"
     >
+			<el-table-column label="序號" type="index" width="100" align="center" :index="indexMethod" />
       <!-- <el-table-column 
         v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
       align="center" fixed/>-->
@@ -72,7 +73,7 @@ export default {
       timeTabId: moment().year(),
       dateTimePickerVisible: false,
       screenWidth: window.innerWidth,
-      daterange: [moment().startOf("y").toDate(), moment().endOf("y").toDate()],
+      daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
       searchRange: "",
 			listQuery: {
 				dist: 104,
@@ -244,6 +245,9 @@ export default {
 			this.pageCurrent = 1;
 			this.getList();
     },
+		indexMethod(index) {
+			return (index + 1) + (this.listQuery.pageCurrent - 1) * this.listQuery.pageSize;
+		},
     formatTime(time) {
       return moment(time).utc().format("YYYY-MM-DD");
     },
@@ -273,7 +277,7 @@ export default {
 					return curr;
 				}, []);
 
-				list.forEach(l => {
+				list.forEach((l, i) => {
 					for(const month of l.createMonth) {
 						const createMonth = String(month).padStart(2, 0);
 
@@ -282,9 +286,10 @@ export default {
 						}
 					}	
 					this.$set(l, "roadId", `${this.roadIdMap[l.id.slice(-1)]}-${l.id.slice(-4, -1)}`);
+					this.$set(l, "index", i+1);
 				});
-				let tHeader = Object.values({...this.headers, ...this.headers_PCI}).map(h => h.name);
-				let filterVal = Object.keys({...this.headers, ...this.headers_PCI});
+				let tHeader = ["序號", ...Object.values({...this.headers, ...this.headers_PCI}).map(h => h.name)];
+				let filterVal =[ "index", ...Object.keys({...this.headers, ...this.headers_PCI})];
 				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
 				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
 				let data = this.formatJson(filterVal, list);

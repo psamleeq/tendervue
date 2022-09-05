@@ -34,6 +34,8 @@
       stripe
       style="width: 100%"
     >
+			<el-table-column label="序號" type="index" width="100" align="center" />
+
       <!-- <el-table-column 
         v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
       align="center" fixed/>-->
@@ -215,6 +217,7 @@ export default {
 			series.push({
 				type: 'treemap',
 				name: '巡查統計',
+				width: 800,
 				data: [],
 				// nodeClick: false,
 				label: {
