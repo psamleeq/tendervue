@@ -1,12 +1,16 @@
 {
-  "name": "vue-element-admin",
-  "version": "0.0.3",
+  "name": "pbcadmin",
+  "version": "0.0.1",
   "description": "A magical vue admin. An out-of-box UI solution for enterprise applications. Newest development stack of vue. Lots of awesome features",
   "author": "Pan <panfree23@gmail.com>",
+  "prd": {
+    "project": "view-prd"
+  },
   "scripts": {
     "dev": "vue-cli-service serve",
 		"loc": "vue-cli-service serve --mode loc",
-    "build:prod": "vue-cli-service build",
+    "build:prod": "gcloud config set project $npm_package_prd_project && gcloud builds submit --tag asia.gcr.io/$npm_package_prd_project/$npm_package_name:v$npm_package_version",
+    "build:gcp": "vue-cli-service build",
     "build:stage": "vue-cli-service build --mode staging",
     "preview": "node build/index.js --preview",
     "new": "plop",
