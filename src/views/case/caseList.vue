@@ -7,7 +7,7 @@
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<el-select class="filter-item" v-model="listQuery.caseType" :disabled="Object.keys(caseType).length <= 1">
-				<el-option v-for="(name, type) in caseType" :key="type" :label="name" :value="Number(type)" />
+				<el-option v-for="type in caseTypeOrder" :key="type" :label="caseType[type].name" :value="Number(type)" />
 			</el-select>
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -32,6 +32,8 @@
       stripe
       style="width: 100%"
     >
+			<el-table-column label="序號" type="index" width="100" align="center" />
+			
       <!-- <el-table-column 
         v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
       align="center" fixed/>-->
@@ -83,10 +85,10 @@ export default {
       timeTabId: 4,
       dateTimePickerVisible: false,
       screenWidth: window.innerWidth,
-      daterange: [moment().startOf("year").toDate(), moment().endOf("year").toDate()],
+      daterange: [moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate()],
       searchRange: "",
 			listQuery: {
-				caseType: 1,
+				caseType: 11,
 				dist: 104
       },
       headers: {
@@ -98,26 +100,36 @@ export default {
 					name: "地址",
 					sortable: false
 				},
-        CType1NO: {
-					name: "派工單號",
+        // CType1NO: {
+				// 	name: "派工單號",
+				// 	sortable: false,
+				// },
+				CaseDate: {
+					name: "成案日期",
 					sortable: false,
 				},
-				total: {
-					name: "面積",
+				dispatchDate: {
+					name: "派工日期",
 					sortable: false,
 				},
-				CloseDate: {
+				finishDate: {
 					name: "完工日期",
+					sortable: false,
+				},
+				dispatchArea: {
+					name: "派工面積",
+					sortable: false,
+				},
+				actualArea: {
+					name: "修復面積",
+					sortable: false,
+				},
+				markerArea: {
+					name: "標線面積",
 					sortable: false,
 				}
       },
       list: [],
-			typeMap: {
-				hotRepair: "熱再生修復(m2)",
-				AC: "AC鉋鋪(m2)",
-				ditch: "水溝(m)",
-				sidewalk: "人行道(m2)"
-			},
 			districtList: {
 				// 100: {
 				// 	"name": "中正區",
@@ -169,11 +181,24 @@ export default {
 				// }
 			},
 			caseType: {
-				1: "熱再生修復",
-				2: "AC鉋鋪",
-				3: "水溝",
-				4: "人行道"
+				11: {
+					name: "熱再生修復",
+					unit: "㎡"
+				},
+				12: {
+					name: "AC鉋鋪",
+					unit: "㎡"
+				},
+				2: {
+					name: "人行道",
+					unit: "㎡"
+				},
+				3: {
+					name: "水溝",
+					unit: "m"
+				}
 			},
+			caseTypeOrder: [11, 12, 2, 3],
 			chart: null
     };
   },
@@ -202,16 +227,20 @@ export default {
           });
         } else {
           this.list = response.data.list;
+					this.list.forEach(l => {
+						l.finishDate = this.formatTime(l.finishDate);
+					})
         }
         this.loading = false;
       }).catch(err => { this.loading = false; });
     },
 		formatter(row, column) {
-      if(Number(row[column.property])) return row[column.property].toLocaleString();
+      if(column.property.indexOf('Date')) return row[column.property] ? row[column.property] : "-";
+			else if(column.property.indexOf('Area')) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
       else return row[column.property];
     },
     formatTime(time) {
-      return moment(time).utc().format("YYYY-MM-DD");
+      return moment(time).utc().format("YYYY/MM/DD");
     },
     handleDownload() {
       let tHeader = Object.values(this.headers);

@@ -53,6 +53,7 @@ import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/bar');
+require('echarts/lib/chart/line');
 import { getCaseReport } from "@/api/case";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
@@ -60,19 +61,19 @@ import { dateWatcher } from "@/utils/pickerOptions";
 // const data = [
 // 	{
 // 		type: "人行道(m2)",
-// 		total: 258
+// 		area: 258
 // 	},
 // 	{
 // 		type: "水溝(m)",
-// 		total: 1119
+// 		area: 1119
 // 	},
 // 	{
 // 		type: "AC鉋鋪(m2)",
-// 		total: 25489
+// 		area: 25489
 // 	},
 // 	{
 // 		type: "熱再生修復(m2)",
-// 		total: 2405
+// 		area: 2405
 // 	}
 // ]
 
@@ -85,7 +86,7 @@ export default {
       timeTabId: 4,
       dateTimePickerVisible: false,
       screenWidth: window.innerWidth,
-      daterange: [moment().startOf("year").toDate(), moment().endOf("year").toDate()],
+      daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
       searchRange: "",
 			listQuery: {
 				dist: 104
@@ -95,7 +96,12 @@ export default {
 					name: "類型",
 					sortable: false
 				},
-        total: {
+        count: {
+					name: "數量",
+					sortable: false,
+					chartType: 'line'
+				},
+				area: {
 					name: "面積",
 					sortable: false,
 					chartType: 'bar'
@@ -188,8 +194,8 @@ export default {
             type: "error",
           });
         } else {
-					const obj = response.data.list[0];
-          this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], total: obj[key] }) );
+					const obj = response.data.list;
+          this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], count: obj[key].count, area: obj[key].area }) );
           this.setChartOptions();
         }
         this.loading = false;
@@ -207,19 +213,37 @@ export default {
 					type: headerFilter[key].chartType,
 					name: headerFilter[key].name,
 					data: this.list.map(l=>l[key]),
-					barWidth: '40%'
+					xAxisIndex: headerFilter[key].chartType == "bar" ? 0 : 1,
+					barWidth: '40%',
+					label: {
+						show: headerFilter[key].chartType != "bar",
+						position: 'bottom',
+						formatter: '{c}'
+					},
+					smooth: false
 				});
 			}
 
 			const options = {
-				xAxis: {
-					name: "區塊數量",
-					type: 'value',
-					boundaryGap: false,
-          axisTick: {
-            alignWithLabel: true
-          }
-				},
+				xAxis: [
+					{
+						name: "面積",
+						type: 'value',
+						boundaryGap: false,
+						axisTick: {
+							alignWithLabel: true
+						},	
+					},
+					{
+						name: '數量',
+						type: 'value',
+						nameGap: 8,
+						boundaryGap: false,
+						axisTick: {
+							alignWithLabel: true
+						}
+					},
+				],
 				yAxis: {
 					name: '類型',
 					type: 'category',
