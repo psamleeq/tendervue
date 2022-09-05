@@ -29,7 +29,7 @@ const caseRouter = {
 				path: 'ratio',
 				component: () => import('@/views/case/ratio'),
 				name: 'ratio',
-				meta: { title: '交辦案件百分比', isNew: true }
+				meta: { title: '交辦案件百分比' }
 			},
 			// {
 			// 	path: 'share',
@@ -47,7 +47,7 @@ const caseRouter = {
 				path: 'inspectCase',
 				component: () => import('@/views/case/inspectCase'),
 				name: 'inspectCase',
-				meta: { title: '巡查統計', isNew: true }
+				meta: { title: '巡查統計' }
 			},
     ]
   }
