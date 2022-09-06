@@ -9,21 +9,20 @@ const caseRouter = {
     name: 'case',
     meta: {
       title: '道路銑鋪',
-			icon: 'el-icon-truck',
-      isNew: true 
+			icon: 'el-icon-truck'
     },
     children: [
 			{
 				path: 'caseStatics',
 				component: () => import('@/views/case/caseStatics'),
 				name: 'caseStatics',
-				meta: { title: '維護數量統計', isNew: true }
+				meta: { title: '維護數量統計' }
 			},
 			{
 				path: 'caseList',
 				component: () => import('@/views/case/caseList'),
 				name: 'caseList',
-				meta: { title: '維護案件列表', isNew: true }
+				meta: { title: '維護案件列表' }
 			},
 			{
 				path: 'ratio',
