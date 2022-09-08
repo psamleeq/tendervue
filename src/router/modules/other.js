@@ -17,7 +17,7 @@ const otherRouter = {
 			path: 'precipitation',
 			component: () => import('@/views/other/precipitation'),
 			name: 'precipitation',
-			meta: { title: '每月降雨天數' }
+			meta: { title: '每月降雨天數', isNew: true }
 		}
 	]
 }

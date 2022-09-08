@@ -9,7 +9,8 @@ const caseRouter = {
     name: 'case',
     meta: {
       title: '道路銑鋪',
-			icon: 'el-icon-truck'
+			icon: 'el-icon-truck',
+			isNew: true
     },
     children: [
 			{
@@ -46,7 +47,7 @@ const caseRouter = {
 				path: 'inspectCase',
 				component: () => import('@/views/case/inspectCase'),
 				name: 'inspectCase',
-				meta: { title: '巡查統計' }
+				meta: { title: '巡查統計', isNew: true }
 			},
     ]
   }

@@ -25,9 +25,7 @@
       stripe
       style="width: 100%"
     >
-      <!-- <el-table-column 
-        v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
-      align="center" fixed/>-->
+      <el-table-column prop="name" label="資料類型" align="center" fixed/>
       <el-table-column
         v-for="(value, key) in headers"
         :key="key"
@@ -44,6 +42,7 @@
 <script>
 import moment from "moment";
 // import { getActivReportMJ } from "@/api/analysis";
+import { getCaseAndPCI } from "@/api/pci";
 import TimePicker from '@/components/TimePicker';
 
 export default {
@@ -110,17 +109,24 @@ export default {
       list: [],
     };
   },
+	created() {
+		if(moment().isSameOrBefore('2022-12-31')) {
+			for(const month in this.headers) if(month < 6) delete this.headers[month];
+		}
+	},
 	mounted() {
 		this.getList(); 
 	},
   methods: {
     getList() {
+			this.loading = true;
+
+			// 抓取降雨天數
 			fetch("https://opendata.cwb.gov.tw/api/v1/rest/datastore/C-B0025-001?Authorization=rdec-key-123-45678-011121314").then(res => res.json()).then(json => {
 				const record = json.records.location.filter(loc => loc.station.stationID == "466920")[0];
 				const precipitation = record.stationObsTimes.stationObsTime;
-
 				const lastIndex = precipitation.length - 1;
-				this.searchRange = `${this.formatTime(precipitation[0].dataDate)} - ${this.formatTime(precipitation[lastIndex].dataDate)}`;
+				this.searchRange = `${precipitation[0].dataDate} - ${precipitation[lastIndex].dataDate}`;
 				const nowMonth = moment(precipitation[lastIndex].dataDate).get("month") + 1;
 
 				this.list = [ precipitation.reduce((init, curr) => {
@@ -131,9 +137,28 @@ export default {
 						else init[month]++;
 					}
 					return init;
-				}, {})];
+				}, { name: "降雨天數"})];
 
 				if(this.list[0][nowMonth] == undefined) this.list[0][nowMonth] = 0;
+
+				// 抓取降雨天數
+				getCaseAndPCI().then(response => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						let caseObj = { name: "坑洞數" };
+						const caseReport = response.data.list;
+						caseReport.forEach(data => {
+							const month = moment(data.month).get("month") + 1;
+							caseObj[month] = data.bimPothole;
+						})
+						this.list.push(caseObj);
+					}
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
 			});
 
 			// this.list = data;
@@ -171,7 +196,8 @@ export default {
     },
 		formatContent(row, column) {
 			const num = row[column.property];
-      if (Number(num)) return num;
+			if(column.property == "name") return num;
+      else if (Number(num)) return num;
       else return "-";
     },
     handleDownload() {
