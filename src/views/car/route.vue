@@ -7423,9 +7423,9 @@ export default {
 					this.polyLine = new google.maps.Polyline({
 						path: paths,
 						geodesic: true,
-						strokeColor: "#E6EE9C",
+						strokeColor: "#9E9D24",
 						strokeOpacity: 1,
-						strokeWeight: 3,
+						strokeWeight: 5,
 						map: this.map
 					})
 
