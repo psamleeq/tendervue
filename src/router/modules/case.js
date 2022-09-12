@@ -9,7 +9,7 @@ const caseRouter = {
     name: 'case',
     meta: {
       title: '道路銑鋪',
-			icon: 'el-icon-truck',
+			icon: 'road',
 			isNew: true
     },
     children: [

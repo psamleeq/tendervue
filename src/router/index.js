@@ -10,6 +10,7 @@ import Layout from '@/layout'
 import PCIRouter from './modules/PCI'
 import caseRouter from './modules/case'
 import otherRouter from './modules/other'
+import carRouter from './modules/car'
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -94,6 +95,7 @@ export const asyncRoutes = [
 	PCIRouter,
 	caseRouter,
 	otherRouter,
+	carRouter,
 
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
