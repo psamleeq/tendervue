@@ -222,7 +222,7 @@ export default {
 				map: this.map,
 				icon: {
 					url: "/assets/icon/truck.png",
-					scaledSize: new google.maps.Size(30, 30)
+					scaledSize: new google.maps.Size(24, 24)
 				}
 			});
 		},
@@ -296,6 +296,7 @@ export default {
     },
 		getCarTrack() {
 			if(this.polyLine != undefined) this.polyLine.setMap(null);
+			if(this.marker != undefined) this.marker.setMap(null);
 
       //TODO: 測試
 			// this.carTracks = [
@@ -7436,6 +7437,7 @@ export default {
 					this.map.fitBounds(bounds);
 
 					this.marker.setPosition(paths[paths.length-1]);
+					this.marker.setMap(this.map);
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
