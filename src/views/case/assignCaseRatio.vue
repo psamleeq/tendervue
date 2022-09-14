@@ -1,0 +1,359 @@
+<template>
+  <div class="app-container assign-case-ratio" v-loading="loading">
+    <h2>交辦案件百分比</h2>
+    <!-- <div class="filter-container">
+			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+      <el-button
+        class="filter-item"
+        type="info"
+        icon="el-icon-document"
+        :circle="screenWidth<567"
+        @click="handleDownload"
+      >輸出報表</el-button>
+    </div> -->
+    
+    <!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+
+		<div class="chart" ref="chart" />
+
+    <el-table
+      empty-text="目前沒有資料"
+      :data="tempList"
+      border
+      fit
+      highlight-current-row
+      :header-cell-style="{'background-color': '#F2F6FC'}"
+      stripe
+      style="width: 100%"
+    >
+      <el-table-column
+        v-for="(value, key) in headers"
+        :key="key"
+        :prop="key"
+        :label="value.name"
+        align="center"
+        :sortable="value.sortable"
+      >
+				<template slot-scope="{ row }">
+					<el-input
+						v-if="isEdit(row, value) && value.editType == 'string'"
+						v-model="row[key]"
+						size="mini"
+						placeholder="月/日"
+						style="width: 100px"
+					/>
+					<el-input-number
+						v-else-if="isEdit(row, value) && value.editType == 'number'"
+						v-model="row[key]"
+						size="mini"
+						:precision="0"
+						:step="1"
+						:min="0"
+						@change="row.ratio = calcRatio(row);"
+					/>
+					<span v-else>{{ formatContent(row, key) }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column label="動作" align="center">
+        <template slot-scope="{ row, _, $index }">
+          <el-button
+            v-if="row.id == undefined"
+            type="success"
+            size="mini"
+            @click="addItem(); setChartOptions();"
+          >新增</el-button>
+          <span v-else-if="row.id != undefined">
+            <el-button
+              v-if="row.editValue"
+              type="success"
+              size="mini"
+              @click="row.editValue = false; setChartOptions();"
+            >確定</el-button>
+            <span v-else>
+              <el-button
+                type="primary"
+                style="margin-left: 10px"
+                size="mini"
+                @click="row.editValue = true"
+							>修改</el-button>
+              <el-button
+                type="danger"
+                size="mini"
+                @click="removeItem($index); setChartOptions();"
+              >刪除</el-button>
+            </span>
+          </span>
+        </template>
+      </el-table-column>
+    </el-table>
+
+  </div>
+</template>
+
+<script>
+import moment from "moment";
+import echarts from 'echarts/lib/echarts';
+require('echarts/theme/macarons');
+require('echarts/lib/chart/bar');
+// import { getActivReportMJ } from "@/api/analysis";
+// import TimePicker from '@/components/TimePicker';
+
+// const data = [
+// 	{
+// 		month: "2021/03",
+// 		implement: 2322424,
+// 		assign: 741804
+// 	},
+// 	{
+// 		month: "2021/04",
+// 		implement: 4187141,
+// 		assign: 673560
+// 	},
+// 	{
+// 		month: "2021/05",
+// 		implement: 1777412,
+// 		assign: 93600
+// 	},
+// 	{
+// 		month: "2021/06",
+// 		implement: 1775372,
+// 		assign: 0
+// 	},
+// 	{
+// 		month: "2021/07",
+// 		implement: 834835,
+// 		assign: 164513
+// 	},
+// 	{
+// 		month: "2021/08",
+// 		implement: 810918,
+// 		assign: 0
+// 	},
+// 	{
+// 		month: "2021/09",
+// 		implement: 2220959,
+// 		assign: 26915
+// 	},
+// 	{
+// 		month: "2021/10",
+// 		implement: 4800973,
+// 		assign: 0
+// 	}
+// ]
+
+export default {
+  name: "assignCaseRatio",
+	// components: { TimePicker },
+  data() {
+    return {
+      loading: false,
+      // timeTabId: -1,
+      // dateTimePickerVisible: false,
+      // screenWidth: window.innerWidth,
+      // daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
+      // searchRange: "",
+      headers: {
+				month: {
+					name: "月份",
+					sortable: false,
+					editable: true,
+					editType: "string"
+				},
+				implement: {
+					name: "聖東執行金額",
+					sortable: false,
+					editable: true,
+					editType: "number",
+					chartType: 'bar'
+				},
+				assign: {
+					name: "機關交辦金額",
+					sortable: false,
+					editable: true,
+					editType: "number",
+					chartType: 'bar'
+				},
+				ratio: {
+					name: "交辦金額百分比 (%)",
+					sortable: false,
+					editable: false,
+					editType: "",
+					chartType: null
+				}
+			},
+			list: [],
+			newItem: {
+				month: "2022/06",
+				implement: 0,
+				assign: 1
+			},
+			chart: null
+    };
+  },
+	computed: {
+		tempList() {
+			return [ ...this.list, this.newItem ]
+		}
+	},
+	mounted() {
+		this.chart = echarts.init(this.$refs.chart, 'macarons', {
+			width: 'auto',
+			height: 'auto'
+		});
+		this.setChartOptions();
+	},
+  methods: {
+    // getList() {
+		// 	this.list = data;
+		// 	this.list.forEach((l, i) => {
+		// 		this.$set(l, 'ratio', Math.round((l.assign / l.implement) * 10000) / 100);
+		// 	})
+		// 	this.setChartOptions();
+    //   // this.loading = true;
+    //   // if (moment(this.daterange[1]).isAfter(moment())) {
+    //   //   this.daterange[1] = moment().endOf("d").toDate();
+    //   // }
+
+    //   // let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+    //   // let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+    //   // this.searchRange = startDate + " - " + endDate;
+
+    //   // this.list = [];
+    //   // getActivReportMJ({
+    //   //   timeStart: startDate,
+    //   //   timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+    //   // }).then((response) => {
+    //   //   if (response.data.list.length == 0) {
+    //   //     this.$message({
+    //   //       message: "查無資料",
+    //   //       type: "error",
+    //   //     });
+    //   //   } else {
+    //   //     this.list = response.data.list;
+    //   //     this.list.map(l=>{
+    //   //       l.Innings = Number(l.Innings)
+    //   //       l.Rounds = Number(l.Rounds)
+    //   //     })
+    //   //   }
+    //   //   this.loading = false;
+    //   // });
+    // },
+		isEdit(row, value) {
+			return (row.id == undefined && value.editable) || ( row.id != undefined && row.editValue) 
+		},
+		addItem() {
+			const id = this.list.length == 0 ? 1 : this.list[this.list.length - 1].id + 1;
+			const ratio = this.calcRatio(this.newItem);
+			this.list.push(Object.assign({}, this.newItem, { id: id, editValue: false, ratio: ratio }));
+			this.newItem = {
+				month: "2022/06",
+				implement: 0,
+				assign: 0
+			};
+		},
+		calcRatio(row) {
+			return Math.round((row.assign / row.implement) * 10000) / 100;
+		},
+		removeItem(index) {
+			this.list.splice(index, 1);
+		},
+		setChartOptions() {
+			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "type"));
+			let legend = [];
+			let series = [];
+
+			for(const key in headerFilter) {
+				if(headerFilter[key].chartType == null) continue;
+				legend.push(headerFilter[key].name);
+				series.push({
+					type: headerFilter[key].chartType,
+					name: headerFilter[key].name,
+					data: this.list.map(l=>l[key]),
+					stack: '金額',
+					barWidth: '40%',
+					offset: [0, 20],
+					label: {
+						show: (key == 'assign'),
+						precision: 2,
+						position: 'top',
+						formatter: (params) => {
+							return `${this.list[params.dataIndex].ratio} %`
+						}
+					}
+				});
+			}
+
+			const options = {
+				xAxis: {
+					name: '月份',
+					type: 'category',
+					data: this.list.map(l=>l.month),
+          axisTick: {
+            alignWithLabel: true
+          }
+				},
+				yAxis: {
+					name: '金額',
+					type: 'value',
+					axisTick: {
+						show: false
+					}
+				},
+				tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross'
+          },
+          padding: [5, 10]
+        },
+				grid: {
+					top: 55,
+					bottom: 20,
+          left: 30,
+          right: 100,
+          containLabel: true
+        },
+				legend: { data: legend },
+				series: series
+			};
+
+			this.chart.setOption(options);
+		},
+    formatTime(time) {
+      return moment(time).utc().format("YYYY-MM-DD");
+    },
+		formatContent(row, key) {
+			if(key == "month") return row[key];
+      else if (row[key] == 0 || Number(row[key])) return row[key].toLocaleString();
+      else return "-";
+    },
+    handleDownload() {
+      let tHeader = Object.values(this.headers);
+      let filterVal = Object.keys(this.headers);
+      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+      let data = this.formatJson(filterVal, this.list);
+
+      import("@/vendor/Export2Excel").then((excel) => {
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+        });
+      });
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map((v) => filterVal.map((j) => v[j]));
+    },
+  },
+};
+</script>
+
+<style lang="sass">
+// *
+// 	border: 1px solid #000
+// 	box-sizing: border-box
+.assign-case-ratio
+	.chart
+		height: 400px
+</style>

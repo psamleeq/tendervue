@@ -17,26 +17,26 @@ const caseRouter = {
 				path: 'caseStatics',
 				component: () => import('@/views/case/caseStatics'),
 				name: 'caseStatics',
-				meta: { title: '維護數量統計' }
+				meta: { title: '維護數量統計', isNew: true }
 			},
 			{
 				path: 'caseList',
 				component: () => import('@/views/case/caseList'),
 				name: 'caseList',
-				meta: { title: '維護案件列表' }
+				meta: { title: '維護案件列表', isNew: true }
 			},
 			{
-				path: 'ratio',
-				component: () => import('@/views/case/ratio'),
+				path: 'assignCaseRatio',
+				component: () => import('@/views/case/assignCaseRatio'),
 				name: 'ratio',
-				meta: { title: '交辦案件百分比' }
+				meta: { title: '交辦案件百分比', isNew: true }
 			},
-			// {
-			// 	path: 'share',
-			// 	component: () => import('@/views/PCI/share'),
-			// 	name: 'share',
-			// 	meta: { title: '預算規劃與執行', isNew: true }
-			// },
+			{
+				path: 'expenseAnalysis',
+				component: () => import('@/views/case/expenseAnalysis'),
+				name: 'expenseAnalysis',
+				meta: { title: '預算規劃與執行', isNew: true }
+			},
 			// {
 			// 	path: 'share',
 			// 	component: () => import('@/views/PCI/share'),
@@ -47,7 +47,7 @@ const caseRouter = {
 				path: 'inspectCase',
 				component: () => import('@/views/case/inspectCase'),
 				name: 'inspectCase',
-				meta: { title: '巡查統計', isNew: true }
+				meta: { title: '巡查統計' }
 			},
     ]
   }
