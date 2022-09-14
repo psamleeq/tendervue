@@ -96,6 +96,10 @@ export default {
 					name: "案號",
 					sortable: false
 				},
+				BTName: {
+					name: "損壞類別",
+					sortable: false
+				},
 				CaseName: {
 					name: "地址",
 					sortable: false
@@ -114,6 +118,10 @@ export default {
 				},
 				finishDate: {
 					name: "完工日期",
+					sortable: false,
+				},
+				warrantyDate: {
+					name: "保固日期",
 					sortable: false,
 				},
 				dispatchArea: {
@@ -199,6 +207,15 @@ export default {
 				}
 			},
 			caseTypeOrder: [11, 12, 2, 3],
+			warrantyMap: {
+				1: {		  						// AC路面
+					15: 14,					  	// 坑洞: 14天 
+					58: 14,				  		// 人孔高差: 14天
+					"etc": 180					// AC路面: 其他 180天
+				},
+				2: { "etc": 180 },		// 人行道: 180天
+				3: { "etc": 180 }			// 側溝屬於人行道: 180天
+			},
 			chart: null
     };
   },
@@ -228,7 +245,12 @@ export default {
         } else {
           this.list = response.data.list;
 					this.list.forEach(l => {
+						const days = this.warrantyMap[l.DeviceType][l.BType] != undefined ? this.warrantyMap[l.DeviceType][l.BType] : this.warrantyMap[l.DeviceType]["etc"];
+						l.warrantyDate = this.formatTime(moment(l.finishDate).add(days, 'd'));
 						l.finishDate = this.formatTime(l.finishDate);
+						l.dispatchArea = Math.floor(l.dispatchArea * 100) / 100;
+						l.actualArea = Math.floor(l.actualArea * 100) / 100;
+						l.markerArea = Math.floor(l.markerArea * 100) / 100;
 					})
         }
         this.loading = false;
