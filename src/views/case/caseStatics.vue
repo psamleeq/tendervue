@@ -195,7 +195,7 @@ export default {
           });
         } else {
 					const obj = response.data.list;
-          this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], count: obj[key].count, area: obj[key].area }) );
+          this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], count: obj[key].count, area: Math.floor(obj[key].area * 100) / 100 }) );
           this.setChartOptions();
         }
         this.loading = false;

@@ -248,6 +248,7 @@ export default {
 			// 		"isDeleted": false
 			// 	}
 			// ];
+			this.listQuery.inspectionId = "";
 
 			getInspectionList({
 				modeId: this.listQuery.modeId

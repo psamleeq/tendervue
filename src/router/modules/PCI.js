@@ -17,25 +17,25 @@ const PCIRouter = {
         path: 'report',
         component: () => import('@/views/PCI/report'),
 				name: 'report',
-        meta: { title: '報表', isNew: true }
+        meta: { title: '報表' }
       },
 			{
 				path: 'trend',
 				component: () => import('@/views/PCI/trend'),
 				name: 'trend',
-				meta: { title: '趨勢圖', isNew: true }
+				meta: { title: '趨勢圖' }
 			},
 			{
 				path: 'average',
 				component: () => import('@/views/PCI/average'),
 				name: 'average',
-				meta: { title: 'PCI平均', isNew: true }
+				meta: { title: 'PCI平均' }
 			},
 			{
 				path: 'share',
 				component: () => import('@/views/PCI/share'),
 				name: 'share',
-				meta: { title: '每月份額', isNew: true }
+				meta: { title: '每月份額' }
 			},
 			{
 				path: 'caseReport',

@@ -250,7 +250,7 @@ export default {
         } else {
 					this.list = response.data.list;
 					this.list.forEach((l, i) => l.month = moment(l.datestar).format("YYYY/MM"))
-					this.setChartOptions();
+					// this.setChartOptions();
         }
         this.loading = false;
       }).catch(err => { this.loading = false; });

@@ -1,6 +1,7 @@
 <template>
   <div class="app-container precipitation" v-loading="loading">
     <h2>每月降雨天數(台北)</h2>
+		<aside>資料初始為2022年6月</aside>
     <!-- <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>

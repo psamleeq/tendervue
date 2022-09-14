@@ -136,22 +136,22 @@ export default {
 					sortable: false
 				},
 				bimPothole: {
-					name: "聖東坑洞",
+					name: "坑洞案件(聖東)",
 					sortable: false,
 					chartType: 'bar'
 				},
 				bimInspect: {
-					name: "聖東巡查",
+					name: "巡查案件(聖東)",
 					sortable: false,
 					chartType: 'bar'
 				},
 				"1999Pothole": {
-					name: "1999坑洞",
+					name: "坑洞案件(1999)",
 					sortable: false,
 					chartType: 'bar'
 				},
 				"1999Report": {
-					name: "1999查報",
+					name: "查報案件(1999)",
 					sortable: false,
 					chartType: 'bar'
 				},
