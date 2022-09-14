@@ -1,0 +1,299 @@
+<template>
+  <div class="app-container case-statics" v-loading="loading">
+    <h2>案件列表</h2>
+		<aside>資料初始為2022年6月</aside>
+    <div class="filter-container">
+			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
+			<time-picker class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+      <!-- <el-button
+        class="filter-item"
+        type="info"
+        icon="el-icon-document"
+        :circle="screenWidth<567"
+        @click="handleDownload"
+      >輸出報表</el-button> -->
+    </div>
+    
+    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+
+    <el-table
+      empty-text="目前沒有資料"
+      :data="list"
+      border
+      fit
+      highlight-current-row
+      :header-cell-style="{'background-color': '#F2F6FC'}"
+      stripe
+      style="width: 100%"
+    >
+			<el-table-column label="序號" type="index" width="100" align="center" />
+			
+      <!-- <el-table-column 
+        v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
+      align="center" fixed/>-->
+      <el-table-column
+        v-for="(value, key) in headers"
+        :key="key"
+        :prop="key"
+        :label="value.name"
+        align="center"
+				:formatter="formatter"
+        :sortable="value.sortable"
+      />
+			<el-table-column label="監造抽查" align="center">
+				<template slot-scope="{ row }">
+					<el-checkbox v-model="row.SVChecked" />
+				</template>
+			</el-table-column>
+			<el-table-column label="機關抽查" align="center">
+				<template slot-scope="{ row }">
+					<el-checkbox v-model="row.organChecked" />
+				</template>
+			</el-table-column>
+			<el-table-column label="備註" align="center">
+				<template slot-scope="{ row }">
+					<el-input
+						v-model="row.note"
+						size="mini"
+						style="width: 100px"
+					/>
+				</template>
+			</el-table-column>
+    </el-table>
+
+  </div>
+</template>
+
+<script>
+import moment from "moment";
+import { getCaseList } from "@/api/PI";
+import TimePicker from '@/components/TimePicker';
+import { dateWatcher } from "@/utils/pickerOptions";
+
+// const data = [
+// 	{
+// 		type: "人行道(m2)",
+// 		total: 258
+// 	},
+// 	{
+// 		type: "水溝(m)",
+// 		total: 1119
+// 	},
+// 	{
+// 		type: "AC鉋鋪(m2)",
+// 		total: 25489
+// 	},
+// 	{
+// 		type: "熱再生修復(m2)",
+// 		total: 2405
+// 	}
+// ]
+
+export default {
+  name: "caseStatics",
+	components: { TimePicker },
+  data() {
+    return {
+      loading: false,
+      timeTabId: 1,
+      dateTimePickerVisible: false,
+      screenWidth: window.innerWidth,
+      daterange: [ moment().startOf("d").subtract(1, "d"), moment().endOf("d").subtract(1, "d") ],
+      searchRange: "",
+			listQuery: {
+				dist: 104
+      },
+      headers: {
+				CaseNo: {
+					name: "案號",
+					sortable: false
+				},
+				DName: {
+					name: "設施類型",
+					sortable: false
+				},
+				BTName: {
+					name: "損壞類別",
+					sortable: false
+				},
+				CaseName: {
+					name: "地址",
+					sortable: false
+				},
+				CaseDate: {
+					name: "成案日期",
+					sortable: false,
+				},
+				// dispatchDate: {
+				// 	name: "派工日期",
+				// 	sortable: false,
+				// },
+				// finishDate: {
+				// 	name: "完工日期",
+				// 	sortable: false,
+				// },
+				// warrantyDate: {
+				// 	name: "保固日期",
+				// 	sortable: false,
+				// },
+				// dispatchArea: {
+				// 	name: "派工面積",
+				// 	sortable: false,
+				// },
+				// actualArea: {
+				// 	name: "修復面積",
+				// 	sortable: false,
+				// },
+				// markerArea: {
+				// 	name: "標線面積",
+				// 	sortable: false,
+				// }
+      },
+      list: [],
+			districtList: {
+				// 100: {
+				// 	"name": "中正區",
+				// 	"engName": "Zhongzheng"
+				// },
+				// 103: {
+				// 	"name": "大同區",
+				// 	"engName": "Datong"
+				// },
+				104: {
+					"name": "中山區",
+					"engName": "Zhongshan"
+				},
+				// 105: {
+				// 	"name": "松山區",
+				// 	"engName": "Songshan"
+				// },
+				// 106: {
+				// 	"name": "大安區",
+				// 	"engName": "Da’an"
+				// },
+				// 108: {
+				// 	"name": "萬華區",
+				// 	"engName": "Wanhua",
+				// },
+				// 110: {
+				// 	"name": "信義區",
+				// 	"engName": "Xinyi"
+				// },
+				// 111: {
+				// 	"name": "士林區",
+				// 	"engName": "Shilin"
+				// },
+				// 112: {
+				// 	"name": "北投區",
+				// 	"engName": "Beitou"
+				// },
+				// 114: {
+				// 	"name": "內湖區",
+				// 	"engName": "Neihu"
+				// },
+				// 115: {
+				// 	"name": "南港區",
+				// 	"engName": "Nangang"
+				// },
+				// 116: {
+				// 	"name": "文山區",
+				// 	"engName": "Wenshan"
+				// }
+			},
+			warrantyMap: {
+				1: {		  						// AC路面
+					15: 14,					  	// 坑洞: 14天 
+					58: 14,				  		// 人孔高差: 14天
+					"etc": 180					// AC路面: 其他 180天
+				},
+				2: { "etc": 180 },		// 人行道: 180天
+				3: { "etc": 180 }			// 側溝屬於人行道: 180天
+			},
+			chart: null
+    };
+  },
+	mounted() {
+		this.getList();
+	},
+  methods: {
+    getList() {
+      this.loading = true;
+			dateWatcher(this.daterange);
+
+      let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+      let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+      this.searchRange = startDate + " - " + endDate;
+
+      this.list = [];
+      getCaseList({
+        timeStart: startDate,
+        timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+      }).then((response) => {
+        if (response.data.list.length == 0) {
+          this.$message({
+            message: "查無資料",
+            type: "error",
+          });
+        } else {
+          this.list = response.data.list;
+					this.list.forEach(l => {
+						l.finishDate = this.formatTime(l.finishDate);
+						l.dispatchArea = Math.floor(l.dispatchArea * 100) / 100;
+						l.actualArea = Math.floor(l.actualArea * 100) / 100;
+						l.markerArea = Math.floor(l.markerArea * 100) / 100;
+						this.$set(l, "SVChecked", false);
+						this.$set(l, "organChecked", false);
+						this.$set(l, "note", "");
+					})
+        }
+        this.loading = false;
+      }).catch(err => { this.loading = false; });
+    },
+		formatter(row, column) {
+      if(column.property.indexOf('Date')) return row[column.property] ? row[column.property] : "-";
+			else if(column.property.indexOf('Area')) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
+      else return row[column.property];
+    },
+    formatTime(time) {
+      return moment(time).utc().format("YYYY/MM/DD");
+    },
+    handleDownload() {
+      let tHeader = Object.values(this.headers);
+      let filterVal = Object.keys(this.headers);
+      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+      let data = this.formatJson(filterVal, this.list);
+
+      import("@/vendor/Export2Excel").then((excel) => {
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+        });
+      });
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map((v) => filterVal.map((j) => v[j]));
+    },
+  },
+};
+</script>
+
+<style lang="sass">
+// *
+// 	border: 1px solid #000
+// 	box-sizing: border-box
+.case-statics
+	.filter-container 
+		.el-select
+			width: 110px
+		.el-input__inner
+			padding-left: 5px
+			text-align: center
+	.filter-item
+		margin-right: 5px
+	.chart
+		height: 400px
+</style>
