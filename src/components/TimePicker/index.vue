@@ -7,7 +7,7 @@
         type="primary"
         :plain="i != timeTabIdProps"
         size="mini"
-        @click="dateShortcuts(i)"
+        @click="dateShortcuts(i, shortcutType)"
       >{{ t.text }}</el-button>
     </el-button-group>
     <el-date-picker
@@ -39,31 +39,35 @@ import { pickerOptions, dateShortcuts, dateWatcher } from "@/utils/pickerOptions
 export default {
   name: 'time-picker',
   props: {
-    type: {
-      type: String,
-      default: 'date'
-    },
-    timeTabId: {
-      required: true,
-      type: Number
-    },
+		type: {
+			type: String,
+			default: 'date'
+		},
+		timeTabId: {
+			required: true,
+			type: Number
+		},
 		hasWeek: {
-      type: Boolean,
-      default: true
-    },
-    daterange: {
-      required: true,
-      type: Array
-    },
-    pageCurrent: {
-      type: Number,
-      default: 1
-    }
+			type: Boolean,
+			default: true
+		},
+		shortcutType: {
+			type: String,
+			default: 'year'
+		},
+		daterange: {
+			required: true,
+			type: Array
+		},
+		pageCurrent: {
+			type: Number,
+			default: 1
+		}
   },
   data() {
     return {
       dateTimePickerVisible: false,
-      pickerOptions: pickerOptions(this.hasWeek),
+      pickerOptions: pickerOptions(this.shortcutType, this.hasWeek),
     }
   },
   computed: {
@@ -90,9 +94,9 @@ export default {
     },
   },
   methods: {
-    dateShortcuts(index) {
+    dateShortcuts(index, shortcutType) {
       this.timeTabIdProps = index;
-      this.daterangeProps = dateShortcuts(index, this.hasWeek);
+      this.daterangeProps = dateShortcuts(index, shortcutType, this.hasWeek);
       this.$emit('update:pageCurrent', 1);
       this.$emit('search');
     }

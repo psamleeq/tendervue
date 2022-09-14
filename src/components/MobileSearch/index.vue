@@ -55,7 +55,7 @@
               type="text"
               size="mini"
               style="padding: 0"
-              @click="dateShortcuts(i)"
+              @click="dateShortcuts(i, shortcutType)"
             >{{ t.text }}</el-button>
           </el-tag>
         </div>
@@ -86,27 +86,35 @@ import {
 export default {
   name: 'mobile-search',
   props: {
-    type: {
-      type: String,
-      default: 'date'
-    },
-    daterange: {
-      required: true,
-      type: Array
-    },
-    pageCurrent: {
-      type: Number,
-      default: 1
-    },
-    hidden: {
-      type: Boolean,
-      default: true
-    }
+		type: {
+			type: String,
+			default: 'date'
+		},
+		hasWeek: {
+			type: Boolean,
+			default: true
+		},
+		shortcutType: {
+			type: String,
+			default: 'year'
+		},
+		daterange: {
+			required: true,
+			type: Array
+		},
+		pageCurrent: {
+			type: Number,
+			default: 1
+		},
+		hidden: {
+			type: Boolean,
+			default: true
+		}
   },
   data() {
     return {
       searchOpen: false,
-      pickerOptions: pickerOptions(),
+      pickerOptions: pickerOptions(this.shortcutType, this.hasWeek),
     }
   },
   computed: {
@@ -134,9 +142,9 @@ export default {
         this.searchOpen = true;
       }
     },
-    dateShortcuts(index) {
-      this.daterangeProps = dateShortcuts(index);
-      this.timeTabIdProps = index;
+    dateShortcuts(index, shortcutType) {
+			this.timeTabIdProps = index;
+      this.daterangeProps = dateShortcuts(index, shortcutType, this.hasWeek);
       this.$emit('update:pageCurrent', 1);
       // this.$emit('search');
     }
