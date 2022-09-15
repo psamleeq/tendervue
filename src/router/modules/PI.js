@@ -16,7 +16,7 @@ const otherRouter = {
 			path: 'caseList',
 			component: () => import('@/views/PI/caseList'),
 			name: 'caseList',
-			meta: { title: '案件列表' }
+			meta: { title: '成效指標-案件列表' }
 		},
 	]
 }

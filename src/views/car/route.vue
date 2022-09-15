@@ -27,7 +27,8 @@
 			</el-col>
 			<el-col class="info-panel" :span="8">
 				<!-- <iframe width="720" height="405" src="https://www.youtube.com/embed/d148YHkaAGg?controls=0&autoplay=1&mute=1&rel=0&modestbranding=1" frameborder="0" allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" /> -->
-				<iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" />
+				<!-- <iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" /> -->
+				<iframe width="560" height="315" src="http://media.bellsgis.com:8080/WebRTCAppEE/play.html?id=246612205179051969409588_720p6000kbps.mp4&playOrder=vod" frameborder="0" allowfullscreen></iframe>
 				<div class="car-info-panel">
 					<i class="el-icon-truck" />
 					<div v-if="Object.keys(carInfo).length > 0" class="car-info">
@@ -119,10 +120,10 @@ export default {
       },
 			options: {
 				modeId: {
-					1: "機車巡查",
-					2: "機車巡查(AI)",
-					3: "汽車巡查",
-					4: "汽車巡查(AI)"
+					1: "手持巡查",
+					2: "手持巡查(AI)",
+					3: "車輛巡查",
+					4: "車輛巡查(AI)"
 				}
 			},
 			carList: [],

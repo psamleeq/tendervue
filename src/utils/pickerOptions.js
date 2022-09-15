@@ -82,7 +82,7 @@ export function pickerOptions(shortcutType = 'year', hasWeek = true) {
 		year: [ 'THIS_WEEK', 'LAST_WEEK', 'THIS_MONTH', 'LAST_MONTH', 'THIS_YEAR' ]
 	};
 
-	console.log(shortcutType, shortcutList[shortcutType]);
+	// console.log(shortcutType, shortcutList[shortcutType]);
 
   let pickerOptions =
   {

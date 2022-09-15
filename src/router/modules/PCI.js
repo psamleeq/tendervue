@@ -41,7 +41,7 @@ const PCIRouter = {
 				path: 'caseReport',
 				component: () => import('@/views/PCI/caseReport'),
 				name: 'caseReport',
-				meta: { title: '派工和PCI分析' }
+				meta: { title: '派工和PCI分析', isNew: true }
 			}
     ]
   }
