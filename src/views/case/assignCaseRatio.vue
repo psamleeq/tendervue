@@ -56,31 +56,31 @@
 				</template>
 			</el-table-column>
 			<el-table-column label="動作" align="center">
-        <template slot-scope="{ row, _, $index }">
+        <template slot-scope="{ row }">
           <el-button
             v-if="row.id == undefined"
             type="success"
             size="mini"
-            @click="addItem(); setChartOptions();"
+            @click="addItem()"
           >新增</el-button>
           <span v-else-if="row.id != undefined">
             <el-button
               v-if="row.editValue"
               type="success"
               size="mini"
-              @click="row.editValue = false; setChartOptions();"
+              @click="editItem(row);"
             >確定</el-button>
             <span v-else>
               <el-button
                 type="primary"
                 style="margin-left: 10px"
                 size="mini"
-                @click="row.editValue = true"
+                @click="row.editValue = true; this.getList();"
 							>修改</el-button>
               <el-button
                 type="danger"
                 size="mini"
-                @click="removeItem($index); setChartOptions();"
+                @click="removeItem(row)"
               >刪除</el-button>
             </span>
           </span>
@@ -96,51 +96,8 @@ import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/bar');
-// import { getActivReportMJ } from "@/api/analysis";
+import { getAssignCaseAmt, setAssignCaseAmt, delAssignCaseAmt } from "@/api/case";
 // import TimePicker from '@/components/TimePicker';
-
-// const data = [
-// 	{
-// 		month: "2021/03",
-// 		implement: 2322424,
-// 		assign: 741804
-// 	},
-// 	{
-// 		month: "2021/04",
-// 		implement: 4187141,
-// 		assign: 673560
-// 	},
-// 	{
-// 		month: "2021/05",
-// 		implement: 1777412,
-// 		assign: 93600
-// 	},
-// 	{
-// 		month: "2021/06",
-// 		implement: 1775372,
-// 		assign: 0
-// 	},
-// 	{
-// 		month: "2021/07",
-// 		implement: 834835,
-// 		assign: 164513
-// 	},
-// 	{
-// 		month: "2021/08",
-// 		implement: 810918,
-// 		assign: 0
-// 	},
-// 	{
-// 		month: "2021/09",
-// 		implement: 2220959,
-// 		assign: 26915
-// 	},
-// 	{
-// 		month: "2021/10",
-// 		implement: 4800973,
-// 		assign: 0
-// 	}
-// ]
 
 export default {
   name: "assignCaseRatio",
@@ -184,7 +141,7 @@ export default {
 			},
 			list: [],
 			newItem: {
-				month: "2022/06",
+				month: moment().format("yyyy/MM"),
 				implement: 0,
 				assign: 1
 			},
@@ -201,62 +158,90 @@ export default {
 			width: 'auto',
 			height: 'auto'
 		});
-		this.setChartOptions();
+		this.getList();
 	},
   methods: {
-    // getList() {
-		// 	this.list = data;
-		// 	this.list.forEach((l, i) => {
-		// 		this.$set(l, 'ratio', Math.round((l.assign / l.implement) * 10000) / 100);
-		// 	})
-		// 	this.setChartOptions();
-    //   // this.loading = true;
-    //   // if (moment(this.daterange[1]).isAfter(moment())) {
-    //   //   this.daterange[1] = moment().endOf("d").toDate();
-    //   // }
+    getList() {
+      this.loading = true;
 
-    //   // let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-    //   // let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-    //   // this.searchRange = startDate + " - " + endDate;
-
-    //   // this.list = [];
-    //   // getActivReportMJ({
-    //   //   timeStart: startDate,
-    //   //   timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-    //   // }).then((response) => {
-    //   //   if (response.data.list.length == 0) {
-    //   //     this.$message({
-    //   //       message: "查無資料",
-    //   //       type: "error",
-    //   //     });
-    //   //   } else {
-    //   //     this.list = response.data.list;
-    //   //     this.list.map(l=>{
-    //   //       l.Innings = Number(l.Innings)
-    //   //       l.Rounds = Number(l.Rounds)
-    //   //     })
-    //   //   }
-    //   //   this.loading = false;
-    //   // });
-    // },
+      this.list = [];
+      getAssignCaseAmt().then(response => {
+        if (response.data.list.length == 0) {
+          this.$message({
+            message: "查無資料",
+            type: "error",
+          });
+        } else {
+          this.list = response.data.list;
+          this.list.map(l=>{
+						this.$set(l, "ratio", this.calcRatio(l));
+          })
+        }
+				this.setChartOptions();
+        this.loading = false;
+      }).catch(err => this.loading = false);
+    },
 		isEdit(row, value) {
 			return (row.id == undefined && value.editable) || ( row.id != undefined && row.editValue) 
-		},
-		addItem() {
-			const id = this.list.length == 0 ? 1 : this.list[this.list.length - 1].id + 1;
-			const ratio = this.calcRatio(this.newItem);
-			this.list.push(Object.assign({}, this.newItem, { id: id, editValue: false, ratio: ratio }));
-			this.newItem = {
-				month: "2022/06",
-				implement: 0,
-				assign: 0
-			};
 		},
 		calcRatio(row) {
 			return Math.round((row.assign / row.implement) * 10000) / 100;
 		},
-		removeItem(index) {
-			this.list.splice(index, 1);
+		addItem() {
+			setAssignCaseAmt({
+				month: this.newItem.month,
+				implement: this.newItem.implement,
+				assign: this.newItem.assign
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "新增成功",
+						type: "success",
+					});
+
+					this.newItem = {
+						month: moment().format("yyyy/MM"),
+						implement: 0,
+						assign: 0
+					};
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
+		},
+		editItem(row) {
+			setAssignCaseAmt({
+				month: row.month,
+				implement: row.implement,
+				assign: row.assign
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "修改成功",
+						type: "success",
+					});
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
+		},
+		removeItem(row) {
+			delAssignCaseAmt(row.id).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "刪除成功",
+						type: "success",
+					});
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
 		},
 		setChartOptions() {
 			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "type"));

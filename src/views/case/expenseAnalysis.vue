@@ -55,31 +55,31 @@
 				</template>
 			</el-table-column>
 			<el-table-column label="動作" align="center">
-        <template slot-scope="{ row, _, $index }">
+        <template slot-scope="{ row }">
           <el-button
             v-if="row.id == undefined"
             type="success"
             size="mini"
-            @click="addItem(); setChartOptions();"
+            @click="addItem();"
           >新增</el-button>
           <span v-else-if="row.id != undefined">
             <el-button
               v-if="row.editValue"
               type="success"
               size="mini"
-              @click="row.editValue = false; setChartOptions();"
+              @click="editItem(row);"
             >確定</el-button>
             <span v-else>
               <el-button
                 type="primary"
                 style="margin-left: 10px"
                 size="mini"
-                @click="row.editValue = true"
+                @click="row.editValue = true; this.getList();"
 							>修改</el-button>
               <el-button
                 type="danger"
                 size="mini"
-                @click="removeItem($index); setChartOptions();"
+                @click="removeItem(row)"
               >刪除</el-button>
             </span>
           </span>
@@ -95,16 +95,8 @@ import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/pie');
-// import { getActivReportMJ } from "@/api/analysis";
+import { getExpenseAmt, setExpenseAmt, delExpenseAmt } from "@/api/case";
 // import TimePicker from '@/components/TimePicker';
-
-// const data = [
-// 	{ type: "巡查費用", amount: 5040000 },
-// 	{ type: "AC道路維護", amount: 13000000 },
-// 	{ type: "附屬設施維護", amount: 8000000 },
-// 	{ type: "緊急修繕", amount: 3500000 },
-// 	{ type: "新材料、工法", amount: 460000 },
-// ]
 
 export default {
   name: "expenseAnalysis",
@@ -150,57 +142,79 @@ export default {
 			width: 'auto',
 			height: 'auto'
 		});
-		this.setChartOptions();
+		this.getList();
 	},
   methods: {
-    // getList() {
-		// 	this.list = data;
-		// 	this.list.forEach((l, i) => {
-		// 		this.$set(l, 'ratio', Math.round((l.assign / l.implement) * 10000) / 100);
-		// 	})
-		// 	this.setChartOptions();
-    //   // this.loading = true;
-    //   // if (moment(this.daterange[1]).isAfter(moment())) {
-    //   //   this.daterange[1] = moment().endOf("d").toDate();
-    //   // }
-
-    //   // let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-    //   // let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-    //   // this.searchRange = startDate + " - " + endDate;
-
-    //   // this.list = [];
-    //   // getActivReportMJ({
-    //   //   timeStart: startDate,
-    //   //   timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-    //   // }).then((response) => {
-    //   //   if (response.data.list.length == 0) {
-    //   //     this.$message({
-    //   //       message: "查無資料",
-    //   //       type: "error",
-    //   //     });
-    //   //   } else {
-    //   //     this.list = response.data.list;
-    //   //     this.list.map(l=>{
-    //   //       l.Innings = Number(l.Innings)
-    //   //       l.Rounds = Number(l.Rounds)
-    //   //     })
-    //   //   }
-    //   //   this.loading = false;
-    //   // });
-    // },
+    getList() {
+      this.list = [];
+      getExpenseAmt().then(response => {
+        if (response.data.list.length == 0) {
+          this.$message({
+            message: "查無資料",
+            type: "error",
+          });
+        } else {
+          this.list = response.data.list;
+        }
+				this.setChartOptions();
+        this.loading = false;
+      }).catch(err => this.loading = false);
+    },
 		isEdit(row, value) {
 			return (row.id == undefined && value.editable) || ( row.id != undefined && row.editValue) 
 		},
 		addItem() {
-			const id = this.list.length == 0 ? 1 : this.list[this.list.length - 1].id + 1;
-			this.list.push(Object.assign({}, this.newItem, { id: id, editValue: false }));
-			this.newItem = {
-				type: "",
-				amount: 1
-			};
+			setExpenseAmt({
+				type: this.newItem.type,
+				amount: this.newItem.amount
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "新增成功",
+						type: "success",
+					});
+
+					this.newItem = {
+						type: "",
+						amount: 1
+					};
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
 		},
-		removeItem(index) {
-			this.list.splice(index, 1);
+		editItem(row) {
+			setExpenseAmt({
+				type: row.type,
+				amount: row.amount
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "修改成功",
+						type: "success",
+					});
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
+		},
+		removeItem(row) {
+			delExpenseAmt(row.id).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "刪除成功",
+						type: "success",
+					});
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
 		},
 		setChartOptions() {
 			const series = [{
