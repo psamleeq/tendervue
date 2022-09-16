@@ -1,6 +1,6 @@
 <template>
-  <div class="app-container assign-case-ratio" v-loading="loading">
-    <h2>交辦案件百分比</h2>
+  <div class="app-container cost-estimate" v-loading="loading">
+    <h2>每月經費估算</h2>
     <!-- <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -50,7 +50,6 @@
 						:precision="0"
 						:step="1"
 						:min="0"
-						@change="row.ratio = calcRatio(row);"
 					/>
 					<span v-else>{{ formatContent(row, key) }}</span>
 				</template>
@@ -96,11 +95,11 @@ import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/bar');
-import { getAssignCaseAmt, setAssignCaseAmt, delAssignCaseAmt } from "@/api/case";
+import { getCostEstimate, setCostEstimate, delCostEstimate } from "@/api/case";
 // import TimePicker from '@/components/TimePicker';
 
 export default {
-  name: "assignCaseRatio",
+  name: "costEstimate",
 	// components: { TimePicker },
   data() {
     return {
@@ -117,33 +116,50 @@ export default {
 					editable: true,
 					editType: "string"
 				},
-				implement: {
-					name: "聖東執行金額",
+				inspection: {
+					name: "巡查費",
 					sortable: false,
 					editable: true,
 					editType: "number",
 					chartType: 'bar'
 				},
-				assign: {
-					name: "機關交辦金額",
+				roadMaintain: {
+					name: "道路維護費",
 					sortable: false,
 					editable: true,
 					editType: "number",
 					chartType: 'bar'
 				},
-				ratio: {
-					name: "交辦金額百分比 (%)",
+				facilityMaintain: {
+					name: "附屬設施維護費",
 					sortable: false,
-					editable: false,
-					editType: "",
-					chartType: null
+					editable: true,
+					editType: "number",
+					chartType: 'bar'
+				},
+				emergencyRepairs: {
+					name: "緊急修繕費用",
+					sortable: false,
+					editable: true,
+					editType: "number",
+					chartType: 'bar'
+				},
+				reservedMethod: {
+					name: "預留新材料工法",
+					sortable: false,
+					editable: true,
+					editType: "number",
+					chartType: 'bar'
 				}
 			},
 			list: [],
 			newItem: {
 				month: moment().format("yyyy/MM"),
-				implement: 0,
-				assign: 1
+				inspection: 0,
+				roadMaintain: 0,
+				facilityMaintain: 0,
+				emergencyRepairs: 0,
+				reservedMethod: 0
 			},
 			chart: null
     };
@@ -164,7 +180,7 @@ export default {
     getList() {
       this.loading = true;
       this.list = [];
-      getAssignCaseAmt().then(response => {
+      getCostEstimate().then(response => {
         if (response.data.list.length == 0) {
           this.$message({
             message: "查無資料",
@@ -172,9 +188,6 @@ export default {
           });
         } else {
           this.list = response.data.list;
-          this.list.map(l=>{
-						this.$set(l, "ratio", this.calcRatio(l));
-          })
         }
 				this.setChartOptions();
         this.loading = false;
@@ -183,14 +196,14 @@ export default {
 		isEdit(row, value) {
 			return (row.id == undefined && value.editable) || ( row.id != undefined && row.editValue) 
 		},
-		calcRatio(row) {
-			return Math.round((row.assign / row.implement) * 10000) / 100;
-		},
 		addItem() {
-			setAssignCaseAmt({
+			setCostEstimate({
 				month: this.newItem.month,
-				implement: this.newItem.implement,
-				assign: this.newItem.assign
+				inspection: this.newItem.inspection,
+				roadMaintain: this.newItem.roadMaintain,
+				facilityMaintain: this.newItem.facilityMaintain,
+				emergencyRepairs: this.newItem.emergencyRepairs,
+				reservedMethod: this.newItem.reservedMethod
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -200,8 +213,11 @@ export default {
 
 					this.newItem = {
 						month: moment().format("yyyy/MM"),
-						implement: 0,
-						assign: 0
+						inspection: 0,
+						roadMaintain: 0,
+						facilityMaintain: 0,
+						emergencyRepairs: 0,
+						reservedMethod: 0
 					};
 					this.getList();
 				} 
@@ -211,10 +227,13 @@ export default {
 			})
 		},
 		editItem(row) {
-			setAssignCaseAmt({
+			setCostEstimate({
 				month: row.month,
-				implement: row.implement,
-				assign: row.assign
+				inspection: row.inspection,
+				roadMaintain: row.roadMaintain,
+				facilityMaintain: row.facilityMaintain,
+				emergencyRepairs: row.emergencyRepairs,
+				reservedMethod: row.reservedMethod
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -229,7 +248,7 @@ export default {
 			})
 		},
 		removeItem(row) {
-			delAssignCaseAmt(row.id).then(response => {
+			delCostEstimate(row.id).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "刪除成功",
@@ -256,15 +275,7 @@ export default {
 					data: this.list.map(l=>l[key]),
 					stack: '金額',
 					barWidth: '40%',
-					offset: [0, 20],
-					label: {
-						show: (key == 'assign'),
-						precision: 2,
-						position: 'top',
-						formatter: (params) => {
-							return `${this.list[params.dataIndex].ratio} %`
-						}
-					}
+					offset: [0, 20]
 				});
 			}
 
@@ -337,7 +348,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.assign-case-ratio
+.cost-estimate
 	.chart
 		height: 400px
 </style>

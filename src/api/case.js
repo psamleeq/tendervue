@@ -1,5 +1,6 @@
 import request from '@/utils/request';
 
+// 維護案件
 export function getCaseReport(query) {
 	return request({
 		url: '/case/caseReport',
@@ -16,6 +17,7 @@ export function getCaseList(query) {
 	})
 }
 
+// 交辦案件金額
 export function getAssignCaseAmt(query) {
 	return request({
 		url: '/case/assignCaseAmt',
@@ -40,6 +42,7 @@ export function delAssignCaseAmt(id, data) {
 	})
 }
 
+// 經費金額
 export function getExpenseAmt(query) {
 	return request({
 		url: '/case/expenseAmt',
@@ -64,6 +67,32 @@ export function delExpenseAmt(id, data) {
 	})
 }
 
+// 經費預估
+export function getCostEstimate(query) {
+	return request({
+		url: '/case/costEstimate',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setCostEstimate(data) {
+	return request({
+		url: '/case/costEstimate',
+		method: 'post',
+		data
+	})
+}
+
+export function delCostEstimate(id, data) {
+	return request({
+		url: `/case/costEstimate/${id}`,
+		method: 'delete',
+		data
+	})
+}
+
+// 巡查數量
 export function getInspectCase(query) {
 	return request({
 		url: '/case/inspectCase',

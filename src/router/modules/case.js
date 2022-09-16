@@ -35,14 +35,14 @@ const caseRouter = {
 				path: 'expenseAnalysis',
 				component: () => import('@/views/case/expenseAnalysis'),
 				name: 'expenseAnalysis',
-				meta: { title: '預算規劃與執行', isNew: true }
+				meta: { title: '經費分析', isNew: true }
 			},
-			// {
-			// 	path: 'share',
-			// 	component: () => import('@/views/PCI/share'),
-			// 	name: 'share',
-			// 	meta: { title: '月執行圖表', isNew: true }
-			// },
+			{
+				path: 'costEstimate',
+				component: () => import('@/views/case/costEstimate'),
+				name: 'costEstimate',
+				meta: { title: '每月經費預估', isNew: true }
+			},
 			{
 				path: 'inspectCase',
 				component: () => import('@/views/case/inspectCase'),

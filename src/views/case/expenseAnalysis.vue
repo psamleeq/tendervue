@@ -1,6 +1,6 @@
 <template>
   <div class="app-container expense-analysis" v-loading="loading">
-    <h2>預算規劃與執行</h2>
+    <h2>經費分析</h2>
     <!-- <div class="filter-container">
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -145,21 +145,22 @@ export default {
 		this.getList();
 	},
   methods: {
-    getList() {
-      this.list = [];
-      getExpenseAmt().then(response => {
-        if (response.data.list.length == 0) {
-          this.$message({
-            message: "查無資料",
-            type: "error",
-          });
-        } else {
-          this.list = response.data.list;
-        }
+		getList() {
+			this.loading = true;
+			this.list = [];
+			getExpenseAmt().then(response => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list;
+				}
 				this.setChartOptions();
-        this.loading = false;
-      }).catch(err => this.loading = false);
-    },
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
 		isEdit(row, value) {
 			return (row.id == undefined && value.editable) || ( row.id != undefined && row.editValue) 
 		},
@@ -229,7 +230,7 @@ export default {
 
 			const options = {
 				title: {
-          text: '成效式契約經費分析',
+          // text: '成效式契約經費分析',
           textStyle: {
             color: 'black',
             fontWeight: 'bold'
