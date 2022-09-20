@@ -1,13 +1,40 @@
 <template>
-  <div class="app-container case-statics" v-loading="loading">
+  <div class="app-container PI-case-list" v-loading="loading">
     <h2>案件列表</h2>
-		<aside>資料初始為2022年6月</aside>
     <div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<time-picker class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			<span class="time-picker">
+				<el-button-group v-if="!dateTimePickerVisible">
+					<el-button
+						v-for="(t, i) in pickerOptions.shortcuts"
+						:key="i"
+						type="primary"
+						:plain="i != timeTabId"
+						size="mini"
+						@click="dateShortcuts(i)"
+					>{{ t.text }}</el-button>
+				</el-button-group>
+				<el-date-picker
+					v-else
+					class="filter-item"
+					v-model="searchDate"
+					type="date"
+					placeholder="日期"
+					:picker-options="pickerOptions"
+					:clearable="false"
+					@change="timeTabId = -1"
+				/>
+				<el-button
+					:type="dateTimePickerVisible ? 'info' : 'primary'"
+					plain
+					size="mini"
+					@click="dateTimePickerVisible = !dateTimePickerVisible"
+				>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
+				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			</span>
+
       <!-- <el-button
         class="filter-item"
         type="info"
@@ -19,6 +46,94 @@
     
     <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
+		<!-- 資訊列表 -->
+		<el-row :gutter="40" class="panel-group">
+			<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
+				<div class="card-panel">
+					<div class="card-panel-icon-wrapper icon-form">
+						<svg-icon icon-class="form" class-name="card-panel-icon" />
+					</div>
+					<div class="card-panel-description">
+						<div class="card-panel-text">案件數</div>
+						<div class="card-panel-num">{{ list.length }}</div>
+					</div>
+				</div>
+			</el-col>
+			<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
+				<div class="card-panel">
+					<div class="card-panel-icon-wrapper icon-people">
+						<svg-icon icon-class="people" class-name="card-panel-icon" />
+					</div>
+					<div class="card-panel-description">
+						<div class="card-panel-text">監造抽查</div>
+						<div class="card-panel-num"> {{ list.filter(l => l.SVCheck != 0).length }} / {{ Math.round(list.length * 0.15, 0) }}</div>
+					</div>
+				</div>
+			</el-col>
+			<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
+				<div class="card-panel">
+					<div class="card-panel-icon-wrapper icon-domain">
+						<svg-icon icon-class="domain" class-name="card-panel-icon" />
+					</div>
+					<div class="card-panel-description">
+						<div class="card-panel-text">機關抽查</div>
+						<div class="card-panel-num">{{ list.filter(l => l.OrganCheck != 0).length }} / {{ Math.round(list.length * 0.06, 0) }} </div>
+					</div>
+				</div>
+			</el-col>
+			<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
+				<div class="card-panel">
+					<div class="card-panel-icon-wrapper icon-message-alert">
+						<svg-icon icon-class="message-alert" class-name="card-panel-icon" />
+					</div>
+					<div class="card-panel-description">
+						<div class="card-panel-text">不合格件數</div>
+						<div class="card-panel-num">
+							<span> {{ resultList.filter(l => l.ReasonType == 1).length }} <el-tooltip class="item" effect="dark" content="損壞情形說明與現況不符(PI1.2)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip></span>	 / 
+							<span> {{ resultList.filter(l => l.ReasonType == 2).length }} <el-tooltip class="item" effect="dark" content="損壞程度與現況不符(PI2.2)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip></span>
+						</div>
+					</div>
+				</div>
+			</el-col>
+		</el-row>
+
+		<!-- 抽查結果列表 -->
+		<el-table
+      empty-text="目前沒有資料"
+      :data="resultList"
+      border
+      fit
+      highlight-current-row
+      :header-cell-style="{'background-color': '#F2F6FC'}"
+      stripe
+      style="width: 100%"
+    >
+			<el-table-column label="序號" type="index" width="100" align="center" />
+      <el-table-column
+        v-for="(value, key) in resultHeader"
+        :key="key"
+        :prop="key"
+        :label="value.name"
+        align="center"
+				:formatter="formatter"
+        :sortable="value.sortable"
+      />
+			<el-table-column label="不合格原因(監造)" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.SVCheck == 2">{{ options.reasonType[row.ReasonType] }}</span>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+			<el-table-column label="不合格原因(機關)" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.OrganCheck == 2">{{ options.reasonType[row.ReasonType] }}</span>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+    </el-table>
+		<br>
+
+		<!-- 案件列表 -->
     <el-table
       empty-text="目前沒有資料"
       :data="list"
@@ -30,10 +145,29 @@
       style="width: 100%"
     >
 			<el-table-column label="序號" type="index" width="100" align="center" />
-			
-      <!-- <el-table-column 
-        v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
-      align="center" fixed/>-->
+			<!-- <el-table-column label="案件編號" prop="UploadCaseNo" align="center">
+				<template slot-scope="{ row }">
+					<template v-if="row.edit">
+						<el-input
+							v-model="row.UploadCaseNo"
+							size="mini"
+							style="width: 100px"
+						/>
+            <el-button type="text" @click="row.edit = false;">
+              <i class="el-icon-success" />
+            </el-button>
+            <el-button type="text" @click="row.edit = false; getList()">
+              <i class="el-icon-error" />
+            </el-button>
+          </template>
+          <template v-else>
+            <span>{{ row.UploadCaseNo || "-" }}</span>
+            <el-link v-if="!row.UploadCaseNo" @click="row.edit = true" style="margin-left: 5px">
+              <i class="el-icon-edit" />
+            </el-link>
+          </template>
+				</template>
+			</el-table-column> -->
       <el-table-column
         v-for="(value, key) in headers"
         :key="key"
@@ -43,116 +177,149 @@
 				:formatter="formatter"
         :sortable="value.sortable"
       />
-			<el-table-column label="監造抽查" align="center">
+			<el-table-column label="監造抽查" width="200px" align="center">
 				<template slot-scope="{ row }">
-					<el-checkbox v-model="row.SVChecked" />
+					<template v-if="row.SVCheck == 0">
+						<el-button v-if="!row.showSVCheck" type="primary" size="small" @click="row.showSVCheck = true">抽查</el-button>
+						<span v-else>
+							<el-button-group>
+								<el-button v-for="(name, type) in options.resultType" :key="type" :type="type == 1 ? 'success' : 'danger'" size="small" @click="beforeSetResult(row, 'SVCheck', Number(type))">{{ name }}</el-button>
+								<el-button size="small" round @click="row.showSVCheck = false">取消</el-button>
+							</el-button-group>
+						</span>
+					</template>
+					<template v-else>
+						<i v-if="row.SVCheck == 1" class="el-icon-check" style="color: #67C23A" />
+						<i v-if="row.SVCheck == 2" class="el-icon-close" style="color: #F56C6C" />
+					</template>
 				</template>
 			</el-table-column>
-			<el-table-column label="機關抽查" align="center">
+			<el-table-column label="機關抽查" width="200px" align="center">
 				<template slot-scope="{ row }">
-					<el-checkbox v-model="row.organChecked" />
-				</template>
-			</el-table-column>
-			<el-table-column label="備註" align="center">
-				<template slot-scope="{ row }">
-					<el-input
-						v-model="row.note"
-						size="mini"
-						style="width: 100px"
-					/>
+					<template v-if="row.OrganCheck == 0">
+						<el-button v-if="!row.showOrganCheck" type="primary" size="small" @click="row.showOrganCheck = true">抽查</el-button>
+						<span v-else>
+							<el-button-group>
+								<el-button v-for="(name, type) in options.resultType" :key="type" :type="type == 1 ? 'success' : 'danger'" size="small" @click="beforeSetResult(row, 'OrganCheck', Number(type))">{{ name }}</el-button>
+								<el-button size="small" round @click="row.showOrganCheck = false">取消</el-button>
+							</el-button-group>
+						</span>
+					</template>
+					<template v-else>
+						<i v-if="row.OrganCheck == 1" class="el-icon-check" style="color: #67C23A" />
+						<i v-if="row.OrganCheck == 2" class="el-icon-close" style="color: #F56C6C" />
+					</template>
 				</template>
 			</el-table-column>
     </el-table>
 
+		<el-dialog
+      :visible.sync="showConfirm"
+      width="300px"
+      :show-close="false"
+      center
+    >	
+			<span slot="title">確認提交 {{ rowActive.UploadCaseNo }}的抽查結果？</span>
+			<div>來源案號: {{ rowActive.CaseNo }}</div>
+			<div>抽查結果: <span :style="rowActive.resultType == 1 ? 'color: #67C23A' : 'color: #F56C6C'">{{ options.resultType[rowActive.resultType] }}</span></div>
+			<div v-if="rowActive.resultType == 2">原因: 
+				<el-select v-model="rowActive.ReasonType">
+					<el-option v-for="( name, key ) in options.reasonType" :key="key" :label="name" :value="Number(key)" />
+				</el-select>
+			</div>
+      <span slot="footer" class="footer-btns">
+        <el-button @click="showConfirm = false; getList();">取消</el-button>
+        <el-button type="primary" @click="setResult()">確定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import moment from "moment";
-import { getCaseList } from "@/api/PI";
-import TimePicker from '@/components/TimePicker';
-import { dateWatcher } from "@/utils/pickerOptions";
-
-// const data = [
-// 	{
-// 		type: "人行道(m2)",
-// 		total: 258
-// 	},
-// 	{
-// 		type: "水溝(m)",
-// 		total: 1119
-// 	},
-// 	{
-// 		type: "AC鉋鋪(m2)",
-// 		total: 25489
-// 	},
-// 	{
-// 		type: "熱再生修復(m2)",
-// 		total: 2405
-// 	}
-// ]
+import { getCaseList, setCaseList } from "@/api/PI";
 
 export default {
-  name: "caseStatics",
-	components: { TimePicker },
+  name: "PICaseList",
   data() {
     return {
       loading: false,
       timeTabId: 1,
       dateTimePickerVisible: false,
-      screenWidth: window.innerWidth,
-      daterange: [ moment().startOf("d").subtract(1, "d"), moment().endOf("d").subtract(1, "d") ],
+			showConfirm: false,
+      pickerOptions: {
+				firstDayOfWeek: 1,
+				shortcuts: [
+					{
+						text: "今日",
+						onClick(picker) {
+							const date = moment();
+							picker.$emit("pick", date);
+						},
+					},
+					{
+						text: "昨日",
+						onClick(picker) {
+							const date = moment().subtract(1, "d");
+							picker.$emit("pick", date);
+						}
+					},
+					{
+						text: "前日",
+						onClick(picker) {
+							const date = moment().subtract(2, "d");
+							picker.$emit("pick", date);
+						}
+					}
+				],
+				disabledDate(date) {
+					return moment(date).valueOf() >= moment().endOf("d").valueOf();
+				},
+			},
+      searchDate: moment().startOf("d").subtract(1, "d"),
       searchRange: "",
 			listQuery: {
 				dist: 104
       },
+			resultHeader: {
+				UploadCaseNo: {
+					name: "案件編號",
+					sortable: true
+				}
+			},
       headers: {
-				CaseNo: {
-					name: "案號",
-					sortable: false
+				UploadCaseNo: {
+					name: "案件編號",
+					sortable: true
+				},
+				CaseDate: {
+					name: "成案日期",
+					sortable: false,
 				},
 				DName: {
 					name: "設施類型",
-					sortable: false
-				},
-				BTName: {
-					name: "損壞類別",
 					sortable: false
 				},
 				CaseName: {
 					name: "地址",
 					sortable: false
 				},
-				CaseDate: {
-					name: "成案日期",
-					sortable: false,
+				CaseNo: {
+					name: "來源案號",
+					sortable: true
 				},
-				// dispatchDate: {
-				// 	name: "派工日期",
-				// 	sortable: false,
-				// },
-				// finishDate: {
-				// 	name: "完工日期",
-				// 	sortable: false,
-				// },
-				// warrantyDate: {
-				// 	name: "保固日期",
-				// 	sortable: false,
-				// },
-				// dispatchArea: {
-				// 	name: "派工面積",
-				// 	sortable: false,
-				// },
-				// actualArea: {
-				// 	name: "修復面積",
-				// 	sortable: false,
-				// },
-				// markerArea: {
-				// 	name: "標線面積",
-				// 	sortable: false,
-				// }
+				CaseType: {
+					name: "損壞情況",
+					sortable: false
+				},
+				CaseStatus: {
+					name: "損壞狀況",
+					sortable: false
+				}
       },
+			resultList: [],
       list: [],
+			rowActive: {},
 			districtList: {
 				// 100: {
 				// 	"name": "中正區",
@@ -203,34 +370,54 @@ export default {
 				// 	"engName": "Wenshan"
 				// }
 			},
-			warrantyMap: {
-				1: {		  						// AC路面
-					15: 14,					  	// 坑洞: 14天 
-					58: 14,				  		// 人孔高差: 14天
-					"etc": 180					// AC路面: 其他 180天
+			options: {
+				resultType: {
+					1: "合格",
+					2: "不合格"
 				},
-				2: { "etc": 180 },		// 人行道: 180天
-				3: { "etc": 180 }			// 側溝屬於人行道: 180天
-			},
-			chart: null
+				reasonType: {
+					1: "損壞情形說明與現況不符(PI1.2)",
+					2: "損壞程度與現況不符(PI2.2)"
+				},
+			}
     };
   },
 	mounted() {
 		this.getList();
 	},
   methods: {
+		dateShortcuts(index) {
+			this.timeTabId = index;
+
+			const DATE_OPTION = {
+				TODAY: 0,
+				YESTERDAY: 1,
+				DAYBEFOREYEST: 2
+			};
+
+			switch (index) {
+				case DATE_OPTION.TODAY:
+					this.searchDate = moment();
+					break;
+				case DATE_OPTION.YESTERDAY:
+					this.searchDate = moment().subtract(1, "d");
+					break;
+				case DATE_OPTION.DAYBEFOREYEST:
+					this.searchDate = moment().subtract(2, "d");
+					break;
+			}
+			this.getList();
+		},
     getList() {
       this.loading = true;
-			dateWatcher(this.daterange);
 
-      let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-      let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-      this.searchRange = startDate + " - " + endDate;
+      let date = moment(this.searchDate).format("YYYY-MM-DD");
+      this.searchRange = date;
 
       this.list = [];
       getCaseList({
-        timeStart: startDate,
-        timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+        timeStart: date,
+        timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
       }).then((response) => {
         if (response.data.list.length == 0) {
           this.$message({
@@ -239,26 +426,54 @@ export default {
           });
         } else {
           this.list = response.data.list;
+					this.resultList = response.data.resultList;
 					this.list.forEach(l => {
-						l.finishDate = this.formatTime(l.finishDate);
-						l.dispatchArea = Math.floor(l.dispatchArea * 100) / 100;
-						l.actualArea = Math.floor(l.actualArea * 100) / 100;
-						l.markerArea = Math.floor(l.markerArea * 100) / 100;
-						this.$set(l, "SVChecked", false);
-						this.$set(l, "organChecked", false);
-						this.$set(l, "note", "");
+						this.$set(l, "showSVCheck", false);
+						this.$set(l, "showOrganCheck", false);
 					})
+
         }
         this.loading = false;
       }).catch(err => { this.loading = false; });
     },
+		beforeSetResult(row, columnName, result) {
+			row[`show${columnName}`] = false;
+			this.rowActive = row;
+
+			if(result == 2) this.rowActive.ReasonType = 1;
+			else this.rowActive.ReasonType = 0;
+
+			this.rowActive[columnName] = result;
+			this.$set(this.rowActive, "resultType", result);
+			this.showConfirm = true;
+		},
+		setResult(row) {
+			this.showConfirm = false;
+
+			setCaseList( this.rowActive.id, {
+				SVCheck: this.rowActive.SVCheck,
+				OrganCheck: this.rowActive.OrganCheck,
+				ReasonType: this.rowActive.ReasonType
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "提交成功",
+						type: "success",
+					});
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
+		},
 		formatter(row, column) {
-      if(column.property.indexOf('Date')) return row[column.property] ? row[column.property] : "-";
-			else if(column.property.indexOf('Area')) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
+      if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
+			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
       else return row[column.property];
     },
     formatTime(time) {
-      return moment(time).utc().format("YYYY/MM/DD");
+      return moment(time).format("YYYY/MM/DD");
     },
     handleDownload() {
       let tHeader = Object.values(this.headers);
@@ -285,15 +500,98 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.case-statics
+.PI-case-list
 	.filter-container 
 		.el-select
 			width: 110px
 		.el-input__inner
 			padding-left: 5px
 			text-align: center
-	.filter-item
-		margin-right: 5px
-	.chart
-		height: 400px
+		.filter-item
+			margin-right: 5px
+		.time-picker 
+			& > *
+				margin-right: 5px
+			.el-date-editor.el-input
+				width: 165px
+				.el-input__inner
+					width: 155px
+					padding: 0 10px
+	.panel-group 
+		margin-top: 18px
+		.card-panel-col 
+			margin-bottom: 32px
+		.card-panel 
+			height: 108px
+			font-size: 12px
+			position: relative
+			// overflow: hidden
+			color: #666
+			background: #fff
+			box-shadow: 4px 4px 40px rgba(0, 0, 0, .05)
+			border-color: rgba(0, 0, 0, .05)
+			&:hover 
+				.card-panel-icon-wrapper 
+					color: #fff
+				.icon-form
+					background: #40c9c6
+				.icon-people
+					background: #36a3f7
+				.icon-domain
+					background: #FF9800
+				.icon-message-alert
+					background: #f4516c
+
+			.icon-form
+				color: #40c9c6
+			.icon-people
+				color: #36a3f7
+			.icon-domain
+				color: #FF9800
+			.icon-message-alert
+				color: #f4516c
+			.card-panel-icon-wrapper 
+				float: left
+				margin: 14px 0 0 14px
+				padding: 16px
+				transition: all 0.38s ease-out
+				border-radius: 6px
+			.card-panel-icon 
+				float: left
+				font-size: 48px
+			.card-panel-description 
+				float: right
+				font-weight: bold
+				margin: 26px
+				margin-left: 0px
+				.card-panel-text 
+					line-height: 18px
+					color: rgba(0, 0, 0, 0.45)
+					font-size: 16px
+					margin-bottom: 12px
+				.card-panel-num 
+					font-size: 20px
+				.icon-tooltip
+					font-size: 16px
+					color: #ddd
+	.el-icon-edit
+		color: #67C23A
+		margin-bottom: 5px
+		&:hover
+			color: white
+			background-color: #67C23A
+			border-radius: 50%
+	.el-icon-success
+		margin-right: -10px
+	.el-icon-error
+		color: #F56C6C
+	.el-dialog
+		.el-dialog__body > div
+			margin-top: 10px
+		.el-select
+			margin-top: 5px
+			width: 250px
+		.footer-btns
+			display: flex
+			justify-content: center
 </style>
