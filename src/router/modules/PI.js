@@ -9,7 +9,8 @@ const otherRouter = {
 	name: 'PIIndex',
 	meta: {
 		title: '成效指標',
-		icon: 'el-icon-s-check'
+		icon: 'el-icon-s-check',
+		isNew: true
 	},
 	children: [
 		{
@@ -17,6 +18,12 @@ const otherRouter = {
 			component: () => import('@/views/PI/caseList'),
 			name: 'caseList',
 			meta: { title: '成效指標-案件列表' }
+		},
+		{
+			path: 'caseUpload',
+			component: () => import('@/views/PI/caseUpload'),
+			name: 'caseUpload',
+			meta: { title: '案件上傳', isNew: true }
 		},
 	]
 }
