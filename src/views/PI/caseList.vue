@@ -65,7 +65,7 @@
 						<svg-icon icon-class="people" class-name="card-panel-icon" />
 					</div>
 					<div class="card-panel-description">
-						<div class="card-panel-text">監造抽查</div>
+						<div class="card-panel-text">監造抽查 (15%)</div>
 						<div class="card-panel-num"> {{ list.filter(l => l.SVCheck != 0).length }} / {{ Math.round(list.length * 0.15, 0) }}</div>
 					</div>
 				</div>
@@ -76,8 +76,8 @@
 						<svg-icon icon-class="domain" class-name="card-panel-icon" />
 					</div>
 					<div class="card-panel-description">
-						<div class="card-panel-text">機關抽查</div>
-						<div class="card-panel-num">{{ list.filter(l => l.OrganCheck != 0).length }} / {{ Math.round(list.length * 0.06, 0) }} </div>
+						<div class="card-panel-text">機關抽查 (5%)</div>
+						<div class="card-panel-num">{{ list.filter(l => l.OrganCheck != 0).length }} / {{ Math.round(list.length * 0.05, 0) }}</div>
 					</div>
 				</div>
 			</el-col>
@@ -179,7 +179,7 @@
       />
 			<el-table-column label="監造抽查" width="200px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="row.SVCheck == 0">
+					<template v-if="row.SVCheck == 0 && row.OrganCheck == 0">
 						<el-button v-if="!row.showSVCheck" type="primary" size="small" @click="row.showSVCheck = true">抽查</el-button>
 						<span v-else>
 							<el-button-group>
@@ -190,13 +190,14 @@
 					</template>
 					<template v-else>
 						<i v-if="row.SVCheck == 1" class="el-icon-check" style="color: #67C23A" />
-						<i v-if="row.SVCheck == 2" class="el-icon-close" style="color: #F56C6C" />
+						<i v-else-if="row.SVCheck == 2" class="el-icon-close" style="color: #F56C6C" />
+						<span v-else> - </span>
 					</template>
 				</template>
 			</el-table-column>
 			<el-table-column label="機關抽查" width="200px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="row.OrganCheck == 0">
+					<template v-if="row.SVCheck == 0 && row.OrganCheck == 0">
 						<el-button v-if="!row.showOrganCheck" type="primary" size="small" @click="row.showOrganCheck = true">抽查</el-button>
 						<span v-else>
 							<el-button-group>
@@ -207,7 +208,8 @@
 					</template>
 					<template v-else>
 						<i v-if="row.OrganCheck == 1" class="el-icon-check" style="color: #67C23A" />
-						<i v-if="row.OrganCheck == 2" class="el-icon-close" style="color: #F56C6C" />
+						<i v-else-if="row.OrganCheck == 2" class="el-icon-close" style="color: #F56C6C" />
+						<span v-else> - </span>
 					</template>
 				</template>
 			</el-table-column>
