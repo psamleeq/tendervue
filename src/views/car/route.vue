@@ -1,9 +1,7 @@
 <template>
   <div class="car-route" v-loading="loading"> 
 		<div class="header-bar">
-			<h2>
-				車巡管理
-				<span v-if="carId.length != 0" style="font-size: 18px; color: #aaa" >車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span>
+			<h2>車巡管理<span v-if="carId.length != 0" style="font-size: 18px; color: #aaa" >車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span>
 			</h2>
 			<div class="filter-container">
 				<el-select v-model="listQuery.modeId" @change="getCarList()">
@@ -266,14 +264,14 @@ export default {
 
 			getInspectionList({
 				modeId: this.listQuery.modeId
-			}).then((response) => {
-				if (response.result.length == 0) {
+			}).then(response => {
+				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
 				} else {
-					this.carList = response.result;
+					this.carList = response.data.list;
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
@@ -293,14 +291,14 @@ export default {
 			// this.carInfo.createdAt = this.formatTime(this.carInfo.createdAt);
 			// this.getCarTrack();
 
-			getSpecInspection(this.listQuery.inspectionId).then((response) => {
-				if (Object.keys(response.result).length == 0) {
+			getSpecInspection(this.listQuery.inspectionId).then(response => {
+				if (Object.keys(response.data).length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
 				} else {
-					this.carInfo = response.result;
+					this.carInfo = response.data;
 					this.carInfo.modeId = this.options.modeId[this.carInfo.modeId];
 					this.carInfo.createdAt = this.formatTime(this.carInfo.createdAt);
 
@@ -314,13 +312,13 @@ export default {
 			for(const marker of Object.values(this.markers)) marker.setMap(null);
 
 			getSpecInspectionTracks(this.listQuery.inspectionId).then((response) => {
-				if (response.result.length == 0) {
+				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
 				} else {
-					this.carTracks = response.result;
+					this.carTracks = response.data.list;
 
 					const paths = this.carTracks.map(point => ({ lat: point.lat, lng: point.long }));
 					// 建立路線
