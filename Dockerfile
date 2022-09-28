@@ -19,7 +19,8 @@ COPY package*.json ./
 # Install production dependencies.
 #RUN yarn install --production
 #RUN npm install --only=production
-RUN yarn install && yarn cache clean
+#RUN yarn install && yarn cache clean
+RUN npm install
 
 # Copy local code to the container image.
 COPY . ./
