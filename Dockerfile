@@ -2,12 +2,14 @@
 # https://hub.docker.com/_/node
 FROM node:12-alpine
 
+ARG ENV_NAME
+
 # Create and change to the app directory.
 WORKDIR /app
 
 # Add ssh
 RUN apk add --update --no-cache openssh-client git \
- && mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+	&& mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 # Copy application dependency manifests to the container image.
 # A wildcard is used to ensure both package.json AND package-lock.json are copied.
@@ -25,7 +27,7 @@ COPY . ./
 # Run the web service on container startup.
 #CMD [ "yarn", "prod" ]
 #CMD [ "npm", "start" ]
-RUN yarn build:gcp
+RUN yarn build:${ENV_NAME}
 
 # 使用nginx代理
 FROM nginx:stable-alpine
