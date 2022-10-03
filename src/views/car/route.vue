@@ -58,7 +58,13 @@
 					<div v-if="Object.keys(carInfo).length > 0" class="car-info">
 						<el-row v-for="(text, key) in headers" :key="key" >
 							<el-col :span="8">{{ text }}: </el-col>
-							<el-col :span="16">{{ carInfo[key] }}</el-col>
+							<el-col :span="16">
+								<span v-if="key == 'pathId'">週期{{ carInfo[key] }}</span>
+								<!-- NOTE: 測試DEMO用 -->
+								<span v-else-if="key == 'carId'">ATE-5102</span>
+								<span v-else-if="key == 'driverId'">王小明</span>
+								<span v-else>{{ carInfo[key] }}</span>
+							</el-col>
 						</el-row>
 					</div>
 				</div>
@@ -164,9 +170,10 @@ export default {
 				inspectionId: ""
 			},
       headers: {
-				id: "路線",
+				// id: "路線",
+				pathId: "週期",
 				carId: "車號",
-        driverId: "駕駛",
+				driverId: "駕駛",
 				modeId: "巡查方式",
 				createdAt: "開始時間"
       },
