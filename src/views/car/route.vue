@@ -1,22 +1,48 @@
 <template>
   <div class="car-route" v-loading="loading"> 
 		<div class="header-bar">
-			<h2>車巡管理<span v-if="carId.length != 0" style="font-size: 18px; color: #aaa" >車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span>
+			<h2 class="route-title">車巡管理
+				<!-- <span v-if="carId.length != 0" class="route-info">車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span> -->
+				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
 			<div class="filter-container">
 				<el-select v-model="listQuery.modeId" @change="getCarList()">
 					<el-option v-for="(text, id) in options.modeId" :key="`model_${id}`" :label="text" :value="Number(id)" />
 				</el-select>
-				<el-select v-model="listQuery.inspectionId" placeholder="請選擇路線" @change="getCarInfo()">
+				<!-- NOTE: 路線先隱藏 -->
+				<!-- <el-select v-model="listQuery.inspectionId" placeholder="請選擇路線" @change="getCarInfo()">
 					<el-option v-for="car in carList" :key="`car_${car.id}`" :label="`路線${car.id} (${car.carId})`" :value="Number(car.id)" />
-				</el-select>
-				<!-- <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-				<el-button
-					class="filter-item"
-					type="info"
-					icon="el-icon-document"
-					@click="handleDownload"
-				>輸出報表</el-button> -->
+				</el-select> -->
+
+				<span class="time-picker">
+					<el-button-group v-if="!dateTimePickerVisible">
+						<el-button
+							v-for="(t, i) in pickerOptions.shortcuts"
+							:key="i"
+							type="primary"
+							:plain="i != timeTabId"
+							size="mini"
+							@click="dateShortcuts(i)"
+						>{{ t.text }}</el-button>
+					</el-button-group>
+					<el-date-picker
+						v-else
+						class="filter-item"
+						v-model="searchDate"
+						type="date"
+						placeholder="日期"
+						:picker-options="pickerOptions"
+						:clearable="false"
+						@change="timeTabId = -1"
+					/>
+					<el-button
+						:type="dateTimePickerVisible ? 'info' : 'primary'"
+						plain
+						size="mini"
+						@click="dateTimePickerVisible = !dateTimePickerVisible"
+					>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
+					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getCarList()">搜尋</el-button>
+				</span>
 			</div>
 		</div>
 		<el-row>
@@ -26,7 +52,7 @@
 			<el-col class="info-panel" :span="8">
 				<!-- <iframe width="720" height="405" src="https://www.youtube.com/embed/d148YHkaAGg?controls=0&autoplay=1&mute=1&rel=0&modestbranding=1" frameborder="0" allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" /> -->
 				<!-- <iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" /> -->
-				<iframe width="560" height="315" src="https://media.bellsgis.com:8443/WebRTCAppEE/play.html?id=246612205179051969409588_720p6000kbps_6.mp4&playOrder=vod" frameborder="0" allowfullscreen />
+				<iframe width="560" height="315" src="https://media.bellsgis.com:8443/WebRTCAppEE/play.html?name=246612205179051969409588" frameborder="0" allowfullscreen></iframe>
 				<div class="car-info-panel">
 					<i class="el-icon-truck" />
 					<div v-if="Object.keys(carInfo).length > 0" class="car-info">
@@ -100,11 +126,39 @@ export default {
 				start: null,
 				end: null
 			},
-      // timeTabId: 4,
-      // dateTimePickerVisible: false,
-      // screenWidth: window.innerWidth,
-      // daterange: [moment().startOf("year").toDate(), moment().endOf("year").toDate()],
-      // searchRange: "",
+			timeTabId: 0,
+			dateTimePickerVisible: false,
+			pickerOptions: {
+				firstDayOfWeek: 1,
+				shortcuts: [
+					{
+						text: "今日",
+						onClick(picker) {
+							const date = moment();
+							picker.$emit("pick", date);
+						},
+					},
+					{
+						text: "昨日",
+						onClick(picker) {
+							const date = moment().subtract(1, "d");
+							picker.$emit("pick", date);
+						}
+					},
+					{
+						text: "前日",
+						onClick(picker) {
+							const date = moment().subtract(2, "d");
+							picker.$emit("pick", date);
+						}
+					}
+				],
+				disabledDate(date) {
+					return moment(date).valueOf() >= moment().endOf("d").valueOf();
+				},
+			},
+			searchDate: moment().startOf("d"),
+			searchRange: "",
 			listQuery: {
 				modeId: 3,
 				inspectionId: ""
@@ -238,65 +292,65 @@ export default {
 				}
 			});
 		},
+		dateShortcuts(index) {
+			this.timeTabId = index;
+
+			const DATE_OPTION = {
+				TODAY: 0,
+				YESTERDAY: 1,
+				DAYBEFOREYEST: 2
+			};
+
+			switch (index) {
+				case DATE_OPTION.TODAY:
+					this.searchDate = moment();
+					break;
+				case DATE_OPTION.YESTERDAY:
+					this.searchDate = moment().subtract(1, "d");
+					break;
+				case DATE_OPTION.DAYBEFOREYEST:
+					this.searchDate = moment().subtract(2, "d");
+					break;
+			}
+			this.getCarList();
+		},
 		getCarList() {
-			//TODO: 測試
-			// this.carList = [
-			// 	{
-			// 		"id": 32,
-			// 		"driverId": 1,
-			// 		"carId": 1,
-			// 		"pathId": 1,
-			// 		"modeId": 3,
-			// 		"createdAt": "2022-09-05T01:55:36.660Z",
-			// 		"isDeleted": false
-			// 	},
-			// 	{
-			// 		"id": 36,
-			// 		"driverId": 1,
-			// 		"carId": 1,
-			// 		"pathId": 1,
-			// 		"modeId": 3,
-			// 		"createdAt": "2022-09-05T03:27:17.564Z",
-			// 		"isDeleted": false
-			// 	}
-			// ];
+			this.loading = true;
 			this.listQuery.inspectionId = "";
+			if(this.polyLine != undefined) this.polyLine.setMap(null);
+			for(const marker of Object.values(this.markers).filter(marker => marker != null)) marker.setMap(null);
+
+			const date = moment(this.searchDate).format("YYYY-MM-DD");
+      this.searchRange = date;
 
 			getInspectionList({
-				modeId: this.listQuery.modeId
+				modeId: this.listQuery.modeId,
+				date: date
 			}).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
+					this.loading = false;
 				} else {
 					this.carList = response.data.list;
+
+					//NOTE: 因為一天只會有一次車巡，所以取第一筆
+					this.listQuery.inspectionId = this.carList[0].id;
+					this.getCarInfo();
 				}
-				this.loading = false;
+				// this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
     getCarInfo() {
-      //TODO: 測試
-			// this.carInfo = {
-			// 	"id": 32,
-			// 	"driverId": 1,
-			// 	"carId": 1,
-			// 	"pathId": 1,
-			// 	"modeId": 3,
-			// 	"createdAt": "2022-09-05T01:55:36.660Z",
-			// 	"isDeleted": false
-			// };
-			// this.carInfo.modeId = this.options.modeId[this.carInfo.modeId];
-			// this.carInfo.createdAt = this.formatTime(this.carInfo.createdAt);
-			// this.getCarTrack();
-
 			getSpecInspection(this.listQuery.inspectionId).then(response => {
 				if (Object.keys(response.data).length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
+					this.loading = false;
 				} else {
 					this.carInfo = response.data;
 					this.carInfo.modeId = this.options.modeId[this.carInfo.modeId];
@@ -304,19 +358,20 @@ export default {
 
 					this.getCarTrack();
 				}
-				this.loading = false;
+				// this.loading = false;
 			}).catch(err => { this.loading = false; });
     },
 		getCarTrack() {
-			if(this.polyLine != undefined) this.polyLine.setMap(null);
-			for(const marker of Object.values(this.markers)) marker.setMap(null);
+			// if(this.polyLine != undefined) this.polyLine.setMap(null);
+			// for(const marker of Object.values(this.markers)) marker.setMap(null);
 
-			getSpecInspectionTracks(this.listQuery.inspectionId).then((response) => {
+			getSpecInspectionTracks(this.listQuery.inspectionId).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
+					this.loading = false;
 				} else {
 					this.carTracks = response.data.list;
 
@@ -385,6 +440,14 @@ export default {
 		top: 0
 		z-index: 1
 		padding-left: 10px
+		.route-title
+			text-stroke: 0.6px white
+			-webkit-text-stroke: 0.6px white
+			.route-info
+				background-color: rgba(white, 0.5)
+				padding: 0 5px
+				font-size: 18px 
+				color: #555
 		.filter-container 
 			& > *
 				padding-right: 5px
