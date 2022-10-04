@@ -35,13 +35,12 @@
 				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			</span>
 
-      <!-- <el-button
+      <el-button
         class="filter-item"
         type="info"
         icon="el-icon-document"
-        :circle="screenWidth<567"
         @click="handleDownload"
-      >輸出報表</el-button> -->
+      >輸出報表</el-button>
     </div>
     
     <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -120,13 +119,13 @@
       />
 			<el-table-column label="不合格原因(監造)" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.SVCheck == 2">{{ options.reasonType[row.ReasonType] }}</span>
+					<span v-if="[21, 22].includes(row.SVCheck)">{{ options.reasonType[row.SVCheck % 10] }}</span>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
 			<el-table-column label="不合格原因(機關)" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.OrganCheck == 2">{{ options.reasonType[row.ReasonType] }}</span>
+					<span v-if="[21, 22].includes(row.OrganCheck)">{{ options.reasonType[row.OrganCheck % 10] }}</span>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
@@ -190,7 +189,7 @@
 					</template>
 					<template v-else>
 						<i v-if="row.SVCheck == 1" class="el-icon-check" style="color: #67C23A" />
-						<i v-else-if="row.SVCheck == 2" class="el-icon-close" style="color: #F56C6C" />
+						<i v-else-if="[21, 22].includes(row.SVCheck)" class="el-icon-close" style="color: #F56C6C" />
 						<span v-else> - </span>
 					</template>
 				</template>
@@ -208,7 +207,7 @@
 					</template>
 					<template v-else>
 						<i v-if="row.OrganCheck == 1" class="el-icon-check" style="color: #67C23A" />
-						<i v-else-if="row.OrganCheck == 2" class="el-icon-close" style="color: #F56C6C" />
+						<i v-else-if="[21, 22].includes(row.OrganCheck)" class="el-icon-close" style="color: #F56C6C" />
 						<span v-else> - </span>
 					</template>
 				</template>
@@ -449,13 +448,14 @@ export default {
 			this.$set(this.rowActive, "resultType", result);
 			this.showConfirm = true;
 		},
-		setResult(row) {
+		setResult() {
 			this.showConfirm = false;
+			const SVCheck = this.rowActive.SVCheck == 2 ? Number(`${this.rowActive.SVCheck}${this.rowActive.ReasonType}`) : this.rowActive.SVCheck;
+			const OrganCheck = this.rowActive.OrganCheck == 2 ? Number(`${this.rowActive.OrganCheck}${this.rowActive.ReasonType}`) : this.rowActive.OrganCheck;
 
 			setCaseList( this.rowActive.id, {
-				SVCheck: this.rowActive.SVCheck,
-				OrganCheck: this.rowActive.OrganCheck,
-				ReasonType: this.rowActive.ReasonType
+				SVCheck: SVCheck,
+				OrganCheck: OrganCheck
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -478,11 +478,21 @@ export default {
       return moment(time).format("YYYY/MM/DD");
     },
     handleDownload() {
-      let tHeader = Object.values(this.headers);
-      let filterVal = Object.keys(this.headers);
-      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-      let data = this.formatJson(filterVal, this.list);
+      const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
+      const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
+      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
+      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
+			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
+				l.CaseDate = this.formatTime(l.CaseDate);
+				const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
+				if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];
+				else l.Note = "";
+				
+				l.SVCheck = l.SVCheck == 0 ? "" : l.SVCheck == 1 ? "V" : "X";
+				l.OrganCheck = l.OrganCheck == 0 ? "" : l.OrganCheck == 1 ? "V" : "X";
+				return l
+			}) 
+      const data = this.formatJson(filterVal, dataList);
 
       import("@/vendor/Export2Excel").then((excel) => {
         excel.export_json_to_excel({
