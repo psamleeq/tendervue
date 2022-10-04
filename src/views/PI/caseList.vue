@@ -178,7 +178,7 @@
       />
 			<el-table-column label="監造抽查" width="200px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="row.SVCheck == 0 && row.OrganCheck == 0">
+					<template v-if="row.SVCheck == 0">
 						<el-button v-if="!row.showSVCheck" type="primary" size="small" @click="row.showSVCheck = true">抽查</el-button>
 						<span v-else>
 							<el-button-group>
@@ -196,7 +196,7 @@
 			</el-table-column>
 			<el-table-column label="機關抽查" width="200px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="row.SVCheck == 0 && row.OrganCheck == 0">
+					<template v-if="row.OrganCheck == 0">
 						<el-button v-if="!row.showOrganCheck" type="primary" size="small" @click="row.showOrganCheck = true">抽查</el-button>
 						<span v-else>
 							<el-button-group>
@@ -487,7 +487,7 @@ export default {
 				const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
 				if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];
 				else l.Note = "";
-				
+
 				l.SVCheck = l.SVCheck == 0 ? "" : l.SVCheck == 1 ? "V" : "X";
 				l.OrganCheck = l.OrganCheck == 0 ? "" : l.OrganCheck == 1 ? "V" : "X";
 				return l
