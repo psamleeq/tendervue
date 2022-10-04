@@ -187,6 +187,8 @@
 
 <script>
 import moment from "moment";
+import jschardet from "jschardet";
+import iconv from "iconv-lite";
 import { getCaseList, addCaseList } from "@/api/PI";
 
 export default {
@@ -469,10 +471,14 @@ export default {
 			} else {
 				this.loading = true;
 				let reader = new FileReader();
-				reader.readAsText(file.raw, "UTF-8");
+				// reader.readAsText(file.raw, "UTF-8");
+				reader.readAsArrayBuffer(file.raw);
 				reader.onload = (evt) => {
 					// 讀取CSV內容
-					const fileString = evt.target.result; 
+					// const fileString = evt.target.result;
+					const buffer = Buffer.from(evt.target.result);
+					const type = jschardet.detect(buffer);
+					const fileString = iconv.decode(buffer, type.encoding);
 
 					//轉乘array
 					this.csvData = this.csvToArray(fileString);
@@ -499,7 +505,7 @@ export default {
 		},
 		csvToArray(str, delimiter = ",") {
 			const headers = str.slice(0, str.indexOf("\n")).split(delimiter).map(header => header.replace(/\r\n/g,'').trim());
-			const rows = str.slice(str.indexOf("\n") + 1).split("\n");
+			const rows = str.slice(str.indexOf("\n") + 1).split("\n").filter(row => row.length != 0);
 			const regex = /("[^"]+"|[^,]+)*,/g;
 
 			const result = rows.map(row => {
@@ -514,7 +520,7 @@ export default {
 					return object;
 				}, {});
 			});	
-
+			
 			return result.sort((a, b) => Number(a["來源編號"].replace(/[^0-9]/ig,"")) - Number(b["來源編號"].replace(/[^0-9]/ig,"")))
 		},
 		replaceCaseList() {
