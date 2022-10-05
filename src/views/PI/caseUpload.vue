@@ -264,7 +264,7 @@ export default {
 					sortable: false
 				}
       },
-			csvHeader: [ "查報日期", "案件編號", "查報地點", "來源編號", "損壞情況", "損壞狀況" ],
+			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情況", "損壞狀況" ],
 			apiHeader: [ "UploadCaseNo", "CaseDate", "DName", "CaseName", "CaseNo", "CaseType", "CaseStatus" ],
 			tableSelect: [],
       list: [],
@@ -520,7 +520,7 @@ export default {
 					return object;
 				}, {});
 			});	
-			
+
 			return result.sort((a, b) => Number(a["來源編號"].replace(/[^0-9]/ig,"")) - Number(b["來源編號"].replace(/[^0-9]/ig,"")))
 		},
 		replaceCaseList() {

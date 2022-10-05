@@ -38,14 +38,20 @@
         v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
       align="center" fixed/>-->
       <el-table-column
-        v-for="(value, key) in headers"
+        v-for="(value, key) in headersFilter"
         :key="key"
         :prop="key"
         :label="value.name"
         align="center"
 				:formatter="formatter"
         :sortable="value.sortable"
-      />
+      >
+				<template slot="header" slot-scope="{ column }">
+					<span v-if="column.property == 'actualFinishDate' && [11, 12].includes(caseTypeNow)">熱更生完工日期</span>
+					<span v-else-if="column.property == 'actualFinishDate' && [2, 3].includes(caseTypeNow)">實際完工日期</span>
+					<span v-else>{{ column.label }}</span>
+				</template>
+			</el-table-column>
     </el-table>
 
   </div>
@@ -81,17 +87,18 @@ export default {
 	components: { TimePicker },
   data() {
     return {
-      loading: false,
-      timeTabId: 4,
-      dateTimePickerVisible: false,
-      screenWidth: window.innerWidth,
-      daterange: [moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate()],
-      searchRange: "",
+			loading: false,
+			timeTabId: 4,
+			dateTimePickerVisible: false,
+			screenWidth: window.innerWidth,
+			daterange: [moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate()],
+			searchRange: "",
+			caseTypeNow: 11,
 			listQuery: {
 				caseType: 11,
 				dist: 104
-      },
-      headers: {
+			},
+			headers: {
 				CaseNo: {
 					name: "案號",
 					sortable: false
@@ -117,8 +124,18 @@ export default {
 					sortable: false,
 				},
 				finishDate: {
-					name: "完工日期",
+					name: "道管完工日期",
 					sortable: false,
+					caseTypeFilter: [ 2, 3 ]
+				},
+				actualFinishDate: {
+					name: "實際完工日期",
+					sortable: false,
+				},
+				markerFinishDate: {
+					name: "標線完工日期",
+					sortable: false,
+					caseTypeFilter: [ 11, 12 ]
 				},
 				warrantyDate: {
 					name: "保固日期",
@@ -219,6 +236,17 @@ export default {
 			chart: null
     };
   },
+	computed: {
+		headersFilter() {
+			let headersFilter = {};
+			Object.keys(this.headers).forEach(key => {
+				const props = this.headers[key];
+				if(!props.hasOwnProperty('caseTypeFilter')) headersFilter[key] = props;
+				else if(props.caseTypeFilter.includes(this.caseTypeNow)) headersFilter[key] = props;
+			})
+			return headersFilter
+		}
+	},
 	mounted() {
 		// this.getList();
 	},
@@ -230,6 +258,7 @@ export default {
       let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
       let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
       this.searchRange = startDate + " - " + endDate;
+			this.caseTypeNow = this.listQuery.caseType;
 
       this.list = [];
       getCaseList({
@@ -245,9 +274,17 @@ export default {
         } else {
           this.list = response.data.list;
 					this.list.forEach(l => {
+						// 計算保固日期
 						const days = this.warrantyMap[l.DeviceType][l.BType] != undefined ? this.warrantyMap[l.DeviceType][l.BType] : this.warrantyMap[l.DeviceType]["etc"];
-						l.warrantyDate = this.formatTime(moment(l.finishDate).add(days, 'd'));
-						l.finishDate = this.formatTime(l.finishDate);
+						let finishDate = "";
+						if([11, 12].includes(this.listQuery.caseType)) finishDate = moment(l.actualFinishDate).isAfter(l.markerFinishDate) ? l.actualFinishDate : l.markerFinishDate;
+						if([2, 3].includes(this.listQuery.caseType)) finishDate = moment(l.actualFinishDate).isAfter(l.finishDate) ? l.actualFinishDate : l.finishDate;
+						l.warrantyDate = this.formatTime(moment(finishDate).add(days, 'd'));
+						
+						l.finishDate = l.finishDate != '0' ? this.formatTime(l.finishDate) : '-';
+						l.actualFinishDate = l.actualFinishDate != '0' ? this.formatTime(l.actualFinishDate) : '-';
+						l.markerFinishDate = l.markerFinishDate != '0' ? this.formatTime(l.markerFinishDate) : '-';
+
 						l.dispatchArea = Math.floor(l.dispatchArea * 100) / 100;
 						l.actualArea = Math.floor(l.actualArea * 100) / 100;
 						l.markerArea = Math.floor(l.markerArea * 100) / 100;
@@ -262,7 +299,7 @@ export default {
       else return row[column.property];
     },
     formatTime(time) {
-      return moment(time).utc().format("YYYY/MM/DD");
+      return moment(time).format("YYYY/MM/DD");
     },
     handleDownload() {
       let tHeader = Object.values(this.headers);
