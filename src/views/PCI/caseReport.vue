@@ -248,7 +248,8 @@ export default {
         } else {
           this.list = response.data.list;
 					this.list.forEach((l, i) => {
-						l.PCIAverage = Math.round((l.PCIAverage) * 100) / 100;
+						if(l.PCIAverage != undefined) l.PCIAverage = Math.floor((l.PCIAverage) * 100) / 100;
+						else l.PCIAverage = '-';
 					})
 					this.setChartOptions();
         }

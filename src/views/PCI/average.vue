@@ -204,7 +204,7 @@ export default {
           this.list = response.data.list;
 					this.list.forEach((l, i) => {
 						l.month = moment(l.datestar).format("YYYY/MM");
-						l.PCIAverage = Math.round((l.PCIAverage) * 100) / 100;
+						l.PCIAverage = Math.floor((l.PCIAverage) * 100) / 100;
 						if(i == 0) this.$set(l, 'variation', 0);
 						else this.$set(l, 'variation', Math.round((this.list[i].PCIAverage - this.list[i-1].PCIAverage) * 100) / 100);
 					})
