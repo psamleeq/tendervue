@@ -7,7 +7,7 @@ on:
      
 # Environment variables available to all jobs and steps in this workflow
 env:
-  GKE_PROJECT: view-prd
+  GKE_PROJECT: gis-prd
   GKE_EMAIL: ${{ secrets.GKE_EMAIL }}
   GKE_KEY: ${{ secrets.GKE_KEY }}
   GITHUB_SHA: ${{ github.tag }}
