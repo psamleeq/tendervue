@@ -35,3 +35,11 @@ export function getCaseAndPCI(query) {
 		params: query
 	})
 }
+
+export function getCaseList(query) {
+	return request({
+		url: '/pci/caseList',
+		method: 'get',
+		params: query
+	})
+}

@@ -42,9 +42,29 @@
         align="center"
 				:formatter="formatter"
         :sortable="value.sortable"
-      />
+      >
+				<template slot-scope="{ row }">
+					<span v-if="['month', 'PCIAverage'].includes(key)">{{ row[key] }}</span>
+					<el-button v-else type="text" @click="listQuery.caseType = key; listQuery.month = row.month; listQuery.pageCurrent = 1; getCaseList();">{{ row[key] }}</el-button>
+				</template>
+			</el-table-column>
     </el-table>
 
+		<el-dialog :visible.sync="showCaseList" width="800px">
+			<el-table v-loading="loading" empty-text="目前沒有資料" :data="caseList">
+				<el-table-column label="序號" type="index" width="100" align="center" :index="indexMethod" />
+				<el-table-column
+					v-for="(value, key) in caseHeaders"
+					:key="key"
+					:prop="key"
+					:label="value.name"
+					align="center"
+					:formatter="formatter"
+					:sortable="value.sortable"
+				/>
+			</el-table>
+			<pagination style="margin: 10px 0 20px 0" :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getCaseList" />
+    </el-dialog>
   </div>
 </template>
 
@@ -54,8 +74,9 @@ import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/line');
 require('echarts/lib/chart/bar');
-import { getCaseAndPCI } from "@/api/pci";
+import { getCaseAndPCI, getCaseList } from "@/api/pci";
 import TimePicker from '@/components/TimePicker';
+import Pagination from '@/components/Pagination';
 
 // const data = [
 // 	{
@@ -118,17 +139,21 @@ import TimePicker from '@/components/TimePicker';
 
 export default {
   name: "caseReport",
-	components: { TimePicker },
+	components: { TimePicker, Pagination },
   data() {
     return {
       loading: false,
       // timeTabId: -1,
-      // dateTimePickerVisible: false,
+      showCaseList: false,
       screenWidth: window.innerWidth,
       // daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
       // searchRange: "",
 			listQuery: {
-				dist: 104
+				dist: 104,
+				caseType: "",
+				month: "",
+				pageCurrent: 1,
+        pageSize: 20,
       },
       headers: {
 				month: {
@@ -166,7 +191,27 @@ export default {
 					chartType: 'line'
 				},
       },
+			caseHeaders: {
+				CaseNo: {
+					name: "案號",
+					sortable: false
+				},
+				BTName: {
+					name: "損壞類別",
+					sortable: false
+				},
+				CaseName: {
+					name: "地址",
+					sortable: false
+				},
+				CaseDate: {
+					name: "成案日期",
+					sortable: false,
+				}
+      },
+			total: 0,
       list: [],
+			caseList: [],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區",
@@ -256,6 +301,31 @@ export default {
         this.loading = false;
       }).catch(err => { this.loading = false; });
     },
+		getCaseList() {
+			this.caseList = [];
+			this.loading = true;
+			this.showCaseList = true;
+			getCaseList({
+				caseType: this.listQuery.caseType,
+				month: this.listQuery.month,
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: this.listQuery.pageSize,
+			}).then(response => {
+        if (response.data.list.length == 0) {
+          this.$message({
+            message: "查無資料",
+            type: "error",
+          });
+        } else {
+					this.caseList = response.data.list;
+					this.total = response.data.total;
+        }
+        this.loading = false;
+      }).catch(err => { this.loading = false; });
+		},
+		indexMethod(index) {
+			return (index + 1) + (this.listQuery.pageCurrent - 1) * this.listQuery.pageSize;
+		},
 		setChartOptions() {
 			const colors = ["#7eb00a","#e5cf0d","#8d98b3","#95706d","#ffb980","#b6a2de","#2ec7c9","#5ab1ef","#d87a80","#97b552","#dc69aa","#07a2a4","#9a7fd1","#588dd5","#f5994e","#c05050","#59678c","#c9ab00","#6f5553","#c14089"];
 			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "month"));
