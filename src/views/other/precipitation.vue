@@ -142,7 +142,7 @@ export default {
 
 				if(this.list[0][nowMonth] == undefined) this.list[0][nowMonth] = 0;
 
-				// 抓取降雨天數
+				// 抓取坑洞數
 				getCaseAndPCI().then(response => {
 					if (response.data.list.length == 0) {
 						this.$message({

@@ -3,18 +3,21 @@
 	"version": "0.1.5",
 	"description": "A magical vue admin. An out-of-box UI solution for enterprise applications. Newest development stack of vue. Lots of awesome features",
 	"author": "Pan <panfree23@gmail.com>",
+	"stg": {
+		"project": "gis-stg"
+	},
 	"prd": {
-		"project": "view-prd"
+		"project": "gis-prd"
 	},
 	"scripts": {
-		"dev": "vue-cli-service serve",
+		"dev": "vue-cli-service serve --mode dev",
 		"loc": "vue-cli-service serve --mode loc",
-		"stage": "vue-cli-service serve --mode staging",
-		"prod": "vue-cli-service serve --mode production",
-		"build:prod": "gcloud config set project $npm_package_prd_project && gcloud builds submit --tag asia.gcr.io/$npm_package_prd_project/$npm_package_name:v$npm_package_version",
-		"build:gcp": "vue-cli-service build",
-		"build:stage": "vue-cli-service build --mode staging",
-		"deploy:stage": "gcloud config set project gis-stg && gcloud builds submit --config cloudbuild.yaml --substitutions _ENV=stage,_PACKAGE_NAME=$npm_package_name,_PACKAGE_VERSION=v$npm_package_version",
+		"stg": "vue-cli-service serve --mode stg",
+		"prod": "vue-cli-service serve --mode prod",
+		"build:prod": "vue-cli-service build --mode prod",
+		"build:stage": "vue-cli-service build --mode stg",
+		"deploy:stage": "gcloud config set project $npm_package_stg_project && gcloud builds submit --config cloudbuild.yaml --substitutions _ENV=stg,_PACKAGE_NAME=$npm_package_name,_PACKAGE_VERSION=v$npm_package_version",
+		"deploy:prod": "gcloud config set project $npm_package_prd_project && gcloud builds submit --config cloudbuild.yaml --substitutions _ENV=prod,_PACKAGE_NAME=$npm_package_name,_PACKAGE_VERSION=v$npm_package_version",
 		"preview": "node build/index.js --preview",
 		"new": "plop",
 		"svgo": "svgo -f src/icons/svg --config=src/icons/svgo.yml",
