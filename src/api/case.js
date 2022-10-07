@@ -42,51 +42,76 @@ export function delAssignCaseAmt(id, data) {
 	})
 }
 
-// 經費金額
-export function getExpenseAmt(query) {
+// 經費類別
+export function getExpType(query) {
 	return request({
-		url: '/case/expenseAmt',
+		url: '/case/expType',
 		method: 'get',
 		params: query
 	})
 }
 
-export function setExpenseAmt(data) {
+export function addExpType(data) {
 	return request({
-		url: '/case/expenseAmt',
+		url: '/case/expType',
 		method: 'post',
 		data
 	})
 }
 
-export function delExpenseAmt(id, data) {
+export function delExpType(id, data) {
 	return request({
-		url: `/case/expenseAmt/${id}`,
+		url: `/case/expType/${id}`,
 		method: 'delete',
 		data
 	})
 }
 
-// 經費預估
-export function getCostEstimate(query) {
+// 經費估算
+export function getExpEstimate(query) {
 	return request({
-		url: '/case/costEstimate',
+		url: '/case/expEstimate',
 		method: 'get',
 		params: query
 	})
 }
 
-export function setCostEstimate(data) {
+export function setExpEstimate(data) {
 	return request({
-		url: '/case/costEstimate',
+		url: '/case/expEstimate',
 		method: 'post',
 		data
 	})
 }
 
-export function delCostEstimate(id, data) {
+export function delExpEstimate(id, data) {
 	return request({
-		url: `/case/costEstimate/${id}`,
+		url: `/case/expEstimate/${id}`,
+		method: 'delete',
+		data
+	})
+}
+
+// 經費執行
+export function getExpExecution(query) {
+	return request({
+		url: '/case/expExecution',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setExpExecution(data) {
+	return request({
+		url: '/case/expExecution',
+		method: 'post',
+		data
+	})
+}
+
+export function delExpExecution(id, data) {
+	return request({
+		url: `/case/expExecution/${id}`,
 		method: 'delete',
 		data
 	})

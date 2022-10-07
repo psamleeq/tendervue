@@ -32,16 +32,27 @@ const caseRouter = {
 				meta: { title: '交辦案件百分比', isNew: true }
 			},
 			{
-				path: 'expenseAnalysis',
-				component: () => import('@/views/case/expenseAnalysis'),
-				name: 'expenseAnalysis',
-				meta: { title: '經費分析', isNew: true }
-			},
-			{
-				path: 'costEstimate',
-				component: () => import('@/views/case/costEstimate'),
-				name: 'costEstimate',
-				meta: { title: '每月經費預估', isNew: true }
+				path: 'expAnalysis',
+				component: {
+					render: (c) => c('router-view')
+				},
+				name: 'expAnalysis',
+				redirect: 'noRedirect',
+				meta: { title: '經費分析', isNew: true },
+				children: [
+					{
+						path: 'estimate',
+						component: () => import('@/views/case/expAnalysis/estimate'),
+						name: 'estimate',
+						meta: { title: '經費估算', isNew: true }
+					},
+					{
+						path: 'execution',
+						component: () => import('@/views/case/expAnalysis/execution'),
+						name: 'execution',
+						meta: { title: '經費執行', isNew: true }
+					},
+				]
 			},
 			{
 				path: 'inspectCase',

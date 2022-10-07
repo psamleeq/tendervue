@@ -1,19 +1,17 @@
 <template>
-  <div class="app-container expense-analysis" v-loading="loading">
-    <h2>經費分析</h2>
-    <!-- <div class="filter-container">
-			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-      <el-button
+  <div class="app-container exp-execution" v-loading="loading">
+    <h2>經費執行</h2>
+    <div class="filter-container">
+			<el-date-picker class="filter-item" v-model="searchDate" type="month" placeholder="選擇月份" :picker-options="pickerOptions" align="center" :clearable="false" :editable="false" style="width: 150px" @change="getList" />
+      <!-- <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button> -->
+      <!-- <el-button
         class="filter-item"
         type="info"
         icon="el-icon-document"
         :circle="screenWidth<567"
         @click="handleDownload"
-      >輸出報表</el-button>
-    </div> -->
-    
-    <!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+      >輸出報表</el-button> -->
+    </div>
 
 		<div class="chart" ref="chart" />
 
@@ -39,7 +37,6 @@
 					<el-input
 						v-if="isEdit(row, value) && value.editType == 'string'"
 						v-model="row[key]"
-						size="mini"
 						placeholder="類別"
 						style="width: 200px"
 					/>
@@ -51,6 +48,21 @@
 						:step="1"
 						:min="0"
 					/>
+					<el-select
+						v-else-if="isEdit(row, value) && value.editType == 'select'"
+						v-model="row[key]"
+						style="width: 200px;"
+						filterable
+						allow-create
+						@change="addTypeList"
+					>
+						<el-option v-for="(type, id) in typeMap" :key="id" :label="type" :value="Number(id)">
+							<span>{{ type }}</span>
+							<el-button type="text" style="position: absolute; right: 15px;" @click="delTypeList(id)">
+								<i class="el-icon-close" style="color: #F56C6C;" />
+							</el-button>
+						</el-option>
+					</el-select>
 					<span v-else>{{ formatContent(row, key) }}</span>
 				</template>
 			</el-table-column>
@@ -74,7 +86,7 @@
                 type="primary"
                 style="margin-left: 10px"
                 size="mini"
-                @click="row.editValue = true; this.getList();"
+                @click="row.editValue = true"
 							>修改</el-button>
               <el-button
                 type="danger"
@@ -95,26 +107,26 @@ import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/pie');
-import { getExpenseAmt, setExpenseAmt, delExpenseAmt } from "@/api/case";
-// import TimePicker from '@/components/TimePicker';
+import { getExpType, addExpType, delExpType, getExpExecution, setExpExecution, delExpExecution } from "@/api/case";
 
 export default {
-  name: "expenseAnalysis",
-	// components: { TimePicker },
+  name: "expExecution",
   data() {
     return {
       loading: false,
-      // timeTabId: -1,
-      // dateTimePickerVisible: false,
       // screenWidth: window.innerWidth,
-      // daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
-      // searchRange: "",
+      searchDate: moment().startOf("month").toDate(),
+			pickerOptions: {
+				disabledDate(date) {
+					return moment(date).valueOf() >= moment().endOf("d").valueOf();
+				},
+			},
       headers: {
-				type: {
+				typeId: {
 					name: "類別",
 					sortable: false,
 					editable: true,
-					editType: "string"
+					editType: "select"
 				},
 				amount: {
 					name: "金額",
@@ -124,9 +136,10 @@ export default {
 					chartType: 'bar'
 				}
 			},
+			typeMap: {},
 			list: [],
 			newItem: {
-				type: "",
+				typeId: 0,
 				amount: 1
 			},
 			chart: null
@@ -137,6 +150,9 @@ export default {
 			return [ ...this.list, this.newItem ]
 		}
 	},
+	created() {
+		this.getTypeList(true);
+	},
 	mounted() {
 		this.chart = echarts.init(this.$refs.chart, 'macarons', {
 			width: 'auto',
@@ -145,10 +161,43 @@ export default {
 		this.getList();
 	},
   methods: {
+		getTypeList(isInit = false, typeId = 0) {
+			this.loading = true;
+			this.typeMap = {};
+			getExpType().then(response => {
+				if(response.data.list.length != 0) {
+					response.data.list.forEach(l => this.$set(this.typeMap, l.id, l.type));
+					if(isInit) this.$nextTick(() => this.newItem.typeId = Number(Object.keys(this.typeMap)[0]));
+					else if (typeId != 0) this.$nextTick(() => this.newItem.typeId = typeId);
+				}
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
+		addTypeList(id) {
+			if(!Object.keys(this.typeMap).map(key => Number(key)).includes(id)) {
+				addExpType({ 
+					type: id
+				}).then(response => {
+						this.getTypeList(false, response.typeId);
+				}).catch(err => {
+					console.log(err);
+				})
+			}
+		},
+		delTypeList(id) {
+			delExpType(id).then(response => {
+				this.getTypeList(id == this.newItem.typeId);
+			}).catch(err => {
+				console.log(err);
+				this.getTypeList();
+			})
+		},
 		getList() {
 			this.loading = true;
 			this.list = [];
-			getExpenseAmt().then(response => {
+			getExpExecution({
+				dataTime: moment(this.searchDate).format("YYYY-MM-DD")
+			}).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -165,8 +214,9 @@ export default {
 			return (row.id == undefined && value.editable) || ( row.id != undefined && row.editValue) 
 		},
 		addItem() {
-			setExpenseAmt({
-				type: this.newItem.type,
+			setExpExecution({
+				dataTime: moment(this.searchDate).format("YYYY-MM-DD"),
+				typeId: this.newItem.typeId,
 				amount: this.newItem.amount
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
@@ -176,7 +226,7 @@ export default {
 					});
 
 					this.newItem = {
-						type: "",
+						typeId: Number(Object.keys(this.typeMap)[0]),
 						amount: 1
 					};
 					this.getList();
@@ -187,8 +237,10 @@ export default {
 			})
 		},
 		editItem(row) {
-			setExpenseAmt({
-				type: row.type,
+			setExpExecution({
+				id: row.id,
+				dataTime: moment(this.searchDate).format("YYYY-MM-DD"),
+				typeId: row.typeId,
 				amount: row.amount
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
@@ -204,7 +256,7 @@ export default {
 			})
 		},
 		removeItem(row) {
-			delExpenseAmt(row.id).then(response => {
+			delExpExecution(row.id).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "刪除成功",
@@ -221,7 +273,7 @@ export default {
 			const series = [{
 				type: 'pie',
 				radius: ['30%', '70%'],
-				data: this.list.map(l => ({ value: l.amount, name: l.type })),
+				data: this.list.map(l => ({ value: l.amount, name: this.typeMap[l.typeId] })),
 				label: { 
 					formatter: '{d}%',
 					fontSize: 14
@@ -264,7 +316,7 @@ export default {
       return moment(time).utc().format("YYYY-MM-DD");
     },
 		formatContent(row, key) {
-			if(key == "type") return row[key];
+			if(key == "typeId") return this.typeMap[row[key]];
       else if (row[key] == 0 || Number(row[key])) return row[key].toLocaleString();
       else return "-";
     },
@@ -293,7 +345,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.expense-analysis
+.exp-execution
 	.chart
 		height: 400px
 </style>
