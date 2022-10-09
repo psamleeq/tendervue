@@ -117,6 +117,15 @@ export function delExpExecution(id, data) {
 	})
 }
 
+// 經費比較
+export function getExpCompare(query) {
+	return request({
+		url: '/case/expCompare',
+		method: 'get',
+		params: query
+	})
+}
+
 // 巡查數量
 export function getInspectCase(query) {
 	return request({

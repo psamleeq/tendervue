@@ -52,6 +52,12 @@ const caseRouter = {
 						name: 'execution',
 						meta: { title: '經費執行', isNew: true }
 					},
+					{
+						path: 'compare',
+						component: () => import('@/views/case/expAnalysis/compare'),
+						name: 'compare',
+						meta: { title: '經費(估算/執行)', isNew: true }
+					}
 				]
 			},
 			{
