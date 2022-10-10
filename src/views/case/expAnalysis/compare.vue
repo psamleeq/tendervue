@@ -139,23 +139,23 @@ export default {
               // 	return l;
               // });
 
-              this[lName] = response.data[lName].reduce((acc, cur) => {
+              this[lName] = response.data[lName].reduce((acc, curr) => {
                 if (
                   acc.length == 0 ||
-                  !moment(cur.dataTime).isSame(acc[acc.length - 1].dataTime)
+                  !moment(curr.dataTime).isSame(acc[acc.length - 1].dataTime)
                 ) {
                   const temp = {
-                    dataTime: cur.dataTime,
+                    dataTime: curr.dataTime,
                     expType: this.expTypeMap[lName],
-                    month: this.formatTime(cur.dataTime),
+                    month: this.formatTime(curr.dataTime),
                   };
                   // for(const typeId in this.typeMap) {
-                  // 	if(typeId == cur.typeId) temp[`type${cur.typeId}`] = cur.amount;
+                  // 	if(typeId == curr.typeId) temp[`type${curr.typeId}`] = curr.amount;
                   // 	else temp[`type${typeId}`] = 0;
                   // }
-                  temp[`type${cur.typeId}`] = cur.amount;
+                  temp[`type${curr.typeId}`] = curr.amount;
                   acc.push(temp);
-                } else acc[acc.length - 1][`type${cur.typeId}`] = cur.amount;
+                } else acc[acc.length - 1][`type${curr.typeId}`] = curr.amount;
                 return acc;
               }, []);
             }
@@ -166,8 +166,7 @@ export default {
         .catch((err) => (this.loading = false));
     },
     setChartOptions() {
-      const monthList = this.list.map((l) => l.month);
-      console.log(monthList);
+      const monthList = Array.from(new Set(this.list.map((l) => l.month)));
       let legend = [];
       let series = [];
 
@@ -179,23 +178,25 @@ export default {
           series.push({
             type: this.headers[key].chartType,
             name: this.headers[key].name,
-            data: this[expType].reduce((acc, cur) => {
-              const index = monthList.indexOf(cur.month);
-              acc[index] = cur[key];
+            data: this[expType].reduce((acc, curr) => {
+              const index = monthList.indexOf(curr.month);
+              if (curr[key] != undefined) acc[index] = curr[key];
               return acc;
             }, Array.from({ length: monthList.length }).fill("-")),
             stack: `金額_${expType}`,
-            barWidth: expType == "estList" ? "15%" : "40%",
+            barWidth: expType == "estList" ? "10%" : "30%",
             itemStyle: {
-              borderColor: "#999",
-              borderWidth: expType == "estList" ? 1 : 0,
+              borderColor: "#aaa",
+              borderWidth: expType == "estList" ? 2 : 0,
               borderType: expType == "estList" ? "dashed" : "solid",
-              opacity: expType == "estList" ? 0.9 : 1,
+              opacity: expType == "estList" ? 0.85 : 1,
             },
             offset: [0, 20],
           });
         }
       }
+
+      console.log(series);
 
       const options = {
         xAxis: {
@@ -216,9 +217,23 @@ export default {
         tooltip: {
           trigger: "axis",
           axisPointer: {
-            type: "cross",
+            type: "shadow",
+            shadowStyle: {
+              opacity: 0.9,
+            },
           },
           padding: [5, 10],
+          formatter: (e) => {
+            let htmlStr = `<div>${e[0].axisValueLabel}<br>`;
+            const expType = Object.values(this.expTypeMap);
+            for (const [index, data] of e.entries()) {
+              if (data.value != "-")
+                htmlStr += `${data.marker} ${data.seriesName}(${expType[index % 2]}): ${data.value} <br>`;
+            }
+            htmlStr += `</div>`;
+
+            return htmlStr;
+          },
         },
         grid: {
           top: 55,
