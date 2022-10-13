@@ -111,7 +111,32 @@
 						align="center"
 						:formatter="formatter"
 						:sortable="value.sortable"
-					/>
+					>
+						<template slot-scope="{ row, column }">
+							<template v-if="[ 'CaseNo', 'DName' ].includes(column.property)">
+								<template v-if="row.edit">
+									<el-input
+										v-model="row[column.property]"
+										size="mini"
+										style="width: 100px"
+									/>
+									<el-button type="text" @click="row.edit = false">
+										<i class="el-icon-success" />
+									</el-button>
+									<el-button type="text" @click="row.edit = false">
+										<i class="el-icon-error" />
+									</el-button>
+								</template>
+								<template v-else>
+									<span>{{ row[column.property] || "-" }}</span>
+									<el-link v-if="column.property == 'CaseNo' || !row[column.property]" @click="row.edit = true" style="margin-left: 5px">
+										<i class="el-icon-edit" />
+									</el-link>
+								</template>
+							</template>
+							<span v-else>{{ formatter(row, column) }}</span>
+						</template>
+					</el-table-column>
 					<el-table-column label="備註" align="center">
 						<template slot-scope="{ row }">
 							<span>{{ row.note || "-" }}</span>
@@ -338,7 +363,7 @@ export default {
 			for(const caseNo of this.caseMinus.list) {
 				const caseItem = this.list.filter(l => l.CaseNo == caseNo)[0];
 				if(caseItem.UploadCaseNo == undefined) caseItem.UploadCaseNo = caseItem.CaseNo;
-				caseErrList.push({ ...caseItem, note: `無法匹配(DB) \n ${caseItem.casetype}` });
+				caseErrList.push({ ...caseItem, note: `無法匹配(DB) \n ${caseItem.casetype}`, edit: false });
 			}
 
 			for(const caseNo of this.caseMinus.csv) {
@@ -346,13 +371,14 @@ export default {
 				// let caseItem = { UploadCaseNo: caseFilter["案件編號"] };
 				let caseItem = {};
 				Object.keys(this.headers).forEach(key => caseItem[key] = caseFilter[this.headers[key].name]);
-				caseErrList.push({ ...caseItem, note: "無法匹配(csv)" });
+				if(caseItem.CaseNo.length == 0) caseItem.CaseNo = caseItem.UploadCaseNo;
+				caseErrList.push({ ...caseItem, note: "無法匹配(csv)", edit: false });
 			}
 
 			for(const caseNo in this.csvRepeatObj) {
 				for(const uploadCaseNo of this.csvRepeatObj[caseNo]) {
 					const caseItem = this.list.filter(l => l.UploadCaseNo == uploadCaseNo)[0];
-					caseErrList.push({ ...caseItem, note: `重複案件: ${caseNo}` });
+					caseErrList.push({ ...caseItem, note: `重複案件: ${caseNo}`, edit: false });
 				}
 			}
 
