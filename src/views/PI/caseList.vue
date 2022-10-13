@@ -65,7 +65,11 @@
 					</div>
 					<div class="card-panel-description">
 						<div class="card-panel-text">監造抽查 (15%)</div>
-						<div class="card-panel-num"> {{ list.filter(l => l.SVCheck != 0).length }} / {{ Math.round(list.length * 0.15, 0) }}</div>
+						<div class="card-panel-num"> 
+							路面: {{ checkNum.SV.AC.check }} / {{ checkNum.SV.AC.total }} 
+							<br>
+							設施: {{ checkNum.SV.facility.check }} / {{ checkNum.SV.facility.total }}
+						</div>
 					</div>
 				</div>
 			</el-col>
@@ -76,7 +80,11 @@
 					</div>
 					<div class="card-panel-description">
 						<div class="card-panel-text">機關抽查 (5%)</div>
-						<div class="card-panel-num">{{ list.filter(l => l.OrganCheck != 0).length }} / {{ Math.round(list.length * 0.05, 0) }}</div>
+						<div class="card-panel-num">
+							路面: {{ checkNum.Organ.AC.check }} / {{ checkNum.Organ.AC.total }} 
+							<br>
+							設施: {{ checkNum.Organ.facility.check }} / {{ checkNum.Organ.facility.total }}
+						</div>
 					</div>
 				</div>
 			</el-col>
@@ -299,7 +307,7 @@ export default {
 				},
 				DName: {
 					name: "設施類型",
-					sortable: false
+					sortable: true
 				},
 				CaseName: {
 					name: "地址",
@@ -393,6 +401,30 @@ export default {
 				}
 			})
 			return reasonTypeArr
+		},
+		checkNum() {
+			return { 
+				SV: { 
+					AC: { 
+						check: this.list.filter(l => l.SVCheck != 0 && l.DName.indexOf("AC") != -1).length, 
+						total: Math.round(this.list.length * 0.15 * 0.6, 0) 
+					}, 
+					facility: { 
+						check: this.list.filter(l => l.SVCheck != 0 && l.DName.indexOf("AC") == -1).length, 
+						total: Math.round(this.list.length * 0.15 * 0.4, 0) 
+					} 
+				}, 
+				Organ: { 
+					AC: { 
+						check: this.list.filter(l => l.OrganCheck != 0 && l.DName.indexOf("AC") != -1).length, 
+						total: Math.round(this.list.length * 0.05 * 0.6, 0) 
+					}, 
+					facility: {
+						check: this.list.filter(l => l.OrganCheck != 0 && l.DName.indexOf("AC") == -1).length, 
+						total: Math.round(this.list.length * 0.05 * 0.4, 0) 
+					} 
+				} 
+			};
 		}
 	},
 	mounted() {
@@ -593,7 +625,7 @@ export default {
 					font-size: 16px
 					margin-bottom: 12px
 				.card-panel-num 
-					font-size: 20px
+					font-size: 18px
 				.icon-tooltip
 					font-size: 16px
 					color: #ddd
