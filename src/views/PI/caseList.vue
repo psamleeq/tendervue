@@ -88,8 +88,8 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">不合格件數</div>
 						<div class="card-panel-num">
-							<span> {{ resultList.filter(l => l.ReasonType == 1).length }} <el-tooltip class="item" effect="dark" content="損壞情形說明與現況不符(PI1.2)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip></span>	 / 
-							<span> {{ resultList.filter(l => l.ReasonType == 2).length }} <el-tooltip class="item" effect="dark" content="損壞程度與現況不符(PI2.2)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip></span>
+							<span> {{ reasonTypeArr[1] }} <el-tooltip class="item" effect="dark" content="損壞情形說明與現況不符(PI1.2)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip></span>	 / 
+							<span> {{ reasonTypeArr[2] }} <el-tooltip class="item" effect="dark" content="損壞程度與現況不符(PI2.2)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip></span>
 						</div>
 					</div>
 				</div>
@@ -383,6 +383,18 @@ export default {
 			}
     };
   },
+	computed: {
+		reasonTypeArr() {
+			let reasonTypeArr = { 1: 0, 2: 0 };
+			this.resultList.forEach(l => {
+				for(let type of Object.keys(this.options.reasonType)) {
+					if(l.SVCheck > 0 && String(l.SVCheck).split("")[1] == type) reasonTypeArr[type]++;
+					if(l.OrganCheck > 0 && String(l.OrganCheck).split("")[1] == type) reasonTypeArr[type]++;
+				}
+			})
+			return reasonTypeArr
+		}
+	},
 	mounted() {
 		this.getList();
 	},
@@ -432,7 +444,6 @@ export default {
 						this.$set(l, "showSVCheck", false);
 						this.$set(l, "showOrganCheck", false);
 					})
-
         }
         this.loading = false;
       }).catch(err => { this.loading = false; });
