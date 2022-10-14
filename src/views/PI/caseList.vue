@@ -525,7 +525,7 @@ export default {
 		formatter(row, column) {
       if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
-      else return row[column.property];
+      else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
     },
     formatTime(time) {
       return moment(time).format("YYYY/MM/DD");

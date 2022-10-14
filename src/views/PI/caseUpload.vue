@@ -60,7 +60,7 @@
 		</aside>
 
 		<!-- 有問題案件列表 -->
-		<el-collapse v-if="!alreadyCreate && caseErrList.length != 0" v-model="activeNames" @change="handleChange">
+		<el-collapse v-if="!alreadyCreate && caseErrList.length != 0">
 			<el-collapse-item class="listLabel" title="需處理案件" name="1">
 				<template slot="title">
 					<span>需處理案件  (</span>
@@ -355,8 +355,7 @@ export default {
 	computed: {
 		caseList() {
 			const errArr = this.caseErrList.map(l => l.CaseNo.length > 0 ? l.CaseNo : l.UploadCaseNo );
-			
-			return this.list.filter(row => !errArr.includes(row.CaseNo) || (row.UploadCaseNo && !errArr.includes(row.UploadCaseNo)));
+			return this.list.filter(row => (!errArr.includes(row.CaseNo) || (row.casetype != '1999' && row.UploadCaseNo && !errArr.includes(row.UploadCaseNo))));
 		},
 		caseErrList() {
 			let caseErrList = [];
@@ -371,7 +370,7 @@ export default {
 				// let caseItem = { UploadCaseNo: caseFilter["案件編號"] };
 				let caseItem = {};
 				Object.keys(this.headers).forEach(key => caseItem[key] = caseFilter[this.headers[key].name]);
-				if(caseItem.CaseNo.length == 0) caseItem.CaseNo = caseItem.UploadCaseNo;
+				// if(caseItem.CaseNo.length == 0) caseItem.CaseNo = caseItem.UploadCaseNo;
 				caseErrList.push({ ...caseItem, note: "無法匹配(csv)", edit: false });
 			}
 
@@ -443,7 +442,7 @@ export default {
       }).catch(err => { this.loading = false; });
     },
 		caseFilterList(list) {
-			console.log(list);
+			// console.log(list);
 			let caseFilterList = [];
 			for(const row of list) {
 				let caseItem = {};
@@ -456,6 +455,7 @@ export default {
 		createList() {
 			this.showConfirm = false;
 			this.loading = true;
+			this.tableSelect.forEach(l => l.CaseNo = l.CaseNo.length == 0 ? '0' : l.CaseNo);
 
 			addCaseList({
 				caseList: this.caseFilterList([...this.caseList, ...this.tableSelect ])
@@ -474,12 +474,20 @@ export default {
 			})
 		},
 		handleSelectionChange(val) {
+			val.forEach(v => {
+				if(!v.DName || v.DName.length == 0) {
+					this.$message({
+						type: "warning",
+						message: `請填入${v.UploadCaseNo}的「設施類型」`
+					});
+				}
+			})
 			this.tableSelect = val;
 		},
 		formatter(row, column) {
       if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
-      else return row[column.property] || "-";
+      else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
     },
     formatTime(time) {
       return moment(time).format("YYYY/MM/DD");
