@@ -1,13 +1,10 @@
 <template>
-  <div class="app-container case-statics" v-loading="loading">
-    <h2>維護案件</h2>
+  <div class="app-container mCase-statics" v-loading="loading">
+    <h2>維護數量</h2>
 		<aside>資料初始為2022年6月</aside>
     <div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
-			</el-select>
-			<el-select class="filter-item" v-model="listQuery.caseType" :disabled="Object.keys(caseType).length <= 1">
-				<el-option v-for="type in caseTypeOrder" :key="type" :label="caseType[type].name" :value="Number(type)" />
 			</el-select>
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -22,6 +19,8 @@
     
     <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
+		<div class="chart" ref="chart" />
+
     <el-table
       empty-text="目前沒有資料"
       :data="list"
@@ -32,26 +31,18 @@
       stripe
       style="width: 100%"
     >
-			<el-table-column label="序號" type="index" width="100" align="center" />
-			
       <!-- <el-table-column 
         v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
       align="center" fixed/>-->
       <el-table-column
-        v-for="(value, key) in headersFilter"
+        v-for="(value, key) in headers"
         :key="key"
         :prop="key"
         :label="value.name"
         align="center"
 				:formatter="formatter"
         :sortable="value.sortable"
-      >
-				<template slot="header" slot-scope="{ column }">
-					<span v-if="column.property == 'actualFinishDate' && [11, 12].includes(caseTypeNow)">熱更生完工日期</span>
-					<span v-else-if="column.property == 'actualFinishDate' && [2, 3].includes(caseTypeNow)">實際完工日期</span>
-					<span v-else>{{ column.label }}</span>
-				</template>
-			</el-table-column>
+      />
     </el-table>
 
   </div>
@@ -59,102 +50,70 @@
 
 <script>
 import moment from "moment";
-import { getCaseList } from "@/api/case";
+import echarts from 'echarts/lib/echarts';
+require('echarts/theme/macarons');
+require('echarts/lib/chart/bar');
+require('echarts/lib/chart/line');
+import { getCaseReport } from "@/api/case";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
 // const data = [
 // 	{
 // 		type: "人行道(m2)",
-// 		total: 258
+// 		area: 258
 // 	},
 // 	{
 // 		type: "水溝(m)",
-// 		total: 1119
+// 		area: 1119
 // 	},
 // 	{
 // 		type: "AC鉋鋪(m2)",
-// 		total: 25489
+// 		area: 25489
 // 	},
 // 	{
 // 		type: "熱再生修復(m2)",
-// 		total: 2405
+// 		area: 2405
 // 	}
 // ]
 
 export default {
-  name: "caseStatics",
+  name: "mCaseStatics",
 	components: { TimePicker },
   data() {
     return {
-			loading: false,
-			timeTabId: 4,
-			dateTimePickerVisible: false,
-			screenWidth: window.innerWidth,
-			daterange: [moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate()],
-			searchRange: "",
-			caseTypeNow: 11,
+      loading: false,
+      timeTabId: 4,
+      dateTimePickerVisible: false,
+      screenWidth: window.innerWidth,
+      daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
+      searchRange: "",
 			listQuery: {
-				caseType: 11,
 				dist: 104
-			},
-			headers: {
-				CaseNo: {
-					name: "案號",
+      },
+      headers: {
+				type: {
+					name: "類型",
 					sortable: false
 				},
-				BTName: {
-					name: "損壞類別",
-					sortable: false
-				},
-				CaseName: {
-					name: "地址",
-					sortable: false
-				},
-        // CType1NO: {
-				// 	name: "派工單號",
-				// 	sortable: false,
-				// },
-				CaseDate: {
-					name: "成案日期",
+        count: {
+					name: "數量",
 					sortable: false,
+					chartType: 'line'
 				},
-				dispatchDate: {
-					name: "派工日期",
+				area: {
+					name: "面積",
 					sortable: false,
-				},
-				finishDate: {
-					name: "道管完工日期",
-					sortable: false,
-					caseTypeFilter: [ 2, 3 ]
-				},
-				actualFinishDate: {
-					name: "實際完工日期",
-					sortable: false,
-				},
-				markerFinishDate: {
-					name: "標線完工日期",
-					sortable: false,
-					caseTypeFilter: [ 11, 12 ]
-				},
-				warrantyDate: {
-					name: "保固日期",
-					sortable: false,
-				},
-				dispatchArea: {
-					name: "派工面積",
-					sortable: false,
-				},
-				actualArea: {
-					name: "修復面積",
-					sortable: false,
-				},
-				markerArea: {
-					name: "標線面積",
-					sortable: false,
+					chartType: 'bar'
 				}
       },
       list: [],
+			typeMap: {
+				hotRepair: "熱再生修復(m2)",
+				AC: "AC鉋鋪(m2)",
+				ditch: "側溝(m)",
+				sidewalk: "人行道(m2)"
+			},
 			districtList: {
 				// 100: {
 				// 	"name": "中正區",
@@ -205,50 +164,15 @@ export default {
 				// 	"engName": "Wenshan"
 				// }
 			},
-			caseType: {
-				11: {
-					name: "熱再生修復",
-					unit: "㎡"
-				},
-				12: {
-					name: "AC鉋鋪",
-					unit: "㎡"
-				},
-				2: {
-					name: "人行道",
-					unit: "㎡"
-				},
-				3: {
-					name: "水溝",
-					unit: "m"
-				}
-			},
-			caseTypeOrder: [11, 12, 2, 3],
-			warrantyMap: {
-				1: {		  						// AC路面
-					15: 14,					  	// 坑洞: 14天 
-					58: 14,				  		// 人孔高差: 14天
-					"etc": 180					// AC路面: 其他 180天
-				},
-				2: { "etc": 180 },		// 人行道: 180天
-				3: { "etc": 180 }			// 側溝屬於人行道: 180天
-			},
 			chart: null
     };
   },
-	computed: {
-		headersFilter() {
-			let headersFilter = {};
-			Object.keys(this.headers).forEach(key => {
-				const props = this.headers[key];
-				if(!props.hasOwnProperty('caseTypeFilter')) headersFilter[key] = props;
-				else if(props.caseTypeFilter.includes(this.caseTypeNow)) headersFilter[key] = props;
-			})
-			return headersFilter
-		}
-	},
 	mounted() {
-		// this.getList();
+		this.chart = echarts.init(this.$refs.chart, 'macarons', {
+			width: 'auto',
+			height: 'auto'
+		});
+		this.getList();
 	},
   methods: {
     getList() {
@@ -258,11 +182,9 @@ export default {
       let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
       let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
       this.searchRange = startDate + " - " + endDate;
-			this.caseTypeNow = this.listQuery.caseType;
 
       this.list = [];
-      getCaseList({
-				caseType: this.listQuery.caseType,
+      getCaseReport({
         timeStart: startDate,
         timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
       }).then((response) => {
@@ -272,34 +194,90 @@ export default {
             type: "error",
           });
         } else {
-          this.list = response.data.list;
-					this.list.forEach(l => {
-						// 計算保固日期
-						const days = this.warrantyMap[l.DeviceType][l.BType] != undefined ? this.warrantyMap[l.DeviceType][l.BType] : this.warrantyMap[l.DeviceType]["etc"];
-						let finishDate = "";
-						if([11, 12].includes(this.listQuery.caseType)) finishDate = moment(l.actualFinishDate).isAfter(l.markerFinishDate) ? l.actualFinishDate : l.markerFinishDate;
-						if([2, 3].includes(this.listQuery.caseType)) finishDate = moment(l.actualFinishDate).isAfter(l.finishDate) ? l.actualFinishDate : l.finishDate;
-						l.warrantyDate = this.formatTime(moment(finishDate).add(days, 'd'));
-						
-						l.finishDate = l.finishDate != '0' ? this.formatTime(l.finishDate) : '-';
-						l.actualFinishDate = l.actualFinishDate != '0' ? this.formatTime(l.actualFinishDate) : '-';
-						l.markerFinishDate = l.markerFinishDate != '0' ? this.formatTime(l.markerFinishDate) : '-';
-
-						l.dispatchArea = Math.floor(l.dispatchArea * 100) / 100;
-						l.actualArea = Math.floor(l.actualArea * 100) / 100;
-						l.markerArea = Math.floor(l.markerArea * 100) / 100;
-					})
+					const obj = response.data.list;
+          this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], count: obj[key].count, area: Math.floor(obj[key].area * 100) / 100 }) );
+          this.setChartOptions();
         }
         this.loading = false;
       }).catch(err => { this.loading = false; });
     },
+		setChartOptions() {
+			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "type"));
+			let legend = [];
+			let series = [];
+
+			for(const key in headerFilter) {
+				if(headerFilter[key].chartType == null) continue;
+				legend.push(headerFilter[key].name);
+				series.push({
+					type: headerFilter[key].chartType,
+					name: headerFilter[key].name,
+					data: this.list.map(l=>l[key]),
+					xAxisIndex: headerFilter[key].chartType == "bar" ? 0 : 1,
+					barWidth: '40%',
+					label: {
+						show: headerFilter[key].chartType != "bar",
+						position: 'bottom',
+						formatter: '{c}'
+					},
+					smooth: false
+				});
+			}
+
+			const options = {
+				xAxis: [
+					{
+						name: "面積",
+						type: 'value',
+						boundaryGap: false,
+						axisTick: {
+							alignWithLabel: true
+						},	
+					},
+					{
+						name: '數量',
+						type: 'value',
+						nameGap: 8,
+						boundaryGap: false,
+						axisTick: {
+							alignWithLabel: true
+						}
+					},
+				],
+				yAxis: {
+					name: '類型',
+					type: 'category',
+					data: this.list.map(l => l.type),
+					axisTick: {
+            show: false
+					}
+				},
+				tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross'
+          },
+          padding: [5, 10]
+        },
+				grid: {
+					top: 55,
+					bottom: 20,
+          left: 30,
+          right: 100,
+          containLabel: true
+        },
+				legend: { data: legend },
+				series: series
+			};
+
+			this.chart.setOption(options);
+		},
 		formatter(row, column) {
-      if(column.property.indexOf('Date')) return row[column.property] ? row[column.property] : "-";
-			else if(column.property.indexOf('Area')) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
+      if(Number(row[column.property])) return row[column.property].toLocaleString();
       else return row[column.property];
     },
     formatTime(time) {
-      return moment(time).format("YYYY/MM/DD");
+      return moment(time).utc().format("YYYY-MM-DD");
     },
     handleDownload() {
       let tHeader = Object.values(this.headers);
@@ -326,10 +304,10 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.case-statics
+.mCase-statics
 	.filter-container 
 		.el-select
-			width: 110px
+			width: 105px
 		.el-input__inner
 			padding-left: 5px
 			text-align: center

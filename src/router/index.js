@@ -8,7 +8,6 @@ import Layout from '@/layout'
 
 /* Router Modules */
 import PCIRouter from './modules/PCI'
-import caseRouter from './modules/case'
 import PIRouter from './modules/PI'
 import otherRouter from './modules/other'
 import carRouter from './modules/car'
@@ -94,7 +93,6 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
 	PCIRouter,
-	caseRouter,
 	PIRouter,
 	otherRouter,
 	carRouter,
