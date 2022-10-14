@@ -124,7 +124,12 @@
         align="center"
 				:formatter="formatter"
         :sortable="value.sortable"
-      />
+      >
+				<template slot-scope="{ row, column }">
+					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
+					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
+			</el-table-column>
 			<el-table-column label="不合格原因(監造)" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="[21, 22].includes(row.SVCheck)">{{ options.reasonType[row.SVCheck % 10] }}</span>
@@ -183,7 +188,12 @@
         align="center"
 				:formatter="formatter"
         :sortable="value.sortable"
-      />
+      >
+				<template slot-scope="{ row, column }">
+					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
+					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
+			</el-table-column>
 			<el-table-column label="監造抽查" width="200px" align="center">
 				<template slot-scope="{ row }">
 					<template v-if="row.SVCheck == 0">

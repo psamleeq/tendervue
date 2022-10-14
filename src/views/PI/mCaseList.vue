@@ -51,6 +51,10 @@
 					<span v-else-if="column.property == 'actualFinishDate' && [2, 3].includes(caseTypeNow)">實際完工日期</span>
 					<span v-else>{{ column.label }}</span>
 				</template>
+				<template slot-scope="{ row, column }">
+					<span v-if="column.property == 'CaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
+					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
 			</el-table-column>
     </el-table>
 
