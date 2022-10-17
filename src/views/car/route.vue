@@ -6,9 +6,14 @@
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
 			<div class="filter-container">
-				<el-select v-model="listQuery.modeId" @change="getCarList()">
-					<el-option v-for="(text, id) in options.modeId" :key="`model_${id}`" :label="text" :value="Number(id)" />
+				<el-select v-model="listQuery.contractId" @change="getCarList()">
+					<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
 				</el-select>
+
+				<!-- NOTE: 種類先隱藏 -->
+				<!-- <el-select v-model="listQuery.modeId" @change="getCarList()">
+					<el-option v-for="(text, id) in options.modeId" :key="`model_${id}`" :label="text" :value="Number(id)" />
+				</el-select> -->
 				<!-- NOTE: 路線先隱藏 -->
 				<!-- <el-select v-model="listQuery.inspectionId" placeholder="請選擇路線" @change="getCarInfo()">
 					<el-option v-for="car in carList" :key="`car_${car.id}`" :label="`路線${car.id} (${car.carId})`" :value="Number(car.id)" />
@@ -50,9 +55,16 @@
 				<div id="map" ref="map" />
 			</el-col>
 			<el-col class="info-panel" :span="8">
-				<!-- <iframe width="720" height="405" src="https://www.youtube.com/embed/d148YHkaAGg?controls=0&autoplay=1&mute=1&rel=0&modestbranding=1" frameborder="0" allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" /> -->
-				<!-- <iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" /> -->
-				<iframe width="560" height="315" src="https://media.bellsgis.com:8443/WebRTCAppEE/play.html?name=246612205179051969409588" frameborder="0" allowfullscreen></iframe>
+				<div class="car-vod-panel">
+					<i class="el-icon-video-camera" v-if="carVodList.length == 0"/>
+					<el-tabs v-else class="vod-tabs" tab-position="bottom">
+						<el-tab-pane v-for="(vod, index) in carVodList" :key="`vod_${index}`" :label="vod.label">
+							<!-- <iframe width="720" height="405" src="https://www.youtube.com/embed/d148YHkaAGg?controls=0&autoplay=1&mute=1&rel=0&modestbranding=1" frameborder="0" allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" /> -->
+							<!-- <iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" /> -->
+							<iframe width="560" height="315" :src="vod.vodUrl" frameborder="0" allowfullscreen></iframe>
+						</el-tab-pane>
+					</el-tabs>
+				</div>
 				<div class="car-info-panel">
 					<i class="el-icon-truck" />
 					<div v-if="Object.keys(carInfo).length > 0" class="car-info">
@@ -126,6 +138,7 @@ export default {
   data() {
     return {
       loading: false,
+			mediaUrl: process.env.VUE_APP_MEDIA_API,
 			map: null,
 			polyLine: null,
 			markers: {
@@ -166,6 +179,7 @@ export default {
 			searchDate: moment().startOf("d"),
 			searchRange: "",
 			listQuery: {
+				contractId: 1,
 				modeId: 3,
 				inspectionId: ""
 			},
@@ -183,9 +197,18 @@ export default {
 					2: "手持巡查(AI)",
 					3: "車輛巡查",
 					4: "車輛巡查(AI)"
+				},
+				contractId: {
+					1: "一標",
+					// 2: "二標",
+					3: "三標",
+					// 4: "四標",
+					// 5: "五標",
+					// 6: "六標"
 				}
 			},
 			carList: [],
+			carVodList: [],
       carInfo: [],
 			carTracks: []
     };
@@ -323,6 +346,10 @@ export default {
 		},
 		getCarList() {
 			this.loading = true;
+			this.carList = [];
+			this.carInfo = {};
+			this.carVodList = [];
+			this.carTracks = [];
 			this.listQuery.inspectionId = "";
 			if(this.polyLine != undefined) this.polyLine.setMap(null);
 			for(const marker of Object.values(this.markers).filter(marker => marker != null)) marker.setMap(null);
@@ -331,6 +358,7 @@ export default {
       this.searchRange = date;
 
 			getInspectionList({
+				contractId: this.listQuery.contractId,
 				modeId: this.listQuery.modeId,
 				date: date
 			}).then(response => {
@@ -350,7 +378,7 @@ export default {
 				// this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
-    getCarInfo() {
+    getCarInfo() {			
 			getSpecInspection(this.listQuery.inspectionId).then(response => {
 				if (Object.keys(response.data).length == 0) {
 					this.$message({
@@ -362,11 +390,29 @@ export default {
 					this.carInfo = response.data;
 					this.carInfo.modeId = this.options.modeId[this.carInfo.modeId];
 					this.carInfo.createdAt = this.formatTime(this.carInfo.createdAt);
+					this.carVodList.push({
+						label: "即時",
+						vodUrl: `${this.mediaUrl}/WebRTCAppEE/play.html?name=${this.carInfo.liveStreamId}`
+					});
 
+					this.getCarVideo();
 					this.getCarTrack();
 				}
 				// this.loading = false;
 			}).catch(err => { this.loading = false; });
+    },
+		getCarVideo() {
+			fetch(`${this.mediaUrl}WebRTCAppEE/rest/v2/vods/list/0/10?streamId=${this.carInfo.liveStreamId}`).then((response) => (response.json()))
+				.then(response => {
+					// console.log(response);
+					this.carVodList.push(...response.map(vod => ({
+						time: vod.startTime,
+						label: this.formatTime(vod.startTime).split(" ")[1],
+						vodUrl: `${this.mediaUrl}WebRTCAppEE/play.html?id=${vod.vodName}&playOrder=vod`
+					})));
+
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
     },
 		getCarTrack() {
 			// if(this.polyLine != undefined) this.polyLine.setMap(null);
@@ -411,7 +457,7 @@ export default {
       else return row[column.property];
     },
     formatTime(time) {
-      return moment(time).utc().format("YYYY-MM-DD HH:mm:ss");
+      return moment(time).format("YYYY-MM-DD HH:mm:ss");
     },
     handleDownload() {
       let tHeader = Object.values(this.headers);
@@ -491,22 +537,39 @@ export default {
 				border: none !important
 				padding: 5px
 	.info-panel
-		background-color: #E6EE9C
 		height: calc(100vh - 50px)
-		iframe
-			height: calc(100vw / 3 / 1.5)
-			width: 100%
-		.car-info-panel
+		background-color: #E6EE9C
+		.car-vod-panel
 			position: relative
-			height: 100%
+			height: calc(100vw / 3 / 1.5 + 40px) 
 			width: 100%
-			i.el-icon-truck
+			background-color:#E0F7FA
+			i.el-icon-video-camera
 				position: absolute
-				bottom: 50%
+				top: 30%
 				left: 50%
 				transform: translateX(-50%)
 				color: white
-				font-size: 2000%
+				font-size: 1000%
+				opacity: 0.8
+			.vod-tabs
+				iframe
+					height: calc(100vw / 3 / 1.5)
+					width: 100%
+				.el-tabs__header
+					margin-top: 0
+					padding: 0 10px
+		.car-info-panel
+			position: relative
+			height: 60%
+			width: 100%
+			i.el-icon-truck
+				position: absolute
+				bottom: 30%
+				left: 50%
+				transform: translateX(-50%)
+				color: white
+				font-size: 1000%
 				opacity: 0.8
 			.car-info
 				padding: 20px
