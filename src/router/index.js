@@ -7,6 +7,7 @@ Vue.use(Router)
 import Layout from '@/layout'
 
 /* Router Modules */
+import roadRouter from './modules/road'
 import PCIRouter from './modules/PCI'
 import PIRouter from './modules/PI'
 import otherRouter from './modules/other'
@@ -92,6 +93,7 @@ export const constantRoutes = [
  * the routes that need to be dynamically loaded based on user roles
  */
 export const asyncRoutes = [
+	roadRouter,
 	PCIRouter,
 	PIRouter,
 	otherRouter,
