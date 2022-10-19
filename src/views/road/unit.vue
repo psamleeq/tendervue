@@ -14,7 +14,7 @@
 			</div>
 			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
 
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
       <el-button
         class="filter-item"
         type="info"
@@ -205,14 +205,16 @@ export default {
       // this.searchRange = startDate + " - " + endDate;
 
       this.list = [];
-      getRoadUnit({
+			let query = {
 				dist: this.listQuery.dist,
-				roadName:this.listQuery.roadName || "%02%03",
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 				// timeStart: startDate,
 				// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-			}).then(response => {
+			}
+			if(this.listQuery.roadName.length > 0) query.roadName = this.listQuery.roadName;
+
+			getRoadUnit(query).then(response => {
         if (response.data.list.length == 0) {
           this.$message({
             message: "查無資料",
@@ -244,14 +246,16 @@ export default {
 			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
       // const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 
-			getRoadUnit({
+			let query = {
 				dist: this.listQuery.dist,
-				roadName:this.listQuery.roadName,
 				pageCurrent: 1,
 				pageSize: this.total,
 				// timeStart: startDate,
 				// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-			}).then(response => {
+			}
+			if(this.listQuery.roadName.length > 0) query.roadName = this.listQuery.roadName;
+
+			getRoadUnit(query).then(response => {
 				let list = response.data.list;
 				list.forEach(l => {
 					l.dist = this.districtList[l.zip].name
