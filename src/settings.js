@@ -1,5 +1,5 @@
 module.exports = {
-  title: '圖表後台',
+  title: '道路管理系統',
 
   /**
    * @type {boolean} true | false

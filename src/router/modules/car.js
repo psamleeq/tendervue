@@ -2,7 +2,7 @@
 
 import Layout from '@/layout'
 
-const otherRouter = {
+const carRouter = {
 	path: '/car',
 	component: Layout,
 	redirect: '/car/route',
@@ -21,4 +21,4 @@ const otherRouter = {
 		}
 	]
 }
-export default otherRouter
+export default carRouter
