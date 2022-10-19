@@ -3,16 +3,31 @@
     <h2>道路單元</h2>
     <div class="filter-container">
 			<div class="filter-item">
-				<el-input
-					v-model="listQuery.roadName"
-					placeholder="請輸入道路名稱"
-				>
-					<el-select slot="prepend" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1" @change="listQuery.pageCurrent = 1; getList();">
-						<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
-					</el-select>
-				</el-input>
+				<el-tooltip effect="dark" content="不填為查詢全部" placement="bottom-end">
+					<el-input v-model="listQuery.roadName" placeholder="請輸入道路名稱" style="width: 300px">
+						<el-select slot="prepend" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1" @change="listQuery.pageCurrent = 1; getList();">
+							<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+						</el-select>
+					</el-input>
+				</el-tooltip>
 			</div>
 			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
+			
+			<div class="filter-item">
+				<el-tooltip effect="dark" content="填0為查詢全部" placement="bottom-end">
+					<el-input v-model="listQuery.width" type="number" :min="0" placeholder="公尺" style="width: 180px" @blur="() => { if(listQuery.width < 0) listQuery.width = 0 }">
+						<span slot="prepend">計畫路寬</span>
+					</el-input>
+				</el-tooltip>
+			</div>
+
+			<div class="filter-item">
+				<el-tooltip effect="dark" content="填0為查詢全部" placement="bottom-end">
+					<el-input v-model="listQuery.widthReal" type="number" :min="0" placeholder="公尺" style="width: 180px" @blur="() => { if(listQuery.width < 0) listQuery.width = 0 }">
+						<span slot="prepend">實際路寬</span>
+					</el-input>
+				</el-tooltip>
+			</div>
 
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
       <el-button
@@ -71,8 +86,10 @@ export default {
       daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
       searchRange: "",
 			listQuery: {
-				roadName: "",
 				dist: 0,
+				roadName: "",
+				width: 0,
+				widthReal: 0,
         pageCurrent: 1,
         pageSize: 20,
       },
@@ -207,6 +224,8 @@ export default {
       this.list = [];
 			let query = {
 				dist: this.listQuery.dist,
+				width: this.listQuery.width,
+				widthReal: this.listQuery.widthReal,
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 				// timeStart: startDate,
@@ -296,4 +315,9 @@ export default {
 			text-align: center
 	.filter-item
 		margin-right: 5px
+		input[type=number]
+			padding: 0
+			overflow: hidden
+			&::-webkit-inner-spin-button
+				transform: scale(1.2, 1) translateX(-11%)
 </style>
