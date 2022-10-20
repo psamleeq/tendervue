@@ -50,6 +50,7 @@
 			<transition name="el-fade-in">
 				<el-button v-if="csvFileList.length > 0" type="success" @click="showConfirm = true">建立列表</el-button>
 			</transition>
+			<el-link icon="el-icon-download" href="/demo/220915.csv" target="_blank">CSV範例</el-link>
 		</div>
 		
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
