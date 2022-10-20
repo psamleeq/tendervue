@@ -1,7 +1,7 @@
 <template>
-  <div class="app-container PI-case-list" v-loading="loading">
-    <h2>案件列表</h2>
-    <div class="filter-container">
+	<div class="app-container PI-case-list" v-loading="loading">
+		<h2>案件列表</h2>
+		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
@@ -35,15 +35,15 @@
 				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			</span>
 
-      <el-button
-        class="filter-item"
-        type="info"
-        icon="el-icon-document"
-        @click="handleDownload"
-      >輸出報表</el-button>
-    </div>
-    
-    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+			<el-button
+				class="filter-item"
+				type="info"
+				icon="el-icon-document"
+				@click="handleDownload"
+			>輸出報表</el-button>
+		</div>
+		
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
 		<!-- 資訊列表 -->
 		<el-row :gutter="40" class="panel-group">
@@ -106,25 +106,25 @@
 
 		<!-- 抽查結果列表 -->
 		<el-table
-      empty-text="目前沒有資料"
-      :data="resultList"
-      border
-      fit
-      highlight-current-row
-      :header-cell-style="{'background-color': '#F2F6FC'}"
-      stripe
-      style="width: 100%"
-    >
+			empty-text="目前沒有資料"
+			:data="resultList"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
 			<el-table-column label="序號" type="index" width="100" align="center" />
-      <el-table-column
-        v-for="(value, key) in resultHeader"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
+			<el-table-column
+				v-for="(value, key) in resultHeader"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
 				:formatter="formatter"
-        :sortable="value.sortable"
-      >
+				:sortable="value.sortable"
+			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
 					<span v-else>{{ formatter(row, column) }}</span>
@@ -142,20 +142,20 @@
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
-    </el-table>
+		</el-table>
 		<br>
 
 		<!-- 案件列表 -->
-    <el-table
-      empty-text="目前沒有資料"
-      :data="list"
-      border
-      fit
-      highlight-current-row
-      :header-cell-style="{'background-color': '#F2F6FC'}"
-      stripe
-      style="width: 100%"
-    >
+		<el-table
+			empty-text="目前沒有資料"
+			:data="list"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
 			<el-table-column label="序號" type="index" width="100" align="center" />
 			<!-- <el-table-column label="案件編號" prop="UploadCaseNo" align="center">
 				<template slot-scope="{ row }">
@@ -165,32 +165,51 @@
 							size="mini"
 							style="width: 100px"
 						/>
-            <el-button type="text" @click="row.edit = false;">
-              <i class="el-icon-success" />
-            </el-button>
-            <el-button type="text" @click="row.edit = false; getList()">
-              <i class="el-icon-error" />
-            </el-button>
-          </template>
-          <template v-else>
-            <span>{{ row.UploadCaseNo || "-" }}</span>
-            <el-link v-if="!row.UploadCaseNo" @click="row.edit = true" style="margin-left: 5px">
-              <i class="el-icon-edit" />
-            </el-link>
-          </template>
+						<el-button type="text" @click="row.edit = false;">
+							<i class="el-icon-success" />
+						</el-button>
+						<el-button type="text" @click="row.edit = false; getList()">
+							<i class="el-icon-error" />
+						</el-button>
+					</template>
+					<template v-else>
+						<span>{{ row.UploadCaseNo || "-" }}</span>
+						<el-link v-if="!row.UploadCaseNo" @click="row.edit = true" style="margin-left: 5px">
+							<i class="el-icon-edit" />
+						</el-link>
+					</template>
 				</template>
 			</el-table-column> -->
-      <el-table-column
-        v-for="(value, key) in headers"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
+			<el-table-column
+				v-for="(value, key) in headers"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
 				:formatter="formatter"
-        :sortable="value.sortable"
-      >
+				:sortable="value.sortable"
+			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
+					<span v-else-if="[ 'BType', 'BrokeType' ].includes(column.property)">
+						<span v-if="row.edit">
+							<el-select v-model.number="row[column.property]">
+								<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+							</el-select>
+							<el-button type="text" @click="rowActive = row; setResult();">
+								<i class="el-icon-success" />
+							</el-button>
+							<el-button type="text" @click="row.edit = false; getList()">
+								<i class="el-icon-error" />
+							</el-button>
+						</span>
+						<span v-else>
+							<span>{{ formatter(row, column) }}</span>
+							<el-link @click="row.edit = true" style="margin-left: 5px">
+								<i class="el-icon-edit" />
+							</el-link>
+						</span>
+					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
@@ -230,14 +249,14 @@
 					</template>
 				</template>
 			</el-table-column>
-    </el-table>
+		</el-table>
 
 		<el-dialog
-      :visible.sync="showConfirm"
-      width="300px"
-      :show-close="false"
-      center
-    >	
+			:visible.sync="showConfirm"
+			width="300px"
+			:show-close="false"
+			center
+		>	
 			<span slot="title">確認提交 {{ rowActive.UploadCaseNo }}的抽查結果？</span>
 			<div>來源案號: {{ rowActive.CaseNo }}</div>
 			<div>抽查結果: <span :style="rowActive.resultType == 1 ? 'color: #67C23A' : 'color: #F56C6C'">{{ options.resultType[rowActive.resultType] }}</span></div>
@@ -246,27 +265,27 @@
 					<el-option v-for="( name, key ) in options.reasonType" :key="key" :label="name" :value="Number(key)" />
 				</el-select>
 			</div>
-      <span slot="footer" class="footer-btns">
-        <el-button @click="showConfirm = false; getList();">取消</el-button>
-        <el-button type="primary" @click="setResult()">確定</el-button>
-      </span>
-    </el-dialog>
-  </div>
+			<span slot="footer" class="footer-btns">
+				<el-button @click="showConfirm = false; getList();">取消</el-button>
+				<el-button type="primary" @click="setResult()">確定</el-button>
+			</span>
+		</el-dialog>
+	</div>
 </template>
 
 <script>
 import moment from "moment";
-import { getCaseList, setCaseList } from "@/api/PI";
+import { getTypeMap, getCaseList, setCaseList } from "@/api/PI";
 
 export default {
-  name: "PICaseList",
-  data() {
-    return {
-      loading: false,
-      timeTabId: 1,
-      dateTimePickerVisible: false,
+	name: "PICaseList",
+	data() {
+		return {
+			loading: false,
+			timeTabId: 1,
+			dateTimePickerVisible: false,
 			showConfirm: false,
-      pickerOptions: {
+			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
 					{
@@ -295,18 +314,18 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
-      searchDate: moment().startOf("d").subtract(1, "d"),
-      searchRange: "",
+			searchDate: moment().startOf("d").subtract(1, "d"),
+			searchRange: "",
 			listQuery: {
 				dist: 104
-      },
+			},
 			resultHeader: {
 				UploadCaseNo: {
 					name: "案件編號",
 					sortable: true
 				}
 			},
-      headers: {
+			headers: {
 				UploadCaseNo: {
 					name: "案件編號",
 					sortable: true
@@ -315,7 +334,7 @@ export default {
 					name: "成案日期",
 					sortable: false,
 				},
-				DName: {
+				DeviceType: {
 					name: "設施類型",
 					sortable: true
 				},
@@ -327,17 +346,21 @@ export default {
 					name: "來源案號",
 					sortable: true
 				},
-				CaseType: {
-					name: "損壞情況",
+				// CaseType: {
+				// 	name: "損壞情況",
+				// 	sortable: false
+				// },
+				BType: {
+					name: "損壞態樣",
 					sortable: false
 				},
-				CaseStatus: {
-					name: "損壞狀況",
+				BrokeType: {
+					name: "損壞程度",
 					sortable: false
 				}
-      },
+			},
 			resultList: [],
-      list: [],
+			list: [],
 			rowActive: {},
 			districtList: {
 				// 100: {
@@ -390,6 +413,13 @@ export default {
 				// }
 			},
 			options: {
+				DeviceType: {},
+				BType: {},
+				BrokeType: {
+					1: "輕度",
+					2: "中度",
+					3: "重度"
+				},
 				resultType: {
 					1: "合格",
 					2: "不合格"
@@ -399,8 +429,8 @@ export default {
 					2: "損壞程度與現況不符(PI2.2)"
 				},
 			}
-    };
-  },
+		};
+	},
 	computed: {
 		reasonTypeArr() {
 			let reasonTypeArr = { 1: 0, 2: 0 };
@@ -416,31 +446,35 @@ export default {
 			return { 
 				SV: { 
 					AC: { 
-						check: this.list.filter(l => l.SVCheck != 0 && l.DName.indexOf("AC") != -1).length, 
+						check: this.list.filter(l => l.SVCheck != 0 && l.DeviceType == 1).length, 
 						total: Math.round(this.list.length * 0.15 * 0.6, 0) 
 					}, 
 					facility: { 
-						check: this.list.filter(l => l.SVCheck != 0 && l.DName.indexOf("AC") == -1).length, 
+						check: this.list.filter(l => l.SVCheck != 0 && l.DeviceType != 1).length, 
 						total: Math.round(this.list.length * 0.15 * 0.4, 0) 
 					} 
 				}, 
 				Organ: { 
 					AC: { 
-						check: this.list.filter(l => l.OrganCheck != 0 && l.DName.indexOf("AC") != -1).length, 
+						check: this.list.filter(l => l.OrganCheck != 0 && l.DeviceType == 1).length, 
 						total: Math.round(this.list.length * 0.05 * 0.6, 0) 
 					}, 
 					facility: {
-						check: this.list.filter(l => l.OrganCheck != 0 && l.DName.indexOf("AC") == -1).length, 
+						check: this.list.filter(l => l.OrganCheck != 0 && l.DeviceType != 1).length, 
 						total: Math.round(this.list.length * 0.05 * 0.4, 0) 
 					} 
 				} 
 			};
 		}
 	},
-	mounted() {
+	created() {
+		getTypeMap().then(response => {
+			this.options.DeviceType = response.data.DeviceTypeMap;
+			this.options.BType = response.data.BTypeMap;
+		});
 		this.getList();
 	},
-  methods: {
+	methods: {
 		dateShortcuts(index) {
 			this.timeTabId = index;
 
@@ -463,33 +497,34 @@ export default {
 			}
 			this.getList();
 		},
-    getList() {
-      this.loading = true;
+		getList() {
+			this.loading = true;
 
-      let date = moment(this.searchDate).format("YYYY-MM-DD");
-      this.searchRange = date;
+			let date = moment(this.searchDate).format("YYYY-MM-DD");
+			this.searchRange = date;
 
-      this.list = [];
-      getCaseList({
-        timeStart: date,
-        timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
-      }).then((response) => {
-        if (response.data.list.length == 0) {
-          this.$message({
-            message: "查無資料",
-            type: "error",
-          });
-        } else {
-          this.list = response.data.list;
+			this.list = [];
+			getCaseList({
+				timeStart: date,
+				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list;
 					this.resultList = response.data.resultList;
 					this.list.forEach(l => {
 						this.$set(l, "showSVCheck", false);
 						this.$set(l, "showOrganCheck", false);
+						this.$set(l, "edit", false);
 					})
-        }
-        this.loading = false;
-      }).catch(err => { this.loading = false; });
-    },
+				}
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		},
 		beforeSetResult(row, columnName, result) {
 			row[`show${columnName}`] = false;
 			this.rowActive = row;
@@ -507,6 +542,8 @@ export default {
 			const OrganCheck = this.rowActive.OrganCheck == 2 ? Number(`${this.rowActive.OrganCheck}${this.rowActive.ReasonType}`) : this.rowActive.OrganCheck;
 
 			setCaseList( this.rowActive.id, {
+				BType: this.rowActive.BType,
+				BrokeType: this.rowActive.BrokeType,
 				SVCheck: SVCheck,
 				OrganCheck: OrganCheck
 			}).then(response => {
@@ -523,20 +560,26 @@ export default {
 			})
 		},
 		formatter(row, column) {
-      if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
+			if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
+			else if(column.property == 'BType') return this.options.BType[row[column.property]];
+			else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
-      else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
-    },
-    formatTime(time) {
-      return moment(time).format("YYYY/MM/DD");
-    },
-    handleDownload() {
-      const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
-      const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
-      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
-      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
+			else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
+		},
+		formatTime(time) {
+			return moment(time).format("YYYY/MM/DD");
+		},
+		handleDownload() {
+			const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
+			const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
+			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
+			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
 			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
 				l.CaseDate = this.formatTime(l.CaseDate);
+				l.DeviceType = this.options.DeviceType[l.DeviceType];
+				l.BType = this.options.BType[l.BType];
+				l.BrokeType = this.options.BrokeType[l.BrokeType];
 				const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
 				if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];
 				else l.Note = "";
@@ -545,19 +588,19 @@ export default {
 				l.OrganCheck = l.OrganCheck == 0 ? "" : l.OrganCheck == 1 ? "V" : "X";
 				return l
 			}) 
-      const data = this.formatJson(filterVal, dataList);
+			const data = this.formatJson(filterVal, dataList);
 
-      import("@/vendor/Export2Excel").then((excel) => {
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-        });
-      });
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) => filterVal.map((j) => v[j]));
-    },
-  },
+			import("@/vendor/Export2Excel").then((excel) => {
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
+				});
+			});
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		},
+	},
 };
 </script>
 

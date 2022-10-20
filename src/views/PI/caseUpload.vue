@@ -1,7 +1,7 @@
 <template>
-  <div class="app-container PI-case-upload" v-loading="loading">
-    <h2>案件上傳</h2>
-    <div class="filter-container">
+	<div class="app-container PI-case-upload" v-loading="loading">
+		<h2>案件上傳</h2>
+		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
@@ -34,13 +34,13 @@
 				>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
 				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			</span>
-      <!-- <el-button
-        class="filter-item"
-        type="info"
-        icon="el-icon-document"
-        :circle="screenWidth<567"
-        @click="handleDownload"
-      >輸出報表</el-button> -->
+			<!-- <el-button
+				class="filter-item"
+				type="info"
+				icon="el-icon-document"
+				:circle="screenWidth<567"
+				@click="handleDownload"
+			>輸出報表</el-button> -->
 
 			<el-upload v-if="!alreadyCreate" :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
 				<!-- <i class="el-icon-upload" />
@@ -50,9 +50,9 @@
 			<transition name="el-fade-in">
 				<el-button v-if="csvFileList.length > 0" type="success" @click="showConfirm = true">建立列表</el-button>
 			</transition>
-    </div>
-    
-    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+		</div>
+		
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
 		<aside>
 			<span v-if="this.caseList.length != 0"> 案件數: {{ this.caseList.length }} </span>
@@ -113,7 +113,7 @@
 						:sortable="value.sortable"
 					>
 						<template slot-scope="{ row, column }">
-							<template v-if="[ 'CaseNo', 'DName' ].includes(column.property)">
+							<span v-if="[ 'CaseNo' ].includes(column.property)">
 								<template v-if="row.edit">
 									<el-input
 										v-model="row[column.property]"
@@ -133,7 +133,12 @@
 										<i class="el-icon-edit" />
 									</el-link>
 								</template>
-							</template>
+							</span>
+							<span v-else-if="[ 'DeviceType', 'BType', 'BrokeType' ].includes(column.property)">
+								<el-select v-model.number="row[column.property]">
+									<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+								</el-select>
+							</span>
 							<span v-else>{{ formatter(row, column) }}</span>
 						</template>
 					</el-table-column>
@@ -148,16 +153,16 @@
 		<br>
 
 		<!-- 案件列表 -->
-    <el-table
-      empty-text="目前沒有資料"
-      :data="caseList"
-      border
-      fit
-      highlight-current-row
-      :header-cell-style="{'background-color': '#F2F6FC'}"
-      stripe
-      style="width: 100%"
-    >
+		<el-table
+			empty-text="目前沒有資料"
+			:data="caseList"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
 			<el-table-column label="序號" type="index" width="55" align="center" />
 			<!-- <el-table-column label="案件編號" prop="UploadCaseNo" :sortable="true" align="center">
 				<template slot-scope="{ row }">
@@ -167,62 +172,62 @@
 							size="mini"
 							style="width: 100px"
 						/>
-            <el-button type="text" @click="editCase(row)">
-              <i class="el-icon-success" />
-            </el-button>
-            <el-button type="text" @click="row.edit = false; getList()">
-              <i class="el-icon-error" />
-            </el-button>
-          </template>
-          <template v-else>
-            <span>{{ row.UploadCaseNo || "-" }}</span>
-            <el-link v-if="!row.UploadCaseNo" @click="row.edit = true" style="margin-left: 5px">
-              <i class="el-icon-edit" />
-            </el-link>
-          </template>
+						<el-button type="text" @click="editCase(row)">
+							<i class="el-icon-success" />
+						</el-button>
+						<el-button type="text" @click="row.edit = false; getList()">
+							<i class="el-icon-error" />
+						</el-button>
+					</template>
+					<template v-else>
+						<span>{{ row.UploadCaseNo || "-" }}</span>
+						<el-link v-if="!row.UploadCaseNo" @click="row.edit = true" style="margin-left: 5px">
+							<i class="el-icon-edit" />
+						</el-link>
+					</template>
 				</template>
 			</el-table-column> -->
-      <el-table-column
-        v-for="(value, key) in headers"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
+			<el-table-column
+				v-for="(value, key) in headers"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
 				:formatter="formatter"
-        :sortable="value.sortable"
-      />
-    </el-table>
+				:sortable="value.sortable"
+			/>
+		</el-table>
 
 		<el-dialog
-      :visible.sync="showConfirm"
-      width="300px"
-      :show-close="false"
-      center
-    >	
+			:visible.sync="showConfirm"
+			width="300px"
+			:show-close="false"
+			center
+		>	
 			<span slot="title">確認建立{{ searchRange }}案件列表</span>
 			<h3>案件數: {{ caseList.length + tableSelect.length }}件</h3>
-      <span slot="footer" class="footer-btns">
-        <el-button @click="showConfirm = false; getList();">取消</el-button>
-        <el-button type="primary" @click="createList()">確定</el-button>
-      </span>
-    </el-dialog>
+			<span slot="footer" class="footer-btns">
+				<el-button @click="showConfirm = false; getList();">取消</el-button>
+				<el-button type="primary" @click="createList()">確定</el-button>
+			</span>
+		</el-dialog>
 
-  </div>
+	</div>
 </template>
 
 <script>
 import moment from "moment";
 import jschardet from "jschardet";
 import iconv from "iconv-lite";
-import { getCaseList, addCaseList } from "@/api/PI";
+import { getTypeMap, getCaseList, addCaseList } from "@/api/PI";
 
 export default {
-  name: "PICaseUpload",
-  data() {
-    return {
-      loading: false,
-      timeTabId: 1,
-      dateTimePickerVisible: false,
+	name: "PICaseUpload",
+	data() {
+		return {
+			loading: false,
+			timeTabId: 1,
+			dateTimePickerVisible: false,
 			showConfirm: false,
 			alreadyCreate: false,
 			pickerOptions: {
@@ -254,12 +259,12 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
-      searchDate: moment().startOf("d").subtract(1, "d"),
-      searchRange: "",
+			searchDate: moment().startOf("d").subtract(1, "d"),
+			searchRange: "",
 			listQuery: {
 				dist: 104
-      },
-      headers: {
+			},
+			headers: {
 				UploadCaseNo: {
 					name: "案件編號",
 					sortable: true
@@ -268,7 +273,7 @@ export default {
 					name: "查報日期",
 					sortable: false,
 				},
-				DName: {
+				DeviceType: {
 					name: "設施類型",
 					sortable: false
 				},
@@ -284,15 +289,19 @@ export default {
 					name: "損壞情況",
 					sortable: false
 				},
-				CaseStatus: {
-					name: "損壞狀況",
+				BType: {
+					name: "損壞態樣",
+					sortable: false
+				},
+				BrokeType: {
+					name: "損壞程度",
 					sortable: false
 				}
-      },
-			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情況", "損壞狀況" ],
-			apiHeader: [ "UploadCaseNo", "CaseDate", "DName", "CaseName", "CaseNo", "CaseType", "CaseStatus" ],
+			},
+			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情況" ],
+			apiHeader: [ "UploadCaseNo", "CaseSN", "CaseDate", "DeviceType", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType" ],
 			tableSelect: [],
-      list: [],
+			list: [],
 			csvData: [],
 			csvFileList: [],
 			csvRepeatObj: {},
@@ -349,9 +358,18 @@ export default {
 				// 	"name": "文山區",
 				// 	"engName": "Wenshan"
 				// }
+			},
+			options: {
+				DeviceType: {},
+				BType: {},
+				BrokeType: {
+					1: "輕度",
+					2: "中度",
+					3: "重度"
+				}
 			}
-    };
-  },
+		};
+	},
 	computed: {
 		caseList() {
 			const errArr = this.caseErrList.map(l => l.CaseNo.length > 0 ? l.CaseNo : l.UploadCaseNo );
@@ -384,10 +402,14 @@ export default {
 			return caseErrList.sort((a, b) => Number(a.UploadCaseNo) - Number(b.UploadCaseNo))
 		}
 	},
-	mounted() {
+	created() {
+		getTypeMap().then(response => {
+			this.options.DeviceType = response.data.DeviceTypeMap;
+			this.options.BType = response.data.BTypeMap;
+		});
 		this.getList();
 	},
-  methods: {
+	methods: {
 		dateShortcuts(index) {
 			this.timeTabId = index;
 
@@ -410,37 +432,42 @@ export default {
 			}
 			this.getList();
 		},
-    getList() {
-      this.loading = true;
+		getList() {
+			this.loading = true;
 
-      let date = moment(this.searchDate).format("YYYY-MM-DD");
-      this.searchRange = date;
+			let date = moment(this.searchDate).format("YYYY-MM-DD");
+			this.searchRange = date;
 
-      this.list = [];
+			this.list = [];
 			this.csvRepeatObj = {};
 			this.caseMinus = { 
 				list: [],
 				csv: []
 			};
-      getCaseList({
+			getCaseList({
 				isList: false,
-        timeStart: date,
-        timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
-      }).then(response => {
-        if (response.data.list.length == 0) {
-          this.$message({
-            message: "查無資料",
-            type: "error",
-          });
-        } else {
-          this.list = response.data.list;
+				timeStart: date,
+				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
+			}).then(response => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list;
+					this.list.forEach(l => {
+						l.DeviceType = Number(l.DeviceType);
+						l.BType = Number(l.BType);
+						l.BrokeType = Number(l.BrokeType);
+					})
 					this.alreadyCreate = !response.data.isRMDB;
 					if(this.alreadyCreate) this.handleRemove();
-        }
+				}
 				if(this.csvFileList.length > 0) this.checkCsv();
-        this.loading = false;
-      }).catch(err => { this.loading = false; });
-    },
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		},
 		caseFilterList(list) {
 			// console.log(list);
 			let caseFilterList = [];
@@ -473,25 +500,35 @@ export default {
 				this.getList();
 			})
 		},
-		handleSelectionChange(val) {
-			val.forEach(v => {
-				if(!v.DName || v.DName.length == 0) {
+		async handleSelectionChange(value) {
+			const delay = (n) => new Promise( r => setTimeout(r, n*1000));
+			for(const val of value) {
+				let msgArr = [];
+				for(const column in this.headers) {
+					if(!val[column]) msgArr.push(`「${this.headers[column].name}」`);
+				}
+				if(msgArr.length > 0) {
 					this.$message({
 						type: "warning",
-						message: `請填入${v.UploadCaseNo}的「設施類型」`
+						message: `請填入${val.UploadCaseNo}的${msgArr.join("、")}`
 					});
+
+					await delay(0.5);
 				}
-			})
+			}
 			this.tableSelect = val;
 		},
 		formatter(row, column) {
-      if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
+			if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
+			else if(column.property == 'BType') return this.options.BType[row[column.property]];
+			else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
-      else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
-    },
-    formatTime(time) {
-      return moment(time).format("YYYY/MM/DD");
-    },
+			else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
+		},
+		formatTime(time) {
+			return moment(time).format("YYYY/MM/DD");
+		},
 		readCSV(file, fileList) {
 			if(fileList.length > 1) fileList.shift();
 			this.csvFileList = JSON.parse(JSON.stringify(fileList));
@@ -582,7 +619,6 @@ export default {
 				let csvRepeat = Array.from({length: this.csvData.length}, () => false);
 				this.list.forEach(l => {
 					l.CaseType = l.BTName;
-					l.CaseStatus = "觀察";
 
 					this.csvData.forEach((data, index) => {
 						if(csvRepeat[index]) return;
@@ -599,7 +635,6 @@ export default {
 							l.UploadCaseNo = data["案件編號"];
 							l.CaseName = data["查報地點"];
 							l.CaseType = data["損壞情況"];
-							l.CaseStatus = data["損壞狀況"];
 
 							csvRepeat[index] = true;
 						}
@@ -615,24 +650,24 @@ export default {
 			this.$refs.uploadFile.clearFiles();
 			this.getList();
 		},
-    handleDownload() {
-      let tHeader = Object.values(this.headers);
-      let filterVal = Object.keys(this.headers);
-      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-      let data = this.formatJson(filterVal, this.list);
+		handleDownload() {
+			let tHeader = Object.values(this.headers);
+			let filterVal = Object.keys(this.headers);
+			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+			let data = this.formatJson(filterVal, this.list);
 
-      import("@/vendor/Export2Excel").then((excel) => {
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-        });
-      });
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) => filterVal.map((j) => v[j]));
-    },
-  },
+			import("@/vendor/Export2Excel").then((excel) => {
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
+				});
+			});
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		},
+	},
 };
 </script>
 
