@@ -275,7 +275,8 @@
 
 <script>
 import moment from "moment";
-import { getTypeMap, getCaseList, setCaseList } from "@/api/PI";
+import { getTypeMap } from "@/api/type";
+import { getCaseList, setCaseList } from "@/api/PI";
 
 export default {
 	name: "PICaseList",

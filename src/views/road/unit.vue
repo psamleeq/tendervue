@@ -93,23 +93,23 @@
 <script>
 import moment from "moment";
 import { getRoadUnit } from "@/api/road";
-import TimePicker from "@/components/TimePicker";
+// import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 
 export default {
 	name: "roadUnit",
-	components: { TimePicker, Pagination },
+	components: { Pagination },
 	data() {
 		return {
 			loading: false,
-			timeTabId: moment().year(),
-			dateTimePickerVisible: false,
+			// timeTabId: moment().year(),
+			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [
-				moment().month(5).startOf("month").toDate(),
-				moment().endOf("year").toDate(),
-			],
-			searchRange: "",
+			// daterange: [
+			// 	moment().month(5).startOf("month").toDate(),
+			// 	moment().endOf("year").toDate(),
+			// ],
+			// searchRange: "",
 			listQuery: {
 				distList: [],
 				roadName: "",

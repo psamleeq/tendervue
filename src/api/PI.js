@@ -1,14 +1,5 @@
 import request from '@/utils/request';
 
-// 類型Map
-export function getTypeMap(query) {
-	return request({
-		url: '/PI/caseTypeMap',
-		method: 'get',
-		params: query
-	})
-}
-
 // 成效指標 - 案件列表
 export function getCaseList(query) {
 	return request({

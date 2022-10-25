@@ -220,7 +220,8 @@
 import moment from "moment";
 import jschardet from "jschardet";
 import iconv from "iconv-lite";
-import { getTypeMap, getCaseList, addCaseList } from "@/api/PI";
+import { getTypeMap } from "@/api/type";
+import { getCaseList, addCaseList } from "@/api/PI";
 
 export default {
 	name: "PICaseUpload",

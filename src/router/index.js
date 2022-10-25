@@ -1,17 +1,17 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import Vue from 'vue';
+import Router from 'vue-router';
 
-Vue.use(Router)
+Vue.use(Router);
 
 /* Layout */
-import Layout from '@/layout'
+import Layout from '@/layout';
 
 /* Router Modules */
-import roadRouter from './modules/road'
-import PCIRouter from './modules/PCI'
-import PIRouter from './modules/PI'
-import otherRouter from './modules/other'
-import carRouter from './modules/car'
+import roadRouter from './modules/road';
+import PCIRouter from './modules/PCI';
+import PIRouter from './modules/PI';
+import otherRouter from './modules/other';
+import carRouter from './modules/car';
 
 /**
  * Note: sub-menu only appear when route children.length >= 1

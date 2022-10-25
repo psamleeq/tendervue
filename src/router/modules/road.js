@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const roadRouter = {
 	path: '/road',
 	component: Layout,
-	redirect: '/road/route',
+	redirect: '/road/unit',
 	name: 'road',
 	meta: {
 		title: '道路管理',
