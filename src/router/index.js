@@ -31,6 +31,7 @@ import carRouter from './modules/car';
     affix: true                  if set true, the tag will affix in the tags-view
     breadcrumb: false            if set false, the item will hidden in breadcrumb(default is true)
     activeMenu: '/example/list'  if set path, the sidebar will highlight the path you set
+		vTag: 'Alpha'                顯示「Alpha」、「Beta」測試版本標籤
 		isNew: true                  設成true，顯示「NEW!!」標籤
   }
  */
