@@ -9,15 +9,14 @@ const roadRouter = {
 	name: 'road',
 	meta: {
 		title: '道路管理',
-		icon: 'road',
-		isNew: true 
+		icon: 'road'
 	},
 	children: [
 		{
 			path: 'unit',
 			component: () => import('@/views/road/unit'),
 			name: 'unit',
-			meta: { title: '道路單元', isNew: true }
+			meta: { title: '道路單元', vTag: 'Alpha' }
 		}
 	]
 }

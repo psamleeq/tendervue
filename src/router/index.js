@@ -8,6 +8,7 @@ import Layout from '@/layout';
 
 /* Router Modules */
 import roadRouter from './modules/road';
+import costRouter from './modules/cost';
 import PCIRouter from './modules/PCI';
 import PIRouter from './modules/PI';
 import otherRouter from './modules/other';
@@ -95,6 +96,7 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
 	roadRouter,
+	costRouter,
 	PCIRouter,
 	PIRouter,
 	otherRouter,
