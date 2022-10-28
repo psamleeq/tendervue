@@ -9,7 +9,8 @@ const roadRouter = {
 	name: 'road',
 	meta: {
 		title: '道路管理',
-		icon: 'road'
+		icon: 'road', 
+		vTag: 'Alpha'
 	},
 	children: [
 		{
@@ -17,6 +18,12 @@ const roadRouter = {
 			component: () => import('@/views/road/unit'),
 			name: 'unit',
 			meta: { title: '道路單元', vTag: 'Alpha' }
+		},
+		{
+			path: 'unitGen',
+			component: () => import('@/views/road/unitGen'),
+			name: 'unitGen',
+			meta: { title: '維護單元產生', vTag: 'Alpha' }
 		}
 	]
 }

@@ -84,6 +84,11 @@
 				:formatter="formatter"
 				:sortable="value.sortable"
 			/>
+			<el-table-column label="操作" align="center">
+				<template slot-scope="{ row }">
+					<el-button type="primary" plain size="mini" round @click="showMap(row)">切分</el-button>
+				</template>
+			</el-table-column>
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
@@ -332,7 +337,13 @@ export default {
 		this.getList();
 	},
 	methods: {
-		async getList() {
+		showMap(row) {
+			this.$router.push({
+				path: "/road/unitGen",
+				query: { roadId: row.RoadId },
+			});
+		},
+		getList() {
 			this.loading = true;
 
 			// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");

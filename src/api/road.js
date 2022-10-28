@@ -7,3 +7,11 @@ export function getRoadUnit(query) {
 		params: query
 	})
 }
+
+export function getRoadUnitGeo(query) {
+	return request({
+		url: '/road/unitGeo',
+		method: 'get',
+		params: query
+	})
+}
