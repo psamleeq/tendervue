@@ -440,13 +440,11 @@ export default {
 					})
 
 					const bounds = new google.maps.LatLngBounds();
-					paths.forEach(position => {
-						bounds.extend(position);
-					});
+					paths.forEach(position => bounds.extend(position));
 					this.map.fitBounds(bounds);
 
-					this.markers.start.setPosition(paths[1]);
-					this.markers.end.setPosition(paths[paths.length-1]);
+					this.markers.start.setPosition(paths[paths.length-1]);
+					this.markers.end.setPosition(paths[0]);
 					for(const marker of Object.values(this.markers)) marker.setMap(this.map);
 				}
 				this.loading = false;

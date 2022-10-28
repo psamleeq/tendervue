@@ -78,7 +78,7 @@
 					:header-cell-style="{'background-color': '#F2F6FC'}"
 					stripe
 					style="width: 100%"
-					@selection-change="handleSelectionChange">
+					@selection-change="handleSelectionChange"
 				>
 					<el-table-column type="selection" width="55" align="center" />
 					<!-- <el-table-column label="案件編號" prop="UploadCaseNo" :sortable="true" align="center">
