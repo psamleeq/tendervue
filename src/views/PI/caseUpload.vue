@@ -50,7 +50,7 @@
 			<transition name="el-fade-in">
 				<el-button v-if="csvFileList.length > 0" type="success" @click="showConfirm = true">建立列表</el-button>
 			</transition>
-			<el-link icon="el-icon-download" href="/demo/220915.csv" target="_blank">CSV範例</el-link>
+			<el-button type="text" @click="showDemo = true">CSV範例</el-button>
 		</div>
 		
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -213,6 +213,11 @@
 			</span>
 		</el-dialog>
 
+		<el-dialog :visible.sync="showDemo" width="1110px" center>
+			<span slot="title">220915.csv (<el-link href="/demo/220915.csv" target="_blank">下載<i class="el-icon-download" /></el-link>)</span>
+			<iframe width="100%" height="600" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSENg_DyEurfd0ZDBFugZTBSTNyCJrUe2xxliAhrXYO4AIeHBpNkTjiQAmQgthjCLGZPxplxfF-xSAH/pubhtml?gid=1382937779&single=true&widget=false&headers=false&chrome=false" />
+		</el-dialog>
+
 	</div>
 </template>
 
@@ -231,6 +236,7 @@ export default {
 			timeTabId: 1,
 			dateTimePickerVisible: false,
 			showConfirm: false,
+			showDemo: false,
 			alreadyCreate: false,
 			pickerOptions: {
 				firstDayOfWeek: 1,
@@ -551,9 +557,10 @@ export default {
 					// const fileString = evt.target.result;
 					const buffer = Buffer.from(evt.target.result);
 					const type = jschardet.detect(buffer);
+					// console.log(type);
 					const fileString = iconv.decode(buffer, type.encoding);
 
-					//轉乘array
+					//轉成array
 					this.csvData = this.csvToArray(fileString);
 					this.checkCsv();
 				}
