@@ -53,8 +53,8 @@
 						</template>
 						<el-row v-for="(point, index) in line.points" :key="`point_${index}`" type="flex" justify="center" align="middle">
 							<el-col :span="6">
-								<el-checkbox-group v-model="selectPt[id]" style="display: inline-flex; width: 100%;" @change="resetLines">
-									<el-checkbox style="margin: auto" :label="index" :key="`checkBox_${index}`">{{ lineIndex(line.range[0], index) }}</el-checkbox>
+								<el-checkbox-group v-model="selectPt[id]" style="display: inline-flex; width: 100%;" @change="resetLines()">
+									<el-checkbox style="margin: auto" :label="lineIndex(line.range[0], index) " :key="`checkBox_${index}`">{{ lineIndex(line.range[0], index) }}</el-checkbox>
 								</el-checkbox-group>
 							</el-col>
 							<el-col :span="18">{{ [ point.lng, point.lat ] }}</el-col>
@@ -89,7 +89,7 @@
 					<el-row>
 						<el-col :span="18" class="info-title">切塊資訊</el-col>
 						<el-col :span="6">
-							<el-button type="success" size="small" icon="el-icon-check" style="margin-left: 5px" @click="null">送出</el-button>
+							<el-button type="success" size="small" icon="el-icon-check" style="margin-left: 5px" @click="setBlock()">送出</el-button>
 						</el-col>
 					</el-row>
 				</div>
@@ -136,7 +136,7 @@ const loaderOpt = {
 	libraries: ["places"],
 };
 
-// TODO: apiKey先關閉
+// apiKey
 if(!sessionStorage.devMode && process.env.VUE_APP_MAP_KEY != undefined) loaderOpt.apiKey = process.env.VUE_APP_MAP_KEY;
 const loader = new Loader(loaderOpt);
 
@@ -168,6 +168,7 @@ export default {
 			},
 			selectPt: {},
 			selectBlock: [],
+			lineFilter: {},
 			headersInfo: {
 				road: {
 					roadName: "道路名稱",
@@ -193,16 +194,17 @@ export default {
 						width: 5
 					}
 				}
-			}
+			},
+			iconStyle: { }
 		};
 	},
 	computed: { },
 	watch: {
 		"listQuery.baseLineId"() {
-			for(const [ id, polyline ] of this.polyLines.entries()) {
+			for(const [ id, polyline ] of Object.entries(this.polyLines)) {
 				polyline.setOptions({ 
-					strokeColor: id+1 == this.listQuery.baseLineId ? this.options.line.base.color : this.options.line.others.color,
-					strokeWeight: id+1 == this.listQuery.baseLineId ? this.options.line.base.width : this.options.line.others.width,
+					strokeColor: id == this.listQuery.baseLineId ? this.options.line.base.color : this.options.line.others.color,
+					strokeWeight: id == this.listQuery.baseLineId ? this.options.line.base.width : this.options.line.others.width,
 				});
 			}
 		}
@@ -240,7 +242,7 @@ export default {
 			this.map = new google.maps.Map(this.$refs.map, {
 				center: location, // 中心點座標
 				zoom: 13, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
-				maxZoom: 20,
+				maxZoom: 30,
 				minZoom: 13,
 				/*
 					roadmap 顯示默認道路地圖視圖。
@@ -249,6 +251,7 @@ export default {
 					terrain 顯示基於地形信息的物理地圖。
 				*/
 				mapTypeId: "hybrid",
+				// mapTypeId: "roadmap",
 				fullscreenControl: false,
 				mapTypeControl: false,
 				streetViewControl: false,
@@ -268,7 +271,7 @@ export default {
 					},
 					{
 						elementType: "labels.text.stroke",
-						stylers: [{ color: "#242f3e" }]
+						stylers: [{ color: "#242F3E" }]
 					},
 					{
 						featureType: "administrative",
@@ -358,6 +361,25 @@ export default {
 				);
 				this.map.overlayMapTypes.push(labelsMapType);
 			}
+
+			// marker icon格式
+			this.iconStyle = {
+				placemark_circle: {
+					url: "http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png",
+					anchor: new google.maps.Point(15, 15),
+					scaledSize: new google.maps.Size(30, 30)
+				},
+				ylw_blank: {
+					url: "https://maps.google.com/mapfiles/kml/paddle/ylw-blank.png",
+					anchor: new google.maps.Point(15, 30),
+					scaledSize: new google.maps.Size(30, 30)
+				},
+				grn_pushpin: {
+					url: "https://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png",
+					anchor: new google.maps.Point(10, 35),
+					scaledSize: new google.maps.Size(35, 35)
+				}
+			}
 		},
 		getList() {
 			if(!Number(this.listQuery.roadId)) {
@@ -369,7 +391,7 @@ export default {
 				this.loading = true;
 				this.clearAll();
 				this.markers = [];
-				this.polyLines = [];
+				this.polyLines = {};
 				this.$router.push({ query: { roadId: this.listQuery.roadId }});
 
 				getRoadUnitGeo({ roadId: this.listQuery.roadId }).then((response) => {
@@ -427,26 +449,11 @@ export default {
 				}).catch(err => this.loading = false);
 			}
 		},
+		setBlock() {
+			TODO: 單元存入資料庫
+		},
 		createMarkers() {
 			// 建立端點
-			const wht_blank =  {
-				url: "https://maps.google.com/mapfiles/kml/paddle/wht-blank.png",
-				anchor: new google.maps.Point(15, 30),
-				scaledSize: new google.maps.Size(30, 30)
-			};
-
-			const ylw_blank =  {
-				url: "https://maps.google.com/mapfiles/kml/paddle/ylw-blank.png",
-				anchor: new google.maps.Point(15, 30),
-				scaledSize: new google.maps.Size(30, 30)
-			};
-
-			const grn_pushpin = {
-				url: "https://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png",
-				anchor: new google.maps.Point(10, 35),
-				scaledSize: new google.maps.Size(35, 35)
-			};
-
 			for(const [ index, point ] of this.boundaryJSON.coordinates[0].entries()) {
 				const [ lng, lat ] = point;
 				// if(index != 0) this.geoInfo.lines[this.geoInfo.lines.length-1].push({ lat, lng });
@@ -460,9 +467,10 @@ export default {
 						title: `${index}: ${JSON.stringify(point)}`,
 						index: index,
 						isPin: false,
+						isDel: false,
 						map: this.map,
 						position: { lat, lng },
-						icon: ylw_blank
+						icon: this.iconStyle.ylw_blank
 					})
 
 					marker.addListener('click', (event) => {
@@ -470,6 +478,7 @@ export default {
 
 						if(!marker.isPin) {
 							marker.isPin = true;
+							marker.isDel = false;
 							this.geoInfo.points.push({ index: marker.index, position: event.latLng.toJSON() });
 							marker.setLabel({
 								// text: `${this.geoInfo.points.length}`,
@@ -478,12 +487,34 @@ export default {
 								fontSize: '20px',
 								fontWeight: 'bold'
 							});
-							marker.setIcon(grn_pushpin);
+							marker.setIcon(this.iconStyle.grn_pushpin);
 						} else {
-							marker.isPin = false;
+							marker.isPin = marker.isDel = false;
 							marker.setLabel("");
 							this.geoInfo.points = this.geoInfo.points.filter(point => point.index != marker.index);
-							marker.setIcon(ylw_blank);
+							marker.setIcon(this.iconStyle.ylw_blank);
+						}
+						// this.infoWindow.setContent(description);
+						// this.infoWindow.setPosition(event.latLng);
+						// this.infoWindow.open(this.map);
+					});
+
+					marker.addListener('rightclick', (event) => {
+						// console.log(event);
+
+						if(!marker.isDel) {
+							marker.isDel = true;
+							marker.isPin = false;
+							this.selectPt = this.selectPt.filter(point => point.index != marker.index);
+							// this.geoInfo.points.push({ index: marker.index, position: event.latLng.toJSON() });
+							marker.setLabel("");
+							marker.setIcon(this.iconStyle.placemark_circle);
+						} else {
+							marker.isPin = marker.isDel = false;
+							marker.setLabel("");
+							this.selectPt.push(marker.index);
+							// this.geoInfo.points = this.geoInfo.points.filter(point => point.index != marker.index);
+							marker.setIcon(this.iconStyle.ylw_blank);
 						}
 						// this.infoWindow.setContent(description);
 						// this.infoWindow.setPosition(event.latLng);
@@ -496,8 +527,8 @@ export default {
 			// }
 		},
 		createLines() {
-			this.polyLines = [];
-			for(const polyline of this.polyLines) polyline.setMap(null);
+			this.polyLines = {};
+			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
 
 			if(this.geoInfo.points.length == 0 || this.geoInfo.points.length != 4) {
 				this.$message({
@@ -548,12 +579,12 @@ export default {
 					line.points = line.points.filter((point, index) => line.points.indexOf(point) == index);
 					line.len = this.calcLineLen(line.points);
 
-					this.$set(this.selectPt, String(id), Array.from({length: line.points.length}, (_, i) => i));
+					this.$set(this.selectPt, String(id), Array.from({length: line.points.length}, (_, i) => this.lineIndex(line.range[0], i)));
 				}
 
 				// 建立線段
 				for(const [ id, path ] of Object.entries(this.geoInfo.lines)) {
-					const polyLine = new google.maps.Polyline({
+					this.polyLines[id] = new google.maps.Polyline({
 						path: path.points,
 						geodesic: true,
 						strokeOpacity: 1,
@@ -562,21 +593,23 @@ export default {
 						map: this.map
 					});
 
-					this.polyLines.push(polyLine);
+					// this.polyLines.push(polyLine);
 				}
 			}
 		},
 		createBlocks() {
+			this.resetLines();
+
 			this.geoInfo.blocks = [];
 			this.selectBlock = [];
 			let splitPObj = {};
-			splitPObj[this.listQuery.baseLineId] = this.splitLine(this.geoInfo.lines[this.listQuery.baseLineId].points);
-			for(const id in this.geoInfo.lines) {
+			splitPObj[this.listQuery.baseLineId] = this.splitLine(this.lineFilter[this.listQuery.baseLineId].points);
+			for(const id in this.lineFilter) {
 				if (id == this.listQuery.baseLineId) continue;
-				splitPObj[id] = this.splitLine_Per(this.geoInfo.lines[id].points, splitPObj[this.listQuery.baseLineId]);
+				splitPObj[id] = this.splitLine_Per(this.lineFilter[id].points, splitPObj[this.listQuery.baseLineId]);
 			}
 			for(const [id, splitPList] of Object.entries(splitPObj)) console.log(`${id}: ${splitPList.length}`);
-			// console.log(splitPObj);
+			// console.log(JSON.parse(JSON.stringify(splitPObj)));
 
 			this.geoJSON_Split = this.getGeoJson(splitPObj);
 			// const geoJsonData = JSON.stringify(geoJson, null, 2);
@@ -617,11 +650,31 @@ export default {
 			this.$nextTick(() => this.$refs.blockTable.toggleAllSelection());
 		},
 		resetLines() {
+			this.lineFilter = JSON.parse(JSON.stringify(this.geoInfo.lines));
 
+			// 變更marker icon
+			this.markers.forEach(marker => {
+				// console.log(marker.index, this.selectPt[lineId]);
+				if(!marker.isPin && Object.values(this.selectPt).flat().includes(marker.index)) marker.setIcon(this.iconStyle.ylw_blank);
+				if(!marker.isPin && !Object.values(this.selectPt).flat().includes(marker.index))  marker.setIcon(this.iconStyle.placemark_circle);
+			});
+
+			Object.keys(this.geoInfo.lines).forEach(id => {
+				// 調整lines的點
+				const line = this.geoInfo.lines[id];
+				// console.log(id, line.points);
+				this.lineFilter[id].points = line.points.filter((_, i) => (this.selectPt[id].includes(this.lineIndex(line.range[0], i))));
+				// console.log(lineFilter[id].points);
+
+				// 變更線段
+				const path = this.lineFilter[id].points;
+				// console.log(id, path);
+				this.polyLines[id].setPath(path);
+			})
 		},
 		clearAll() {
 			this.map.data.forEach(feature => this.map.data.remove(feature));
-			for(const polyline of this.polyLines) polyline.setMap(null);
+			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
 			for(const markers of this.markers) markers.setMap(null);
 		},
 		// 計算線段長度
@@ -745,7 +798,7 @@ export default {
 
 			for (const [id, splitPList] of Object.entries(splitPObj)) {
 				if(id == this.listQuery.baseLineId) continue;
-				for (const [index, border] of this.splitBlock(splitPObj[this.listQuery.baseLineId], splitPList, this.geoInfo.lines[this.listQuery.baseLineId].points, this.geoInfo.lines[id].points).entries()) {
+				for (const [index, border] of this.splitBlock(splitPObj[this.listQuery.baseLineId], splitPList, this.lineFilter[this.listQuery.baseLineId].points, this.lineFilter[id].points).entries()) {
 					const area = calArea(border.flat());
 					let fillColor = "#90CAF9";
 					if(area < this.areaLimit[0] || area > this.areaLimit[1]) fillColor = "#EF5350";
@@ -846,7 +899,8 @@ export default {
 			color: #555
 			.el-card__body
 				max-height: 400px
-				overflow-y: scroll
+				overflow-x: hidden
+				overflow-y: auto
 			.info-title
 				font-weight: bold
 				margin-bottom: 5px
