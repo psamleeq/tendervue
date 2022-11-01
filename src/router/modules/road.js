@@ -24,6 +24,12 @@ const roadRouter = {
 			component: () => import('@/views/road/unitGen'),
 			name: 'unitGen',
 			meta: { title: '維護單元產生', vTag: 'Alpha' }
+		},
+		{
+			path: 'caseGeo',
+			component: () => import('@/views/road/case'),
+			name: 'caseGeo',
+			meta: { title: '鋪面缺失', vTag: 'Alpha' }
 		}
 	]
 }

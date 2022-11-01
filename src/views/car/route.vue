@@ -260,6 +260,8 @@ export default {
 				fullscreenControl: false,
 				mapTypeControl: false,
 				streetViewControl: false,
+				rotateControl: false,
+				tilt: 0,
 				styles: [
 					{
 						stylers: [{ visibility: "on" }],
