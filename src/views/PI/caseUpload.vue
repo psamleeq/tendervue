@@ -415,7 +415,7 @@ export default {
 			this.options.DeviceType = response.data.DeviceTypeMap;
 			this.options.BType = response.data.BTypeMap;
 		});
-		this.getList();
+		// this.getList();
 	},
 	methods: {
 		dateShortcuts(index) {
