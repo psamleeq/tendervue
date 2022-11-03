@@ -18,14 +18,20 @@
 		</el-card> -->
 
 		<el-card class="info-box left">
-			<el-row class="color-box" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%;`">
-				<el-col :span="10" style="padding-left: 5px">{{ String(info.caseName) || " - " }}</el-col>
-				<el-col :span="5">{{ info.total }}</el-col>
+			<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
+				<el-col :span="10" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
 				<el-col :span="5">
-					<el-switch v-model="selectCase[info.caseName].switch" @change="caseFilter()" />
+					<span v-if="selectCase[info.caseName].level == 0">{{ info.total }}</span>
+					<span v-else>{{ 
+						info.level.filter(l => l.caseLevel == options.levelMap[selectCase[info.caseName].level]).length > 0 ?
+						info.level.filter(l => l.caseLevel == options.levelMap[selectCase[info.caseName].level])[0].total : 0
+					}}</span>
+				</el-col>
+				<el-col :span="5">
+					<el-switch v-model="selectCase[info.caseName].switch" :active-color="info.color" @change="caseFilter()" />
 				</el-col>
 				<el-col :span="4">
-					<el-select v-model="selectCase[info.caseName].level" placeholder="請選擇" size="mini" popper-class="type-select" @change="caseFilter()">
+					<el-select v-model="selectCase[info.caseName].level" placeholder="請選擇" size="mini" popper-class="type-select" :disabled="!selectCase[info.caseName].switch" @change="caseFilter()">
 						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="options.levelMap[order]" />
 					</el-select>
 				</el-col>
@@ -543,7 +549,7 @@ export default {
 			// 	contentText += `<img src="https://img.bellsgis.com/images/casepic_o/${img}" style="object-fit: scale-down;">`
 			// }
 			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg" class="img" onerror="this.className='img hide-img'">`;
-			contentText += `<button type="button" id="info-del-btn" class="el-button el-button--default" style="height: 38px; width: 38px;"><i aria-hidden="true" class="el-icon-close" style="font-size: 20px; line-height: 40px; color: #EF5350;"></i></button>`;
+			contentText += `<button type="button" id="info-del-btn" class="el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">刪除</span></button>`;
 			contentText += `</div>`;
 			// console.log(contentText);
 			this.infoWindow.setContent(contentText);
@@ -604,8 +610,12 @@ export default {
 			padding: 2px
 			.color-box
 				line-height: 30px
-				color: white
-				margin-bottom: 2p
+				*
+					color: #C0C4CC
+				&.active *
+					color: white	
+			.el-switch .el-switch__core
+				border: 1px solid #DCDFE6 !important
 			.el-select
 				width: 38px
 				.el-input__inner
@@ -638,12 +648,14 @@ export default {
 				position: absolute
 				bottom: 25px
 				right: 30px
-				background-color: rgba(#fff, 0.3)
-				& i.el-icon-close
-					font-size: 30px
-					color: #EF5350
+				background-color: rgba(#EF5350, 0.3)
+				border-color: #EF5350
+				& .btn-text
 					position: absolute
 					top: 50%
 					left: 50%
 					transform: translate(-50%, -50%)
+					font-size: 14px
+					line-height: 20px
+					color: #EF5350
 </style>
