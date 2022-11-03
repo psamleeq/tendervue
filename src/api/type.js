@@ -1,5 +1,14 @@
 import request from '@/utils/request'
 
+// 區域Geo
+export function getDistGeo(query) {
+	return request({
+		url: '/type/unitZip',
+		method: 'get',
+		params: query
+	})
+}
+
 // 合約Map
 export function getDteamMap(query) {
 	return request({
