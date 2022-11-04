@@ -17,53 +17,80 @@
 					<span v-if="!node.isLeaf"> ({{ listQuery.distList.length }}) </span>
 				</template>
 			</el-cascader>
+
 			<div class="filter-item">
 				<el-tooltip effect="dark" content="不填為查詢全部" placement="bottom-end">
 					<el-input
 						v-model="listQuery.roadName"
+						type="textarea"
+						:rows="1"
+						:autosize="{ minRows: 2, maxRows: 2 }" 
 						placeholder="請輸入道路名稱，多個以「,」分隔"
-						style="width: 300px"
+						style="width: 500px"
 						@input="listQuery.roadName = listQuery.roadName.replace(/\s+/g, '')"
 					/>
 				</el-tooltip>
 			</div>
-			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
+		</div>
 
-			<div class="filter-item">
-				<el-tooltip effect="dark" content="填0為查詢全部" placement="bottom-end">
+		<div class="filter-container">
+			<div class="filter-item" style="margin-left: 12px">
+				<el-tooltip effect="dark" content="填0為不限制" placement="bottom-end">
 					<el-input
-						v-model="listQuery.width"
+						v-model.number="listQuery.width[0]"
 						type="number"
 						:min="0"
 						placeholder="公尺"
-						style="width: 180px"
-						@blur="() => { if (listQuery.width < 0) listQuery.width = 0; }"
+						style="width: 160px"
+						@input="() => { 
+							if (listQuery.width[0] < 0) listQuery.width[0] = 0; 
+							if (listQuery.width[0] >= listQuery.width[1]) listQuery.width[1] = listQuery.width[0];
+						}"
 					>
-						<el-select slot="prepend" v-model="listQuery.widthType">
+						<el-select slot="prepend" v-model="listQuery.widthType" popper-class="type-select">
+							<el-option v-for="(name, type) in widthTypeMap" :key="type" :label="name" :value="Number(type)" />
+						</el-select>
+					</el-input>
+				</el-tooltip>
+
+				<span style="margin: 0 12px"> - </span>
+
+				<el-tooltip effect="dark" content="填0為不限制" placement="bottom-end">
+					<el-input
+						v-model.number="listQuery.width[1]"
+						type="number"
+						:min="0"
+						placeholder="公尺"
+						style="width: 160px"
+						@input="() => {
+							if (listQuery.width[1] < 0) listQuery.width[1] = 0; 
+							if (listQuery.width[0] >= listQuery.width[1]) listQuery.width[1] = listQuery.width[0]; 
+						}"
+					>
+						<el-select slot="prepend" v-model="listQuery.widthType" popper-class="type-select">
 							<el-option v-for="(name, type) in widthTypeMap" :key="type" :label="name" :value="Number(type)" />
 						</el-select>
 					</el-input>
 				</el-tooltip>
 			</div>
 
-			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" style="margin-left: 40px" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button>
-
-			<div class="filter-item">
-				<div class="el-input-group">
-					<div class="el-input-group__prepend">
-						<el-checkbox v-model="allHeaders" :indeterminate="partHeaders">欄位</el-checkbox>
-					</div>
-					<el-checkbox-group class="el-input__inner column-filter-item" v-model="headersCheckVal">
-						<el-checkbox v-for="(value, key) in headersOpt" :key="key" :label="key">{{ value.name }}</el-checkbox>
-					</el-checkbox-group>
-				</div>
-			</div>
 		</div>
 
-		<h4 v-if="list.length != 0">道路單元數：{{ total }}</h4>
+		<el-divider />
 
+		<h4>道路單元數：{{ total }}</h4>
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+
+		<div class="el-input-group" style="margin-bottom: 10px">
+			<div class="el-input-group__prepend">
+				<el-checkbox v-model="allHeaders" :indeterminate="partHeaders">欄位</el-checkbox>
+			</div>
+			<el-checkbox-group class="el-input__inner column-filter-item" v-model="headersCheckVal" style="line-height: 15px">
+				<el-checkbox v-for="(value, key) in headersOpt" :key="key" :label="key">{{ value.name }}</el-checkbox>
+			</el-checkbox-group>
+		</div>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -98,7 +125,6 @@
 <script>
 import moment from "moment";
 import { getRoadUnit } from "@/api/road";
-// import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 
 export default {
@@ -107,20 +133,12 @@ export default {
 	data() {
 		return {
 			loading: false,
-			// timeTabId: moment().year(),
-			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			// daterange: [
-			// 	moment().month(5).startOf("month").toDate(),
-			// 	moment().endOf("year").toDate(),
-			// ],
-			// searchRange: "",
 			listQuery: {
 				distList: [],
 				roadName: "",
 				widthType: 1,
-				width: 0,
-				widthReal: 0,
+				width: [ 0, 0 ],
 				pageCurrent: 1,
 				pageSize: 20,
 			},
@@ -242,63 +260,7 @@ export default {
 					name: "文山區",
 					engName: "Wenshan",
 				},
-			},
-			// districtOpt: [
-			// 	{
-			// 		value: 0,
-			// 		label: "台北市",
-			// 		children: [
-			// 			{
-			// 				value: 100,
-			// 				label: "中正區"
-			// 			},
-			// 			{
-			// 				value: 103,
-			// 				label: "大同區"
-			// 			},
-			// 			{
-			// 				value: 104,
-			// 				label: "中山區"
-			// 			},
-			// 			{
-			// 				value: 105,
-			// 				label: "松山區"
-			// 			},
-			// 			{
-			// 				value: 106,
-			// 				label: "大安區"
-			// 			},
-			// 			{
-			// 				value: 108,
-			// 				label: "萬華區"
-			// 			},
-			// 			{
-			// 				value: 110,
-			// 				label: "信義區"
-			// 			},
-			// 			{
-			// 				value: 111,
-			// 				label: "士林區"
-			// 			},
-			// 			{
-			// 				value: 112,
-			// 				label: "北投區"
-			// 			},
-			// 			{
-			// 				value: 114,
-			// 				label: "內湖區"
-			// 			},
-			// 			{
-			// 				value: 115,
-			// 				label: "南港區"
-			// 			},
-			// 			{
-			// 				value: 116,
-			// 				label: "文山區"
-			// 			}
-			// 		]
-			// 	}
-			// ]
+			}
 		};
 	},
 	computed: {
@@ -434,25 +396,38 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-
+.type-select .el-select-dropdown__item
+	padding: 0 5px
+	text-align: center
 .road-unit
 	.filter-container
-		.el-select
-			width: 105px
+		.el-textarea .el-textarea__inner
+			resize: none
+			height: 62px !important
 		.el-input__inner
 			padding-left: 5px
 			text-align: center
+		.el-select
+			width: 85px
+			.el-input__inner
+				padding-left: 3px
+				padding-right: 10px
+			.el-input__suffix
+				right: 0
+				margin-right: -3px
+				transform: scale(0.7)
 		.filter-item
 			margin-right: 5px
+			vertical-align: middle
 			input[type=number]
 				padding: 0
 				overflow: hidden
 				&::-webkit-inner-spin-button
 					transform: scale(1.2, 1) translateX(-11%)
-			.el-input__inner.column-filter-item
-				width: auto
-				// max-width: 1200px
-				text-align: left
-				.el-checkbox
-					margin: 0 4px 0 10px
+	.el-input__inner.column-filter-item
+		width: auto
+		// max-width: 1200px
+		text-align: left
+		.el-checkbox
+			margin: 0 4px 0 10px
 </style>
