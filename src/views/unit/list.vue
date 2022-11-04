@@ -301,7 +301,7 @@ export default {
 	methods: {
 		showMap(row) {
 			this.$router.push({
-				path: "/road/unitGen",
+				path: "/unit/genMap",
 				query: { roadId: row.RoadId },
 			});
 		},
