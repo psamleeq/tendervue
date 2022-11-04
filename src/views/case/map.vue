@@ -37,6 +37,13 @@
 				</el-col>
 			</el-row>
 		</el-card>
+
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="img-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgUrls"
+		/>
 	</div>
 </template>
 
@@ -45,6 +52,7 @@ import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 import { getDistGeo } from "@/api/type"
 import { getRoadCaseGeo, setRoadCase } from "@/api/road";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -61,14 +69,16 @@ const loader = new Loader(loaderOpt);
 
 export default {
 	name: "roadCase",
-	components: { },
+	components: { ElImageViewer },
 	data() {
 		return {
 			loading: false,
+			showImgViewer: false,
 			screenWidth: window.innerWidth,
 			areaLimit: [139, 325],
 			map: null,
 			currCaseId: null,
+			imgUrls: [],
 			dataLayer: {},
 			infoWindow: null,
 			markers: [],
@@ -307,8 +317,11 @@ export default {
 
 			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 			this.infoWindow.addListener('domready', () => {
-				this.infoDelBtn = this.$el.querySelector("#map #info-del-btn");
-				if(this.infoDelBtn) this.infoDelBtn.addEventListener("click", this.removeCaseStatus);
+				const infoDelBtn = this.$el.querySelector("#map #info-del-btn");
+				if(infoDelBtn) infoDelBtn.addEventListener("click", this.removeCaseStatus);
+
+				const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
+				if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { this.showImgViewer = true });
 			})
 
 			getDistGeo().then(response => {
@@ -537,6 +550,7 @@ export default {
 		},
 		showCaseContent(props, position) {
 			this.currCaseId = props.caseId;
+			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg` ];
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.caseInfo) {
 				if(props[key]) {
@@ -549,8 +563,9 @@ export default {
 			// for(const img of event.feature.j.img) {
 			// 	contentText += `<img src="https://img.bellsgis.com/images/casepic_o/${img}" style="object-fit: scale-down;">`
 			// }
+			contentText += `<button type="button" id="info-del-btn" class="info-btn del el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">刪除</span></button>`;
 			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg" class="img" onerror="this.className='img hide-img'">`;
-			contentText += `<button type="button" id="info-del-btn" class="el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">刪除</span></button>`;
+			contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
 			contentText += `</div>`;
 			// console.log(contentText);
 			this.infoWindow.setContent(contentText);
@@ -626,6 +641,12 @@ export default {
 					color: #FFF
 				.el-input__suffix
 					display: none
+	.img-preview
+		width: 100%
+		.el-image-viewer__mask
+			opacity: 0.7
+		.el-icon-circle-close
+			color:  #FFF
 	#map
 		overflow: hidden
 		background: none !important
@@ -645,12 +666,18 @@ export default {
 				object-fit: scale-down
 				&.hide-img
 					display: none
-			#info-del-btn
+			.info-btn
 				position: absolute
-				bottom: 25px
 				right: 30px
-				background-color: rgba(#EF5350, 0.3)
-				border-color: #EF5350
+				&.del
+					top: 25px
+					background-color: rgba(#EF5350, 0.3)
+					border-color: #EF5350
+				&.scrn-full
+					padding: 0
+					bottom: 25px
+					background-color: rgba( #FFF, 0.3)
+					border-color:  #FFF
 				& .btn-text
 					position: absolute
 					top: 50%
@@ -659,4 +686,9 @@ export default {
 					font-size: 14px
 					line-height: 20px
 					color: #EF5350
+					&.el-icon-full-screen
+						color:  #FFF
+						line-height: 30px
+						font-size: 20px
+						width: 30px
 </style>
