@@ -513,6 +513,7 @@ export default {
 				});
 				return;
 			} 
+			this.$router.push({ query: { caseId: this.listQuery.caseId }});
 			let caseSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.caseId == this.listQuery.caseId))[0];
 			if(caseSpec == undefined ) {
 				this.$message({
