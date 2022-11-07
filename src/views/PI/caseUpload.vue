@@ -114,7 +114,11 @@
 						:sortable="value.sortable"
 					>
 						<template slot-scope="{ row, column }">
-							<span v-if="[ 'CaseNo' ].includes(column.property)">
+							<span v-if="[ 'UploadCaseNo' ].includes(column.property)">
+								<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
+								<span v-else> - </span>
+							</span>
+							<span v-else-if="[ 'CaseNo' ].includes(column.property)">
 								<template v-if="row.edit">
 									<el-input
 										v-model="row[column.property]"
@@ -196,7 +200,15 @@
 				align="center"
 				:formatter="formatter"
 				:sortable="value.sortable"
-			/>
+			>
+				<template slot-scope="{ row, column }">
+					<span v-if="[ 'UploadCaseNo' ].includes(column.property)">
+						<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
+						<span v-else> - </span>
+					</span>
+					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
+			</el-table-column>
 		</el-table>
 
 		<el-dialog
