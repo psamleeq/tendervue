@@ -61,7 +61,10 @@
 						<el-tab-pane v-for="(vod, index) in carVodList" :key="`vod_${index}`" :label="vod.label">
 							<!-- <iframe width="720" height="405" src="https://www.youtube.com/embed/d148YHkaAGg?controls=0&autoplay=1&mute=1&rel=0&modestbranding=1" frameborder="0" allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" /> -->
 							<!-- <iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" /> -->
-							<iframe width="560" height="315" :src="vod.vodUrl" frameborder="0" allowfullscreen></iframe>
+							<iframe width="560" height="315" :src="vod.vodUrl" frameborder="0" allowfullscreen allow="autoplay" />
+							<!-- <video width="560" height="315" controls autoplay>
+								<source :src="vod.vodUrl" type="video/mp4">
+							</video> -->
 						</el-tab-pane>
 					</el-tabs>
 				</div>
@@ -138,7 +141,8 @@ export default {
   data() {
     return {
       loading: false,
-			mediaUrl: process.env.VUE_APP_MEDIA_API,
+			mediaAPIUrl: process.env.VUE_APP_MEDIA_API,
+			mediaGCSUrl: process.env.VUE_APP_MEDIA_URL,
 			map: null,
 			polyLine: null,
 			markers: {
@@ -394,7 +398,7 @@ export default {
 					this.carInfo.createdAt = this.formatTime(this.carInfo.createdAt);
 					this.carVodList.push({
 						label: "即時",
-						vodUrl: `${this.mediaUrl}/WebRTCAppEE/play.html?name=${this.carInfo.liveStreamId}`
+						vodUrl: `${this.mediaAPIUrl}WebRTCAppEE/play.html?name=${this.carInfo.liveStreamId}`
 					});
 
 					this.getCarVideo();
@@ -404,13 +408,13 @@ export default {
 			}).catch(err => { this.loading = false; });
     },
 		getCarVideo() {
-			fetch(`${this.mediaUrl}WebRTCAppEE/rest/v2/vods/list/0/10?streamId=${this.carInfo.liveStreamId}`).then((response) => (response.json()))
+			fetch(`${this.mediaAPIUrl}WebRTCAppEE/rest/v2/vods/list/0/10?streamId=${this.carInfo.liveStreamId}&sort_by=date`).then((response) => (response.json()))
 				.then(response => {
 					// console.log(response);
 					this.carVodList.push(...response.map(vod => ({
 						time: vod.startTime,
 						label: this.formatTime(vod.startTime).split(" ")[1],
-						vodUrl: `${this.mediaUrl}WebRTCAppEE/play.html?id=${vod.vodName}&playOrder=vod`
+						vodUrl: `${this.mediaGCSUrl}${vod.vodName}`
 					})));
 
 					this.loading = false;
