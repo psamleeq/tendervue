@@ -57,11 +57,11 @@
 			<el-col class="info-panel" :span="8">
 				<div class="car-vod-panel">
 					<i class="el-icon-video-camera" v-if="carVodList.length == 0"/>
-					<el-tabs v-else class="vod-tabs" tab-position="bottom">
+					<el-tabs v-else v-model="activeVodName" class="vod-tabs" tab-position="bottom">
 						<el-tab-pane v-for="(vod, index) in carVodList" :key="`vod_${index}`" :label="vod.label">
 							<!-- <iframe width="720" height="405" src="https://www.youtube.com/embed/d148YHkaAGg?controls=0&autoplay=1&mute=1&rel=0&modestbranding=1" frameborder="0" allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" /> -->
 							<!-- <iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" /> -->
-							<iframe width="560" height="315" :src="vod.vodUrl" frameborder="0" allowfullscreen allow="autoplay" />
+							<iframe v-if="activeVodName == index" width="560" height="315" :src="vod.vodUrl" frameborder="0" allowfullscreen allow="autoplay" />
 							<!-- <video width="560" height="315" controls autoplay>
 								<source :src="vod.vodUrl" type="video/mp4">
 							</video> -->
@@ -149,6 +149,7 @@ export default {
 				start: null,
 				end: null
 			},
+			activeVodName: "",
 			timeTabId: 0,
 			dateTimePickerVisible: false,
 			pickerOptions: {
