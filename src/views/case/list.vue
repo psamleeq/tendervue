@@ -2,28 +2,45 @@
 	<div class="app-container road-case" v-loading="loading">
 		<h2>缺失列表</h2>
 		<div class="filter-container">
-			<el-select
-				class="filter-item"
-				v-model="listQuery.caseType"
-				placeholder="請選擇缺失類型"
-				multiple
-				style="width: 500px"
-			>
-				<el-option v-for="type in options.caseType" :key="type" :label="type" :value="type" />
-			</el-select>
 			<div class="filter-item">
-				<el-tooltip effect="dark" content="不填為查詢全部" placement="bottom-end">
+				<div v-if="listQuery.filterType == 1" class="select-contract">
+					<el-select v-model="listQuery.filterType" popper-class="type-select">
+						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
+					</el-select>
+					<el-select v-model="listQuery.contractType" popper-class="type-select" style="width: 115px">
+						<el-option v-for="(name, type) in options.contractType" :key="type" :label="name" :value="Number(type)" />
+					</el-select>
+				</div>
+				
+				<el-tooltip v-else effect="dark" content="不填為查詢全部" placement="bottom-end">
 					<el-input
-						v-model="listQuery.caseId"
-						placeholder="請輸入缺失編號"
-						style="width: 150px"
-					/>
+						v-model="listQuery.filterStr"
+						placeholder="請輸入"
+						style="width: 200px"
+					>
+						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
+							<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
+						</el-select>
+					</el-input>
 				</el-tooltip>
 			</div>
 			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> -->
+			<el-button
+				class="filter-item"
+				:type="listQuery.caseType.length == 0 ? 'success' : 'danger'"
+				:plain="listQuery.caseType.length != 0"
+				icon="el-icon-s-order"
+				@click="filterDialogOpen"
+				>過濾</el-button>
+			<el-button
+				v-if="listQuery.caseType.length != 0"
+				type="text"
+				size="mini"
+				@click="filterClear"
+				>清空過濾條件</el-button>
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 		</div>
 
@@ -65,6 +82,43 @@
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
+
+		<el-dialog
+			:visible.sync="dialogFilterVisible"
+			title="過濾條件"
+			:show-close="false"
+			center
+		>
+			<el-row>
+				<el-col
+					v-for="title in Object.keys(options.caseTitle)"
+					:key="title"
+					:span="12"
+					:class="{ 'check-all-col': options.caseTitle[title]['checkAll'] }"
+				>
+					<el-checkbox
+						v-model="options.caseTitle[title]['checkAll']"
+						class="check-all-btn"
+						border
+						:indeterminate="options.caseTitle[title]['isIndeterminate']"
+						@change="handleCheckAllChange(title)"
+						>{{ options.caseTitle[title]["name"] }}</el-checkbox>
+					<el-checkbox-group v-model="listQuery.caseType" @change="handleCheckedChange">
+						<el-checkbox
+							v-for="event in caseClass[title]"
+							:key="event"
+							:label="event"
+							>{{ event }}</el-checkbox>
+					</el-checkbox-group>
+				</el-col>
+			</el-row>
+
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="filterCancel">取消</el-button>
+				<el-button type="primary" @click="filterConfirm">確定</el-button>
+			</span>
+			<!-- <h4>{{ listQuery.caseType }}</h4> -->
+		</el-dialog>
 	</div>
 </template>
 
@@ -80,6 +134,9 @@ export default {
 	data() {
 		return {
 			loading: false,
+			dialogFilterVisible: false,
+			caseTypeTemp: [],
+			caseTitleTemp: [],
 			// timeTabId: moment().year(),
 			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
@@ -90,8 +147,10 @@ export default {
 			// searchRange: "",
 			listQuery: {
 				filter: false,
+				filterType: 1,
+				contractType: 9101,
+				filterStr: null,
 				caseType: [],
-				caseId: null,
 				pageCurrent: 1,
 				pageSize: 20,
 			},
@@ -187,6 +246,57 @@ export default {
 				},
 			},
 			options: {
+				filterType: {
+					1: "合約",
+					2: "缺失編號",
+					3: "道路名稱"
+				},
+				contractType: {
+					9101: "中山區成效R1"
+				},
+				caseTitle: {
+					0: {
+						name: "龜裂",
+						filter: ["龜裂"],
+						checkAll: false,
+						isIndeterminate: false
+					},
+					1: {
+						name: "裂縫",
+						filter: ["裂縫", "縱橫裂縫", "塊狀裂縫"],
+						checkAll: false,
+						isIndeterminate: false
+					},
+					2: {
+						name: "坑洞及人孔高差與薄層剝離", 
+						filter: ["坑洞", "人孔高差", "薄層剝離"],
+						checkAll: false,
+						isIndeterminate: false
+					},
+					3: {
+						name: "車轍",
+						filter: ["車轍"],
+						checkAll: false,
+						isIndeterminate: false
+					},
+					4: {
+						name: "補綻及管線回填", 
+						filter: ["補綻", "管線回填"],
+						checkAll: false,
+						isIndeterminate: false
+					},
+					5: {
+						name: "隆起與凹陷",
+						filter: ["隆起與凹陷"],
+						checkAll: false,
+						isIndeterminate: false
+					},
+					6: {	
+						name: "其他",
+						checkAll: false,
+						isIndeterminate: false
+					}
+				},
 				caseType: [],
 				BrokeType: {
 					1: "輕度",
@@ -196,11 +306,39 @@ export default {
 			}
 		};
 	},
-	computed: {},
+	computed: {
+		caseClass() {
+			let checked = Array.from({ length: this.options.caseType.length }, () => (false));
+			let caseClass = {};
+			for(const titleId in this.options.caseTitle) {
+				caseClass[titleId] = [];
+				for(const [ index, caseSpec ] of this.options.caseType.entries()) {
+					if(this.options.caseTitle[titleId].filter == undefined) {
+						if(checked[index] == false) caseClass[titleId].push(caseSpec);
+					}else {
+						if(checked[index] == false) {
+							let caseFlag = false;
+							for(const filter of this.options.caseTitle[titleId].filter) {
+								caseFlag = (caseSpec.indexOf(filter) != -1);
+								if(caseFlag) {
+									checked[index] = true;
+									caseClass[titleId].push(caseSpec);
+									break;
+								}
+							}
+						} 
+					}
+				}
+			}
+
+			return caseClass
+		}
+	},
 	watch: {},
 	created() {
 		getRoadCaseType().then(response => {
-			this.listQuery.caseType = this.options.caseType = response.data.list;
+			// this.listQuery.caseType = JSON.parse(JSON.stringify(response.data.list));
+			this.options.caseType = JSON.parse(JSON.stringify(response.data.list));
 			this.getList();
 		});
 		// this.listQuery.distList = Object.keys(this.districtList);
@@ -223,13 +361,17 @@ export default {
 			this.list = [];
 			this.total = 0;
 
-			getRoadCaseList({
+			let query = {
 				filter: this.listQuery.filter,
-				caseType: this.listQuery.caseType.join(","),
-				caseId: this.listQuery.caseId,
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
-			}).then((response) => {
+			};
+
+			if(this.listQuery.filterType == 2 && this.listQuery.filterStr.length != 0) query.caseId = this.listQuery.filterStr;
+			if(this.listQuery.filterType == 3 && this.listQuery.filterStr.length != 0) query.roadName = this.listQuery.filterStr;
+			if(this.listQuery.caseType.length != 0) query.caseType = this.listQuery.caseType.join(",");
+
+			getRoadCaseList(query).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -241,6 +383,30 @@ export default {
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		filterDialogOpen() {
+			this.dialogFilterVisible = true;
+			this.caseTypeTemp = JSON.parse(JSON.stringify(this.listQuery.caseType));
+			this.caseTitleTemp = JSON.parse(JSON.stringify(this.options.caseTitle));
+		},
+		filterConfirm() {
+			this.listQuery.pageCurrent = 1;
+			this.dialogFilterVisible = false;
+			this.getList();
+		},
+		filterCancel() {
+			this.dialogFilterVisible = false;
+			this.listQuery.caseType = JSON.parse(JSON.stringify(this.caseTypeTemp));
+			this.options.caseTitle = JSON.parse(JSON.stringify(this.caseTitleTemp));
+		},
+		filterClear() {
+			this.listQuery.caseType = [];
+			this.listQuery.pageCurrent = 1;
+			Object.keys(this.options.caseTitle).forEach((k) => {
+				this.options.caseTitle[k].checkAll = false;
+				this.options.caseTitle[k].isIndeterminate = false;
+			});
+			this.getList();
 		},
 		recoverCaseStatus(row) {
 			// console.log(this.currCaseId);
@@ -267,29 +433,48 @@ export default {
 		formatTime(time) {
 			return moment(time).utc().format("YYYY-MM-DD");
 		},
+		handleCheckAllChange(title) {
+			let values = this.caseClass[title];
+			if (this.options.caseTitle[title]["checkAll"]) {
+				this.listQuery.caseType.push(...values);
+			} else {
+				this.listQuery.caseType = this.listQuery.caseType.filter((el) => values.indexOf(el) == -1);
+			}
+			this.listQuery.caseType = [...new Set(this.listQuery.caseType)];
+			this.options.caseTitle[title]["isIndeterminate"] = false;
+		},
+		handleCheckedChange() {
+			let titles = Object.keys(this.options.caseTitle);
+			titles.forEach((title) => {
+				let values = this.caseClass[title];
+				let temp = values.filter((el) => this.listQuery.caseType.indexOf(el) != -1);
+				this.options.caseTitle[title]["isIndeterminate"] = false;
+				this.options.caseTitle[title]["checkAll"] = false;
+				if (temp.length == 0) {
+					this.options.caseTitle[title]["checkAll"] = false;
+				} else if (temp.length == values.length) {
+					this.options.caseTitle[title]["checkAll"] = true;
+				} else {
+					this.options.caseTitle[title]["isIndeterminate"] = true;
+				}
+			});
+		},
 		async handleDownload() {
 			// await this.dateWatcher();
 
 			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
 			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 
-			let query = {
+			getRoadUnit({
 				pageCurrent: 1,
 				pageSize: this.total,
 				// timeStart: startDate,
 				// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-			};
-			if (this.listQuery.distList.length > 0) query.distList = this.listQuery.distList.join(",");
-			if (this.listQuery.roadName.length > 0) query.roadName = this.listQuery.roadName;
-			if (this.listQuery.widthType == 1) query.width = this.listQuery.width;
-			else if (this.listQuery.widthType == 2) query.widthReal = this.listQuery.width;
-
-			getRoadUnit(query).then((response) => {
+			}).then((response) => {
 				let list = response.data.list;
-				list.forEach(l => l.dist = this.districtList[l.zip].name);
 
-				const tHeader = Object.values(this.headersFilter).map((h) => h.name);
-				const filterVal = Object.keys(this.headersFilter);
+				const tHeader = Object.values(this.headers).map((h) => h.name);
+				const filterVal = Object.keys(this.headers);
 				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
 				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
 				const data = this.formatJson(filterVal, list);
@@ -313,25 +498,75 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-
-.road-unit
+.type-select .el-select-dropdown__item
+	padding: 0 5px
+	text-align: center
+.road-case
 	.filter-container
-		.el-select
-			width: 105px
-		.el-input__inner
-			padding-left: 5px
-			text-align: center
 		.filter-item
 			margin-right: 5px
-			input[type=number]
-				padding: 0
-				overflow: hidden
-				&::-webkit-inner-spin-button
-					transform: scale(1.2, 1) translateX(-11%)
-			.el-input__inner.column-filter-item
-				width: auto
-				// max-width: 1200px
-				text-align: left
-				.el-checkbox
-					margin: 0 4px 0 10px
+			.el-select
+				width: 85px
+				.el-input__inner
+					padding-left: 3px
+					padding-right: 10px
+					text-align: center
+				.el-input__suffix
+					right: 0
+					margin-right: -3px
+					transform: scale(0.7)
+			.select-contract
+				.el-select:first-child .el-input__inner
+					background-color: #F5F7FA
+					color: #909399
+					border-right: none
+					border-top-right-radius: 0
+					border-bottom-right-radius: 0
+					&:focus
+						border-color: #DCDFE6
+				.el-select:last-child .el-input__inner
+					border-top-left-radius: 0
+					border-bottom-left-radius: 0
+	.el-dialog
+		width: 450px
+		overflow: hidden
+		.el-dialog__header
+			background-color: #EBEEF5
+		.el-dialog__body
+			height: 80%
+			padding: 10px
+			margin: 0px 10px
+			.el-row
+				display: flex
+				flex-wrap: wrap
+				.el-col
+					padding: 10px 0px
+					position: relative
+					&::before
+						display: block
+						content: ''
+						position: absolute
+						border: 1px solid #eee
+						height: 100%
+						width: 100%
+					&.check-all-col::before
+						box-shadow: 0px 0px 2px #409EFF
+					.el-checkbox
+						width: 100%
+						padding-left: 20px
+					.check-all-btn
+						padding-left: 10px
+						margin-bottom: 5px
+						background-color: #F2F6FC
+						border: none
+						border-radius: 0px
+						box-shadow: inset 0px 0px 1px #C0C4CC
+						&.is-checked
+							background-color: #409EFF
+							span
+								color: white
+					.el-checkbox__input.is-indeterminate .el-checkbox__inner
+						background-color: lighten(#409EFF, 15)
+		.el-dialog__footer
+			margin: 5px 0px
 </style>
