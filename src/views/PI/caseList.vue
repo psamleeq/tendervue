@@ -530,8 +530,8 @@ export default {
 			row[`show${columnName}`] = false;
 			this.rowActive = row;
 
-			if(result == 2) this.rowActive.ReasonType = 1;
-			else this.rowActive.ReasonType = 0;
+			if(result == 2) this.$set(this.rowActive, "ReasonType", 1);
+			else this.$set(this.rowActive, "ReasonType", 0);
 
 			this.rowActive[columnName] = result;
 			this.$set(this.rowActive, "resultType", result);
