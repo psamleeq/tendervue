@@ -44,7 +44,7 @@
 						style="width: 160px"
 						@input="() => { 
 							if (listQuery.width[0] < 0) listQuery.width[0] = 0; 
-							if (listQuery.width[0] >= listQuery.width[1]) listQuery.width[1] = listQuery.width[0];
+							if (listQuery.width[1] != 0 && listQuery.width[0] >= listQuery.width[1]) listQuery.width[1] = listQuery.width[0];
 						}"
 					>
 						<el-select slot="prepend" v-model="listQuery.widthType" popper-class="type-select">
@@ -64,7 +64,7 @@
 						style="width: 160px"
 						@input="() => {
 							if (listQuery.width[1] < 0) listQuery.width[1] = 0; 
-							if (listQuery.width[0] >= listQuery.width[1]) listQuery.width[1] = listQuery.width[0]; 
+							if (listQuery.width[1] != 0 && listQuery.width[0] >= listQuery.width[1]) listQuery.width[1] = listQuery.width[0]; 
 						}"
 					>
 						<el-select slot="prepend" v-model="listQuery.widthType" popper-class="type-select">
@@ -313,6 +313,7 @@ export default {
 			// this.searchRange = startDate + " - " + endDate;
 
 			this.list = [];
+			this.total = 0;
 			let query = {
 				// width: this.listQuery.width,
 				// widthReal: this.listQuery.widthReal,
