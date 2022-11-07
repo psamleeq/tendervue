@@ -104,6 +104,8 @@
 			</el-col>
 		</el-row>
 
+		<br />
+
 		<!-- 抽查結果列表 -->
 		<el-table
 			empty-text="目前沒有資料"
@@ -610,6 +612,8 @@ export default {
 // 	border: 1px solid #000
 // 	box-sizing: border-box
 .PI-case-list
+	height: calc(100vh - 50px)
+	overflow: scroll
 	.filter-container 
 		.el-select
 			width: 110px
@@ -627,11 +631,24 @@ export default {
 					width: 155px
 					padding: 0 10px
 	.panel-group 
-		margin-top: 18px
+		position: sticky
+		top: -20px
+		display: flex
+		align-items: center
+		background-color: rgba(#fff, 1)
+		box-shadow: 0 5px 5px rgba(#eee, 0.1)
+		width: calc(100% + 40px)
+		margin: 0 !important
+		transform: translateX(-15px)
+		padding: 5px
+		// margin: 5px 0
+		// margin-top: 18px
+		z-index: 2
 		.card-panel-col 
-			margin-bottom: 32px
+			position: relative
+			margin: auto
 		.card-panel 
-			height: 108px
+			height: 125px
 			font-size: 12px
 			position: relative
 			// overflow: hidden
@@ -639,6 +656,9 @@ export default {
 			background: #fff
 			box-shadow: 4px 4px 40px rgba(0, 0, 0, .05)
 			border-color: rgba(0, 0, 0, .05)
+			display: flex
+			justify-content: space-around
+			align-items: center
 			&:hover 
 				.card-panel-icon-wrapper 
 					color: #fff
