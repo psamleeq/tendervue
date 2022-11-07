@@ -9,7 +9,7 @@ const caseRouter = {
 	name: 'road',
 	meta: {
 		title: '缺失管理',
-		icon: 'road', 
+		icon: 'el-icon-s-release', 
 		vTag: 'Alpha'
 	},
 	children: [

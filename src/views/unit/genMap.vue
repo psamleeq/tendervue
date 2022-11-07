@@ -10,11 +10,34 @@
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="getList();">搜尋</el-button>
+
+				<div class="filter-item step-box">
+					<el-steps :active="stepOrder" simple>
+						<el-step icon="el-icon-add-location" @click.native="switchStep(0)">
+							<template slot="title">
+								<div>{{ geoInfo.roadName || " - " }}</div>
+								<div>{{ geoInfo.area.toLocaleString() }} ㎡ </div>
+							</template>
+						</el-step>
+						<el-step icon="el-icon-edit-outline" @click.native="switchStep(1)">
+							<template slot="title">
+								<div>切分距離</div>
+								<div>{{ listQuery.splitLen }} m </div>
+							</template>
+						</el-step>
+						<el-step icon="el-icon-upload" @click.native="switchStep(2)">
+							<template slot="title">
+								<div>區塊數量</div>
+								<div>{{ geoInfo.blocks.length }}</div>
+							</template>
+						</el-step>
+					</el-steps>
+				</div>
 			</div>
 		</div>
 
-		<div class="info-box left">
-			<el-card class="road-info">
+		<div class="info-box">
+			<el-card v-if="stepOrder == 0 && geoInfo.roadName.length != 0" class="road-info">
 				<div slot="header" class="info-title">道路資訊</div>
 				<el-row v-for="(text, key) in headersInfo.road" :key="key">
 					<el-col :span="8">{{ text }}: </el-col>
@@ -25,12 +48,12 @@
 				</el-row>
 				<el-row>
 					<el-col :offset="18">
-						<el-button type="success" size="small" icon="el-icon-check" :disabled="geoInfo.points.length == 0" @click="createLines()">線段</el-button>
+						<el-button type="success" size="small" icon="el-icon-check" :disabled="geoInfo.points.length == 0" @click="splitLines()">線段</el-button>
 					</el-col>
 				</el-row>
 			</el-card>
 
-			<el-card class="road-info" v-if="geoInfo.lines.length != 0">
+			<el-card v-if="stepOrder == 1 && geoInfo.lines.length != 0" class="road-info">
 				<div slot="header">
 					<div class="info-title">線段資訊</div>
 					<div class="info-btn">
@@ -46,6 +69,7 @@
 						<el-button type="success" size="small" icon="el-icon-check" style="margin-left: 5px" @click="createBlocks()">切分</el-button>
 					</div>
 				</div>
+				<el-button class="btn-switch-line" type="info" icon="el-icon-refresh" circle plain size="mini" @click="switchLines" />
 				<el-collapse accordion>
 					<el-collapse-item :class="[ 'line-label', { 'base' : id == listQuery.baseLineId } ]" v-for="(line, id) in geoInfo.lines" :key="`lines_${id}`" :name="`lines_${id}`">
 						<template slot="title">
@@ -59,32 +83,11 @@
 							</el-col>
 							<el-col :span="18">{{ [ point.lng, point.lat ] }}</el-col>
 						</el-row>
-						<!-- <el-table
-							empty-text="目前沒有資料"
-							:data="line.points.map((p, i) => ({index: lineIndex(line.range[0], i), point: JSON.stringify([ p.lng, p.lat ])}))"
-							fit
-							highlight-current-row
-							:header-cell-style="{'background-color': '#F2F6FC'}"
-							style="width: 100%"
-							@selection-change="(selection) => selectPt[id] = selection"
-						>
-							<el-table-column type="selection" :min-width="5" align="center" />
-							<el-table-column
-								v-for="(text, key) in headersInfo.line"
-								:key="key"
-								:prop="key"
-								:label="text"
-								:min-width="key == 'index' ? 11 : 50"
-								align="center"
-							/>
-						</el-table> -->
 					</el-collapse-item>
 				</el-collapse>
 			</el-card>
-		</div>
 
-		<div class="info-box right">
-			<el-card class="road-info" v-if="geoInfo.blocks.length != 0">
+			<el-card v-if="stepOrder == 2 && geoInfo.blocks.length != 0" class="road-info">
 				<div slot="header">
 					<el-row>
 						<el-col :span="18" class="info-title">切塊資訊</el-col>
@@ -147,6 +150,7 @@ export default {
 		return {
 			loading: false,
 			screenWidth: window.innerWidth,
+			stepOrder: 0,
 			areaLimit: [139, 325],
 			map: null,
 			markers: [],
@@ -161,6 +165,8 @@ export default {
 				lines: [],
 				blocks: []
 			},
+			isShortBound: false,
+			boundary: [],
 			listQuery: {
 				roadId: null,
 				splitLen: 20,
@@ -450,7 +456,14 @@ export default {
 			}
 		},
 		setBlock() {
-			TODO: 單元存入資料庫
+			//TODO: 單元存入資料庫
+			this.stepOrder = 3;
+		},
+		switchStep(index) {
+			// console.log(index, this.stepOrder);
+			if(index >= this.stepOrder) return;
+			this.stepOrder = index;
+			console.log(index, this.stepOrder);
 		},
 		createMarkers() {
 			// 建立端點
@@ -526,79 +539,90 @@ export default {
 			}
 			// }
 		},
-		createLines() {
-			this.polyLines = {};
-			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
-
+		splitLines() {
 			if(this.geoInfo.points.length == 0 || this.geoInfo.points.length != 4) {
 				this.$message({
 					message: "請標記4個點",
 					type: "error",
 				});
 			} else {
+				this.stepOrder = 1;
 				this.geoInfo.points.sort((a, b) => (a.index - b.index));
 
-				const points = this.geoInfo.points.reduce((acc, cur, id, arr) => {
+				this.boundary = this.geoInfo.points.reduce((acc, cur, id, arr) => {
 					const index = id+1 <= arr.length - 1 ? id+1 : 0;
 					const dist = calcDistance(cur.position, arr[index].position);
 					const endRange = arr[index].index != 0 ? arr[index].index : this.boundaryJSON.coordinates[0].length - 1;
 					acc.push({ range: [ cur.index, endRange ], dist });
 
 					return acc;
-				}, []).sort((a, b) => (b.dist - a.dist)).slice(0, 2).sort((a, b) => (a.range[0] - b.range[0]));
-				// console.log(points);
+				}, []).sort((a, b) => (b.dist - a.dist));
 
-				let index = 0;
-				this.geoInfo.lines = this.boundaryJSON.coordinates[0].reduce((acc, cur, id, arr) => {
-					if(index > points.length - 1) return acc;
-					let range = points[index].range;
-					if(id < range[0]) return acc;
-
-					const [ lng, lat ] = cur;
-					if(Object.keys(acc).length == 0 || ( range[0] <= range[1] && id > range[1])) {
-						// console.log(id, range[0], range[1]);
-						if(id != range[0]) {
-							if(++index > points.length - 1) return acc;
-							range = points[index].range;
-						}
-						if(id >= range[0]) acc[index+1] = { range: range, points: [{ lat, lng }]};
-						else acc[index+1] = { range: range, points: [] };
-					} else if(id >= range[0]) {
-						// console.log(id, range[0], range[1]); 
-						acc[index+1].points.push({ lat, lng });
-
-						if(range[0] > range[1] && id == arr.length-1) {
-							for(let i = 1; i <= range[1]; i++) acc[index+1].points.push({ lat: arr[i][1], lng: arr[i][0]});
-						}
-					}
-
-					return acc;
-				}, {});
-
-				for(const[ id, line] of Object.entries(this.geoInfo.lines)) {
-					line.points = line.points.filter((point, index) => line.points.indexOf(point) == index);
-					line.len = this.calcLineLen(line.points);
-
-					this.$set(this.selectPt, String(id), Array.from({length: line.points.length}, (_, i) => this.lineIndex(line.range[0], i)));
-				}
-
-				// 建立線段
-				for(const [ id, path ] of Object.entries(this.geoInfo.lines)) {
-					this.polyLines[id] = new google.maps.Polyline({
-						path: path.points,
-						geodesic: true,
-						strokeOpacity: 1,
-						strokeColor: id == this.listQuery.baseLineId ? this.options.line.base.color : this.options.line.others.color,
-						strokeWeight: id == this.listQuery.baseLineId ? this.options.line.base.width : this.options.line.others.width,
-						map: this.map
-					});
-
-					// this.polyLines.push(polyLine);
-				}
+				const points = this.boundary.slice(0, 2).sort((a, b) => (a.range[0] - b.range[0]));
+				this.createLines(points);
 			}
+		},
+		createLines(points) {
+			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
+			this.polyLines = {};
+
+			let index = 0;
+			this.geoInfo.lines = this.boundaryJSON.coordinates[0].reduce((acc, cur, id, arr) => {
+				if(index > points.length - 1) return acc;
+				let range = points[index].range;
+				if(id < range[0]) return acc;
+
+				const [ lng, lat ] = cur;
+				if(Object.keys(acc).length == 0 || ( range[0] <= range[1] && id > range[1])) {
+					// console.log(id, range[0], range[1]);
+					if(id != range[0]) {
+						if(++index > points.length - 1) return acc;
+						range = points[index].range;
+					}
+					if(id >= range[0]) acc[index+1] = { range: range, points: [{ lat, lng }]};
+					else acc[index+1] = { range: range, points: [] };
+				} else if(id >= range[0]) {
+					// console.log(id, range[0], range[1]); 
+					acc[index+1].points.push({ lat, lng });
+
+					if(range[0] > range[1] && id == arr.length-1) {
+						for(let i = 1; i <= range[1]; i++) acc[index+1].points.push({ lat: arr[i][1], lng: arr[i][0]});
+					}
+				}
+
+				return acc;
+			}, {});
+
+			for(const[ id, line] of Object.entries(this.geoInfo.lines)) {
+				line.points = line.points.filter((point, index) => line.points.indexOf(point) == index);
+				line.len = this.calcLineLen(line.points);
+
+				this.$set(this.selectPt, String(id), Array.from({length: line.points.length}, (_, i) => this.lineIndex(line.range[0], i)));
+			}
+
+			// 建立線段
+			for(const [ id, path ] of Object.entries(this.geoInfo.lines)) {
+				this.polyLines[id] = new google.maps.Polyline({
+					path: path.points,
+					geodesic: true,
+					strokeOpacity: 1,
+					strokeColor: id == this.listQuery.baseLineId ? this.options.line.base.color : this.options.line.others.color,
+					strokeWeight: id == this.listQuery.baseLineId ? this.options.line.base.width : this.options.line.others.width,
+					map: this.map
+				});
+
+				// this.polyLines.push(polyLine);
+			}
+		},
+		switchLines() {
+			this.isShortBound = !this.isShortBound;
+			const indexArr = this.isShortBound ? [2, 4] : [0, 2];
+			const points = this.boundary.slice(indexArr[0], indexArr[1]).sort((a, b) => (a.range[0] - b.range[0]));
+			this.createLines(points);
 		},
 		createBlocks() {
 			this.resetLines();
+			this.stepOrder = 2;
 
 			this.geoInfo.blocks = [];
 			this.selectBlock = [];
@@ -620,23 +644,23 @@ export default {
 			this.map.data.setStyle(feature => {
 				// console.log(feature);
 				return {
-					strokeWeight: feature.h["stroke-width"],
-					strokeColor: feature.h.stroke,
-					strokeOpacity: feature.h["stroke-opacity"],
-					fillOpacity: feature.h["fill-opacity"],
-					fillColor: feature.h.fill
+					strokeWeight: feature.j["stroke-width"],
+					strokeColor: feature.j.stroke,
+					strokeOpacity: feature.j["stroke-opacity"],
+					fillOpacity: feature.j["fill-opacity"],
+					fillColor: feature.j.fill
 				}
 			});
 
-			// this.map.data.forEach(feature => console.log(feature.h.blockId));
+			// this.map.data.forEach(feature => console.log(feature.j.blockId));
 
 			// NOTE: test
 			this.map.data.addListener("click", (event) => {
-				console.log(`${event.feature.h.area.toLocaleString()} ㎡`,);
+				console.log(`${event.feature.j.area.toLocaleString()} ㎡`,);
 			});
 
 			this.map.data.addListener('mouseover', (event) => {
-				const row = this.geoInfo.blocks.filter((block) => block.blockId == event.feature.h.blockId)[0];
+				const row = this.geoInfo.blocks.filter((block) => block.blockId == event.feature.j.blockId)[0];
 				if(this.$refs.blockTable) this.$refs.blockTable.setCurrentRow(row);
 				this.map.data.revertStyle();
 				this.map.data.overrideStyle(event.feature, { fillColor: "#FFF176" });
@@ -673,6 +697,7 @@ export default {
 			})
 		},
 		clearAll() {
+			this.stepOrder = 0;
 			this.map.data.forEach(feature => this.map.data.remove(feature));
 			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
 			for(const markers of this.markers) markers.setMap(null);
@@ -842,7 +867,7 @@ export default {
 			
 			this.map.data.revertStyle();
 			this.map.data.forEach(feature => {
-				if(feature.h.blockId == row.blockId) this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
+				if(feature.j.blockId == row.blockId) this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
 			});
 		},
 		handleMouseLeave(row, column, cell, event) {
@@ -882,14 +907,25 @@ export default {
 			text-shadow: 0px 0px 5px white
 			text-stroke: 0.6px white
 			-webkit-text-stroke: 0.6px white
+		.step-box
+			width: 600px
+			margin-left: 100px
+			.el-steps.el-steps--simple
+				padding: 5px 40px 5px 20px
+			.el-step__icon-inner.el-icon-add-location
+				font-size: 24px
+			.el-step__head.is-finish, .el-step__title.is-finish
+				cursor: pointer
+			.el-step__main
+				margin-left: 10px
+				.el-step__title > *, .el-step__arrow
+					text-align: center
+					cursor: default
 	.info-box
 		position: absolute
-		z-index: 1
 		top: 150px
-		&.left
-			left: 10px
-		&.right
-			right: 20px
+		left: 10px
+		z-index: 1
 		.road-info
 			width: 360px
 			background-color: rgba(white, 0.7)
@@ -901,6 +937,10 @@ export default {
 				max-height: 400px
 				overflow-x: hidden
 				overflow-y: auto
+			.btn-switch-line
+				position: relative
+				margin-left: 90%
+				margin-bottom: 5px
 			.info-title
 				font-weight: bold
 				margin-bottom: 5px
