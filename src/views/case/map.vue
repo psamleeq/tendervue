@@ -18,6 +18,12 @@
 		</el-card> -->
 
 		<el-card class="info-box left">
+			<el-row :class="[ 'color-box', 'select-all', { 'active' : selectCaseAll } ]" style="margin: 5px 0;">
+				<el-col :span="8" :offset="7" style="padding: 0 5px">全選</el-col>
+				<el-col :span="5">
+					<el-switch v-model="selectCaseAll" @change="caseFilter()" />
+				</el-col>
+			</el-row>
 			<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
 				<el-col :span="10" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
 				<el-col :span="5">
@@ -147,6 +153,19 @@ export default {
 		};
 	},
 	computed: {
+		selectCaseAll: {
+			get() {
+				const onNum = Object.values(this.selectCase).reduce((acc, cur) => {
+					if(cur.switch) acc++;
+					return acc;
+				}, 0);
+				return onNum == this.caseInfo.length;
+			},
+			set(val) {
+				if(val) Object.values(this.selectCase).forEach(caseInfo => caseInfo.switch = true);
+				else Object.values(this.selectCase).forEach(caseInfo => caseInfo.switch = false);
+			}
+		},
 		geoJSONFilter() {
 			let geoJSONFilter = { features: [] };
 			if(Object.keys(this.geoJSON).length > 0) {
@@ -629,7 +648,12 @@ export default {
 				*
 					color: #C0C4CC
 				&.active *
-					color: white	
+					color: #FFF
+				&.select-all 
+					*
+						color: #606266
+					&.active *
+						color: #409EFF
 			.el-switch .el-switch__core
 				border: 1px solid #DCDFE6 !important
 			.el-select
