@@ -11,13 +11,13 @@
 			</el-select>
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-      <!-- <el-button
+      <el-button
         class="filter-item"
         type="info"
         icon="el-icon-document"
         :circle="screenWidth<567"
         @click="handleDownload"
-      >輸出報表</el-button> -->
+      >輸出報表</el-button>
     </div>
     
     <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -126,6 +126,10 @@ export default {
 				dispatchDate: {
 					name: "派工日期",
 					sortable: false,
+				},
+				estFinishDate: {
+					name: "預計完工日期",
+					sortable: false
 				},
 				finishDate: {
 					name: "道管完工日期",
@@ -285,6 +289,7 @@ export default {
 						if([2, 3].includes(this.listQuery.caseType)) finishDate = moment(l.actualFinishDate).isAfter(l.finishDate) ? l.actualFinishDate : l.finishDate;
 						l.warrantyDate = this.formatTime(moment(finishDate).add(days, 'd'));
 						
+						l.estFinishDate = l.estFinishDate != '0' ? this.formatTime(l.estFinishDate) : '-';
 						l.finishDate = l.finishDate != '0' ? this.formatTime(l.finishDate) : '-';
 						l.actualFinishDate = l.actualFinishDate != '0' ? this.formatTime(l.actualFinishDate) : '-';
 						l.markerFinishDate = l.markerFinishDate != '0' ? this.formatTime(l.markerFinishDate) : '-';
@@ -306,8 +311,8 @@ export default {
       return moment(time).format("YYYY/MM/DD");
     },
     handleDownload() {
-      let tHeader = Object.values(this.headers);
-      let filterVal = Object.keys(this.headers);
+      let tHeader = Object.values(this.headersFilter).map(header => header.name);
+      let filterVal = Object.keys(this.headersFilter);
       // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
       // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
       let data = this.formatJson(filterVal, this.list);
