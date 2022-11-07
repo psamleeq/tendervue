@@ -83,11 +83,11 @@
 		<h4>道路單元數：{{ total }}</h4>
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
-		<div class="el-input-group" style="margin-bottom: 10px">
+		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1075px; min-width: 500px">
 			<div class="el-input-group__prepend">
 				<el-checkbox v-model="allHeaders" :indeterminate="partHeaders">欄位</el-checkbox>
 			</div>
-			<el-checkbox-group class="el-input__inner column-filter-item" v-model="headersCheckVal" style="line-height: 15px">
+			<el-checkbox-group class="el-input__inner column-filter-item" v-model="headersCheckVal" style="line-height: 15px;">
 				<el-checkbox v-for="(value, key) in headersOpt" :key="key" :label="key">{{ value.name }}</el-checkbox>
 			</el-checkbox-group>
 		</div>
@@ -162,19 +162,19 @@ export default {
 			},
 			headersOpt: {
 				crossName: {
-					name: "交叉道路名稱",
+					name: "交叉道路",
 					sortable: false,
 				},
 				roadStart: {
-					name: "起始道路名稱",
+					name: "起始道路",
 					sortable: false,
 				},
 				roadEnd: {
-					name: "結束道路名稱",
+					name: "結束道路",
 					sortable: false,
 				},
 				lane: {
-					name: "車道數",
+					name: "車道數量",
 					sortable: false,
 				},
 				width: {
