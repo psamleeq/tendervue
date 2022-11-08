@@ -594,6 +594,7 @@ export default {
 
 					marker.addListener('click', (event) => {
 						// console.log(event);
+						if(this.stepOrder != 0) return;
 
 						if(!marker.isPin) {
 							marker.isPin = true;
@@ -613,31 +614,30 @@ export default {
 							this.geoInfo.points = this.geoInfo.points.filter(point => point.index != marker.index);
 							marker.setIcon(this.iconStyle.ylw_blank);
 						}
-						// this.infoWindow.setContent(description);
-						// this.infoWindow.setPosition(event.latLng);
-						// this.infoWindow.open(this.map);
 					});
 
 					marker.addListener('rightclick', (event) => {
 						// console.log(event);
+						if(this.stepOrder != 1) return;
 
 						if(!marker.isDel) {
 							marker.isDel = true;
 							marker.isPin = false;
-							this.selectPt = this.selectPt.filter(point => point.index != marker.index);
-							// this.geoInfo.points.push({ index: marker.index, position: event.latLng.toJSON() });
 							marker.setLabel("");
+							for(const id in this.selectPt) this.selectPt[id] = this.selectPt[id].filter(point => point != marker.index);
+							this.resetLines();
 							marker.setIcon(this.iconStyle.placemark_circle);
 						} else {
 							marker.isPin = marker.isDel = false;
 							marker.setLabel("");
-							this.selectPt.push(marker.index);
-							// this.geoInfo.points = this.geoInfo.points.filter(point => point.index != marker.index);
+							const id = Object.keys(this.geoInfo.lines).filter(id => {
+								const indexList = this.geoInfo.lines[id].points.map((_, index) => (this.lineIndex(this.geoInfo.lines[id].range[0], index)));
+								return indexList.includes(marker.index)
+							})[0];
+							this.selectPt[id].push(marker.index);
+							this.resetLines();
 							marker.setIcon(this.iconStyle.ylw_blank);
 						}
-						// this.infoWindow.setContent(description);
-						// this.infoWindow.setPosition(event.latLng);
-						// this.infoWindow.open(this.map);
 					});
 
 					this.markers.push(marker);
