@@ -113,7 +113,8 @@
 			/>
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
-					<el-button type="primary" plain size="mini" round @click="showMap(row)">切分</el-button>
+					<div v-if="row.unitNum != 0">區塊數: {{ row.unitNum }}</div>
+					<el-button :type="row.unitNum == 0 ? 'primary' : 'info' " plain size="mini" round @click="showMap(row)">切分</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
