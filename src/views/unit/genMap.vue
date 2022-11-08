@@ -11,6 +11,7 @@
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="getList();">搜尋</el-button>
 
+				<!-- 步驟條 -->
 				<div class="filter-item step-box">
 					<el-steps :active="stepOrder" simple>
 						<el-step icon="el-icon-add-location" @click.native="switchStep(0)">
@@ -36,6 +37,7 @@
 			</div>
 		</div>
 
+		<!-- 資訊欄 -->
 		<div class="info-box">
 			<el-card v-if="stepOrder == 0 && geoInfo.roadName.length != 0" class="road-info">
 				<div slot="header" class="info-title">道路資訊</div>
@@ -48,7 +50,7 @@
 				</el-row>
 				<el-row>
 					<el-col :offset="18">
-						<el-button type="success" size="small" icon="el-icon-check" :disabled="geoInfo.points.length == 0" @click="splitLines()">線段</el-button>
+						<el-button type="success" size="small" :disabled="geoInfo.points.length == 0" @click="splitLines()">線段</el-button>
 					</el-col>
 				</el-row>
 			</el-card>
@@ -66,7 +68,10 @@
 						>
 							<span slot="prepend">切分距離</span>
 						</el-input>
-						<el-button type="success" size="small" icon="el-icon-check" style="margin-left: 5px" @click="createBlocks()">切分</el-button>
+						<el-button-group style="margin-left: 5px">
+							<el-button type="success" size="small" @click="createBlocks()">切分</el-button>
+							<el-button type="info" size="small" @click="switchStep(-1)">返回</el-button>
+						</el-button-group>
 					</div>
 				</div>
 				<el-button class="btn-switch-line" type="info" icon="el-icon-refresh" circle plain size="mini" @click="switchLines" />
@@ -87,14 +92,21 @@
 				</el-collapse>
 			</el-card>
 
-			<el-card v-if="stepOrder == 2 && geoInfo.blocks.length != 0" class="road-info">
+			<el-card v-show="stepOrder == 2 && geoInfo.blocks.length != 0" class="road-info">
 				<div slot="header">
-					<el-row>
-						<el-col :span="18" class="info-title">切塊資訊</el-col>
-						<el-col :span="6">
-							<el-button type="success" size="small" icon="el-icon-check" style="margin-left: 5px" @click="setBlock()">送出</el-button>
-						</el-col>
-					</el-row>
+					<div class="info-title">切塊資訊</div>
+					<div class="info-btn">
+						<el-input v-model="listQuery.roadCode" placeholder="請輸入">
+							<span slot="prepend">道路編碼</span>
+						</el-input>
+						<el-select v-model="listQuery.roadDir" popper-class="type-select" style="width: 40px">
+							<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
+						</el-select>
+						<el-button-group style="margin-left: 5px">
+							<el-button type="success" size="small" @click="setBlock()">送出</el-button>
+							<el-button type="info" size="small" @click="switchStep(-1)">返回</el-button>
+						</el-button-group>
+					</div>
 				</div>
 				<el-table
 					ref="blockTable"
@@ -103,13 +115,13 @@
 					fit
 					highlight-current-row
 					:header-cell-style="{'background-color': '#F2F6FC'}"
-					:row-class-name="({row, rowIndex})=>{row.index = rowIndex; return 'blockTableRow';}"
+					:row-class-name="({row, rowIndex})=>{row.index = rowIndex; return 'block-table-row';}"
 					style="width: 100%"
 					@selection-change="(selection) => selectBlock = selection"
 					@cell-mouse-enter="handleMouseEnter"
 					@cell-mouse-leave="handleMouseLeave"
 				>
-					<el-table-column type="selection" width="50" align="center" />
+					<el-table-column type="selection" width="45" align="center" />
 					<el-table-column
 						v-for="(text, key) in headersInfo.block"
 						:key="key"
@@ -117,7 +129,17 @@
 						:label="text"
 						align="center"
 						:formatter="formatter"
-					/>
+					>
+						<template slot-scope="{ row, column }">
+							<span v-if="[ 'blockId' ].includes(column.property)" class="road-code">
+								<el-input v-model="row[column.property]" size="mini">
+									<span slot="prepend">{{ listQuery.roadCode || "-" }}</span>
+									<span slot="append">{{ listQuery.roadDir }}</span>
+								</el-input>
+							</span>
+							<span v-else>{{ row[column.property] || "-" }}</span>
+						</template>
+					</el-table-column>
 				</el-table>
 			</el-card>
 		</div>
@@ -128,7 +150,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 const { calcDistance, calArea } = require('@/utils/geo-tools');
-import { getRoadUnitGeo } from "@/api/road";
+import { getRoadUnitGeo, setRoadUnitGeo } from "@/api/road";
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -153,12 +175,16 @@ export default {
 			stepOrder: 0,
 			areaLimit: [139, 325],
 			map: null,
+			dataLayer: null,
+			infoWindow: null,
 			markers: [],
 			polyLines: [],
 			boundaryJSON: {},
 			geoJSON_Ori: {},
 			geoJSON_Split: {},
 			geoInfo: {
+				lastCode: 0,
+				roadId: 0,
 				roadName: "",
 				area: 0,
 				points: [],
@@ -169,6 +195,8 @@ export default {
 			boundary: [],
 			listQuery: {
 				roadId: null,
+				roadCode: null,
+				roadDir: 0,
 				splitLen: 20,
 				baseLineId: 1
 			},
@@ -199,6 +227,11 @@ export default {
 						color: "#827717",
 						width: 5
 					}
+				},
+				roadDir: {
+					0: "無",
+					1: "順",
+					2: "逆"
 				}
 			},
 			iconStyle: { }
@@ -368,6 +401,9 @@ export default {
 				this.map.overlayMapTypes.push(labelsMapType);
 			}
 
+			this.dataLayer = new google.maps.Data({ map: this.map });
+			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -5) });
+
 			// marker icon格式
 			this.iconStyle = {
 				placemark_circle: {
@@ -401,29 +437,72 @@ export default {
 				this.$router.push({ query: { roadId: this.listQuery.roadId }});
 
 				getRoadUnitGeo({ roadId: this.listQuery.roadId }).then((response) => {
-					if(response.data.result.boundary == null) {
+					if(response.data.result.geo.boundary == null) {
 						this.$message({
 							message: "查無資料",
 							type: "error",
 						});
-						this.geoInfo.roadName = response.data.result.roadName;
+						this.geoInfo.roadName = response.data.result.geo.roadName;
 
 					} else {
-						this.boundaryJSON = JSON.parse(response.data.result.boundary);
+						this.boundaryJSON = JSON.parse(response.data.result.geo.boundary);
 						// console.log(this.boundaryJSON.coordinates[0]);
-						const bLat = { min: response.data.result.latMin, max: response.data.result.latMax };
-						const bLng = { min: response.data.result.lngMin, max: response.data.result.lngMax };
+						// const bLat = { min: response.data.result.geo.latMin, max: response.data.result.geo.latMax };
+						// const bLng = { min: response.data.result.geo.lngMin, max: response.data.result.geo.lngMax };
 
 						this.geoInfo = {
-							roadName: response.data.result.roadName,
-							area: response.data.result.area,
+							roadId: response.data.result.geo.RoadId,
+							roadName: response.data.result.geo.roadName,
+							lastCode: response.data.result.lastCode,
+							area: response.data.result.geo.area,
 							points: [],
 							lines: [],
 							blocks: []
 						};
 
-						// 建立區塊
-						const resJSON = JSON.parse(response.data.result.geoJSON);
+						// 顯示該路段已完成區塊
+						let geoJSON_Unit = { 
+							"type": "FeatureCollection",
+							"name": "polyJSON",
+							"features": []
+						};
+
+						for(const geo of response.data.result.unitList) geoJSON_Unit.features.push({
+							"type": "Feature",
+							"properties": {
+								"roadCode": geo.roadCode,
+								"roadName": geo.roadName,
+							},
+							"geometry": JSON.parse(geo.geoJSON)
+						})
+
+						this.dataLayer.addGeoJson(geoJSON_Unit);
+						this.dataLayer.setStyle({ 
+							strokeColor: '#D81B60',
+							strokeWeight: 2,
+							strokeOpacity: 1,
+							fillColor: '#607D8B',
+							fillOpacity: 0.8,
+							zIndex: 1
+						});
+
+						this.dataLayer.addListener('mouseover', (event) => {
+							// console.log(event);
+							this.infoWindow.setContent(`道路編碼: ${event.feature.j.roadCode}`);
+
+							const bounds = new google.maps.LatLngBounds();
+							event.feature.h.h[0].h.forEach(position => bounds.extend(position));
+							this.infoWindow.setPosition(bounds.getCenter());
+
+							this.infoWindow.open(this.map);
+						});
+
+						this.dataLayer.addListener('mouseout', (event) => {
+							this.infoWindow.close();
+						});
+
+						// 建立道路外框
+						const resJSON = JSON.parse(response.data.result.geo.geoJSON);
 						this.geoJSON_Ori = { 
 							"type": "FeatureCollection",
 							"name": "polyJSON",
@@ -456,14 +535,41 @@ export default {
 			}
 		},
 		setBlock() {
-			//TODO: 單元存入資料庫
-			this.stepOrder = 3;
+			if(this.listQuery.roadCode == null || this.listQuery.roadCode.length == 0) {
+				this.$message({
+					message: "請輸入道路編碼",
+					type: "error",
+				});
+			} else { 
+				let unitList = [];
+				for(const block of this.selectBlock) {
+					unitList.push({
+						roadId: Number(this.geoInfo.roadId),
+						roadCode: `${this.listQuery.roadCode}${block.blockId}${this.listQuery.roadDir}`,
+						roadName: this.geoInfo.roadName,
+						geometry: JSON.stringify(block.geometry)
+					})
+				}
+				// console.log(unitList);
+
+				setRoadUnitGeo({ unitList }).then(response => {
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: "新增成功",
+							type: "success",
+						});
+
+						this.stepOrder = 3;
+						this.getList();
+					} 
+				}).catch(err => console.log(err))
+				}
 		},
 		switchStep(index) {
 			// console.log(index, this.stepOrder);
 			if(index >= this.stepOrder) return;
-			this.stepOrder = index;
-			console.log(index, this.stepOrder);
+			if(index == -1) this.stepOrder--;
+			else this.stepOrder = index;
 		},
 		createMarkers() {
 			// 建立端點
@@ -546,7 +652,6 @@ export default {
 					type: "error",
 				});
 			} else {
-				this.stepOrder = 1;
 				this.geoInfo.points.sort((a, b) => (a.index - b.index));
 
 				this.boundary = this.geoInfo.points.reduce((acc, cur, id, arr) => {
@@ -560,6 +665,7 @@ export default {
 
 				const points = this.boundary.slice(0, 2).sort((a, b) => (a.range[0] - b.range[0]));
 				this.createLines(points);
+				this.stepOrder = 1;
 			}
 		},
 		createLines(points) {
@@ -622,7 +728,6 @@ export default {
 		},
 		createBlocks() {
 			this.resetLines();
-			this.stepOrder = 2;
 
 			this.geoInfo.blocks = [];
 			this.selectBlock = [];
@@ -659,19 +764,21 @@ export default {
 				console.log(`${event.feature.j.area.toLocaleString()} ㎡`,);
 			});
 
+			const _this = this;
 			this.map.data.addListener('mouseover', (event) => {
-				const row = this.geoInfo.blocks.filter((block) => block.blockId == event.feature.j.blockId)[0];
-				if(this.$refs.blockTable) this.$refs.blockTable.setCurrentRow(row);
-				this.map.data.revertStyle();
-				this.map.data.overrideStyle(event.feature, { fillColor: "#FFF176" });
+				const row = _this.geoInfo.blocks.filter((block) => block.blockId == event.feature.j.blockId)[0];
+				if(_this.$refs.blockTable) _this.$refs.blockTable.setCurrentRow(row);
+				_this.map.data.revertStyle();
+				_this.map.data.overrideStyle(event.feature, { fillColor: "#FFF176" });
 			});
 
-			this.map.data.addListener('mouseout', function(event) {
-				// if(this.$refs.blockTable) this.$refs.blockTable.setCurrentRow();
+			this.map.data.addListener('mouseout', (event) => {
+				if(_this.$refs.blockTable) _this.$refs.blockTable.setCurrentRow();
 				this.map.data.revertStyle();
 			});
 
-			this.$nextTick(() => this.$refs.blockTable.toggleAllSelection());
+			this.$nextTick(() => _this.$refs.blockTable.toggleAllSelection());
+			this.stepOrder = 2;
 		},
 		resetLines() {
 			this.lineFilter = JSON.parse(JSON.stringify(this.geoInfo.lines));
@@ -697,7 +804,9 @@ export default {
 			})
 		},
 		clearAll() {
+			this.infoWindow.close();
 			this.stepOrder = 0;
+			this.dataLayer.forEach(feature => this.dataLayer.remove(feature));
 			this.map.data.forEach(feature => this.map.data.remove(feature));
 			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
 			for(const markers of this.markers) markers.setMap(null);
@@ -829,11 +938,15 @@ export default {
 					if(area < this.areaLimit[0] || area > this.areaLimit[1]) fillColor = "#EF5350";
 
 					// console.log(border.flat().map(point => ({ lat: point[1], lng: point[0] })));
-
+					const blockId = String(this.geoInfo.lastCode + index + 1).padStart(3, '0');
 					const block = {
-						blockId: index+1,
+						blockId: blockId,
 						area: area,
-						points: border.flat().map(point => ({ lat: point[1], lng: point[0] }))
+						points: border.flat().map(point => ({ lat: point[1], lng: point[0] })),
+						geometry: {
+							type: "Polygon",
+							coordinates: border
+						}
 					};
 					this.geoInfo.blocks.push(block);
 
@@ -846,7 +959,7 @@ export default {
 							"fill": fillColor,
 							"fill-opacity": 0.8,
 							"area": area,
-							"blockId": index+1
+							"blockId": blockId
 						},
 						"geometry": {
 							"type": "Polygon",
@@ -894,6 +1007,9 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
+.type-select .el-select-dropdown__item
+	padding: 0 5px
+	text-align: center
 .road-unitGen
 	position: relative
 	height: 100%
@@ -918,7 +1034,8 @@ export default {
 				cursor: pointer
 			.el-step__main
 				margin-left: 10px
-				.el-step__title > *, .el-step__arrow
+				.el-step__title, .el-step__arrow
+					width: 100%
 					text-align: center
 					cursor: default
 	.info-box
@@ -933,6 +1050,19 @@ export default {
 			// padding: 5px
 			font-size: 18px 
 			color: #555
+			.el-input-group__prepend, input
+				padding: 0 5px
+				text-align: center
+			.el-select
+				width: 85px
+				.el-input__inner
+					padding-left: 3px
+					padding-right: 10px
+					text-align: center
+				.el-input__suffix
+					right: 0
+					margin-right: -3px
+					transform: scale(0.7)
 			.el-card__body
 				max-height: 400px
 				overflow-x: hidden
@@ -952,7 +1082,10 @@ export default {
 					transform: scale(1.2, 1) translateX(-11%)
 			.info-btn
 				display: inline-flex
+				align-items: center
 				margin-bottom: 5px
+				.el-input-group--prepend
+					flex: 2
 			.line-label
 				width: 100%
 				.el-collapse-item__header
@@ -964,8 +1097,16 @@ export default {
 					background-color: rgba(#EF5350, 0.8)
 				.el-collapse-item__content
 						height: 100%
-			.blockTableRow
+			.block-table-row
 				cursor: pointer
+				.road-code
+					.el-input-group__prepend, .el-input-group__append, input
+						padding: 0 2px
+						text-align: center
+					.el-input-group__prepend
+						width: 70px
+					.el-input-group__append
+						width: 10px
 	#map
 		overflow: hidden
 		background: none !important

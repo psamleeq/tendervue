@@ -17,6 +17,14 @@ export function getRoadUnitGeo(query) {
 	})
 }
 
+export function setRoadUnitGeo(data) {
+	return request({
+		url: '/road/PCIUnit',
+		method: 'post',
+		data
+	})
+}
+
 // 缺失管理
 export function getRoadCaseType(query) {
 	return request({

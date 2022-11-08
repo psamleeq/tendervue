@@ -22,19 +22,19 @@ const otherRouter = {
 		{
 			path: 'caseUpload',
 			component: () => import('@/views/PI/caseUpload'),
-			name: 'caseUpload',
+			name: 'PICaseUpload',
 			meta: { title: '案件上傳', isNew: true }
 		},
 		{
 			path: 'mCaseStatics',
 			component: () => import('@/views/PI/mCaseStatics'),
-			name: 'caseStatics',
+			name: 'mCaseStatics',
 			meta: { title: '維護數量統計' }
 		},
 		{
 			path: 'mCaseList',
 			component: () => import('@/views/PI/mCaseList'),
-			name: 'caseList',
+			name: 'mcaseList',
 			meta: { title: '維護案件列表', isNew: true }
 		},
 		{

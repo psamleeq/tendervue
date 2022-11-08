@@ -489,7 +489,7 @@ export default {
 						});
 
 						this.map.data.addListener('click', (event) => {
-							console.log("click: ", event);
+							// console.log("click: ", event);
 							// console.log(this.currCaseId);
 							this.showCaseContent(event.feature.j, event.latLng);
 						});
