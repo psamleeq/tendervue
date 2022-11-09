@@ -64,19 +64,33 @@
 				align="center"
 				:formatter="formatter"
 				:sortable="value.sortable"
-			/>
+			>
+				<template slot-scope="{ row, column }">
+					<span>{{ formatter(row, column) }}</span>
+					<span v-if="column.property == 'caseName'">
+						<el-popover popper-class="imgHover" placement="top" trigger="hover">
+							<el-image style="width: 100%; height: 100%" :src="`https://img.bellsgis.com/images/online_pic/${row.caseId}.jpg`" fit="scale-down" />
+							<el-button slot="reference" class="btn-action" type="primary" plain size="mini" round @click="showImg(row)">檢視</el-button>
+							<!-- <i  class="el-icon-picture" style="color: #409EFF; margin-left: 5px" /> -->
+						</el-popover>
+					</span>
+				</template>
+			</el-table-column>
 			<el-table-column label="狀態" align="center">
 				<template slot-scope="{ row }">
-					<i v-if="row.reccontrol == '1'" class="el-icon-check" style="color: #67C23A" />
+					<span v-if="row.reccontrol == '1'">
+						<i class="el-icon-check" style="color: #67C23A" />
+						<el-button class="btn-action" type="danger" plain size="mini" round @click="setCaseStatus(row, 8)">刪除</el-button>
+					</span>
 					<span v-else-if="row.reccontrol == '8'">
 						<i class="el-icon-close" style="color: #F56C6C" />
-						<el-button type="success" plain size="mini" round @click="recoverCaseStatus(row)">復原</el-button>
+						<el-button class="btn-action" type="success" plain size="mini" round @click="setCaseStatus(row, 1)">復原</el-button>
 					</span>
 				</template>
 			</el-table-column>
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
-					<el-button type="primary" plain size="mini" round @click="showMap(row)">地圖</el-button>
+					<el-button class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">地圖</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -119,6 +133,13 @@
 			</span>
 			<!-- <h4>{{ listQuery.caseType }}</h4> -->
 		</el-dialog>
+
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="img-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgUrls"
+		/>
 	</div>
 </template>
 
@@ -127,14 +148,17 @@ import moment from "moment";
 import { getRoadCaseType, getRoadCaseList, setRoadCase } from "@/api/road";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "roadCase",
-	components: { Pagination },
+	components: { Pagination, ElImageViewer },
 	data() {
 		return {
 			loading: false,
+			showImgViewer: false,
 			dialogFilterVisible: false,
+			imgUrls: "",
 			caseTypeTemp: [],
 			caseTitleTemp: [],
 			// timeTabId: moment().year(),
@@ -175,8 +199,16 @@ export default {
 					name: "道路名稱",
 					sortable: true,
 				},
-				width: {
-					name: "寬度(cm)",
+				// width: {
+				// 	name: "寬度(cm)",
+				// 	sortable: true,
+				// },
+				length: {
+					name: "長度(m)",
+					sortable: true,
+				},
+				area: {
+					name: "面積(㎡)",
 					sortable: true,
 				},
 				depth: {
@@ -345,6 +377,10 @@ export default {
 		
 	},
 	methods: {
+		showImg(row) {
+			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${row.caseId}.jpg` ];
+			this.showImgViewer = true;
+		},
 		showMap(row) {
 			this.$router.push({
 				path: "/case/caseMap",
@@ -371,7 +407,10 @@ export default {
 			if(this.listQuery.filterType == 3 && this.listQuery.filterStr.length != 0) query.roadName = this.listQuery.filterStr;
 			if(this.listQuery.caseType.length != 0) query.caseType = this.listQuery.caseType.join(",");
 
+			// FIXME: this.listQuery.pageCurrent 會被改動，需再檢查
+			const pageCurrent = this.listQuery.pageCurrent;
 			getRoadCaseList(query).then(response => {
+				this.listQuery.pageCurrent = pageCurrent;
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -408,9 +447,9 @@ export default {
 			});
 			this.getList();
 		},
-		recoverCaseStatus(row) {
+		setCaseStatus(row, type) {
 			// console.log(this.currCaseId);
-			setRoadCase(row.caseId, { type: 1 }).then(response => {
+			setRoadCase(row.caseId, { type }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",
@@ -501,6 +540,9 @@ export default {
 .type-select .el-select-dropdown__item
 	padding: 0 5px
 	text-align: center
+.imgHover
+	max-width: 800px
+	height: 400px
 .road-case
 	.filter-container
 		.filter-item
@@ -527,6 +569,15 @@ export default {
 				.el-select:last-child .el-input__inner
 					border-top-left-radius: 0
 					border-bottom-left-radius: 0
+	.btn-action
+		margin-left: 5px
+		padding: 5px 10px
+	.img-preview
+		width: 100%
+		.el-image-viewer__mask
+			opacity: 0.7
+		.el-icon-circle-close
+			color:  #FFF
 	.el-dialog
 		width: 450px
 		overflow: hidden
