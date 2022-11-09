@@ -58,7 +58,7 @@ import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 import { getDistGeo } from "@/api/type"
 import { getRoadCaseGeo, setRoadCase } from "@/api/road";
-import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -101,7 +101,8 @@ export default {
 					caseName: "缺失類型",
 					caseLevel: "損壞程度",
 					roadName: "道路名稱",
-					width: "寬度(cm)",
+					length: "長度(m)",
+					area: "面積(㎡)",
 					depth: "深度(cm)"
 				}
 			},
