@@ -30,13 +30,13 @@
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> -->
 			<el-button
 				class="filter-item"
-				:type="listQuery.caseType.length == 0 ? 'success' : 'danger'"
-				:plain="listQuery.caseType.length != 0"
+				:type="checked.length == 0 ? 'success' : 'danger'"
+				:plain="checked.length != 0"
 				icon="el-icon-s-order"
 				@click="filterDialogOpen"
 				>過濾</el-button>
 			<el-button
-				v-if="listQuery.caseType.length != 0"
+				v-if="checked.length != 0"
 				type="text"
 				size="mini"
 				@click="filterClear"
@@ -117,12 +117,15 @@
 						:indeterminate="options.caseTitle[title]['isIndeterminate']"
 						@change="handleCheckAllChange(title)"
 						>{{ options.caseTitle[title]["name"] }}</el-checkbox>
-					<el-checkbox-group v-model="listQuery.caseType" @change="handleCheckedChange">
-						<el-checkbox
-							v-for="event in caseClass[title]"
-							:key="event"
-							:label="event"
-							>{{ event }}</el-checkbox>
+					<el-checkbox-group v-model="checked" @change="handleCheckedChange">
+						<span v-for="type in caseClass[title]" :key="type" style="display: flex; align-items: center;">
+							<el-checkbox :label="type" style="width: 70%">
+								<span>{{ type }}</span>
+							</el-checkbox>
+							<el-select v-model="typeLevel[type]" placeholder="請選擇" size="mini" popper-class="type-select" :disabled="!checked.includes(type)"  @change="(val) => handleLevelSelect(val, type)">
+								<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="options.levelMap[order]" />
+							</el-select>
+						</span>
 					</el-checkbox-group>
 				</el-col>
 			</el-row>
@@ -330,15 +333,32 @@ export default {
 					}
 				},
 				caseType: [],
-				BrokeType: {
-					1: "輕度",
-					2: "中度",
-					3: "重度"
+				levelMap: {
+					0: "全部",
+					1: "輕",
+					2: "中",
+					3: "重"
 				},
 			}
 		};
 	},
 	computed: {
+		checked: {
+			get() {
+				return this.listQuery.caseType.filter(type => (type.checked)).map(type => (type.name));
+			},
+			set(val) {
+				this.listQuery.caseType.forEach(type => {
+					if(val.includes(type.name)) type.checked = true;
+					else type.checked = false;
+				})
+			}
+		},
+		typeLevel() {
+			let typeLevel = {};
+			this.listQuery.caseType.forEach(type => this.$set(typeLevel, type.name, type.level) );
+			return typeLevel;
+		},
 		caseClass() {
 			let checked = Array.from({ length: this.options.caseType.length }, () => (false));
 			let caseClass = {};
@@ -371,12 +391,16 @@ export default {
 		getRoadCaseType().then(response => {
 			// this.listQuery.caseType = JSON.parse(JSON.stringify(response.data.list));
 			this.options.caseType = JSON.parse(JSON.stringify(response.data.list));
+			for(const type of this.options.caseType) this.listQuery.caseType.push({ name: type, checked: false, level: 0 });
 			this.getList();
 		});
 		// this.listQuery.distList = Object.keys(this.districtList);
 		
 	},
 	methods: {
+		handleLevelSelect(val, typeName) {
+			this.listQuery.caseType.filter(type => (type.name == typeName))[0].level = val;
+		},
 		showImg(row) {
 			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${row.caseId}.jpg` ];
 			this.showImgViewer = true;
@@ -405,7 +429,7 @@ export default {
 
 			if(this.listQuery.filterType == 2 && this.listQuery.filterStr.length != 0) query.caseId = this.listQuery.filterStr;
 			if(this.listQuery.filterType == 3 && this.listQuery.filterStr.length != 0) query.roadName = this.listQuery.filterStr;
-			if(this.listQuery.caseType.length != 0) query.caseType = this.listQuery.caseType.join(",");
+			if(this.listQuery.caseType.length != 0) query.caseType = JSON.stringify(this.listQuery.caseType);
 
 			// FIXME: this.listQuery.pageCurrent 會被改動，需再檢查
 			const pageCurrent = this.listQuery.pageCurrent;
@@ -439,7 +463,7 @@ export default {
 			this.options.caseTitle = JSON.parse(JSON.stringify(this.caseTitleTemp));
 		},
 		filterClear() {
-			this.listQuery.caseType = [];
+			this.checked = [];
 			this.listQuery.pageCurrent = 1;
 			Object.keys(this.options.caseTitle).forEach((k) => {
 				this.options.caseTitle[k].checkAll = false;
@@ -475,18 +499,18 @@ export default {
 		handleCheckAllChange(title) {
 			let values = this.caseClass[title];
 			if (this.options.caseTitle[title]["checkAll"]) {
-				this.listQuery.caseType.push(...values);
+				this.checked.push(...values);
 			} else {
-				this.listQuery.caseType = this.listQuery.caseType.filter((el) => values.indexOf(el) == -1);
+				this.checked = this.checked.filter((el) => values.indexOf(el) == -1);
 			}
-			this.listQuery.caseType = [...new Set(this.listQuery.caseType)];
+			this.checked = [...new Set(this.checked)];
 			this.options.caseTitle[title]["isIndeterminate"] = false;
 		},
 		handleCheckedChange() {
 			let titles = Object.keys(this.options.caseTitle);
 			titles.forEach((title) => {
 				let values = this.caseClass[title];
-				let temp = values.filter((el) => this.listQuery.caseType.indexOf(el) != -1);
+				let temp = values.filter((el) => this.checked.indexOf(el) != -1);
 				this.options.caseTitle[title]["isIndeterminate"] = false;
 				this.options.caseTitle[title]["checkAll"] = false;
 				if (temp.length == 0) {
@@ -618,6 +642,16 @@ export default {
 								color: white
 					.el-checkbox__input.is-indeterminate .el-checkbox__inner
 						background-color: lighten(#409EFF, 15)
+					.el-select
+						width: 55px
+						.el-input__inner
+							padding: 0 13px 0 5px
+							text-align: center
+							background-color: transparent
+						.el-input__suffix
+							right: 0px
+							margin-right: -3px
+							transform: scale(0.7)
 		.el-dialog__footer
 			margin: 5px 0px
 </style>
