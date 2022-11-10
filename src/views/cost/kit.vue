@@ -187,7 +187,7 @@ export default {
 			listQuery: {
 				dteamSN: null,
 				pageCurrent: 1,
-				pageSize: 20,
+				pageSize: 50,
 			},
 			headers: {
 				serialno: {
@@ -287,6 +287,7 @@ export default {
 							message: "查無資料",
 							type: "error",
 						});
+						this.total = 0;
 					} else {
 						this.total = response.data.total;
 						this.list = response.data.list;

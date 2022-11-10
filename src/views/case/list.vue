@@ -68,7 +68,7 @@
 				<template slot-scope="{ row, column }">
 					<span>{{ formatter(row, column) }}</span>
 					<span v-if="column.property == 'caseName'">
-						<el-popover popper-class="imgHover" placement="top" trigger="hover">
+						<el-popover popper-class="imgHover" placement="top" trigger="hover" :close-delay="0">
 							<el-image style="width: 100%; height: 100%" :src="`https://img.bellsgis.com/images/online_pic/${row.caseId}.jpg`" fit="scale-down" />
 							<el-button slot="reference" class="btn-action" type="primary" plain size="mini" round @click="showImg(row)">檢視</el-button>
 							<!-- <i  class="el-icon-picture" style="color: #409EFF; margin-left: 5px" /> -->
@@ -179,7 +179,7 @@ export default {
 				filterStr: null,
 				caseType: [],
 				pageCurrent: 1,
-				pageSize: 20,
+				pageSize: 50,
 			},
 			headers: {
 				id: {
@@ -419,7 +419,6 @@ export default {
 			// this.searchRange = startDate + " - " + endDate;
 
 			this.list = [];
-			this.total = 0;
 
 			let query = {
 				filter: this.listQuery.filter,
@@ -431,15 +430,13 @@ export default {
 			if(this.listQuery.filterType == 3 && this.listQuery.filterStr.length != 0) query.roadName = this.listQuery.filterStr;
 			if(this.listQuery.caseType.length != 0) query.caseType = JSON.stringify(this.listQuery.caseType);
 
-			// FIXME: this.listQuery.pageCurrent 會被改動，需再檢查
-			const pageCurrent = this.listQuery.pageCurrent;
 			getRoadCaseList(query).then(response => {
-				this.listQuery.pageCurrent = pageCurrent;
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
+					this.total = 0;
 				} else {
 					this.total = response.data.total;
 					this.list = response.data.list;

@@ -24,6 +24,12 @@ const unitRouter = {
 			component: () => import('@/views/unit/genMap'),
 			name: 'genMap',
 			meta: { title: '維護單元產生', vTag: 'Alpha' }
+		},
+		{
+			path: 'roadStatus',
+			component: () => import('@/views/unit/roadStatus'),
+			name: 'roadStatus',
+			meta: { title: '路況查詢', vTag: 'Alpha' }
 		}
 	]
 }

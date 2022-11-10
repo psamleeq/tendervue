@@ -1,8 +1,8 @@
 <template>
-	<div class="app-container road-unit" v-loading="loading">
-		<h2>道路單元</h2>
+	<div class="app-container road-status" v-loading="loading">
+		<h2>路況查詢</h2>
 		<div class="filter-container">
-			<el-cascader
+			<!-- <el-cascader
 				class="filter-item"
 				v-model="listQuery.distList"
 				placeholder="請選擇區域"
@@ -16,9 +16,9 @@
 					<span>{{ data.label }}</span>
 					<span v-if="!node.isLeaf"> ({{ listQuery.distList.length }}) </span>
 				</template>
-			</el-cascader>
+			</el-cascader> -->
 
-			<div class="filter-item">
+			<!-- <div class="filter-item">
 				<el-tooltip effect="dark" content="不填為查詢全部" placement="bottom-end">
 					<el-input
 						v-model="listQuery.roadName"
@@ -30,49 +30,31 @@
 						@input="listQuery.roadName = listQuery.roadName.replace(/\s+/g, '')"
 					/>
 				</el-tooltip>
+			</div> -->
+
+			<div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>區塊類型</span>
+					</div>
+					<el-select v-model="listQuery.groupType" popper-class="type-select">
+						<el-option v-for="(name, type) in options.groupType" :key="type" :label="name" :value="Number(type)" />
+					</el-select>
+				</div>
 			</div>
-		</div>
 
-		<div class="filter-container">
-			<div class="filter-item" style="margin-left: 12px">
-				<el-tooltip effect="dark" content="填0為不限制" placement="bottom-end">
-					<el-input
-						v-model.number="listQuery.width[0]"
-						type="number"
-						:min="0"
-						placeholder="公尺"
-						style="width: 160px"
-						@input="() => { 
-							if (listQuery.width[0] < 0) listQuery.width[0] = 0; 
-							if (listQuery.width[1] != 0 && listQuery.width[0] >= listQuery.width[1]) listQuery.width[1] = listQuery.width[0];
-						}"
-					>
-						<el-select slot="prepend" v-model="listQuery.widthType" popper-class="type-select">
-							<el-option v-for="(name, type) in widthTypeMap" :key="type" :label="name" :value="Number(type)" />
-						</el-select>
-					</el-input>
-				</el-tooltip>
-
-				<span style="margin: 0 12px"> - </span>
-
-				<el-tooltip effect="dark" content="填0為不限制" placement="bottom-end">
-					<el-input
-						v-model.number="listQuery.width[1]"
-						type="number"
-						:min="0"
-						placeholder="公尺"
-						style="width: 160px"
-						@input="() => {
-							if (listQuery.width[1] < 0) listQuery.width[1] = 0; 
-							if (listQuery.width[1] != 0 && listQuery.width[0] >= listQuery.width[1]) listQuery.width[1] = listQuery.width[0]; 
-						}"
-					>
-						<el-select slot="prepend" v-model="listQuery.widthType" popper-class="type-select">
-							<el-option v-for="(name, type) in widthTypeMap" :key="type" :label="name" :value="Number(type)" />
-						</el-select>
-					</el-input>
-				</el-tooltip>
+			<div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>計算依據</span>
+					</div>
+					<el-select v-model="listQuery.computeType" popper-class="type-select">
+						<el-option v-for="(name, type) in options.computeType" :key="type" :label="name" :value="Number(type)" />
+					</el-select>
+				</div>
 			</div>
+
+			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" style="margin-left: 40px" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button>
@@ -80,17 +62,7 @@
 
 		<el-divider />
 
-		<h4>道路單元數：{{ total }}</h4>
-		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
-
-		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1075px; min-width: 500px">
-			<div class="el-input-group__prepend">
-				<el-checkbox v-model="allHeaders" :indeterminate="partHeaders">欄位</el-checkbox>
-			</div>
-			<el-checkbox-group class="el-input__inner column-filter-item" v-model="headersCheckVal" style="line-height: 15px;">
-				<el-checkbox v-for="(value, key) in headersOpt" :key="key" :label="key">{{ value.name }}</el-checkbox>
-			</el-checkbox-group>
-		</div>
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -102,8 +74,9 @@
 			stripe
 			style="width: 100%"
 		>
+			<el-table-column label="序號" type="index" width="100" align="center" :index="indexMethod" />
 			<el-table-column
-				v-for="(value, key) in headersFilter"
+				v-for="(value, key) in headers"
 				:key="key"
 				:prop="key"
 				:label="value.name"
@@ -111,12 +84,6 @@
 				:formatter="formatter"
 				:sortable="value.sortable"
 			/>
-			<el-table-column label="操作" align="center">
-				<template slot-scope="{ row }">
-					<div v-if="row.unitNum != 0">區塊數: {{ row.unitNum }}</div>
-					<el-button :type="row.unitNum == 0 ? 'primary' : 'info' " plain size="mini" round @click="showMap(row)">切分</el-button>
-				</template>
-			</el-table-column>
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
@@ -125,93 +92,56 @@
 
 <script>
 import moment from "moment";
-import { getRoadUnit } from "@/api/road";
+import { getRoadStatus } from "@/api/road";
+import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 
 export default {
-	name: "roadUnit",
-	components: { Pagination },
+	name: "roadStatus",
+	components: { TimePicker, Pagination },
 	data() {
 		return {
 			loading: false,
+			timeTabId: 1,
+			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
+			daterange: [ moment().subtract(1, "month").startOf("month").toDate(), moment().subtract(1, "month").endOf("month").toDate() ],
+			searchRange: "",
 			listQuery: {
 				distList: [],
-				roadName: "",
-				widthType: 1,
-				width: [ 0, 0 ],
+				groupType: 1,
+				computeType: 2,
 				pageCurrent: 1,
 				pageSize: 50,
 			},
-			headersFixed: {
-				RoadId: {
-					name: "序號",
-					sortable: false,
-				},
-				notes: {
-					name: "單元編號",
-					sortable: true,
-				},
+			headers: {
+				// Id: {
+				// 	name: "序號",
+				// 	sortable: false
+				// },
 				dist: {
 					name: "行政區",
-					sortable: true,
+					sortable: false
 				},
-				roadName: {
+				fcl_road: {
 					name: "道路名稱",
-					sortable: true,
+					sortable: false
 				},
-			},
-			headersOpt: {
-				crossName: {
-					name: "交叉道路",
-					sortable: false,
-				},
-				roadStart: {
+				fcl_sta_ro: {
 					name: "起始道路",
-					sortable: false,
+					sortable: false
 				},
-				roadEnd: {
+				fcl_end_ro: {
 					name: "結束道路",
-					sortable: false,
+					sortable: false
 				},
-				lane: {
-					name: "車道數量",
-					sortable: false,
-				},
-				width: {
-					name: "計畫路寬",
-					sortable: true,
-				},
-				widthReal: {
-					name: "實際路寬",
-					sortable: true,
-				},
-				length: {
-					name: "區段長度",
-					sortable: true,
-				},
-				area: {
-					name: "道路面積",
-					sortable: true,
-				},
-				areaCross: {
-					name: "道路面積(扣除路口重覆)",
-					sortable: true,
+				PCI_value: {
+					name: "PCI",
+					sortable: false
 				},
 			},
 			total: 0,
 			list: [],
-			headersCheckVal: [],
-			allHeaders: true,
-			widthTypeMap: {
-				1: "計畫路寬",
-				2: "實際路寬",
-			},
-			roadIdMap: {
-				0: "路口",
-				1: "順向",
-				2: "逆向",
-			},
 			districtList: {
 				100: {
 					name: "中正區",
@@ -261,20 +191,20 @@ export default {
 					name: "文山區",
 					engName: "Wenshan",
 				},
+			},
+			options: {
+				groupType: {
+					1: "街廓",
+					2: "路段",
+				},
+				computeType: {
+					// 1: "缺失數量",
+					2: "PCI分數"
+				}
 			}
 		};
 	},
 	computed: {
-		partHeaders() {
-			return (this.headersCheckVal.length != 0 && this.headersCheckVal.length < Object.keys(this.headersOpt).length);
-		},
-		headersFilter() {
-			if (this.headersCheckVal.length == 0) this.allHeaders = false;
-
-			let headersFilter = Object.assign({}, this.headersFixed);
-			this.headersCheckVal.forEach((header) => headersFilter[header] = this.headersOpt[header]);
-			return headersFilter;
-		},
 		districtOpt() {
 			let districtOpt = [{ value: 0, label: "台北市", children: [] }];
 			for (const zip in this.districtList)
@@ -286,16 +216,9 @@ export default {
 			return districtOpt;
 		},
 	},
-	watch: {
-		allHeaders(val) {
-			if (val) this.headersCheckVal = Object.keys(this.headersOpt);
-			else this.headersCheckVal = [];
-		},
-	},
+	watch: {},
 	created() {
 		this.listQuery.distList = Object.keys(this.districtList);
-		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headersOpt);
-		else this.headersCheckVal = [];
 
 		this.getList();
 	},
@@ -309,25 +232,19 @@ export default {
 		getList() {
 			this.loading = true;
 
-			// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-			// this.searchRange = startDate + " - " + endDate;
+			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
 
 			this.list = [];
-			let query = {
-				// width: this.listQuery.width,
-				// widthReal: this.listQuery.widthReal,
-				pageCurrent: this.listQuery.pageCurrent,
-				pageSize: this.listQuery.pageSize,
-				// timeStart: startDate,
-				// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-			};
-			if (this.listQuery.distList.length > 0) query.distList = this.listQuery.distList.join(",");
-			if (this.listQuery.roadName.length > 0) query.roadName = this.listQuery.roadName;
-			if (this.listQuery.widthType == 1) query.width = this.listQuery.width;
-			else if (this.listQuery.widthType == 2) query.widthReal = this.listQuery.width;
 
-			getRoadUnit(query).then(response => {
+			getRoadStatus({
+				groupType: this.listQuery.groupType,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: this.listQuery.pageSize
+			}).then((response) => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -337,7 +254,7 @@ export default {
 				} else {
 					this.total = response.data.total;
 					this.list = response.data.list;
-					this.list.forEach(l => l.dist = this.districtList[l.zip].name);
+					this.list.forEach(l => l.dist = this.districtList[l.zip_code].name);
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
@@ -364,17 +281,12 @@ export default {
 				// timeStart: startDate,
 				// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 			};
-			if (this.listQuery.distList.length > 0) query.distList = this.listQuery.distList.join(",");
-			if (this.listQuery.roadName.length > 0) query.roadName = this.listQuery.roadName;
-			if (this.listQuery.widthType == 1) query.width = this.listQuery.width;
-			else if (this.listQuery.widthType == 2) query.widthReal = this.listQuery.width;
 
 			getRoadUnit(query).then((response) => {
 				let list = response.data.list;
-				list.forEach(l => l.dist = this.districtList[l.zip].name);
 
-				const tHeader = Object.values(this.headersFilter).map((h) => h.name);
-				const filterVal = Object.keys(this.headersFilter);
+				const tHeader = Object.values(this.headers).map((h) => h.name);
+				const filterVal = Object.keys(this.headers);
 				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
 				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
 				const data = this.formatJson(filterVal, list);
@@ -401,11 +313,8 @@ export default {
 .type-select .el-select-dropdown__item
 	padding: 0 5px
 	text-align: center
-.road-unit
+.road-status
 	.filter-container
-		.el-textarea .el-textarea__inner
-			resize: none
-			height: 62px !important
 		.el-input__inner
 			padding-left: 5px
 			text-align: center
@@ -418,6 +327,8 @@ export default {
 				right: 0
 				margin-right: -3px
 				transform: scale(0.7)
+		.el-input-group--prepend .el-select .el-input.is-focus .el-input__inner
+			border-color: #DCDFE6
 		.filter-item
 			margin-right: 5px
 			vertical-align: middle

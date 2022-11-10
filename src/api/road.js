@@ -57,3 +57,12 @@ export function getRoadCaseGeo(query) {
 		params: query
 	})
 }
+
+//路況查詢
+export function getRoadStatus(query) {
+	return request({
+		url: '/road/status',
+		method: 'get',
+		params: query
+	})
+}

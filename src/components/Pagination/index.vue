@@ -79,12 +79,12 @@ export default {
   methods: {
     handleSizeChange(val) {
       this.pageSizeProps = val;
-      this.pageCurrentProps =  1;
-      this.$emit('pagination')
+      this.pageCurrentProps = 1;
+      this.$emit('pagination');
     },
     handleCurrentChange(val) {
       this.pageCurrentProps =  val;
-      this.$emit('pagination')
+      this.$emit('pagination');
     }
   }
 }

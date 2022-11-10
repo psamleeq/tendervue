@@ -1,8 +1,8 @@
 <template>
-  <div class="app-container PCI-report" v-loading="loading">
-    <h2>PCI報表</h2>
+	<div class="app-container PCI-report" v-loading="loading">
+		<h2>PCI報表</h2>
 		<aside>資料初始為2022年6月</aside>
-    <div class="filter-container">
+		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
@@ -17,44 +17,44 @@
 					@click="dateShortcuts(i)"
 				>{{ i }}</el-button>
 			</el-button-group>
-      <!-- <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button> -->
-      <el-button
-        class="filter-item"
-        type="info"
-        icon="el-icon-document"
-        :circle="screenWidth<567"
-        @click="handleDownload"
-      >輸出報表</el-button>
-    </div>
-    
-    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+			<!-- <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button> -->
+			<el-button
+				class="filter-item"
+				type="info"
+				icon="el-icon-document"
+				:circle="screenWidth<567"
+				@click="handleDownload"
+			>輸出報表</el-button>
+		</div>
+		
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
-    <el-table
-      empty-text="目前沒有資料"
-      :data="list"
-      border
-      fit
-      highlight-current-row
-      :header-cell-style="{'background-color': '#F2F6FC'}"
-      stripe
-      style="width: 100%"
-    >
+		<el-table
+			empty-text="目前沒有資料"
+			:data="list"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
 			<el-table-column label="序號" type="index" width="100" align="center" :index="indexMethod" />
-      <!-- <el-table-column 
-        v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
-      align="center" fixed/>-->
-      <el-table-column
-        v-for="(value, key) in { ...headers, ...headers_PCI}"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
-        :sortable="value.sortable"
-      />
-    </el-table>
+			<!-- <el-table-column 
+				v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
+			align="center" fixed/>-->
+			<el-table-column
+				v-for="(value, key) in { ...headers, ...headers_PCI}"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
+				:sortable="value.sortable"
+			/>
+		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
-  </div>
+	</div>
 </template>
 
 <script>
@@ -65,35 +65,35 @@ import Pagination from '@/components/Pagination';
 // import { data } from "../../../public/assets/json/pci.json"
 
 export default {
-  name: "PCIReport",
+	name: "PCIReport",
 	components: { TimePicker, Pagination },
-  data() {
-    return {
-      loading: false,
-      timeTabId: moment().year(),
-      dateTimePickerVisible: false,
-      screenWidth: window.innerWidth,
-      daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
-      searchRange: "",
+	data() {
+		return {
+			loading: false,
+			timeTabId: moment().year(),
+			dateTimePickerVisible: false,
+			screenWidth: window.innerWidth,
+			daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
+			searchRange: "",
 			listQuery: {
 				dist: 104,
-        pageCurrent: 1,
-        pageSize: 20,
-      },
-      headers: {
-        id: {
+				pageCurrent: 1,
+				pageSize: 50,
+			},
+			headers: {
+				id: {
 					name: "單元編號",
 					sortable: false
 				},
-        dist: {
+				dist: {
 					name: "行政區",
 					sortable: false
 				},
-        roadName: {
+				roadName: {
 					name: "道路名稱",
 					sortable: false
 				},
-        roadId: {
+				roadId: {
 					name: "道路編號",
 					sortable: false
 				},
@@ -111,9 +111,9 @@ export default {
 				// 	name: "PCI_2207",
 				// 	sortable: false
 				// }
-      },
+			},
 			total: 0,
-      list: [],
+			list: [],
 			roadIdMap: {
 				0: "路口",
 				1: "順向",
@@ -175,45 +175,46 @@ export default {
 					// dateEnd: "2022/12/31"
 				}
 			}
-    };
-  },
+		};
+	},
 	created() {
 		this.getList();
 	},
-  methods: {
+	methods: {
 		async dateWatcher() {
 			const dateStart = this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().startOf("y");
 			let dateEnd = this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().endOf("y");
 			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().endOf("d").toDate();
-      this.daterange = [ dateStart, dateEnd ];
+			this.daterange = [ dateStart, dateEnd ];
 
 			return new Promise(resolve => resolve());
 		},
-    async getList() {
-      this.loading = true;
+		async getList() {
+			this.loading = true;
 			await this.dateWatcher();
 
-      let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-      let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-      this.searchRange = startDate + " - " + endDate;
+			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
 
-      this.list = [];
-      getPCIList({
+			this.list = [];
+			getPCIList({
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 			}).then(response => {
-        if (response.data.list.length == 0) {
-          this.$message({
-            message: "查無資料",
-            type: "error",
-          });
-        } else {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+					this.total = 0;
+				} else {
 					this.total = response.data.total;
 					this.list = response.data.list;
 					this.headers_PCI = {};
-          this.list = this.list.reduce((curr, prev) => {
+					this.list = this.list.reduce((curr, prev) => {
 						const createMonth = String(prev.createMonth).padStart(2, 0);
 						if(curr.length == 0 || prev.id != curr[curr.length - 1].id) {
 							prev[`PCIValue_${createMonth}`] = prev.PCI_value;
@@ -235,27 +236,27 @@ export default {
 						}	
 						this.$set(l, "roadId", `${this.roadIdMap[l.id.slice(-1)]}-${l.id.slice(-4, -1)}`);
 					});
-        }
-        this.loading = false;
-      }).catch(err => { this.loading = false; });
-    },
+				}
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		},
 		async dateShortcuts(index) {
-      this.timeTabId = index;
+			this.timeTabId = index;
 			await this.dateWatcher();
 			this.pageCurrent = 1;
 			this.getList();
-    },
+		},
 		indexMethod(index) {
 			return (index + 1) + (this.listQuery.pageCurrent - 1) * this.listQuery.pageSize;
 		},
-    formatTime(time) {
-      return moment(time).utc().format("YYYY-MM-DD");
-    },
-    async handleDownload() {
+		formatTime(time) {
+			return moment(time).utc().format("YYYY-MM-DD");
+		},
+		async handleDownload() {
 			await this.dateWatcher();
 
 			const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-      const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 
 			getPCIList({
 				pageCurrent: 1,
@@ -301,11 +302,11 @@ export default {
 					});
 				});
 			});
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) => filterVal.map((j) => v[j]));
-    },
-  },
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		},
+	},
 };
 </script>
 
