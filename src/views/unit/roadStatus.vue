@@ -76,7 +76,7 @@
 		>
 			<el-table-column label="序號" type="index" width="100" align="center" :index="indexMethod" />
 			<el-table-column
-				v-for="(value, key) in headers"
+				v-for="(value, key) in headersFilter"
 				:key="key"
 				:prop="key"
 				:label="value.name"
@@ -107,6 +107,10 @@ export default {
 			screenWidth: window.innerWidth,
 			daterange: [ moment().subtract(1, "month").startOf("month").toDate(), moment().subtract(1, "month").endOf("month").toDate() ],
 			searchRange: "",
+			filterType: {
+				groupType: 1,
+				computeType: 2
+			},
 			listQuery: {
 				distList: [],
 				groupType: 1,
@@ -127,17 +131,25 @@ export default {
 					name: "道路名稱",
 					sortable: false
 				},
+				fcl_roadx: {
+					name: "交叉道路",
+					sortable: false,
+					groupTypeFilter: [ 1 ]
+				},
 				fcl_sta_ro: {
 					name: "起始道路",
-					sortable: false
+					sortable: false,
+					groupTypeFilter: [ 1 ]
 				},
 				fcl_end_ro: {
 					name: "結束道路",
-					sortable: false
+					sortable: false,
+					groupTypeFilter: [ 1 ]
 				},
 				PCI_value: {
 					name: "PCI",
-					sortable: false
+					sortable: false,
+					computeTypeFilter: [ 2 ]
 				},
 			},
 			total: 0,
@@ -200,7 +212,12 @@ export default {
 				computeType: {
 					// 1: "缺失數量",
 					2: "PCI分數"
-				}
+				},
+				roadIdMap: {
+					0: "路口",
+					1: "順",
+					2: "逆"
+				},
 			}
 		};
 	},
@@ -215,6 +232,16 @@ export default {
 
 			return districtOpt;
 		},
+		headersFilter() {
+			let headersFilter = {};
+			Object.keys(this.headers).forEach(key => {
+				const props = this.headers[key];
+				if(props.hasOwnProperty('groupTypeFilter') && props.groupTypeFilter.includes(this.filterType.groupType)) headersFilter[key] = props;
+				else if(props.hasOwnProperty('computeTypeFilter') && props.computeTypeFilter.includes(this.filterType.computeType)) headersFilter[key] = props;
+				else if(!props.hasOwnProperty('groupTypeFilter') && !props.hasOwnProperty('computeTypeFilter')) headersFilter[key] = props;
+			})
+			return headersFilter
+		}
 	},
 	watch: {},
 	created() {
@@ -235,8 +262,9 @@ export default {
 			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
-
 			this.list = [];
+			this.filterType.groupType = this.listQuery.groupType;
+			this.filterType.computeType = this.listQuery.computeType;
 
 			getRoadStatus({
 				groupType: this.listQuery.groupType,
@@ -254,7 +282,11 @@ export default {
 				} else {
 					this.total = response.data.total;
 					this.list = response.data.list;
-					this.list.forEach(l => l.dist = this.districtList[l.zip_code].name);
+					this.list.forEach(l => {
+						// if(this.listQuery.groupType == 2) l.fcl_road += ` - ${this.options.roadIdMap[l.pci_id_group.slice(-1)]}`;
+						l.dist = this.districtList[l.zip_code].name;
+						if(l.wkb_geometry) l.wkb_geometry = JSON.parse(l.wkb_geometry);
+					});
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
@@ -270,23 +302,26 @@ export default {
 			return moment(time).utc().format("YYYY-MM-DD");
 		},
 		async handleDownload() {
-			// await this.dateWatcher();
-
-			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 
 			let query = {
+				groupType: this.listQuery.groupType,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 				pageCurrent: 1,
-				pageSize: this.total,
-				// timeStart: startDate,
-				// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				pageSize: this.total
 			};
 
-			getRoadUnit(query).then((response) => {
+			getRoadStatus(query).then((response) => {
 				let list = response.data.list;
+				list.forEach((l, i) => {
+					this.$set(l, "index", i+1);
+					l.dist = this.districtList[l.zip_code].name;
+				});
 
-				const tHeader = Object.values(this.headers).map((h) => h.name);
-				const filterVal = Object.keys(this.headers);
+				const tHeader = [ "序號", ...Object.values(this.headersFilter).map((h) => h.name) ];
+				const filterVal = [ "index", ...Object.keys(this.headersFilter) ];
 				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
 				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
 				const data = this.formatJson(filterVal, list);
