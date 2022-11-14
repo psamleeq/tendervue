@@ -206,6 +206,10 @@
 						<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
 						<span v-else> - </span>
 					</span>
+					<span v-else-if="[ 'organAssign' ].includes(column.property)">
+						<i v-if="row[column.property] == 1" class="el-icon-check" style="color: #67C23A" />
+						<span v-else> - </span>
+					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
@@ -297,6 +301,10 @@ export default {
 					name: "設施類型",
 					sortable: false
 				},
+				organAssign: {
+					name: "是否交辦",
+					sortable: false
+				},
 				CaseName: {
 					name: "查報地點",
 					sortable: false
@@ -319,7 +327,7 @@ export default {
 				}
 			},
 			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情況" ],
-			apiHeader: [ "UploadCaseNo", "CaseSN", "CaseDate", "DeviceType", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType" ],
+			apiHeader: [ "UploadCaseNo", "CaseSN", "CaseDate", "DeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
 			tableSelect: [],
 			list: [],
 			csvData: [],
@@ -480,6 +488,8 @@ export default {
 						l.DeviceType = Number(l.DeviceType);
 						l.BType = Number(l.BType);
 						l.BrokeType = Number(l.BrokeType);
+						l.lat = Number(l.lat);
+						l.lng = Number(l.lng);
 					})
 					this.alreadyCreate = !response.data.isRMDB;
 					if(this.alreadyCreate) this.handleRemove();

@@ -193,6 +193,10 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
+					<span v-else-if="[ 'organAssign' ].includes(column.property)">
+						<i v-if="row[column.property] == 1" class="el-icon-check" style="color: #67C23A" />
+						<span v-else> - </span>
+					</span>
 					<span v-else-if="[ 'BType', 'BrokeType' ].includes(column.property)">
 						<span v-if="row.edit">
 							<el-select v-model.number="row[column.property]">
@@ -341,6 +345,10 @@ export default {
 					name: "設施類型",
 					sortable: true
 				},
+				organAssign: {
+					name: "是否交辦",
+					sortable: false
+				},
 				CaseName: {
 					name: "地址",
 					sortable: false
@@ -359,6 +367,10 @@ export default {
 				},
 				BrokeType: {
 					name: "損壞程度",
+					sortable: false
+				},
+				PCIValue: {
+					name: "PCI",
 					sortable: false
 				}
 			},
