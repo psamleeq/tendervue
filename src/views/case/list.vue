@@ -90,14 +90,25 @@
 			</el-table-column>
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">地圖</el-button>
+					<el-button-group>
+						<el-button class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">地圖</el-button>
+						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini"  round @click="showMapViewer(row)" />
+					</el-button-group>
 				</template>
 			</el-table-column>
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="img-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgUrls"
+		/>
+
 		<el-dialog
+			class="dialog-filter"
 			:visible.sync="dialogFilterVisible"
 			title="過濾條件"
 			:show-close="false"
@@ -137,12 +148,9 @@
 			<!-- <h4>{{ listQuery.caseType }}</h4> -->
 		</el-dialog>
 
-		<el-image-viewer
-			v-if="showImgViewer"
-			class="img-preview"
-			:on-close="() => { showImgViewer = false; }"
-			:url-list="imgUrls"
-		/>
+		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px" style="height: 800px">
+			<map-viewer :map.sync="map"/>
+		</el-dialog>
 	</div>
 </template>
 
@@ -151,16 +159,19 @@ import moment from "moment";
 import { getRoadCaseType, getRoadCaseList, setRoadCase } from "@/api/road";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
+import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "roadCase",
-	components: { Pagination, ElImageViewer },
+	components: { Pagination, ElImageViewer, MapViewer },
 	data() {
 		return {
 			loading: false,
 			showImgViewer: false,
+			dialogMapVisible: true,
 			dialogFilterVisible: false,
+			map: {},
 			imgUrls: "",
 			caseTypeTemp: [],
 			caseTitleTemp: [],
@@ -397,6 +408,9 @@ export default {
 		// this.listQuery.distList = Object.keys(this.districtList);
 		
 	},
+	mounted(){
+		this.dialogMapVisible = false;
+	},
 	methods: {
 		handleLevelSelect(val, typeName) {
 			this.listQuery.caseType.filter(type => (type.name == typeName))[0].level = val;
@@ -410,6 +424,45 @@ export default {
 				path: "/case/caseMap",
 				query: { caseId: row.caseId },
 			});
+		},
+		showMapViewer(row) {
+			// console.log("showMap");
+			this.map.data.forEach(feature => this.map.data.remove(feature));
+			this.dialogMapVisible = true;
+
+			let geoJSON_case = { 
+				"type": "FeatureCollection",
+				"name": "polyJSON",
+				"features": []
+			};
+			// console.log(row.wkb_geometry);
+
+			geoJSON_case.features.push({
+				"type": "Feature",
+				"properties": { },
+				"geometry": row.wkb_geometry
+			});
+
+			// console.log(geoJSON_case);
+
+			this.map.data.addGeoJson(geoJSON_case);
+			this.map.data.setStyle({ 
+				strokeColor: '#F56C6C',
+				strokeWeight: 3,
+				strokeOpacity: 0.9,
+				fillColor: '#F56C6C',
+				fillOpacity: 0.8
+			});
+
+			const depth = row.isLine ? 1 : 2;
+			const paths = row.wkb_geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
+			const bounds = new google.maps.LatLngBounds();
+			paths.forEach(position => bounds.extend(position));
+			this.map.fitBounds(bounds);
+			const zoom = this.map.getZoom();
+			this.map.setZoom(zoom < 21 ? 21 : zoom);
+			// this.map.setCenter(bounds.getCenter());
+			// this.map.panToBounds(bounds);
 		},
 		getList() {
 			this.loading = true;
@@ -440,6 +493,9 @@ export default {
 				} else {
 					this.total = response.data.total;
 					this.list = response.data.list;
+					this.list.forEach(l => {
+						if(l.wkb_geometry) l.wkb_geometry = JSON.parse(l.wkb_geometry);
+					});
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
@@ -592,14 +648,14 @@ export default {
 					border-bottom-left-radius: 0
 	.btn-action
 		margin-left: 5px
-		padding: 5px 10px
+		padding: 5px 8px
 	.img-preview
 		width: 100%
 		.el-image-viewer__mask
 			opacity: 0.7
 		.el-icon-circle-close
 			color:  #FFF
-	.el-dialog
+	.dialog-filter .el-dialog
 		width: 450px
 		overflow: hidden
 		.el-dialog__header
@@ -649,6 +705,9 @@ export default {
 							right: 0px
 							margin-right: -3px
 							transform: scale(0.7)
-		.el-dialog__footer
-			margin: 5px 0px
+			.el-dialog__footer
+				margin: 5px 0px
+	.dialog-map
+		min-height: 600px
+		height: 30%
 </style>

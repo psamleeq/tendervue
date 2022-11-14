@@ -86,9 +86,19 @@
 				:formatter="formatter"
 				:sortable="value.sortable"
 			/>
+			<el-table-column label="操作" align="center">
+				<template slot-scope="{ row }">
+					<el-button v-if="row.wkb_geometry" class="btn-action" type="info" icon="el-icon-search" plain size="mini"  round @click="showMapViewer(row)" />
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
+
+		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px" style="height: 800px">
+			<map-viewer :map.sync="map"/>
+		</el-dialog>
 	</div>
 </template>
 
@@ -97,16 +107,19 @@ import moment from "moment";
 import { getRoadStatus } from "@/api/road";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
+import MapViewer from "@/components/MapViewer";
 
 export default {
 	name: "roadStatus",
-	components: { TimePicker, Pagination },
+	components: { TimePicker, Pagination, MapViewer },
 	data() {
 		return {
 			loading: false,
+			dialogMapVisible: true,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
+			map: {},
 			daterange: [ moment().subtract(1, "month").startOf("month").toDate(), moment().subtract(1, "month").endOf("month").toDate() ],
 			searchRange: "",
 			filterType: {
@@ -256,12 +269,44 @@ export default {
 
 		this.getList();
 	},
+	mounted(){
+		this.dialogMapVisible = false;
+	},
 	methods: {
-		showMap(row) {
-			this.$router.push({
-				path: "/unit/genMap",
-				query: { roadId: row.RoadId },
+		showMapViewer(row) {
+			// console.log("showMap");
+			this.map.data.forEach(feature => this.map.data.remove(feature));
+			this.dialogMapVisible = true;
+
+			let geoJSON_road = { 
+				"type": "FeatureCollection",
+				"name": "polyJSON",
+				"features": []
+			};
+			// console.log(row.wkb_geometry);
+
+			geoJSON_road.features.push({
+				"type": "Feature",
+				"properties": { },
+				"geometry": row.wkb_geometry
 			});
+
+			this.map.data.addGeoJson(geoJSON_road);
+			this.map.data.setStyle({ 
+				strokeWeight: 1,
+				strokeOpacity: 0.5,
+				fillColor: '#409EFF',
+				fillOpacity: 0.8
+			});
+
+			const paths = row.wkb_geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
+			const bounds = new google.maps.LatLngBounds();
+			paths.forEach(position => bounds.extend(position));
+			this.map.fitBounds(bounds);
+			const zoom = this.map.getZoom();
+			this.map.setZoom(zoom < 18 ? 18 : zoom);
+			// this.map.setCenter(bounds.getCenter());
+			// this.map.panToBounds(bounds);
 		},
 		getList() {
 			this.loading = true;
@@ -386,4 +431,10 @@ export default {
 		text-align: left
 		.el-checkbox
 			margin: 0 4px 0 10px
+	.btn-action
+		margin-left: 5px
+		padding: 5px 8px
+	.dialog-map
+		min-height: 600px
+		height: 30%
 </style>
