@@ -56,8 +56,10 @@
 
 			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 
-			<el-button class="filter-item" type="primary" icon="el-icon-search" style="margin-left: 40px" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" style="margin-left: 20px" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button>
+
+			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">排除路口</el-checkbox>
 		</div>
 
 		<el-divider />
@@ -112,6 +114,7 @@ export default {
 				computeType: 2
 			},
 			listQuery: {
+				filter: false,
 				distList: [],
 				groupType: 1,
 				computeType: 2,
@@ -271,6 +274,7 @@ export default {
 			this.filterType.computeType = this.listQuery.computeType;
 
 			getRoadStatus({
+				filter: this.listQuery.filter,
 				groupType: this.listQuery.groupType,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
