@@ -96,7 +96,7 @@
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
-		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px" style="height: 800px">
+		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px">
 			<map-viewer :map.sync="map"/>
 		</el-dialog>
 	</div>
@@ -433,8 +433,9 @@ export default {
 			margin: 0 4px 0 10px
 	.btn-action
 		margin-left: 5px
-		padding: 5px 8px
-	.dialog-map
-		min-height: 600px
-		height: 30%
+		padding: 5px
+	.dialog-map 
+		min-height: 300px 
+		.el-dialog__body
+			height: 30%
 </style>

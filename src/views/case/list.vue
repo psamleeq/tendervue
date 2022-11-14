@@ -148,7 +148,7 @@
 			<!-- <h4>{{ listQuery.caseType }}</h4> -->
 		</el-dialog>
 
-		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px" style="height: 800px">
+		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px">
 			<map-viewer :map.sync="map"/>
 		</el-dialog>
 	</div>
@@ -648,16 +648,17 @@ export default {
 					border-bottom-left-radius: 0
 	.btn-action
 		margin-left: 5px
-		padding: 5px 8px
+		padding: 5px
 	.img-preview
 		width: 100%
 		.el-image-viewer__mask
 			opacity: 0.7
 		.el-icon-circle-close
 			color:  #FFF
-	.dialog-filter .el-dialog
-		width: 450px
-		overflow: hidden
+	.dialog-filter 
+		.el-dialog
+			width: 450px
+			overflow: hidden
 		.el-dialog__header
 			background-color: #EBEEF5
 		.el-dialog__body
@@ -708,6 +709,7 @@ export default {
 			.el-dialog__footer
 				margin: 5px 0px
 	.dialog-map
-		min-height: 600px
-		height: 30%
+		min-height: 300px 
+		.el-dialog__body
+			height: 30%
 </style>
