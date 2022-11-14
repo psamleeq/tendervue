@@ -131,6 +131,10 @@ export default {
 					name: "道路名稱",
 					sortable: false
 				},
+				road_direction: {
+					name: "道路方向",
+					sortable: false
+				},
 				fcl_roadx: {
 					name: "交叉道路",
 					sortable: false,
