@@ -144,6 +144,9 @@
 									<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 								</el-select>
 							</span>
+							<span v-else-if="[ 'organAssign' ].includes(column.property)">
+								<el-checkbox v-model.number="row[column.property]" :true-label="1" :false-label="0" />
+							</span>
 							<span v-else>{{ formatter(row, column) }}</span>
 						</template>
 					</el-table-column>
@@ -207,7 +210,8 @@
 						<span v-else> - </span>
 					</span>
 					<span v-else-if="[ 'organAssign' ].includes(column.property)">
-						<i v-if="row[column.property] == 1" class="el-icon-check" style="color: #67C23A" />
+						<!-- <i v-if="row[column.property] == 1" class="el-icon-check" style="color: #67C23A" /> -->
+						<span v-if="row[column.property] == 1">是</span>
 						<span v-else> - </span>
 					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
@@ -472,6 +476,7 @@ export default {
 				list: [],
 				csv: []
 			};
+			this.tableSelect = [];
 			getCaseList({
 				isList: false,
 				timeStart: date,
@@ -532,10 +537,11 @@ export default {
 		},
 		async handleSelectionChange(value) {
 			const delay = (n) => new Promise( r => setTimeout(r, n*1000));
+
 			for(const val of value) {
 				let msgArr = [];
 				for(const column in this.headers) {
-					if(!val[column]) msgArr.push(`「${this.headers[column].name}」`);
+					if(column != 'organAssign' && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
 				}
 				if(msgArr.length > 0) {
 					this.$message({
@@ -546,7 +552,7 @@ export default {
 					await delay(0.5);
 				}
 			}
-			this.tableSelect = val;
+			this.tableSelect = value;
 		},
 		formatter(row, column) {
 			if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];

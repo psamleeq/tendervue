@@ -158,7 +158,7 @@
 			stripe
 			style="width: 100%"
 		>
-			<el-table-column label="序號" type="index" width="100" align="center" />
+			<el-table-column label="序號" type="index" width="40" align="center" />
 			<!-- <el-table-column label="案件編號" prop="UploadCaseNo" align="center">
 				<template slot-scope="{ row }">
 					<template v-if="row.edit">
@@ -188,20 +188,32 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
+				:width="['organAssign'].includes(key) ? 70 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
-					<span v-else-if="[ 'organAssign' ].includes(column.property)">
-						<i v-if="row[column.property] == 1" class="el-icon-check" style="color: #67C23A" />
-						<span v-else> - </span>
-					</span>
-					<span v-else-if="[ 'BType', 'BrokeType' ].includes(column.property)">
+					<span v-else-if="[ 'organAssign', 'BType', 'BrokeType', 'PCIValue' ].includes(column.property)">
 						<span v-if="row.edit">
-							<el-select v-model.number="row[column.property]">
+							<span v-if="[ 'organAssign' ].includes(column.property)">
+								<el-checkbox v-model.number="row[column.property]" :true-label="1" :false-label="0" />
+							</span>
+							<el-select v-else-if="[ 'BType', 'BrokeType' ].includes(column.property)" class="edit-select" v-model.number="row[column.property]" size="mini" popper-class="type-select">
 								<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 							</el-select>
+								<el-input-number 
+									v-else-if="[ 'PCIValue' ].includes(column.property)" 
+									class="edit-number"
+									v-model.number="row[column.property]"
+									controls-position="right"
+									size="mini"
+									:precision="1"
+									:step="0.1"
+									:min="0"
+									:max="100"
+									style="width: 80px"
+								/>
 							<el-button type="text" @click="rowActive = row; setResult();">
 								<i class="el-icon-success" />
 							</el-button>
@@ -557,8 +569,10 @@ export default {
 			const OrganCheck = this.rowActive.OrganCheck == 2 ? Number(`${this.rowActive.OrganCheck}${this.rowActive.ReasonType}`) : this.rowActive.OrganCheck;
 
 			setCaseList( this.rowActive.id, {
+				organAssign: this.rowActive.organAssign,
 				BType: this.rowActive.BType,
 				BrokeType: this.rowActive.BrokeType,
+				PCIValue: this.rowActive.PCIValue,
 				SVCheck: SVCheck,
 				OrganCheck: OrganCheck
 			}).then(response => {
@@ -575,7 +589,8 @@ export default {
 			})
 		},
 		formatter(row, column) {
-			if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
+			if(column.property == 'organAssign') return row[column.property] == 1 ? '是' : '-';
+			else if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
 			else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
 			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
@@ -593,8 +608,11 @@ export default {
 			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
 				l.CaseDate = this.formatTime(l.CaseDate);
 				l.DeviceType = this.options.DeviceType[l.DeviceType];
+				l.organAssign =  l.organAssign == 1 ? "是" : "";
 				l.BType = this.options.BType[l.BType];
 				l.BrokeType = this.options.BrokeType[l.BrokeType];
+				l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
+
 				const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
 				if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];
 				else l.Note = "";
@@ -623,6 +641,9 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
+.type-select .el-select-dropdown__item
+	padding: 0 5px
+	// text-align: center
 .PI-case-list
 	height: calc(100vh - 50px)
 	overflow: scroll
@@ -682,7 +703,6 @@ export default {
 					background: #FF9800
 				.icon-message-alert
 					background: #f4516c
-
 			.icon-form
 				color: #40c9c6
 			.icon-people
@@ -726,6 +746,18 @@ export default {
 		margin-right: -10px
 	.el-icon-error
 		color: #F56C6C
+	.el-select.edit-select
+		width: 85px
+		.el-input__inner
+			padding-left: 3px
+			padding-right: 10px
+		.el-input__suffix
+			right: 0
+			margin-right: -3px
+			transform: scale(0.7)
+	.edit-number.el-input-number .el-input__inner
+		padding: 0 10px
+		text-align: left
 	.el-dialog
 		.el-dialog__body > div
 			margin-top: 10px
