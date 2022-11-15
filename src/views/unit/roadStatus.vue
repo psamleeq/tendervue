@@ -88,7 +88,10 @@
 			/>
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
-					<el-button v-if="row.wkb_geometry" class="btn-action" type="info" icon="el-icon-search" plain size="mini"  round @click="showMapViewer(row)" />
+					<el-button-group v-if="row.wkb_geometry">
+						<el-button v-if="listQuery.groupType == 1" class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">地圖</el-button>
+						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini"  round @click="showMapViewer(row)" />
+					</el-button-group>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
@@ -273,6 +276,12 @@ export default {
 		this.dialogMapVisible = false;
 	},
 	methods: {
+		showMap(row) {
+			this.$router.push({
+				path: "/case/caseMap",
+				query: { blockId: row.fcl_id },
+			});
+		},
 		showMapViewer(row) {
 			// console.log("showMap");
 			this.map.data.forEach(feature => this.map.data.remove(feature));
