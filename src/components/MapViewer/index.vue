@@ -1,5 +1,5 @@
 <template>
-	<div id="map" ref="map" />
+	<div id="map-viewer" ref="map" />
 </template>
 
 <script>
@@ -27,9 +27,7 @@ export default {
 		}
 	},
 	data() {
-		return {
-
-		}
+		return { }
 	},
 	computed: {
 		mapProps: {
@@ -190,7 +188,7 @@ export default {
 </script>
 
 <style lang="sass">
-#map
+#map-viewer
 	overflow: hidden
 	background: none !important
 	// position: absolute

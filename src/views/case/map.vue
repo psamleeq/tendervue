@@ -4,12 +4,22 @@
 		<div class="header-bar">
 			<h2 class="case-title">缺失地圖</h2>
 			<div class="filter-container">
+				<div class="filter-item filter">
+					<div>PCI切塊</div>
+					<el-checkbox-group v-model="listQuery.blockType" size="mini" @change="switchBlockType">
+						<el-checkbox-button v-for="(block, type) in options.blockMap" :label="Number(type)" :key="type">{{ block }}</el-checkbox-button>
+					</el-checkbox-group>
+				</div>
 				<div class="filter-item">
-					<el-input v-model="listQuery.caseId" placeholder="請輸入">
-						<span slot="prepend">缺失編號</span>
+					<el-input v-model="listQuery.filterId" placeholder="請輸入">
+						<!-- <span slot="prepend">缺失編號</span> -->
+						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
+							<el-option label="缺失編號" :value="1" />
+							<el-option label="區塊編號" :value="2" />
+						</el-select>
 					</el-input>
 				</div>
-				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="focusCase();">搜尋</el-button>
+				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
 			</div>
 		</div>
 
@@ -19,9 +29,15 @@
 
 		<el-card class="info-box left">
 			<el-row :class="[ 'color-box', 'select-all', { 'active' : selectCaseAll } ]" style="margin: 5px 0;">
-				<el-col :span="8" :offset="7" style="padding: 0 5px">全選</el-col>
+				<el-col :span="8" :offset="7" style="padding: 0 5px">篩選</el-col>
 				<el-col :span="5">
 					<el-switch v-model="selectCaseAll" @change="caseFilter()" />
+				</el-col>
+				<el-col :span="4">
+					<el-select v-model.number="selectLevelAll" placeholder="請選擇" size="mini" popper-class="type-select" @change="caseFilter()">
+						<el-option :value="-1" label="無" style="display: none" />
+						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="options.levelMap[order]" />
+					</el-select>
 				</el-col>
 			</el-row>
 			<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
@@ -82,18 +98,20 @@ export default {
 			showImgViewer: false,
 			screenWidth: window.innerWidth,
 			areaLimit: [139, 325],
-			map: null,
+			// map: null,
 			currCaseId: null,
 			imgUrls: [],
-			dataLayer: {},
+			// dataLayer: {},
 			infoWindow: null,
 			markers: [],
 			polyLines: [],
-			geoJSON: {},
+			// geoJSON: {},
 			caseInfo: [],
 			selectCase: {},
 			listQuery: {
-				caseId: null
+				filterType: 1,
+				filterId: null,
+				blockType: [1]
 			},
 			headers: {
 				caseInfo: {
@@ -107,6 +125,10 @@ export default {
 				}
 			},
 			options: { 
+				blockMap: {
+					1: "超鉞",
+					2: "新工處"
+				},
 				levelMap: {
 					0: "全部",
 					1: "輕",
@@ -167,10 +189,24 @@ export default {
 				else Object.values(this.selectCase).forEach(caseInfo => caseInfo.switch = false);
 			}
 		},
+		selectLevelAll: {
+			get() {
+				const selectLevelAll = Object.values(this.selectCase).reduce((acc, cur) => {
+					acc[cur.level]++;
+					return acc;
+				}, { 0: 0, 1: 0, 2: 0, 3: 0 });
+
+				const level = Object.keys(selectLevelAll).filter(key => selectLevelAll[key] == this.caseInfo.length);
+				return level.length > 0 ? Number(level[0]) : -1;
+			},
+			set(val) {
+				Object.values(this.selectCase).forEach(caseInfo => caseInfo.level = val);
+			}
+		},
 		geoJSONFilter() {
 			let geoJSONFilter = { features: [] };
-			if(Object.keys(this.geoJSON).length > 0) {
-				geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON));
+			if(Object.keys(this.geoJSON.case).length > 0) {
+				geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON.case));
 				const selectCaseList = Object.keys(this.selectCase).filter(caseName => this.selectCase[caseName].switch);
 				const selectCaseLvMap = selectCaseList.reduce((acc, cur) => { 
 					acc[cur] = this.selectCase[cur].level == 0 ? this.selectCase[cur].level : this.options.levelMap[this.selectCase[cur].level];
@@ -189,8 +225,14 @@ export default {
 		}
 	},
 	watch: { },
-	created() {},
+	created() {
+		this.dataLayer = { 
+			PCIBlock: {}
+		};
+		this.geoJSON = {};
+	},
 	async mounted() {
+		this.loading = true;
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
 			console.log("Google Map Failure");
@@ -204,7 +246,11 @@ export default {
 		loader.load().then(async() => {
 			await this.initMap();
 			if (this.$route.query.caseId) {
-				this.listQuery.caseId = this.$route.query.caseId;
+				this.listQuery.filterType = 1;
+				this.listQuery.filterId = this.$route.query.caseId;
+			} else if (this.$route.query.blockId) {
+				this.listQuery.filterType = 2;
+				this.listQuery.filterId = this.$route.query.blockId;
 			}
 			this.getList();
 		}).catch(err => console.log("err: ", err));
@@ -212,303 +258,318 @@ export default {
 	methods: {
 		// init google map
 		async initMap() {
-			// 預設顯示的地點：台北市政府親子劇場
-			// const location = {
-			// 	lat: 25.0374865, // 經度
-			// 	lng: 121.5647688, // 緯度
-			// };
-			const location = {
-				lat: 25.0685406,
-				lng: 121.5280918
-			}
+			return new Promise(resolve => {
+				// console.log("initMap");
+				// 預設顯示的地點：台北市政府親子劇場
+				// const location = {
+				// 	lat: 25.0374865, // 經度
+				// 	lng: 121.5647688, // 緯度
+				// };
+				const location = {
+					lat: 25.0685406,
+					lng: 121.5280918
+				}
 
-			// 建立地圖
-			this.map = new google.maps.Map(this.$refs.map, {
-				center: location, // 中心點座標
-				zoom: 14, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
-				maxZoom: 24,
-				minZoom: 13,
-				/*
-					roadmap 顯示默認道路地圖視圖。
-					satellite 顯示 Google 地球衛星圖像。
-					hybrid 顯示正常和衛星視圖的混合。
-					terrain 顯示基於地形信息的物理地圖。
-				*/
-				// mapTypeId: "roadmap",
-				fullscreenControl: false,
-				mapTypeControl: false,
-				streetViewControl: false,
-				rotateControl: false,
-				tilt: 0,
-				styles: [
-					{
-						stylers: [{ visibility: "on" }],
-					},
-					{
-						elementType: "geometry",
-						stylers: [{ color: "#f5f5f5" }]
-					},
-					{
-						elementType: "labels.text.fill",
-						stylers: [{ color: "#616161" }]
-					},
-					{
-						elementType: "labels.text.stroke",
-						stylers: [{ color: "#f5f5f5" }]
-					},
-					{
-						featureType: "administrative",
-						elementType: "all",
-						stylers: [{ visibility: "off" }]
-					},
-					{
-						featureType: "poi",
-						elementType: "all",
-						stylers: [{ visibility: "off" }],
-					},
-					{
-						featureType: "road",
-						elementType: "geometry",
-						stylers: [{ color: "#FFFFFF" }]
-					},
-					{
-						featureType: "road.arterial",
-						elementType: "labels.text.fill",
-						stylers: [{ color: "#757575" }]
-					},
-					{
-						featureType: "road.highway",
-						elementType: "geometry",
-						stylers: [{ color: "#DADADA" }]
-					},
-					{
-						featureType: "road.highway",
-						elementType: "labels.text.fill",
-						stylers: [{ color: "#616161" }]
-					},
-					{
-						featureType: "road.local",
-						elementType: "labels.text.fill",
-						stylers: [{ color: "#9E9E9E" }]
-					},
-					{
-						featureType: "transit",
-						elementType: "all",
-						stylers: [{ visibility: "off" }],
-					},
-					{
-						featureType: "road",
-						elementType: "labels",
-						stylers: [{ visibility: "off" }]
-					},
-					{
-						featureType: "water",
-						elementType: "geometry",
-						stylers: [{ color: "#C9C9C9" }]
-					},
-					{
-						featureType: "water",
-						elementType: "labels.text.fill",
-						stylers: [{ color: "#9E9E9E" }]
-					}
-				],
-			});
-
-			// NOTE: 設定路名在KML之上，只有在非開發模式才能載入多圖層
-			if(loaderOpt.apiKey.length != 0) {
-				// NOTE: 疊上StyledMapType
-				const labelsMapType = new google.maps.StyledMapType(
-					[
+				// 建立地圖
+				this.map = new google.maps.Map(this.$refs.map, {
+					center: location, // 中心點座標
+					zoom: 14, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
+					maxZoom: 24,
+					minZoom: 13,
+					/*
+						roadmap 顯示默認道路地圖視圖。
+						satellite 顯示 Google 地球衛星圖像。
+						hybrid 顯示正常和衛星視圖的混合。
+						terrain 顯示基於地形信息的物理地圖。
+					*/
+					// mapTypeId: "roadmap",
+					fullscreenControl: false,
+					mapTypeControl: false,
+					streetViewControl: false,
+					rotateControl: false,
+					tilt: 0,
+					styles: [
 						{
-							stylers: [{ visibility: 'off'}]
-						}, 
+							stylers: [{ visibility: "on" }],
+						},
+						{
+							elementType: "geometry",
+							stylers: [{ color: "#f5f5f5" }]
+						},
+						{
+							elementType: "labels.text.fill",
+							stylers: [{ color: "#616161" }]
+						},
+						{
+							elementType: "labels.text.stroke",
+							stylers: [{ color: "#f5f5f5" }]
+						},
+						{
+							featureType: "administrative",
+							elementType: "all",
+							stylers: [{ visibility: "off" }]
+						},
+						{
+							featureType: "poi",
+							elementType: "all",
+							stylers: [{ visibility: "off" }],
+						},
 						{
 							featureType: "road",
-							elementType: 'labels',
-							stylers: [{ visibility: 'on' }]
+							elementType: "geometry",
+							stylers: [{ color: "#FFFFFF" }]
+						},
+						{
+							featureType: "road.arterial",
+							elementType: "labels.text.fill",
+							stylers: [{ color: "#757575" }]
+						},
+						{
+							featureType: "road.highway",
+							elementType: "geometry",
+							stylers: [{ color: "#DADADA" }]
+						},
+						{
+							featureType: "road.highway",
+							elementType: "labels.text.fill",
+							stylers: [{ color: "#616161" }]
+						},
+						{
+							featureType: "road.local",
+							elementType: "labels.text.fill",
+							stylers: [{ color: "#9E9E9E" }]
+						},
+						{
+							featureType: "transit",
+							elementType: "all",
+							stylers: [{ visibility: "off" }],
+						},
+						{
+							featureType: "road",
+							elementType: "labels",
+							stylers: [{ visibility: "off" }]
+						},
+						{
+							featureType: "water",
+							elementType: "geometry",
+							stylers: [{ color: "#C9C9C9" }]
+						},
+						{
+							featureType: "water",
+							elementType: "labels.text.fill",
+							stylers: [{ color: "#9E9E9E" }]
 						}
-					], 
-					{
-						name: 'Labels'
-					}
-				);
-				this.map.overlayMapTypes.push(labelsMapType);
-			}
-
-			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
-			this.infoWindow.addListener('domready', () => {
-				const infoDelBtn = this.$el.querySelector("#map #info-del-btn");
-				if(infoDelBtn) infoDelBtn.addEventListener("click", this.removeCaseStatus);
-
-				const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
-				if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { this.showImgViewer = true });
-			})
-
-			getDistGeo().then(response => {
-				this.distGeoJSON = response.data.geoJSON;
-				this.dataLayer.mask = new google.maps.Data({ map: this.map });
-				this.dataLayer.mask.loadGeoJson("/assets/json/NewTaipei.geojson");
-				this.dataLayer.mask.setStyle({
-					strokeColor: "#000000",
-					strokeWeight: 0,
-					strokeOpacity: 1,
-					fillColor: "#000000",
-					fillOpacity: 0.7,
-					zIndex: 0
+					],
 				});
 
-				this.dataLayer.district = new google.maps.Data({ map: this.map });
-				// this.dataLayer.district.loadGeoJson("/assets/json/district.geojson");
-				// console.log(JSON.stringify(this.distGeoJSON));
-				// console.log(distGeoJSON);
-				this.dataLayer.district.addGeoJson(response.data.geoJSON);
-				this.dataLayer.district.setStyle(feature => {
-					// console.log(feature);
-					const condition = feature.j.zipCode == 104;
-					return {
-						strokeColor: "#827717",
-						strokeWeight: 3,
-						strokeOpacity: 0.2,
+				// NOTE: 設定路名在KML之上，只有在非開發模式才能載入多圖層
+				if(loaderOpt.apiKey.length != 0) {
+					// NOTE: 疊上StyledMapType
+					const labelsMapType = new google.maps.StyledMapType(
+						[
+							{
+								stylers: [{ visibility: 'off'}]
+							}, 
+							{
+								featureType: "road",
+								elementType: 'labels',
+								stylers: [{ visibility: 'on' }]
+							}
+						], 
+						{
+							name: 'Labels'
+						}
+					);
+					this.map.overlayMapTypes.push(labelsMapType);
+				}
+
+				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
+				this.infoWindow.addListener('domready', () => {
+					const infoDelBtn = this.$el.querySelector("#map #info-del-btn");
+					if(infoDelBtn) infoDelBtn.addEventListener("click", this.removeCaseStatus);
+
+					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
+					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { this.showImgViewer = true });
+				})
+
+				// 載入區域GeoJson
+				getDistGeo().then(response => {
+					this.dataLayer.mask = new google.maps.Data({ map: this.map });
+					this.dataLayer.mask.loadGeoJson("/assets/json/NewTaipei.geojson");
+					this.dataLayer.mask.setStyle({
+						strokeColor: "#000000",
+						strokeWeight: 0,
+						strokeOpacity: 1,
 						fillColor: "#000000",
-						fillOpacity: condition ? 0 : 0.7,
+						fillOpacity: 0.7,
 						zIndex: 0
-					}
-				});
+					});
 
-				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
-				this.dataLayer.PCIBlock.loadGeoJson("/assets/json/PCIBlock.geojson");
-				this.dataLayer.PCIBlock.setStyle({ 
-					strokeColor: '#CFD8DC',
-					strokeWeight: 1,
-					strokeOpacity: 1,
-					fillOpacity: 0,
-					zIndex: 1
-				});
+					const distGeoJSON = response.data.geoJSON;
+					this.dataLayer.district = new google.maps.Data({ map: this.map });
+					// this.dataLayer.district.loadGeoJson("/assets/json/district.geojson");
+					// console.log(JSON.stringify(this.distGeoJSON));
+					// console.log(distGeoJSON);
+					this.dataLayer.district.addGeoJson(distGeoJSON);
+					this.dataLayer.district.setStyle(feature => {
+						// console.log(feature);
+						const condition = feature.j.zipCode == 104;
+						return {
+							strokeColor: "#827717",
+							strokeWeight: 3,
+							strokeOpacity: 0.2,
+							fillColor: "#000000",
+							fillOpacity: condition ? 0 : 0.7,
+							zIndex: 0
+						}
+					});
 
-			});
+					// 載入切塊GeoJson
+					this.geoJSON.block_104 = response.data.geoJSON["block_104"];
+					this.dataLayer.PCIBlock.bell = new google.maps.Data();
+					// this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block_104);
+					this.dataLayer.PCIBlock.bell.loadGeoJson("/assets/json/PCIBlock_104.geojson");
+					this.dataLayer.PCIBlock.bell.setStyle({ 
+						strokeColor: '#FFF',
+						strokeWeight: 1,
+						strokeOpacity: 1,
+						fillColor: '#2196F3',
+						fillOpacity: 0.1,
+						zIndex: 1
+					});
+
+					this.geoJSON.block_nco = response.data.geoJSON["block_nco"];
+					this.dataLayer.PCIBlock.nco = new google.maps.Data();
+					this.dataLayer.PCIBlock.nco.loadGeoJson("/assets/json/PCIBlock_nco.geojson", null, () => {
+						this.switchBlockType();
+						resolve();
+					});
+					// this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block_nco);
+					this.dataLayer.PCIBlock.nco.setStyle({ 
+						strokeColor: '#78909C',
+						strokeWeight: 2,
+						strokeOpacity: 0.4,
+						fillOpacity: 0,
+						zIndex: 2
+					});
+				});
+			})
 		},
-		getList() {
-			// if(this.listQuery.caseId.length != 0 && !Number(this.listQuery.caseId)) {
-			// 	this.$message({
-			// 		message: "請輸入正確缺失編號",
-			// 		type: "error",
-			// 	});
-			// } else {
-				this.loading = true;
-				this.clearAll();
-				this.markers = [];
-				this.polyLines = {};
-				// this.$router.push({ query: { caseId: this.listQuery.caseId }});
+		async getList() {
+			this.loading = true;
+			this.clearAll();
+			this.markers = [];
+			this.polyLines = {};
 
-				getRoadCaseGeo().then(response => {
-					if(Object.keys(response.data.geoJSON).length == 0) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-					} else {
-						this.caseInfo = response.data.summary;
-						this.caseInfo.forEach(info => {
-							let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-							let index = this.options.colorMap.filter(color => color.name == '其他')[0].index;
-							if(info.caseName) {
-								const colorFilter = this.options.colorMap.filter(color => {
-									let caseFlag = false;
-									for(const name of color.name) {
-										caseFlag = (info.caseName.indexOf(name) != -1);
-										// console.log(info.caseName, name, caseFlag);
-										if(caseFlag) break;
-									}
-
-									return caseFlag; 
-								})
-								// console.log(colorFilter);
-								
-								if(colorFilter.length > 0) {
-									color = colorFilter[0].color;
-									index = colorFilter[0].index;
+			getRoadCaseGeo().then(async (response) => {
+				if(Object.keys(response.data.geoJSON).length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.caseInfo = response.data.summary;
+					this.caseInfo.forEach(info => {
+						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
+						let index = this.options.colorMap.filter(color => color.name == '其他')[0].index;
+						if(info.caseName) {
+							const colorFilter = this.options.colorMap.filter(color => {
+								let caseFlag = false;
+								for(const name of color.name) {
+									caseFlag = (info.caseName.indexOf(name) != -1);
+									// console.log(info.caseName, name, caseFlag);
+									if(caseFlag) break;
 								}
+
+								return caseFlag; 
+							})
+							// console.log(colorFilter);
+							
+							if(colorFilter.length > 0) {
+								color = colorFilter[0].color;
+								index = colorFilter[0].index;
 							}
+						}
 
-							this.$set(info, "color", color);
-							this.$set(info, "index", index);
-							// console.log(JSON.stringify(info));
-							this.$set(this.selectCase, info.caseName, { switch: true, level: 0 });
-						})
+						this.$set(info, "color", color);
+						this.$set(info, "index", index);
+						// console.log(JSON.stringify(info));
+						this.$set(this.selectCase, info.caseName, { switch: true, level: 0 });
+					})
 
-						this.caseInfo.sort((a, b) => (a.index - b.index));
+					this.caseInfo.sort((a, b) => (a.index - b.index));
 
-						this.geoJSON = response.data.geoJSON;
-						// console.log(this.geoJSON);
-						this.map.data.addGeoJson(this.geoJSON);
-						// this.map.data.setStyle({ 
-						// 	strokeColor: '#009688',
-						// 	strokeWeight: 1,
-						// 	strokeOpacity: 0.5,
-						// 	fillColor: '#EF5350',
-						// 	fillOpacity: 0.8
-						// });
-						this.map.data.setStyle(feature => { 
-							// console.log(feature.j.caseName);
-							let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-							if(feature.j.caseName) {
-								const colorFilter = this.options.colorMap.filter(color => {
-									let caseFlag = false;
-									for(const name of color.name) {
-										caseFlag = (feature.j.caseName.indexOf(name) != -1);
-										// console.log(name, caseFlag);
-										if(caseFlag) break;
-									}
+					this.geoJSON.case = response.data.geoJSON;
+					// console.log(this.geoJSON.case);
+					this.map.data.addGeoJson(this.geoJSON.case);
+					// this.map.data.setStyle({ 
+					// 	strokeColor: '#009688',
+					// 	strokeWeight: 1,
+					// 	strokeOpacity: 0.5,
+					// 	fillColor: '#EF5350',
+					// 	fillOpacity: 0.8
+					// });
+					this.map.data.setStyle(feature => { 
+						// console.log(feature.j.caseName);
+						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
+						if(feature.j.caseName) {
+							const colorFilter = this.options.colorMap.filter(color => {
+								let caseFlag = false;
+								for(const name of color.name) {
+									caseFlag = (feature.j.caseName.indexOf(name) != -1);
+									// console.log(name, caseFlag);
+									if(caseFlag) break;
+								}
 
-									return caseFlag; 
-								})
-								// console.log(colorFilter);
-								
-								if(colorFilter.length > 0) color = colorFilter[0].color;
-							}
+								return caseFlag; 
+							})
+							// console.log(colorFilter);
+							
+							if(colorFilter.length > 0) color = colorFilter[0].color;
+						}
 
-							// console.log(color);
+						// console.log(color);
 
-							if(feature.j.isLine) {
-								return { 
-									strokeColor: color,
-									strokeWeight: 3,
-									strokeOpacity: 1,
-									fillOpacity: 0,
-									zIndex: 5
-								};
-							} else {
-								return { 
-									strokeColor: color,
-									strokeWeight: 1,
-									strokeOpacity: 1,
-									fillColor: color,
-									fillOpacity: 0.8,
-									zIndex: 5
-								};
-							}
-						});
+						if(feature.j.isLine) {
+							return { 
+								strokeColor: color,
+								strokeWeight: 3,
+								strokeOpacity: 1,
+								fillOpacity: 0,
+								zIndex: 5
+							};
+						} else {
+							return { 
+								strokeColor: color,
+								strokeWeight: 1,
+								strokeOpacity: 1,
+								fillColor: color,
+								fillOpacity: 0.8,
+								zIndex: 5
+							};
+						}
+					});
 
-						this.map.data.addListener('click', (event) => {
-							// console.log("click: ", event);
-							// console.log(this.currCaseId);
-							this.showCaseContent(event.feature.j, event.latLng);
-						});
+					this.map.data.addListener('click', (event) => {
+						// console.log("click: ", event);
+						// console.log(this.currCaseId);
+						this.showCaseContent(event.feature.j, event.latLng);
+					});
 
-						// this.map.data.addListener('rightclick', (event) => {
-						// 	console.log("rightclick: ",event);
+					// this.map.data.addListener('rightclick', (event) => {
+					// 	console.log("rightclick: ",event);
 
-						// 	this.infoWindow.setContent(event.latLng.toString());
-						// 	this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
-						// 	this.infoWindow.setPosition(event.latLng);
+					// 	this.infoWindow.setContent(event.latLng.toString());
+					// 	this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
+					// 	this.infoWindow.setPosition(event.latLng);
 
-						// 	this.infoWindow.open(this.map);
-						// });
-					}
-					this.loading = false;
-					this.focusCase();
-				}).catch(err => this.loading = false);
-			// }
+					// 	this.infoWindow.open(this.map);
+					// });
+				}
+				// this.loading = false;
+				await this.focusMap();
+				this.loading = false;
+			}).catch(err => this.loading = false);
 		},
 		removeCaseStatus() {
 			// console.log(this.currCaseId);
@@ -525,48 +586,107 @@ export default {
 				this.getList();
 			})
 		},
-		caseFilter() {
-			// console.log(this.geoJSON.features);
-			this.clearAll();
-
-			// let geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON));
-			// const selectCaseList = Object.keys(this.selectCase).filter(caseName => this.selectCase[caseName]);
-			// // console.log(selectCaseList);
-
-			// geoJSONFilter.features = geoJSONFilter.features.filter(feature => selectCaseList.includes(feature.properties.caseName));
-			// // console.log(geoJSONFilter);
-			this.map.data.addGeoJson(this.geoJSONFilter);
-		},
-		focusCase() {
-			if(this.listQuery.caseId.length == 0) return;
-			if(this.listQuery.caseId.length != 0 && !Number(this.listQuery.caseId)) {
-				this.$message({
-					message: "請輸入正確缺失編號",
-					type: "error",
-				});
-				return;
-			} 
-			this.$router.push({ query: { caseId: this.listQuery.caseId }});
-			let caseSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.caseId == this.listQuery.caseId))[0];
-			if(caseSpec == undefined ) {
-				this.$message({
-					message: "查無資料",
-					type: "error",
-				});
-
-				return;
+		switchBlockType() {
+			for(const block of Object.values(this.dataLayer.PCIBlock)) {
+				block.revertStyle();
+				block.setMap(null);
 			}
 
-			const depth = caseSpec.properties.isLine ? 1 : 2;
-			// console.log(caseSpec.properties.isLine, depth);
-			const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
-			// console.log(paths);
+			if(this.listQuery.blockType.includes(1)) this.dataLayer.PCIBlock.bell.setMap(this.map);
+			if(this.listQuery.blockType.includes(2)) this.dataLayer.PCIBlock.nco.setMap(this.map);
+		},
+		caseFilter() {
+			this.clearAll();
+			this.map.data.addGeoJson(this.geoJSONFilter);
+		},
+		async search() {
+			this.loading = true;
+			await this.focusMap();
+			this.loading = false;
+		},
+		async focusMap() {
+			return new Promise(resolve => {
+				for(const block of Object.values(this.dataLayer.PCIBlock)) block.revertStyle();
 
-			const bounds = new google.maps.LatLngBounds();
-			paths.forEach(position => bounds.extend(position));
-			this.map.fitBounds(bounds);
+				if(this.listQuery.filterId.length == 0) resolve();
+				if(this.listQuery.filterId.length != 0 && !Number(this.listQuery.filterId)) {
+					this.$message({
+						message: "請輸入正確編號",
+						type: "error",
+					});
+					resolve();
+				} 
 
-			this.showCaseContent(caseSpec.properties, paths[Math.floor(paths.length / 2)]);
+				if(this.listQuery.filterType == 1) {
+					this.$router.push({ query: { caseId: this.listQuery.filterId }});
+					const caseSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.caseId == this.listQuery.filterId))[0];
+					if(caseSpec == undefined ) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+
+						resolve();
+					}
+
+					const depth = caseSpec.properties.isLine ? 1 : 2;
+					// console.log(caseSpec.properties.isLine, depth);
+					const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
+					// console.log(paths);
+
+					const bounds = new google.maps.LatLngBounds();
+					paths.forEach(position => bounds.extend(position));
+					this.map.fitBounds(bounds);
+					this.showCaseContent(caseSpec.properties, paths[Math.floor(paths.length / 2)]);
+
+					resolve();
+				} else if(this.listQuery.filterType == 2) {
+					this.$router.push({ query: { blockId: this.listQuery.filterId }});
+
+					let blockSpec;
+					for(const[ key, block ] of Object.entries(this.dataLayer.PCIBlock)) {
+						// console.log(key, block);
+						block.forEach(features =>{ 
+							let blockId = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
+							if(features.j[blockId] == this.listQuery.filterId) blockSpec = features;
+						});
+						
+						if(blockSpec != undefined ) {
+							if(key == 'bell') this.listQuery.blockType = [ 1 ];
+							else if(key == 'nco') this.listQuery.blockType = [ 2 ];
+							this.switchBlockType();
+
+							block.overrideStyle(blockSpec, { strokeColor: "#FF6F00", zIndex: 3 });
+							break;
+						}
+					}
+
+					// for(const block of ['block_nco', 'block_104']) {
+					// 	blockSpec = this.geoJSON[block].features.filter(feature => (feature.properties.blockId == this.listQuery.filterId))[0];
+					// 	if(blockSpec != undefined ) break;
+					// }
+					// console.log(blockSpec);
+					if(blockSpec == undefined ) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+
+						resolve();
+					}
+
+					// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
+					const paths = blockSpec.getGeometry();
+					// console.log(paths);
+
+					const bounds = new google.maps.LatLngBounds();
+					// paths.forEach(position => bounds.extend(position));
+					paths.forEachLatLng(position => bounds.extend(position));
+					this.map.fitBounds(bounds);
+
+					resolve();
+				}
+			})
 		},
 		showCaseContent(props, position) {
 			this.currCaseId = props.caseId;
@@ -595,6 +715,11 @@ export default {
 			this.infoWindow.open(this.map);
 		},
 		clearAll() {
+			for(const block of Object.values(this.dataLayer.PCIBlock)) {
+				block.revertStyle();
+				block.setMap(null);
+			}
+
 			this.infoWindow.close();
 			this.map.data.forEach(feature => this.map.data.remove(feature));
 			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
@@ -631,6 +756,25 @@ export default {
 			text-shadow: 0px 0px 5px white
 			text-stroke: 0.6px white
 			-webkit-text-stroke: 0.6px white
+		.filter-item.filter
+			position: relative
+			margin: -8px 10px auto 5px
+			& > div:first-child
+				display: inline-block
+				width: auto
+				padding: 0 5px
+				color: #bbb
+				font-size: 12px
+				// background-color: white
+		.el-select
+			width: 85px
+			.el-input__inner
+				padding-left: 8px
+				padding-right: 10px
+			.el-input__suffix
+				right: 0
+				margin-right: -3px
+				transform: scale(0.7)
 	.info-box
 		position: absolute
 		width: 250px
