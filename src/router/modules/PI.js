@@ -38,6 +38,12 @@ const otherRouter = {
 			meta: { title: '維護案件列表', isNew: true }
 		},
 		{
+			path: 'inspecCaseList',
+			component: () => import('@/views/PI/inspecCaseList'),
+			name: 'inspecCaseList',
+			meta: { title: '派工紀錄', isNew: true }
+		},
+		{
 			path: 'assignCaseRatio',
 			component: () => import('@/views/PI/assignCaseRatio'),
 			name: 'ratio',
