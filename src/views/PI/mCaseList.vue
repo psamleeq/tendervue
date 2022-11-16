@@ -6,8 +6,8 @@
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<el-select class="filter-item" v-model="listQuery.caseType" :disabled="Object.keys(caseType).length <= 1">
-				<el-option v-for="type in caseTypeOrder" :key="type" :label="caseType[type].name" :value="Number(type)" />
+			<el-select class="filter-item" v-model="listQuery.caseType" :disabled="Object.keys(options.caseType).length <= 1">
+				<el-option v-for="type in options.caseTypeOrder" :key="type" :label="options.caseType[type].name" :value="Number(type)" />
 			</el-select>
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -53,6 +53,10 @@
 				</template>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'CaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
+					<span v-else-if="column.property == 'organAssign'">
+						<span v-if="row[column.property] == 1">是</span>
+						<span v-else> - </span>
+					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
@@ -107,8 +111,16 @@ export default {
 					name: "案號",
 					sortable: false
 				},
+				organAssign: {
+					name: "是否交辦",
+					sortable: false
+				},
 				BTName: {
 					name: "損壞類別",
+					sortable: false
+				},
+				BrokeType: {
+					name: "損壞程度",
 					sortable: false
 				},
 				CaseName: {
@@ -213,33 +225,40 @@ export default {
 				// 	"engName": "Wenshan"
 				// }
 			},
-			caseType: {
-				11: {
-					name: "熱再生修復",
-					unit: "㎡"
+			options: {
+				caseType: {
+					11: {
+						name: "熱再生修復",
+						unit: "㎡"
+					},
+					12: {
+						name: "AC鉋鋪",
+						unit: "㎡"
+					},
+					2: {
+						name: "人行道",
+						unit: "㎡"
+					},
+					3: {
+						name: "側溝",
+						unit: "m"
+					}
 				},
-				12: {
-					name: "AC鉋鋪",
-					unit: "㎡"
+				caseTypeOrder: [11, 12, 2, 3],
+				warrantyMap: {
+					1: {		  						// AC路面
+						15: 14,					  	// 坑洞: 14天 
+						58: 14,				  		// 人孔高差: 14天
+						"etc": 180					// AC路面: 其他 180天
+					},
+					2: { "etc": 180 },		// 人行道: 180天
+					3: { "etc": 180 }			// 側溝屬於人行道: 180天
 				},
-				2: {
-					name: "人行道",
-					unit: "㎡"
-				},
-				3: {
-					name: "側溝",
-					unit: "m"
+				BrokeType: {
+					1: "輕度",
+					2: "中度",
+					3: "重度"
 				}
-			},
-			caseTypeOrder: [11, 12, 2, 3],
-			warrantyMap: {
-				1: {		  						// AC路面
-					15: 14,					  	// 坑洞: 14天 
-					58: 14,				  		// 人孔高差: 14天
-					"etc": 180					// AC路面: 其他 180天
-				},
-				2: { "etc": 180 },		// 人行道: 180天
-				3: { "etc": 180 }			// 側溝屬於人行道: 180天
 			},
 			chart: null
     };
@@ -283,7 +302,7 @@ export default {
           this.list = response.data.list;
 					this.list.forEach(l => {
 						// 計算保固日期
-						const days = this.warrantyMap[l.DeviceType][l.BType] != undefined ? this.warrantyMap[l.DeviceType][l.BType] : this.warrantyMap[l.DeviceType]["etc"];
+						const days = this.options.warrantyMap[l.DeviceType][l.BType] != undefined ? this.options.warrantyMap[l.DeviceType][l.BType] : this.options.warrantyMap[l.DeviceType]["etc"];
 						let finishDate = "";
 						if([11, 12].includes(this.listQuery.caseType)) finishDate = moment(l.actualFinishDate).isAfter(l.markerFinishDate) ? l.actualFinishDate : l.markerFinishDate;
 						if([2, 3].includes(this.listQuery.caseType)) finishDate = moment(l.actualFinishDate).isAfter(l.finishDate) ? l.actualFinishDate : l.finishDate;
@@ -303,7 +322,8 @@ export default {
       }).catch(err => { this.loading = false; });
     },
 		formatter(row, column) {
-      if(column.property.indexOf('Date')) return row[column.property] ? row[column.property] : "-";
+      if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+      else if(column.property.indexOf('Date')) return row[column.property] ? row[column.property] : "-";
 			else if(column.property.indexOf('Area')) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
       else return row[column.property];
     },
@@ -315,7 +335,14 @@ export default {
       let filterVal = Object.keys(this.headersFilter);
       // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
       // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-      let data = this.formatJson(filterVal, this.list);
+      const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
+				l.organAssign =  l.organAssign == 1 ? "是" : "";
+				l.BrokeType = this.options.BrokeType[l.BrokeType];
+
+				return l
+			});
+
+      const data = this.formatJson(filterVal, dataList);
 
       import("@/vendor/Export2Excel").then((excel) => {
         excel.export_json_to_excel({
