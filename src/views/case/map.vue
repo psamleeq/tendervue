@@ -567,6 +567,7 @@ export default {
 					// });
 				}
 				// this.loading = false;
+				this.switchBlockType();
 				await this.focusMap();
 				this.loading = false;
 			}).catch(err => this.loading = false);
