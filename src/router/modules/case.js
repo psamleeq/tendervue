@@ -24,6 +24,12 @@ const caseRouter = {
 			component: () => import('@/views/case/map'),
 			name: 'caseMap',
 			meta: { title: '缺失地圖', vTag: 'Alpha' }
+		},
+		{
+			path: 'roadStatus',
+			component: () => import('@/views/case/roadStatus'),
+			name: 'roadStatus',
+			meta: { title: '路況查詢', vTag: 'Alpha' }
 		}
 	]
 }
