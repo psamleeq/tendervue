@@ -390,68 +390,60 @@ export default {
 
 					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
 					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { this.showImgViewer = true });
-				})
+				});
+				resolve();
 
 				// 載入區域GeoJson
-				getDistGeo().then(response => {
-					this.dataLayer.mask = new google.maps.Data({ map: this.map });
-					this.dataLayer.mask.loadGeoJson("/assets/json/NewTaipei.geojson");
-					this.dataLayer.mask.setStyle({
-						strokeColor: "#000000",
-						strokeWeight: 0,
-						strokeOpacity: 1,
+				this.dataLayer.mask = new google.maps.Data({ map: this.map });
+				this.dataLayer.mask.loadGeoJson("/assets/json/NewTaipei.geojson");
+				this.dataLayer.mask.setStyle({
+					strokeColor: "#000000",
+					strokeWeight: 0,
+					strokeOpacity: 1,
+					fillColor: "#000000",
+					fillOpacity: 0.7,
+					zIndex: 0
+				});
+
+				this.dataLayer.district = new google.maps.Data({ map: this.map });
+				this.dataLayer.district.loadGeoJson("/assets/json/district.geojson");
+				// console.log(JSON.stringify(this.distGeoJSON));
+				// console.log(distGeoJSON);
+				this.dataLayer.district.setStyle(feature => {
+					// console.log(feature);
+					const condition = feature.j.TNAME == '中山區'
+					return {
+						strokeColor: "#827717",
+						strokeWeight: 3,
+						strokeOpacity: 0.2,
 						fillColor: "#000000",
-						fillOpacity: 0.7,
+						fillOpacity: condition ? 0 : 0.7,
 						zIndex: 0
-					});
+					}
+				});
 
-					const distGeoJSON = response.data.geoJSON;
-					this.dataLayer.district = new google.maps.Data({ map: this.map });
-					// this.dataLayer.district.loadGeoJson("/assets/json/district.geojson");
-					// console.log(JSON.stringify(this.distGeoJSON));
-					// console.log(distGeoJSON);
-					this.dataLayer.district.addGeoJson(distGeoJSON);
-					this.dataLayer.district.setStyle(feature => {
-						// console.log(feature);
-						const condition = feature.j.zipCode == 104;
-						return {
-							strokeColor: "#827717",
-							strokeWeight: 3,
-							strokeOpacity: 0.2,
-							fillColor: "#000000",
-							fillOpacity: condition ? 0 : 0.7,
-							zIndex: 0
-						}
-					});
+				// 載入切塊GeoJson
+				this.dataLayer.PCIBlock.bell = new google.maps.Data();
+				this.dataLayer.PCIBlock.bell.loadGeoJson("/assets/json/PCIBlock_104.geojson", null, () => {
+					this.switchBlockType();
+				});
+				this.dataLayer.PCIBlock.bell.setStyle({ 
+					strokeColor: '#FFF',
+					strokeWeight: 1,
+					strokeOpacity: 1,
+					fillColor: '#2196F3',
+					fillOpacity: 0.1,
+					zIndex: 1
+				});
 
-					// 載入切塊GeoJson
-					this.geoJSON.block_104 = response.data.geoJSON["block_104"];
-					this.dataLayer.PCIBlock.bell = new google.maps.Data();
-					// this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block_104);
-					this.dataLayer.PCIBlock.bell.loadGeoJson("/assets/json/PCIBlock_104.geojson");
-					this.dataLayer.PCIBlock.bell.setStyle({ 
-						strokeColor: '#FFF',
-						strokeWeight: 1,
-						strokeOpacity: 1,
-						fillColor: '#2196F3',
-						fillOpacity: 0.1,
-						zIndex: 1
-					});
-
-					this.geoJSON.block_nco = response.data.geoJSON["block_nco"];
-					this.dataLayer.PCIBlock.nco = new google.maps.Data();
-					this.dataLayer.PCIBlock.nco.loadGeoJson("/assets/json/PCIBlock_nco.geojson", null, () => {
-						this.switchBlockType();
-						resolve();
-					});
-					// this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block_nco);
-					this.dataLayer.PCIBlock.nco.setStyle({ 
-						strokeColor: '#78909C',
-						strokeWeight: 2,
-						strokeOpacity: 0.4,
-						fillOpacity: 0,
-						zIndex: 2
-					});
+				this.dataLayer.PCIBlock.nco = new google.maps.Data();
+				this.dataLayer.PCIBlock.nco.loadGeoJson("/assets/json/PCIBlock_nco.geojson");
+				this.dataLayer.PCIBlock.nco.setStyle({ 
+					strokeColor: '#78909C',
+					strokeWeight: 2,
+					strokeOpacity: 0.4,
+					fillOpacity: 0,
+					zIndex: 2
 				});
 			})
 		},
