@@ -144,6 +144,13 @@
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
+
+			<!-- NOTE: 展示用，還未實作 -->
+			<el-table-column label="操作" align="center">
+				<template slot-scope="{ row }">
+					<el-button class="btn-action" type="info" plain size="mini" round disabled @click="showMap(row)">地圖</el-button>
+				</template>
+			</el-table-column>
 		</el-table>
 		<br>
 
@@ -265,6 +272,13 @@
 						<i v-else-if="[21, 22].includes(row.OrganCheck)" class="el-icon-close" style="color: #F56C6C" />
 						<span v-else> - </span>
 					</template>
+				</template>
+			</el-table-column>
+
+			<!-- NOTE: 展示用，還未實作 -->
+			<el-table-column label="操作" align="center">
+				<template slot-scope="{ row }">
+					<el-button class="btn-action" type="info" plain size="mini" round disabled @click="showMap(row)">地圖</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
