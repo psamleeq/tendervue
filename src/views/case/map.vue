@@ -411,7 +411,7 @@ export default {
 				// console.log(distGeoJSON);
 				this.dataLayer.district.setStyle(feature => {
 					// console.log(feature);
-					const condition = feature.j.TNAME == '中山區'
+					const condition = feature.j.TOWNNAME == '中山區'
 					return {
 						strokeColor: "#827717",
 						strokeWeight: 3,
