@@ -89,7 +89,7 @@
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="row.wkb_geometry">
-						<el-button v-if="listQuery.groupType == 1" class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">地圖</el-button>
+						<el-button v-if="filterType.groupType == 1" class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">地圖</el-button>
 						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini"  round @click="showMapViewer(row)" />
 					</el-button-group>
 					<span v-else> - </span>
@@ -130,7 +130,7 @@ export default {
 				computeType: 2
 			},
 			listQuery: {
-				filter: false,
+				filter: true,
 				distList: [],
 				groupType: 1,
 				computeType: 2,
@@ -138,10 +138,11 @@ export default {
 				pageSize: 50,
 			},
 			headers: {
-				// Id: {
-				// 	name: "序號",
-				// 	sortable: false
-				// },
+				fcl_id: {
+					name: "道路編碼",
+					sortable: false,
+					groupTypeFilter: [ 1 ]
+				},
 				dist: {
 					name: "行政區",
 					sortable: false
