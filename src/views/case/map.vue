@@ -395,7 +395,7 @@ export default {
 
 				// 載入區域GeoJson
 				this.dataLayer.mask = new google.maps.Data({ map: this.map });
-				this.dataLayer.mask.loadGeoJson("/assets/json/NewTaipei.geojson");
+				this.dataLayer.mask.loadGeoJson(`/assets/json/NewTaipei.geojson?t=${Date.now()}`);
 				this.dataLayer.mask.setStyle({
 					strokeColor: "#000000",
 					strokeWeight: 0,
@@ -406,7 +406,7 @@ export default {
 				});
 
 				this.dataLayer.district = new google.maps.Data({ map: this.map });
-				this.dataLayer.district.loadGeoJson("/assets/json/district.geojson");
+				this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
 				// console.log(JSON.stringify(this.distGeoJSON));
 				// console.log(distGeoJSON);
 				this.dataLayer.district.setStyle(feature => {
@@ -424,7 +424,7 @@ export default {
 
 				// 載入切塊GeoJson
 				this.dataLayer.PCIBlock.bell = new google.maps.Data();
-				this.dataLayer.PCIBlock.bell.loadGeoJson("/assets/json/PCIBlock_104.geojson", null, () => {
+				this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_104.geojson?t=${Date.now()}`, null, () => {
 					this.switchBlockType();
 				});
 				this.dataLayer.PCIBlock.bell.setStyle({ 
