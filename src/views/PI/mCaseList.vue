@@ -112,7 +112,7 @@ export default {
 					sortable: false
 				},
 				organAssign: {
-					name: "是否交辦",
+					name: "機關交辦",
 					sortable: false
 				},
 				BTName: {
