@@ -1096,7 +1096,7 @@ export default {
 				&.base .el-collapse-item__header
 					background-color: rgba(#EF5350, 0.8)
 				.el-collapse-item__content
-						height: 100%
+					height: 100%
 			.block-table-row
 				cursor: pointer
 				.road-code

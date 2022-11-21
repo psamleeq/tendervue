@@ -21,7 +21,7 @@ const caseRouter = {
 		},
 		{
 			path: 'caseMap',
-			component: () => import('@/views/case/map'),
+			component: () => import('@/views/case/caseMap'),
 			name: 'caseMap',
 			meta: { title: '缺失地圖', vTag: 'Alpha' }
 		},
@@ -30,6 +30,12 @@ const caseRouter = {
 			component: () => import('@/views/case/roadStatus'),
 			name: 'roadStatus',
 			meta: { title: '路況查詢', vTag: 'Alpha' }
+		},
+		{
+			path: 'PCIMap',
+			component: () => import('@/views/case/PCIMap'),
+			name: 'PCIMap',
+			meta: { title: '查核地圖', vTag: 'Alpha' }
 		}
 	]
 }

@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 道路管理
+// 單元管理
 export function getRoadUnit(query) {
 	return request({
 		url: '/road/unit',
@@ -22,6 +22,15 @@ export function setRoadUnitGeo(data) {
 		url: '/road/PCIUnit',
 		method: 'post',
 		data
+	})
+}
+
+// PCI地圖
+export function getPCIBlock(query) {
+	return request({
+		url: '/road/PCIBlock',
+		method: 'get',
+		params: query
 	})
 }
 

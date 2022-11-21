@@ -1,21 +1,15 @@
 <template>
-	<div class="road-case" v-loading="loading">
+	<div class="PCI-map" v-loading="loading">
 		<div id="map" ref="map" />
 		<div class="header-bar">
-			<h2 class="case-title">缺失地圖</h2>
+			<h2 class="map-title">查核地圖</h2>
 			<div class="filter-container">
-				<div class="filter-item filter">
-					<div>PCI切塊</div>
-					<el-checkbox-group v-model="listQuery.blockType" size="mini" @change="switchBlockType">
-						<el-checkbox-button v-for="(block, type) in options.blockMap" :label="Number(type)" :key="type">{{ block }}</el-checkbox-button>
-					</el-checkbox-group>
-				</div>
 				<div class="filter-item">
 					<el-input v-model="listQuery.filterId" placeholder="請輸入">
 						<!-- <span slot="prepend">缺失編號</span> -->
 						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-							<el-option label="缺失編號" :value="1" />
-							<el-option label="區塊編號" :value="2" />
+							<el-option label="區塊編號" :value="1" />
+							<el-option label="道路名稱" :value="2" />
 						</el-select>
 					</el-input>
 				</div>
@@ -27,38 +21,25 @@
 			<div class="color-box" v-for="(color, index) in options.colorMap" :key="`color_${index}`"  :style="`background-color: ${color.color}; width: 100%; height: 30px;`">{{ color.name.join("、") }}</div>
 		</el-card> -->
 
-		<el-card class="info-box left">
-			<el-row :class="[ 'color-box', 'select-all', { 'active' : selectCaseAll } ]" style="margin: 5px 0;">
-				<el-col :span="8" :offset="7" style="padding: 0 5px">篩選</el-col>
-				<el-col :span="5">
-					<el-switch v-model="selectCaseAll" @change="caseFilter()" />
-				</el-col>
-				<el-col :span="4">
-					<el-select v-model.number="selectLevelAll" placeholder="請選擇" size="mini" popper-class="type-select" @change="caseFilter()">
-						<el-option :value="-1" label="無" style="display: none" />
-						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="options.levelMap[order]" />
-					</el-select>
-				</el-col>
-			</el-row>
-			<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
-				<el-col :span="10" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
-				<el-col :span="5">
-					<span v-if="selectCase[info.caseName].level == 0">{{ info.total }}</span>
-					<span v-else>{{ 
-						info.level.filter(l => l.caseLevel == options.levelMap[selectCase[info.caseName].level]).length > 0 ?
-						info.level.filter(l => l.caseLevel == options.levelMap[selectCase[info.caseName].level])[0].total : 0
-					}}</span>
-				</el-col>
-				<el-col :span="5">
-					<el-switch v-model="selectCase[info.caseName].switch" :active-color="info.color" @change="caseFilter()" />
-				</el-col>
-				<el-col :span="4">
-					<el-select v-model="selectCase[info.caseName].level" placeholder="請選擇" size="mini" popper-class="type-select" :disabled="!selectCase[info.caseName].switch" @change="caseFilter()">
-						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="options.levelMap[order]" />
-					</el-select>
-				</el-col>
-			</el-row>
-		</el-card>
+		<div class="info-box left">
+			<el-card>
+				<el-collapse>
+					<el-collapse-item class="collapse-label" title="鋪面狀況指數">
+						<el-row class="color-box" v-for="key in [ 6, 5, 4, 3, 2, 1, 0 ]" :key="`PCILevel_${key}`"  :style="`background-color: ${options.PCILevel[key].color}; width: 100%; margin-bottom: 0px`">
+							<el-col :span="7" style="padding: 0 5px">{{ options.PCILevel[key].description }}</el-col>
+							<el-col :span="7">({{ options.PCILevel[key].range[0] }} - {{ options.PCILevel[key].range[1] }})</el-col>
+							<el-col :span="10">{{ options.PCILevel[key].total }}</el-col>
+						</el-row>
+					</el-collapse-item>
+					<el-collapse-item class="collapse-label" title="缺失類型">
+							<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
+								<el-col :span="10" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
+								<el-col :span="14">{{ info.total }}</el-col>
+							</el-row>
+					</el-collapse-item>
+				</el-collapse>
+			</el-card>
+		</div>
 
 		<el-image-viewer
 			v-if="showImgViewer"
@@ -72,8 +53,8 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-import { getDistGeo } from "@/api/type"
-import { getRoadCaseGeo, setRoadCase } from "@/api/road";
+// import { getDistGeo } from "@/api/type";
+import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
@@ -90,16 +71,14 @@ if(!sessionStorage.devMode && process.env.VUE_APP_MAP_KEY != undefined) loaderOp
 const loader = new Loader(loaderOpt);
 
 export default {
-	name: "roadCase",
+	name: "PCIMap",
 	components: { ElImageViewer },
 	data() {
 		return {
 			loading: false,
 			showImgViewer: false,
 			screenWidth: window.innerWidth,
-			areaLimit: [139, 325],
 			// map: null,
-			currCaseId: null,
 			imgUrls: [],
 			// dataLayer: {},
 			infoWindow: null,
@@ -110,24 +89,73 @@ export default {
 			selectCase: {},
 			listQuery: {
 				filterType: 1,
-				filterId: null,
-				blockType: [1]
+				filterId: null
 			},
 			headers: {
-				caseInfo: {
-					caseId: "缺失編號",
-					caseName: "缺失類型",
-					caseLevel: "損壞程度",
-					roadName: "道路名稱",
-					length: "長度(m)",
-					area: "面積(㎡)",
-					depth: "深度(cm)"
-				}
+				// PCIInfo
+				blockId: "區塊編號",
+				roadName: "道路名稱",
+				PCIValue: "PCI",
+
+				// caseInfo
+				caseId: "缺失編號",
+				caseName: "缺失類型",
+				caseLevel: "損壞程度",
+				length: "長度(m)",
+				area: "面積(㎡)",
+				depth: "深度(cm)"
 			},
 			options: { 
-				blockMap: {
-					1: "超鉞",
-					2: "新工處"
+				PCILevel: {
+					6: {
+						text: "veryGood",
+						description: "很好",
+						range: [ 85, 100 ],
+						color: "#00B900",
+						total: 0
+					},
+					5: {
+						text: "good",
+						description: "好",
+						range: [ 70, 85 ],
+						color: "#C1FE00",
+						total: 0
+					},
+					4: {
+						text: "fair",
+						description: "尚可",
+						range: [ 55, 70 ],
+						color: "#FEFE00",
+						total: 0
+					},
+					3: {
+						text: "poor",
+						description: "差",
+						range: [ 40, 55 ],
+						color: "#F40088",
+						total: 0
+					},
+					2: {
+						text: "veryPoor",
+						description: "很差",
+						range: [ 25, 40 ],
+						color: "#F40000",
+						total: 0
+					},
+					1: {
+						text: "serious",
+						description: "嚴重",
+						range: [ 10, 25 ],
+						color: "#A72126",
+						total: 0
+					},
+					0: {
+						text: "failed",
+						description: "不合格",
+						range: [ 0, 10 ],
+						color: "#666666",
+						total: 0
+					},
 				},
 				levelMap: {
 					0: "全部",
@@ -139,7 +167,7 @@ export default {
 					{
 						index: 0,
 						name: ["龜裂"],
-						color: "#F44336"
+						color: "#B71C1C"
 					},
 					{
 						index: 1,
@@ -175,55 +203,7 @@ export default {
 			}
 		};
 	},
-	computed: {
-		selectCaseAll: {
-			get() {
-				const onNum = Object.values(this.selectCase).reduce((acc, cur) => {
-					if(cur.switch) acc++;
-					return acc;
-				}, 0);
-				return onNum == this.caseInfo.length;
-			},
-			set(val) {
-				if(val) Object.values(this.selectCase).forEach(caseInfo => caseInfo.switch = true);
-				else Object.values(this.selectCase).forEach(caseInfo => caseInfo.switch = false);
-			}
-		},
-		selectLevelAll: {
-			get() {
-				const selectLevelAll = Object.values(this.selectCase).reduce((acc, cur) => {
-					acc[cur.level]++;
-					return acc;
-				}, { 0: 0, 1: 0, 2: 0, 3: 0 });
-
-				const level = Object.keys(selectLevelAll).filter(key => selectLevelAll[key] == this.caseInfo.length);
-				return level.length > 0 ? Number(level[0]) : -1;
-			},
-			set(val) {
-				Object.values(this.selectCase).forEach(caseInfo => caseInfo.level = val);
-			}
-		},
-		geoJSONFilter() {
-			let geoJSONFilter = { features: [] };
-			if(Object.keys(this.geoJSON.case).length > 0) {
-				geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON.case));
-				const selectCaseList = Object.keys(this.selectCase).filter(caseName => this.selectCase[caseName].switch);
-				const selectCaseLvMap = selectCaseList.reduce((acc, cur) => { 
-					acc[cur] = this.selectCase[cur].level == 0 ? this.selectCase[cur].level : this.options.levelMap[this.selectCase[cur].level];
-					return acc
-				}, {});
-
-				geoJSONFilter.features = geoJSONFilter.features.filter(feature => {
-					const caseName = feature.properties.caseName;
-					const caseLevel = feature.properties.caseLevel;
-					const levelFilter= selectCaseLvMap[feature.properties.caseName];
-
-					return (selectCaseList.includes(caseName)) && (levelFilter == 0 || caseLevel == levelFilter);
-				});
-			}
-			return geoJSONFilter;
-		}
-	},
+	computed: { },
 	watch: { },
 	created() {
 		this.dataLayer = { 
@@ -245,12 +225,12 @@ export default {
 		// 初始化Google Map
 		loader.load().then(async() => {
 			await this.initMap();
-			if (this.$route.query.caseId) {
+			if (this.$route.query.blockId) {
 				this.listQuery.filterType = 1;
-				this.listQuery.filterId = this.$route.query.caseId;
-			} else if (this.$route.query.blockId) {
-				this.listQuery.filterType = 2;
 				this.listQuery.filterId = this.$route.query.blockId;
+			} else if (this.$route.query.roadName) {
+				this.listQuery.filterType = 2;
+				this.listQuery.filterId = this.$route.query.roadName;
 			}
 			this.getList();
 		}).catch(err => console.log("err: ", err));
@@ -407,8 +387,6 @@ export default {
 
 				this.dataLayer.district = new google.maps.Data({ map: this.map });
 				this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
-				// console.log(JSON.stringify(this.distGeoJSON));
-				// console.log(distGeoJSON);
 				this.dataLayer.district.setStyle(feature => {
 					// console.log(feature);
 					const condition = feature.j.TOWNNAME == '中山區'
@@ -422,38 +400,18 @@ export default {
 					}
 				});
 
-				// 載入切塊GeoJson
-				this.dataLayer.PCIBlock.bell = new google.maps.Data();
-				this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_104.geojson?t=${Date.now()}`, null, () => {
-					this.switchBlockType();
-				});
-				this.dataLayer.PCIBlock.bell.setStyle({ 
-					strokeColor: '#FFF',
-					strokeWeight: 1,
-					strokeOpacity: 1,
-					fillColor: '#2196F3',
-					fillOpacity: 0.1,
-					zIndex: 1
-				});
-
-				this.dataLayer.PCIBlock.nco = new google.maps.Data();
-				this.dataLayer.PCIBlock.nco.loadGeoJson("/assets/json/PCIBlock_nco.geojson");
-				this.dataLayer.PCIBlock.nco.setStyle({ 
-					strokeColor: '#78909C',
-					strokeWeight: 2,
-					strokeOpacity: 0.4,
-					fillOpacity: 0,
-					zIndex: 2
-				});
+				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
+				this.dataLayer.case = new google.maps.Data({ map: this.map });
 			})
 		},
 		async getList() {
 			this.loading = true;
 			this.clearAll();
+
+			// 載入case GeoJSON
 			this.markers = [];
 			this.polyLines = {};
-
-			getRoadCaseGeo().then(async (response) => {
+			getRoadCaseGeo().then(response => {
 				if(Object.keys(response.data.geoJSON).length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -491,17 +449,11 @@ export default {
 
 					this.caseInfo.sort((a, b) => (a.index - b.index));
 
-					this.geoJSON.case = response.data.geoJSON;
+					this.geoJSON.case = JSON.parse(response.data.geoJSON);
 					// console.log(this.geoJSON.case);
-					this.map.data.addGeoJson(this.geoJSON.case);
-					// this.map.data.setStyle({ 
-					// 	strokeColor: '#009688',
-					// 	strokeWeight: 1,
-					// 	strokeOpacity: 0.5,
-					// 	fillColor: '#EF5350',
-					// 	fillOpacity: 0.8
-					// });
-					this.map.data.setStyle(feature => { 
+					this.dataLayer.case.addGeoJson(this.geoJSON.case);
+
+					this.dataLayer.case.setStyle(feature => { 
 						// console.log(feature.j.caseName);
 						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
 						if(feature.j.caseName) {
@@ -532,65 +484,69 @@ export default {
 							};
 						} else {
 							return { 
-								strokeColor: color,
+								strokeColor: '#BDBDBD',
 								strokeWeight: 1,
 								strokeOpacity: 1,
 								fillColor: color,
-								fillOpacity: 0.8,
+								fillOpacity: 1,
 								zIndex: 5
 							};
 						}
 					});
 
-					this.map.data.addListener('click', (event) => {
-						// console.log("click: ", event);
-						// console.log(this.currCaseId);
-						this.showCaseContent(event.feature.j, event.latLng);
+					this.dataLayer.case.addListener('click', (event) => {
+						this.showContent(event.feature.j, event.latLng);
 					});
-
-					// this.map.data.addListener('rightclick', (event) => {
-					// 	console.log("rightclick: ",event);
-
-					// 	this.infoWindow.setContent(event.latLng.toString());
-					// 	this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
-					// 	this.infoWindow.setPosition(event.latLng);
-
-					// 	this.infoWindow.open(this.map);
-					// });
 				}
-				// this.loading = false;
-				this.switchBlockType();
-				await this.focusMap();
-				this.loading = false;
 			}).catch(err => this.loading = false);
-		},
-		removeCaseStatus() {
-			// console.log(this.currCaseId);
-			setRoadCase(this.currCaseId, {type: 8}).then(response => {
-				if ( response.statusCode == 20000 ) {
-					this.$message({
-						message: "修改成功",
-						type: "success",
-					});
-					this.getList();
-				} 
-			}).catch(err => {
-				console.log(err);
-				this.getList();
-			})
-		},
-		switchBlockType() {
-			for(const block of Object.values(this.dataLayer.PCIBlock)) {
-				block.revertStyle();
-				block.setMap(null);
-			}
 
-			if(this.listQuery.blockType.includes(1)) this.dataLayer.PCIBlock.bell.setMap(this.map);
-			if(this.listQuery.blockType.includes(2)) this.dataLayer.PCIBlock.nco.setMap(this.map);
-		},
-		caseFilter() {
-			this.clearAll();
-			this.map.data.addGeoJson(this.geoJSONFilter);
+			// 載入PCI切塊 GeoJson
+			getPCIBlock().then(async (response) => {
+				// console.log("getPCIBlock");
+				if(Object.keys(response.data.geoJSON).length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					const summary = response.data.summary[0];
+					Object.keys(this.options.PCILevel).forEach(key => {
+						const levelText = this.options.PCILevel[key].text;
+						this.options.PCILevel[key].total = summary[levelText];
+					})
+					
+					this.geoJSON.block = JSON.parse(response.data.geoJSON);
+					this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
+					this.dataLayer.PCIBlock.setStyle(feature => {
+						// console.log(feature);
+						const PCISpec = feature.j.PCIValue;
+						let  filterLevel = [];
+						if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
+						else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
+						else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
+							// console.log(level, PCISpec);
+							return PCISpec >= level.range[0] && PCISpec < level.range[1]
+						});
+						// console.log(filterLevel);
+
+						return {
+							strokeColor: '#FFF',
+							strokeWeight: 1,
+							strokeOpacity: 1,
+							fillColor: filterLevel[0][1].color,
+							fillOpacity: filterLevel[0][0] != -1 ? 1 - filterLevel[0][0] * 0.1 : 0.4,
+							zIndex: 1
+						}
+					});
+
+					this.dataLayer.PCIBlock.addListener('click', (event) => {
+						this.showContent(event.feature.j, event.latLng);
+					});
+
+					await this.focusMap();
+					this.loading = false;
+				}
+			})
 		},
 		async search() {
 			this.loading = true;
@@ -598,105 +554,76 @@ export default {
 			this.loading = false;
 		},
 		async focusMap() {
+			// console.log("focusMap");
 			return new Promise(resolve => {
-				for(const block of Object.values(this.dataLayer.PCIBlock)) block.revertStyle();
+				this.dataLayer.PCIBlock.revertStyle();
 
-				if(this.listQuery.filterId.length == 0) resolve();
-				if(this.listQuery.filterId.length != 0 && !Number(this.listQuery.filterId)) {
+				if(!this.listQuery.filterId || this.listQuery.filterId.length == 0) resolve();
+				if(this.listQuery.filterType == 1 && this.listQuery.filterId.length != 0 && !Number(this.listQuery.filterId)) {
 					this.$message({
 						message: "請輸入正確編號",
 						type: "error",
 					});
 					resolve();
-				} 
+				}
 
-				if(this.listQuery.filterType == 1) {
-					this.$router.push({ query: { caseId: this.listQuery.filterId }});
-					const caseSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.caseId == this.listQuery.filterId))[0];
-					if(caseSpec == undefined ) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
+				const key = this.listQuery.filterType == 1 ? 'blockId' : 'roadName';
+				let query = {};
+				query[key] = this.listQuery.filterId;
+				this.$router.push({ query });
 
-						resolve();
-					}
+				// let blockSpec;
+				// this.dataLayer.PCIBlock.forEach(features =>{ 
+				// 	if(features.j[key] == this.listQuery.filterId) blockSpec = features;
+				// });
 
-					const depth = caseSpec.properties.isLine ? 1 : 2;
-					// console.log(caseSpec.properties.isLine, depth);
-					const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
-					// console.log(paths);
-
-					const bounds = new google.maps.LatLngBounds();
-					paths.forEach(position => bounds.extend(position));
-					this.map.fitBounds(bounds);
-					this.showCaseContent(caseSpec.properties, paths[Math.floor(paths.length / 2)]);
-
-					resolve();
-				} else if(this.listQuery.filterType == 2) {
-					this.$router.push({ query: { blockId: this.listQuery.filterId }});
-
-					let blockSpec;
-					for(const[ key, block ] of Object.entries(this.dataLayer.PCIBlock)) {
-						// console.log(key, block);
-						block.forEach(features =>{ 
-							let blockId = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
-							if(features.j[blockId] == this.listQuery.filterId) blockSpec = features;
-						});
-						
-						if(blockSpec != undefined ) {
-							if(key == 'bell') this.listQuery.blockType = [ 1 ];
-							else if(key == 'nco') this.listQuery.blockType = [ 2 ];
-							this.switchBlockType();
-
-							block.overrideStyle(blockSpec, { strokeColor: "#FF6F00", zIndex: 3 });
-							break;
-						}
-					}
-
-					// for(const block of ['block_nco', 'block_104']) {
-					// 	blockSpec = this.geoJSON[block].features.filter(feature => (feature.properties.blockId == this.listQuery.filterId))[0];
-					// 	if(blockSpec != undefined ) break;
-					// }
-					// console.log(blockSpec);
-					if(blockSpec == undefined ) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-
-						resolve();
-					}
-
-					// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
-					const paths = blockSpec.getGeometry();
-					// console.log(paths);
-
-					const bounds = new google.maps.LatLngBounds();
-					// paths.forEach(position => bounds.extend(position));
-					paths.forEachLatLng(position => bounds.extend(position));
-					this.map.fitBounds(bounds);
+				let featureList = [];
+				this.dataLayer.PCIBlock.forEach(feature =>{ 
+					if(feature.j[key] == this.listQuery.filterId) featureList.push(feature);
+				});
+				
+				// if(blockSpec != undefined ) {
+				for(const feature of featureList) {
+					this.dataLayer.PCIBlock.overrideStyle(feature, { strokeColor: "#FF6F00", zIndex: 3 });
+				}
+				
+				if(featureList.length == 0) {
+				// if(blockSpec == undefined ) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
 
 					resolve();
 				}
+
+				// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
+				// const paths = blockSpec.getGeometry();
+				const paths = featureList[0].getGeometry();
+				// console.log(paths);
+
+				const bounds = new google.maps.LatLngBounds();
+				// paths.forEach(position => bounds.extend(position));
+				paths.forEachLatLng(position => bounds.extend(position));
+				this.map.fitBounds(bounds);
+
+				resolve();
 			})
 		},
-		showCaseContent(props, position) {
-			this.currCaseId = props.caseId;
+		showContent(props, position) {
+			// console.log(props);
 			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg` ];
 			let contentText = `<div style="width: 400px;">`;
-			for(const key in this.headers.caseInfo) {
+			for(const key in this.headers) {
+				// console.log(key);
 				if(props[key]) {
 					contentText += `<div class="el-row" style="margin-bottom: 4px">`;
-					contentText += `<div class="el-col el-col-8" style="padding-left: 5px; font-size: 18px; line-height: 18px;">${this.headers.caseInfo[key]}</div>`;
+					contentText += `<div class="el-col el-col-8" style="padding-left: 5px; font-size: 18px; line-height: 18px;">${this.headers[key]}</div>`;
 					contentText += `<div class="el-col el-col-16" style="font-size: 18px; line-height: 18px;">${props[key]}</div>`;
 					contentText += `</div>`;
 				}
 			}
-			// for(const img of event.feature.j.img) {
-			// 	contentText += `<img src="https://img.bellsgis.com/images/casepic_o/${img}" style="object-fit: scale-down;">`
-			// }
-			contentText += `<button type="button" id="info-del-btn" class="info-btn del el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">刪除</span></button>`;
+
 			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg" class="img" onerror="this.className='img hide-img'">`;
 			contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
 			contentText += `</div>`;
@@ -708,13 +635,9 @@ export default {
 			this.infoWindow.open(this.map);
 		},
 		clearAll() {
-			for(const block of Object.values(this.dataLayer.PCIBlock)) {
-				block.revertStyle();
-				block.setMap(null);
-			}
-
 			this.infoWindow.close();
-			this.map.data.forEach(feature => this.map.data.remove(feature));
+
+			for(const layer of Object.values(this.dataLayer)) layer.forEach(feature => this.dataLayer.case.remove(feature));
 			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
 			for(const markers of this.markers) markers.setMap(null);
 		},
@@ -736,7 +659,7 @@ export default {
 .type-select .el-select-dropdown__item
 	padding: 0 5px
 	text-align: center
-.road-case
+.PCI-map
 	position: relative
 	height: 100%
 	width: 100%
@@ -745,7 +668,7 @@ export default {
 		top: 0
 		z-index: 1
 		padding-left: 10px
-		.case-title
+		.map-title
 			text-shadow: 0px 0px 5px white
 			text-stroke: 0.6px white
 			-webkit-text-stroke: 0.6px white
@@ -771,7 +694,7 @@ export default {
 	.info-box
 		position: absolute
 		width: 250px
-		background-color: rgba(white, 0.7)
+		// background-color: rgba(white, 0.7)
 		z-index: 1
 		&.left
 			top: 140px
@@ -779,19 +702,29 @@ export default {
 		&.right
 			top: 140px
 			right: 20px
+		.collapse-label
+			width: 100%
+			.el-collapse-item__header
+				padding: 5px
+				&.is-active
+					transition: 0.5s
+			.el-collapse-item__content
+				height: 100%
+				padding-bottom: 0
 		.el-card__body
 			padding: 2px
+			.info-title
+				text-align: center
+				margin-bottom: 0
+				line-height: 24px
 			.color-box
 				line-height: 30px
 				*
-					color: #C0C4CC
-				&.active *
-					color: #FFF
-				&.select-all 
-					*
-						color: #606266
-					&.active *
-						color: #409EFF
+					color: #ECEFF1
+					text-shadow: 0px 0px 1px rgba(#263238, 0.6)
+				div:last-child
+					text-align: right
+					padding-right: 5px
 			.el-switch .el-switch__core
 				border: 1px solid #DCDFE6 !important
 			.el-select
@@ -803,12 +736,6 @@ export default {
 					color: #FFF
 				.el-input__suffix
 					display: none
-	.img-preview
-		width: 100%
-		.el-image-viewer__mask
-			opacity: 0.7
-		.el-icon-circle-close
-			color:  #FFF
 	#map
 		overflow: hidden
 		background: none !important
@@ -831,10 +758,6 @@ export default {
 			.info-btn
 				position: absolute
 				right: 30px
-				&.del
-					top: 25px
-					background-color: rgba(#EF5350, 0.3)
-					border-color: #EF5350
 				&.scrn-full
 					padding: 0
 					bottom: 25px
