@@ -145,10 +145,10 @@ export default {
 					name: "成案日期",
 					sortable: false,
 				},
-				dispatchDate: {
-					name: "派工日期",
-					sortable: false,
-				},
+				// dispatchDate: {
+				// 	name: "派工日期",
+				// 	sortable: false,
+				// },
 				estFinishDate: {
 					name: "預計完工日期",
 					sortable: false
@@ -171,10 +171,10 @@ export default {
 				// 	name: "保固日期",
 				// 	sortable: false,
 				// },
-				dispatchArea: {
-					name: "派工面積",
-					sortable: false,
-				},
+				// dispatchArea: {
+				// 	name: "派工面積",
+				// 	sortable: false,
+				// },
 				// actualArea: {
 				// 	name: "修復面積",
 				// 	sortable: false,
