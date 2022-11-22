@@ -9,6 +9,15 @@ export function getCaseReport(query) {
 	})
 }
 
+export function getMCaseList(query) {
+	return request({
+		url: '/case/mCaseList',
+		method: 'get',
+		params: query
+	})
+}
+
+// 案件紀錄
 export function getCaseList(query) {
 	return request({
 		url: '/case/caseList',

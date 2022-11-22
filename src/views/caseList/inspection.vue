@@ -1,51 +1,54 @@
 <template>
-  <div class="app-container iCase-list" v-loading="loading">
-    <h2>派工紀錄</h2>
+	<div class="app-container iCase-list" v-loading="loading">
+		<h2>派工紀錄</h2>
 		<aside>資料初始為2022年6月</aside>
-    <div class="filter-container">
+		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<el-select class="filter-item" v-model="listQuery.caseType" :disabled="Object.keys(options.caseType).length <= 1">
 				<el-option v-for="type in options.caseTypeOrder" :key="type" :label="options.caseType[type].name" :value="Number(type)" />
 			</el-select>
-			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-      <el-button
-        class="filter-item"
-        type="info"
-        icon="el-icon-document"
-        :circle="screenWidth<567"
-        @click="handleDownload"
-      >輸出報表</el-button>
-    </div>
-    
-    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+			<span class="filter-item">
+				<div style="font-size: 12px; color: #909399">派工日期</div>
+				<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			</span>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			<el-button
+				class="filter-item"
+				type="info"
+				icon="el-icon-document"
+				:circle="screenWidth<567"
+				@click="handleDownload"
+			>輸出報表</el-button>
+		</div>
+		
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
-    <el-table
-      empty-text="目前沒有資料"
-      :data="list"
-      border
-      fit
-      highlight-current-row
-      :header-cell-style="{'background-color': '#F2F6FC'}"
-      stripe
-      style="width: 100%"
-    >
+		<el-table
+			empty-text="目前沒有資料"
+			:data="list"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
 			<el-table-column label="序號" type="index" width="100" align="center" />
 			
-      <!-- <el-table-column 
-        v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
-      align="center" fixed/>-->
-      <el-table-column
-        v-for="(value, key) in headersFilter"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
+			<!-- <el-table-column 
+				v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
+			align="center" fixed/>-->
+			<el-table-column
+				v-for="(value, key) in headersFilter"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
 				:formatter="formatter"
-        :sortable="value.sortable"
-      >
+				:sortable="value.sortable"
+			>
 				<template slot="header" slot-scope="{ column }">
 					<span v-if="column.property == 'actualFinishDate' && [11, 12].includes(caseTypeNow)">熱更生完工日期</span>
 					<span v-else-if="column.property == 'actualFinishDate' && [2, 3].includes(caseTypeNow)">實際完工日期</span>
@@ -67,9 +70,9 @@
 					<el-button class="btn-action" type="info" plain size="mini" round disabled @click="showMap(row)">地圖</el-button>
 				</template>
 			</el-table-column>
-    </el-table>
+		</el-table>
 
-  </div>
+	</div>
 </template>
 
 <script>
@@ -78,35 +81,16 @@ import { getCaseList } from "@/api/case";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
-// const data = [
-// 	{
-// 		type: "人行道(m2)",
-// 		total: 258
-// 	},
-// 	{
-// 		type: "水溝(m)",
-// 		total: 1119
-// 	},
-// 	{
-// 		type: "AC鉋鋪(m2)",
-// 		total: 25489
-// 	},
-// 	{
-// 		type: "熱再生修復(m2)",
-// 		total: 2405
-// 	}
-// ]
-
 export default {
-  name: "iCaseList",
+	name: "iCaseList",
 	components: { TimePicker },
-  data() {
-    return {
+	data() {
+		return {
 			loading: false,
 			timeTabId: 4,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate()],
+			daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
 			searchRange: "",
 			caseTypeNow: 11,
 			listQuery: {
@@ -134,7 +118,7 @@ export default {
 					name: "地址",
 					sortable: false
 				},
-        // CType1NO: {
+				// CType1NO: {
 				// 	name: "派工單號",
 				// 	sortable: false,
 				// },
@@ -142,46 +126,20 @@ export default {
 					name: "成案日期",
 					sortable: false,
 				},
-				dispatchDate: {
-					name: "派工日期",
+				directDispatchDate: {
+					name: "主任派工日期",
 					sortable: false,
 				},
-				estFinishDate: {
-					name: "預計完工日期",
-					sortable: false
-				},
-				finishDate: {
-					name: "道管完工日期",
-					sortable: false,
-					caseTypeFilter: [ 2, 3 ]
-				},
-				actualFinishDate: {
-					name: "實際完工日期",
-					sortable: false,
-				},
-				markerFinishDate: {
-					name: "標線完工日期",
-					sortable: false,
-					caseTypeFilter: [ 11, 12 ]
-				},
-				// warrantyDate: {
-				// 	name: "保固日期",
+				// dispatchDate: {
+				// 	name: "派工日期",
 				// 	sortable: false,
 				// },
 				dispatchArea: {
 					name: "派工面積",
 					sortable: false,
-				},
-				// actualArea: {
-				// 	name: "修復面積",
-				// 	sortable: false,
-				// },
-				// markerArea: {
-				// 	name: "標線面積",
-				// 	sortable: false,
-				// }
-      },
-      list: [],
+				}
+			},
+			list: [],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區",
@@ -268,8 +226,8 @@ export default {
 				}
 			},
 			chart: null
-    };
-  },
+		};
+	},
 	computed: {
 		headersFilter() {
 			let headersFilter = {};
@@ -284,29 +242,30 @@ export default {
 	mounted() {
 		// this.getList();
 	},
-  methods: {
-    getList() {
-      this.loading = true;
+	methods: {
+		getList() {
+			this.loading = true;
 			dateWatcher(this.daterange);
 
-      let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-      let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-      this.searchRange = startDate + " - " + endDate;
+			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
 			this.caseTypeNow = this.listQuery.caseType;
 
-      this.list = [];
-      getCaseList({
+			this.list = [];
+			getCaseList({
+				reportType: 1,
 				caseType: this.listQuery.caseType,
-        timeStart: startDate,
-        timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-      }).then((response) => {
-        if (response.data.list.length == 0) {
-          this.$message({
-            message: "查無資料",
-            type: "error",
-          });
-        } else {
-          this.list = response.data.list;
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list;
 					this.list.forEach(l => {
 						// 計算保固日期
 						const days = this.options.warrantyMap[l.DeviceType][l.BType] != undefined ? this.options.warrantyMap[l.DeviceType][l.BType] : this.options.warrantyMap[l.DeviceType]["etc"];
@@ -324,24 +283,25 @@ export default {
 						l.actualArea = Math.floor(l.actualArea * 100) / 100;
 						l.markerArea = Math.floor(l.markerArea * 100) / 100;
 					})
-        }
-        this.loading = false;
-      }).catch(err => { this.loading = false; });
-    },
+				}
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		},
 		formatter(row, column) {
 			if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
-      else if(column.property.indexOf('Date')) return row[column.property] ? row[column.property] : "-";
+			else if(column.property.indexOf('Date')) return row[column.property] ? row[column.property] : "-";
 			else if(column.property.indexOf('Area')) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
-      else return row[column.property];
-    },
-    formatTime(time) {
-      return moment(time).format("YYYY/MM/DD");
-    },
-    handleDownload() {
-      let tHeader = Object.values(this.headersFilter).map(header => header.name);
-      let filterVal = Object.keys(this.headersFilter);
-      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+			else return row[column.property];
+		},
+		formatTime(time) {
+			const m = moment(time).utc();
+			return m.isValid ? m.format("YYYY/MM/DD") : '-' ;
+		},
+		handleDownload() {
+			let tHeader = Object.values(this.headersFilter).map(header => header.name);
+			let filterVal = Object.keys(this.headersFilter);
+			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
 
 			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
 				l.organAssign =  l.organAssign == 1 ? "是" : "";
@@ -350,19 +310,19 @@ export default {
 				return l
 			});
 
-      const data = this.formatJson(filterVal, dataList);
+			const data = this.formatJson(filterVal, dataList);
 
-      import("@/vendor/Export2Excel").then((excel) => {
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-        });
-      });
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) => filterVal.map((j) => v[j]));
-    },
-  },
+			import("@/vendor/Export2Excel").then((excel) => {
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
+				});
+			});
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		},
+	},
 };
 </script>
 

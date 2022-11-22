@@ -535,7 +535,7 @@ export default {
 							strokeOpacity: 1,
 							fillColor: filterLevel[0][1].color,
 							fillOpacity: filterLevel[0][0] != -1 ? 1 - filterLevel[0][0] * 0.1 : 0.4,
-							zIndex: 1
+							zIndex: filterLevel[0][0] != -1 ? 2 : 1
 						}
 					});
 

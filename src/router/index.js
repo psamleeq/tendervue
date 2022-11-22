@@ -9,6 +9,7 @@ import Layout from '@/layout';
 /* Router Modules */
 import unitRouter from './modules/unit';
 import caseRouter from './modules/case';
+import caseListRouter from './modules/caseList';
 import costRouter from './modules/cost';
 import PCIRouter from './modules/PCI';
 import PIRouter from './modules/PI';
@@ -98,6 +99,7 @@ export const constantRoutes = [
 export const asyncRoutes = [
 	unitRouter,
 	caseRouter,
+	caseListRouter,
 	costRouter,
 	PCIRouter,
 	PIRouter,

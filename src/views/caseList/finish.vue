@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container mCase-list" v-loading="loading">
-		<h2>維護案件</h2>
+	<div class="app-container fCase-list" v-loading="loading">
+		<h2>完工紀錄</h2>
 		<aside>資料初始為2022年6月</aside>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
@@ -10,7 +10,7 @@
 				<el-option v-for="type in options.caseTypeOrder" :key="type" :label="options.caseType[type].name" :value="Number(type)" />
 			</el-select>
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">成案日期</div>
+				<div style="font-size: 12px; color: #909399">完工日期</div>
 				<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -63,6 +63,13 @@
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
+
+			<!-- NOTE: 展示用，還未實作 -->
+			<el-table-column label="操作" align="center">
+				<template slot-scope="{ row }">
+					<el-button class="btn-action" type="info" plain size="mini" round disabled @click="showMap(row)">地圖</el-button>
+				</template>
+			</el-table-column>
 		</el-table>
 
 	</div>
@@ -70,7 +77,7 @@
 
 <script>
 import moment from "moment";
-import { getMCaseList } from "@/api/case";
+import { getCaseList } from "@/api/case";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
@@ -94,7 +101,7 @@ import { dateWatcher } from "@/utils/pickerOptions";
 // ]
 
 export default {
-	name: "mCaseList",
+	name: "fCaseList",
 	components: { TimePicker },
 	data() {
 		return {
@@ -160,22 +167,22 @@ export default {
 					sortable: false,
 					caseTypeFilter: [ 11, 12 ]
 				},
-				warrantyDate: {
-					name: "保固日期",
-					sortable: false,
-				},
+				// warrantyDate: {
+				// 	name: "保固日期",
+				// 	sortable: false,
+				// },
 				dispatchArea: {
 					name: "派工面積",
 					sortable: false,
 				},
-				actualArea: {
-					name: "修復面積",
-					sortable: false,
-				},
-				markerArea: {
-					name: "標線面積",
-					sortable: false,
-				}
+				// actualArea: {
+				// 	name: "修復面積",
+				// 	sortable: false,
+				// },
+				// markerArea: {
+				// 	name: "標線面積",
+				// 	sortable: false,
+				// }
 			},
 			list: [],
 			districtList: {
@@ -291,7 +298,8 @@ export default {
 			this.caseTypeNow = this.listQuery.caseType;
 
 			this.list = [];
-			getMCaseList({
+			getCaseList({
+				reportType: 2,
 				caseType: this.listQuery.caseType,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
@@ -339,6 +347,7 @@ export default {
 			let filterVal = Object.keys(this.headersFilter);
 			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
 			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+
 			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
 				l.organAssign =  l.organAssign == 1 ? "是" : "";
 				l.BrokeType = this.options.BrokeType[l.BrokeType];
@@ -366,7 +375,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.mCase-List
+.fCase-List
 	.filter-container 
 		.el-select
 			width: 110px
