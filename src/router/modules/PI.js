@@ -10,7 +10,7 @@ const otherRouter = {
 	meta: {
 		title: '成效指標',
 		icon: 'el-icon-s-check',
-		roles: ['PIcase.viewer'],
+		roles: ['PIcase'],
 		isNew: true
 	},
 	children: [

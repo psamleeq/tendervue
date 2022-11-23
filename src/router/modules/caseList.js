@@ -10,7 +10,7 @@ const otherRouter = {
 	meta: {
 		title: '案件紀錄',
 		icon: 'el-icon-suitcase',
-		roles: ['case.viewer'],
+		roles: ['case'],
 		isNew: true
 	},
 	children: [

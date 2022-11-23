@@ -10,7 +10,7 @@ const PCIRouter = {
 		meta: {
 			title: 'PCI數據',
 			icon: 'el-icon-s-marketing',
-			roles: ['PIcase.analyst']
+			roles: ['PIcase']
 		},
 		children: [
 			{

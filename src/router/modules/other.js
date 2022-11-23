@@ -10,7 +10,7 @@ const otherRouter = {
 	meta: {
 		title: '其他報表',
 		icon: 'el-icon-info',
-		roles: ['PIcase.analyst'],
+		roles: ['PIcase'],
 		isNew: true 
 	},
 	children: [

@@ -10,7 +10,7 @@ const unitRouter = {
 	meta: {
 		title: '單元管理',
 		icon: 'road', 
-		roles: ['uRoad.viewer', 'uBlock.manager'],
+		roles: ['uRoad', 'uBlock'],
 		isNew: true
 	},
 	children: [
