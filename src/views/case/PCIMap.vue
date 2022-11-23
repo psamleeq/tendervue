@@ -14,6 +14,7 @@
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
+				<el-button v-if="checkPermission(['beta'])" class="filter-item" type="success" size="small" icon="el-icon-refresh-right" @click="generatePCI()">產生PCI</el-button>
 			</div>
 		</div>
 
@@ -55,7 +56,9 @@ import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 // import { getDistGeo } from "@/api/type";
 import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
+import { calPCI } from "@/api/tool";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
+import checkPermission from '@/utils/permission';
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -236,6 +239,7 @@ export default {
 		}).catch(err => console.log("err: ", err));
 	},
 	methods: {
+		checkPermission,
 		// init google map
 		async initMap() {
 			return new Promise(resolve => {
@@ -608,6 +612,22 @@ export default {
 
 					resolve();	
 				}
+			})
+		},
+		generatePCI() {
+			this.loading = true;
+			calPCI().then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "產生成功",
+						type: "success",
+					});
+
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
 			})
 		},
 		showContent(props, position) {
