@@ -426,6 +426,7 @@ export default {
 				this.dataLayer.PCIBlock.bell = new google.maps.Data();
 				this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_104.geojson?t=${Date.now()}`, null, () => {
 					this.switchBlockType();
+					this.search();
 				});
 				this.dataLayer.PCIBlock.bell.setStyle({ 
 					strokeColor: '#FFF',
@@ -559,8 +560,8 @@ export default {
 					// });
 				}
 				// this.loading = false;
-				this.switchBlockType();
-				await this.focusMap();
+				// this.switchBlockType();
+				// await this.focusMap();
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
@@ -601,7 +602,7 @@ export default {
 			return new Promise(resolve => {
 				for(const block of Object.values(this.dataLayer.PCIBlock)) block.revertStyle();
 
-				if(this.listQuery.filterId.length == 0) resolve();
+				if(!this.listQuery.filterId || this.listQuery.filterId.length == 0) resolve();
 				if(this.listQuery.filterId.length != 0 && !Number(this.listQuery.filterId)) {
 					this.$message({
 						message: "請輸入正確編號",
