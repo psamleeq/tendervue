@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { MessageBox, Message } from 'element-ui'
 import store from '@/store'
+import router, { resetRouter } from '@/router'
 import { getToken } from '@/utils/auth'
 
 // create an axios instance
@@ -84,8 +85,8 @@ service.interceptors.response.use(
 					// 跳至登入頁
 					store.dispatch('user/resetToken')
 					localStorage.clear();
-					let fullPath = router.currentRoute.fullPath
-					let query = fullPath.indexOf('login') == -1 ? { redirect: fullPath } : {}
+					let fullPath = router.currentRoute.fullPath;
+					let query = fullPath.indexOf('login') == -1 ? { redirect: fullPath } : {};
 
 					router.push({
 						path: "/login",
