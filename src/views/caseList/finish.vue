@@ -121,16 +121,16 @@ export default {
 					name: "案號",
 					sortable: false
 				},
-				organAssign: {
-					name: "機關交辦",
-					sortable: false
-				},
 				BTName: {
 					name: "損壞類別",
 					sortable: false
 				},
 				BrokeType: {
 					name: "損壞程度",
+					sortable: false
+				},
+				organAssign: {
+					name: "機關交辦",
 					sortable: false
 				},
 				CaseName: {
