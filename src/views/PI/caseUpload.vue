@@ -405,12 +405,13 @@ export default {
 	computed: {
 		caseList() {
 			const errArr = this.caseErrList.map(l => l.CaseNo.length > 0 ? l.CaseNo : l.UploadCaseNo );
-			return this.list.filter(row => (!errArr.includes(row.CaseNo) || (row.casetype != '1999' && row.UploadCaseNo && !errArr.includes(row.UploadCaseNo))));
+			return this.list.filter(row => (row.CaseNo.length > 0 && !errArr.includes(row.CaseNo)) || (row.casetype != '1999' && row.UploadCaseNo && !errArr.includes(row.UploadCaseNo)));
 		},
 		caseErrList() {
 			let caseErrList = [];
 			for(const caseNo of this.caseMinus.list) {
 				const caseItem = this.list.filter(l => l.CaseNo == caseNo)[0];
+				// const caseItem = this.list.filter(l => l.CaseNo.length > 0 ? l.CaseNo == caseNo : l.UploadCaseNo == caseNo )[0];
 				if(caseItem.UploadCaseNo == undefined) caseItem.UploadCaseNo = caseItem.CaseNo;
 				caseErrList.push({ ...caseItem, note: `無法匹配(DB) \n ${caseItem.casetype}`, edit: false });
 			}
@@ -508,6 +509,7 @@ export default {
 			let caseFilterList = [];
 			for(const row of list) {
 				let caseItem = {};
+				row.CaseNo = row.CaseNo.length == 0 ? '0' : row.CaseNo;
 				for(const key of this.apiHeader) caseItem[key] = row[key];
 				caseFilterList.push(caseItem);
 			}
@@ -517,7 +519,6 @@ export default {
 		createList() {
 			this.showConfirm = false;
 			this.loading = true;
-			this.tableSelect.forEach(l => l.CaseNo = l.CaseNo.length == 0 ? '0' : l.CaseNo);
 
 			addCaseList({
 				caseList: this.caseFilterList([...this.caseList, ...this.tableSelect ])
@@ -541,7 +542,7 @@ export default {
 			for(const val of value) {
 				let msgArr = [];
 				for(const column in this.headers) {
-					if(column != 'organAssign' && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
+					if(!['CaseNo', 'organAssign'].includes(column) && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
 				}
 				if(msgArr.length > 0) {
 					this.$message({
@@ -633,6 +634,7 @@ export default {
 		},
 		replaceCaseList() {
 			// 比對 DB 和 新工處
+			// const listCSNArr = this.list.map(l => l.CaseNo.length > 0 ?  l.CaseNo : l.UploadCaseNo);
 			const listCSNArr = this.list.map(l => l.CaseNo);
 			const csvCSNArr = this.csvData.map(d => d["來源編號"].length > 0 ? d["來源編號"] : d["案件編號"]);
 			this.csvRepeatObj = this.csvData.reduce((obj, curr, index ) => {
