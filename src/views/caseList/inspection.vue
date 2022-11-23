@@ -114,6 +114,10 @@ export default {
 					name: "損壞程度",
 					sortable: false
 				},
+				PCIValue: {
+					name: "PCI",
+					sortable: false
+				},
 				CaseName: {
 					name: "地址",
 					sortable: false
@@ -122,10 +126,10 @@ export default {
 				// 	name: "派工單號",
 				// 	sortable: false,
 				// },
-				CaseDate: {
-					name: "成案日期",
-					sortable: false,
-				},
+				// CaseDate: {
+				// 	name: "成案日期",
+				// 	sortable: false,
+				// },
 				directDispatchDate: {
 					name: "主任派工日期",
 					sortable: false,
