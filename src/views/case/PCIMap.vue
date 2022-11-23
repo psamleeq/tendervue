@@ -565,49 +565,49 @@ export default {
 						type: "error",
 					});
 					resolve();
-				}
+				} else {
+					const key = this.listQuery.filterType == 1 ? 'blockId' : 'roadName';
+					let query = {};
+					query[key] = this.listQuery.filterId;
+					this.$router.push({ query });
 
-				const key = this.listQuery.filterType == 1 ? 'blockId' : 'roadName';
-				let query = {};
-				query[key] = this.listQuery.filterId;
-				this.$router.push({ query });
+					// let blockSpec;
+					// this.dataLayer.PCIBlock.forEach(features =>{ 
+					// 	if(features.j[key] == this.listQuery.filterId) blockSpec = features;
+					// });
 
-				// let blockSpec;
-				// this.dataLayer.PCIBlock.forEach(features =>{ 
-				// 	if(features.j[key] == this.listQuery.filterId) blockSpec = features;
-				// });
-
-				let featureList = [];
-				this.dataLayer.PCIBlock.forEach(feature =>{ 
-					if(feature.j[key] == this.listQuery.filterId) featureList.push(feature);
-				});
-				
-				// if(blockSpec != undefined ) {
-				for(const feature of featureList) {
-					this.dataLayer.PCIBlock.overrideStyle(feature, { strokeColor: "#FF6F00", zIndex: 3 });
-				}
-				
-				if(featureList.length == 0) {
-				// if(blockSpec == undefined ) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
+					let featureList = [];
+					this.dataLayer.PCIBlock.forEach(feature =>{ 
+						if(feature.j[key] == this.listQuery.filterId) featureList.push(feature);
 					});
+					
+					// if(blockSpec != undefined ) {
+					for(const feature of featureList) {
+						this.dataLayer.PCIBlock.overrideStyle(feature, { strokeColor: "#FF6F00", zIndex: 3 });
+					}
+					
+					if(featureList.length == 0) {
+					// if(blockSpec == undefined ) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
 
-					resolve();
+						resolve();
+					}
+
+					// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
+					// const paths = blockSpec.getGeometry();
+					const paths = featureList[0].getGeometry();
+					// console.log(paths);
+
+					const bounds = new google.maps.LatLngBounds();
+					// paths.forEach(position => bounds.extend(position));
+					paths.forEachLatLng(position => bounds.extend(position));
+					this.map.fitBounds(bounds);
+
+					resolve();	
 				}
-
-				// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
-				// const paths = blockSpec.getGeometry();
-				const paths = featureList[0].getGeometry();
-				// console.log(paths);
-
-				const bounds = new google.maps.LatLngBounds();
-				// paths.forEach(position => bounds.extend(position));
-				paths.forEachLatLng(position => bounds.extend(position));
-				this.map.fitBounds(bounds);
-
-				resolve();
 			})
 		},
 		showContent(props, position) {
