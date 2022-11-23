@@ -10,6 +10,7 @@ const otherRouter = {
 	meta: {
 		title: '案件紀錄',
 		icon: 'el-icon-suitcase',
+		roles: ['case.viewer'],
 		isNew: true
 	},
 	children: [
@@ -17,13 +18,21 @@ const otherRouter = {
 			path: 'inspection',
 			component: () => import('@/views/caseList/inspection'),
 			name: 'inspection',
-			meta: { title: '派工紀錄', isNew: true }
+			meta: { 
+				title: '派工紀錄', 
+				roles: ['case.viewer'],
+				isNew: true 
+			}
 		},
 		{
 			path: 'finish',
 			component: () => import('@/views/caseList/finish'),
 			name: 'finish',
-			meta: { title: '完工紀錄', isNew: true }
+			meta: { 
+				title: '完工紀錄', 
+				roles: ['case.viewer'],
+				isNew: true 
+			}
 		},
 	]
 }

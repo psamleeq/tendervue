@@ -9,14 +9,19 @@ const roadRouter = {
 	name: 'cost',
 	meta: {
 		title: '計價管理',
-		icon: 'el-icon-money'
+		icon: 'el-icon-money',
+		roles: ['beta']
 	},
 	children: [
 		{
 			path: 'kit',
 			component: () => import('@/views/cost/kit'),
 			name: 'kit',
-			meta: { title: '計價套組', vTag: 'Alpha' }
+			meta: { 
+				title: '計價套組', 
+				roles: ['beta'],
+				vTag: 'Alpha' 
+			}
 		}
 	]
 }

@@ -201,7 +201,7 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
-					<span v-else-if="[ 'organAssign', 'BType', 'BrokeType', 'PCIValue' ].includes(column.property)">
+					<span v-else-if="checkPermission(['PIcase.editor']) && [ 'organAssign', 'BType', 'BrokeType', 'PCIValue' ].includes(column.property)">
 						<span v-if="row.edit">
 							<span v-if="[ 'organAssign' ].includes(column.property)">
 								<el-checkbox v-model.number="row[column.property]" :true-label="1" :false-label="0" />
@@ -309,6 +309,7 @@
 import moment from "moment";
 import { getTypeMap } from "@/api/type";
 import { getCaseList, setCaseList } from "@/api/PI";
+import checkPermission from '@/utils/permission';
 
 export default {
 	name: "PICaseList",
@@ -516,6 +517,7 @@ export default {
 		this.getList();
 	},
 	methods: {
+		checkPermission,
 		dateShortcuts(index) {
 			this.timeTabId = index;
 

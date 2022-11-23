@@ -10,20 +10,29 @@ const unitRouter = {
 	meta: {
 		title: '單元管理',
 		icon: 'road', 
-		vTag: 'Alpha'
+		roles: ['uRoad.viewer', 'uBlock.manager'],
+		isNew: true
 	},
 	children: [
 		{
 			path: 'list',
 			component: () => import('@/views/unit/list'),
 			name: 'list',
-			meta: { title: '道路單元', vTag: 'Alpha' }
+			meta: { 
+				title: '道路單元',
+				roles: ['uRoad.viewer', 'uBlock.manager'],
+				isNew: true
+			}
 		},
 		{
 			path: 'genMap',
 			component: () => import('@/views/unit/genMap'),
 			name: 'genMap',
-			meta: { title: '維護單元產生', vTag: 'Alpha' }
+			meta: { 
+				title: '維護單元產生', 
+				roles: ['uBlock.manager'],
+				isNew: true
+			}
 		}
 	]
 }

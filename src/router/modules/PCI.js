@@ -3,46 +3,61 @@
 import Layout from '@/layout'
 
 const PCIRouter = {
-    path: '/PCI',
-    component: Layout,
-    redirect: '/PCI/report',
-    name: 'PCI',
-    meta: {
-      title: 'PCI數據',
+		path: '/PCI',
+		component: Layout,
+		redirect: '/PCI/report',
+		name: 'PCI',
+		meta: {
+			title: 'PCI數據',
 			icon: 'el-icon-s-marketing',
-      isNew: true 
-    },
-    children: [
-      {
-        path: 'report',
-        component: () => import('@/views/PCI/report'),
+			roles: ['PIcase.analyst']
+		},
+		children: [
+			{
+				path: 'report',
+				component: () => import('@/views/PCI/report'),
 				name: 'report',
-        meta: { title: '報表' }
-      },
+				meta: { 
+					title: '報表',
+					roles: ['PIcase.analyst']
+				}
+			},
 			{
 				path: 'trend',
 				component: () => import('@/views/PCI/trend'),
 				name: 'trend',
-				meta: { title: '趨勢圖' }
+				meta: { 
+					title: '趨勢圖',
+					roles: ['PIcase.analyst']
+				}
 			},
 			{
 				path: 'average',
 				component: () => import('@/views/PCI/average'),
 				name: 'average',
-				meta: { title: 'PCI平均' }
+				meta: { 
+					title: 'PCI平均',
+					roles: ['PIcase.analyst']
+				}
 			},
 			{
 				path: 'share',
 				component: () => import('@/views/PCI/share'),
 				name: 'share',
-				meta: { title: '每月份額' }
+				meta: { 
+					title: '每月份額',
+					roles: ['PIcase.analyst']
+				}
 			},
 			{
 				path: 'caseReport',
 				component: () => import('@/views/PCI/caseReport'),
 				name: 'caseReport',
-				meta: { title: '派工和PCI分析', isNew: true }
+				meta: { 
+					title: '派工和PCI分析', 
+					roles: ['PIcase.analyst'] 
+				}
 			}
-    ]
-  }
-  export default PCIRouter
+		]
+	}
+	export default PCIRouter

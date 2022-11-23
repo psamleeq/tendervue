@@ -825,7 +825,7 @@ export default {
 			const lng = different * (end.lng - start.lng) / dist + start.lng;
 			return { lat, lng };
 		},
-		//計算垂直點: { lat: -1, lng: -1 } -> 不在線段內
+		// 計算垂直點: { lat: -1, lng: -1 } -> 不在線段內
 		getFootOfPer(start, end, pt) {
 			const dLat = start.lat - end.lat; //Y
 			const dLng = start.lng - end.lng; //X
@@ -838,7 +838,7 @@ export default {
 			if(calcDistance(start, footOfPer) > calcDistance(start, end)) return { lat: -1, lng: -1 };
 			else return footOfPer;
 		},
-		//切割線段 - 線段長度
+		// 切割線段 - 線段長度
 		splitLine(linesPosSpec) {
 			let pointList = [{ index: 0, point: linesPosSpec[0] }];
 			let pointInfo = { dist: 0, index: 0, point: pointList[pointList.length - 1].point };
@@ -864,7 +864,7 @@ export default {
 			}
 			return pointList
 		},
-		//切割線段 - 垂直點
+		// 切割線段 - 垂直點
 		splitLine_Per(linesPosSpec, splitPList) {
 			let pointList = [{ index: linesPosSpec.length-1, point: linesPosSpec[linesPosSpec.length-1] }];
 			let pointInfo = { index: 0, point: {} };

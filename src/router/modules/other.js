@@ -10,6 +10,7 @@ const otherRouter = {
 	meta: {
 		title: '其他報表',
 		icon: 'el-icon-info',
+		roles: ['PIcase.analyst'],
 		isNew: true 
 	},
 	children: [
@@ -17,7 +18,10 @@ const otherRouter = {
 			path: 'precipitation',
 			component: () => import('@/views/other/precipitation'),
 			name: 'precipitation',
-			meta: { title: '每月降雨天數' }
+			meta: {
+				title: '每月降雨天數',
+				roles: ['PIcase.analyst']
+			}
 		}
 	]
 }
