@@ -10,7 +10,7 @@ const otherRouter = {
 	meta: {
 		title: '其他報表',
 		icon: 'el-icon-info',
-		roles: ['PIcase'],
+		roles: ['other'],
 		isNew: true 
 	},
 	children: [
@@ -20,7 +20,7 @@ const otherRouter = {
 			name: 'precipitation',
 			meta: {
 				title: '每月降雨天數',
-				roles: ['PIcase.analyst']
+				roles: ['other.weather']
 			}
 		}
 	]

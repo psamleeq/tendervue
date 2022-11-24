@@ -10,7 +10,7 @@ const PCIRouter = {
 		meta: {
 			title: 'PCI數據',
 			icon: 'el-icon-s-marketing',
-			roles: ['PIcase']
+			roles: ['PCIanalyst']
 		},
 		children: [
 			{
@@ -19,7 +19,7 @@ const PCIRouter = {
 				name: 'report',
 				meta: { 
 					title: '報表',
-					roles: ['PIcase.analyst']
+					roles: ['PCIanalyst.viewer']
 				}
 			},
 			{
@@ -28,7 +28,7 @@ const PCIRouter = {
 				name: 'trend',
 				meta: { 
 					title: '趨勢圖',
-					roles: ['PIcase.analyst']
+					roles: ['PCIanalyst.viewer']
 				}
 			},
 			{
@@ -37,7 +37,7 @@ const PCIRouter = {
 				name: 'average',
 				meta: { 
 					title: 'PCI平均',
-					roles: ['PIcase.analyst']
+					roles: ['PCIanalyst.viewer']
 				}
 			},
 			{
@@ -46,7 +46,7 @@ const PCIRouter = {
 				name: 'share',
 				meta: { 
 					title: '每月份額',
-					roles: ['PIcase.analyst']
+					roles: ['PCIanalyst.viewer']
 				}
 			},
 			{
@@ -55,7 +55,7 @@ const PCIRouter = {
 				name: 'caseReport',
 				meta: { 
 					title: '派工和PCI分析', 
-					roles: ['PIcase.analyst'] 
+					roles: ['PCIanalyst.viewer'] 
 				}
 			}
 		]
