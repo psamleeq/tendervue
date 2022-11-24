@@ -48,6 +48,20 @@
 						<span v-else>{{ geoInfo[key] }}</span>
 					</el-col>
 				</el-row>
+				<!-- <div class="info-btn">
+					<el-input 
+						v-model="listQuery.splitLane"
+						type="number"
+						:min="1"
+						placeholder="公尺"
+						@blur="() => { if (listQuery.splitLane < 0) listQuery.splitLane = 0; }"
+					>
+						<span slot="prepend">車道寬度</span>
+					</el-input>
+					<el-button-group style="margin-left: 5px">
+						<el-button type="success" size="small" :disabled="geoInfo.points.length == 0" @click="splitLines()">線段</el-button>
+					</el-button-group>
+				</div> -->
 				<el-row>
 					<el-col :offset="18">
 						<el-button type="success" size="small" :disabled="geoInfo.points.length == 0" @click="splitLines()">線段</el-button>
@@ -197,6 +211,7 @@ export default {
 				roadId: null,
 				roadCode: null,
 				roadDir: 0,
+				splitLane: 3,
 				splitLen: 20,
 				baseLineId: 1
 			},
@@ -741,8 +756,8 @@ export default {
 			// console.log(JSON.parse(JSON.stringify(splitPObj)));
 
 			this.geoJSON_Split = this.getGeoJson(splitPObj);
-			// const geoJsonData = JSON.stringify(geoJson, null, 2);
-			// console.log(geoJson);
+			// const geoJsonData = JSON.stringify(geoJSON_Split, null, 2);
+			// console.log(geoJSON_Split);
 
 			this.map.data.forEach(feature => this.map.data.remove(feature));
 			this.map.data.addGeoJson(this.geoJSON_Split);
@@ -893,6 +908,7 @@ export default {
 		splitBlock(splitPList1, splitPList2, line1, line2) {
 			const limit = Math.max(splitPList1.length, splitPList2.length);
 			let borders = [];
+			// console.log(splitPList1, splitPList2);
 			
 			for (let i = 0; i < limit - 1; i++) {
 				let splitPList1Curr, splitPList1Next, splitPList2Curr, splitPList2Next;
@@ -913,7 +929,8 @@ export default {
 				for (let a = splitPList1Curr.index + 1; a <= splitPList1Next.index; a++) border.push([line1[a].lng, line1[a].lat]);
 				border.push([splitPList1Next.point.lng, splitPList1Next.point.lat]);
 				border.push([splitPList2Next.point.lng, splitPList2Next.point.lat]);
-				for (let b = splitPList2Next.index; b >= splitPList2Curr.index + 1; b--) border.push([line2[b].lng, line2[b].lat]);
+				// for (let b = splitPList2Next.index; b >= splitPList2Curr.index + 1; b--) border.push([line2[b].lng, line2[b].lat]);
+				for (let b = splitPList2Next.index; b <= splitPList2Curr.index - 1; b++) border.push([line2[b].lng, line2[b].lat]);
 				border.push([splitPList2Curr.point.lng, splitPList2Curr.point.lat]);
 
 				border.push([splitPList1Curr.point.lng, splitPList1Curr.point.lat]);
