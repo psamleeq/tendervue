@@ -25,9 +25,19 @@ const unitRouter = {
 			}
 		},
 		{
-			path: 'genMap',
-			component: () => import('@/views/unit/genMap'),
-			name: 'genMap',
+			path: 'genLaneMap',
+			component: () => import('@/views/unit/genLaneMap'),
+			name: 'genLaneMap',
+			meta: {
+				title: '車道單元產生',
+				roles: ['uBlock.manager'],
+				isNew: true
+			}
+		},
+		{
+			path: 'genBlockMap',
+			component: () => import('@/views/unit/genBlockMap'),
+			name: 'genBlockMap',
 			meta: { 
 				title: '維護單元產生', 
 				roles: ['uBlock.manager'],

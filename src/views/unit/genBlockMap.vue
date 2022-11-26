@@ -48,20 +48,6 @@
 						<span v-else>{{ geoInfo[key] }}</span>
 					</el-col>
 				</el-row>
-				<!-- <div class="info-btn">
-					<el-input 
-						v-model="listQuery.splitLane"
-						type="number"
-						:min="1"
-						placeholder="公尺"
-						@blur="() => { if (listQuery.splitLane < 0) listQuery.splitLane = 0; }"
-					>
-						<span slot="prepend">車道寬度</span>
-					</el-input>
-					<el-button-group style="margin-left: 5px">
-						<el-button type="success" size="small" :disabled="geoInfo.points.length == 0" @click="splitLines()">線段</el-button>
-					</el-button-group>
-				</div> -->
 				<el-row>
 					<el-col :offset="18">
 						<el-button type="success" size="small" :disabled="geoInfo.points.length == 0" @click="splitLines()">線段</el-button>
@@ -497,7 +483,7 @@ export default {
 							strokeWeight: 2,
 							strokeOpacity: 1,
 							fillColor: '#607D8B',
-							fillOpacity: 0.8,
+							fillOpacity: 0.4,
 							zIndex: 1
 						});
 
@@ -535,7 +521,7 @@ export default {
 							strokeWeight: 1,
 							strokeOpacity: 0.5,
 							fillColor: '#409EFF',
-							fillOpacity: 0.8
+							fillOpacity: 0.4
 						});
 
 						const paths = resJSON.coordinates.flat().flat().map(point => ({ lat: point[1], lng: point[0] }));
@@ -731,8 +717,6 @@ export default {
 					strokeWeight: id == this.listQuery.baseLineId ? this.options.line.base.width : this.options.line.others.width,
 					map: this.map
 				});
-
-				// this.polyLines.push(polyLine);
 			}
 		},
 		switchLines() {
@@ -989,9 +973,6 @@ export default {
 
 			return geoJson
 		},
-		// handleSelBlockChange(selection) {
-		// 	this.selectBlock = selection;
-		// },
 		handleMouseEnter(row, column, cell, event) {
 			// console.log(row.blockId);
 			
@@ -1050,11 +1031,14 @@ export default {
 			.el-step__head.is-finish, .el-step__title.is-finish
 				cursor: pointer
 			.el-step__main
-				margin-left: 10px
+				margin: 0 20px 0 -8px
 				.el-step__title, .el-step__arrow
-					width: 100%
+					max-width: 100%
 					text-align: center
 					cursor: default
+					flex: 3
+				.el-step__arrow
+					flex: 1
 	.info-box
 		position: absolute
 		top: 150px

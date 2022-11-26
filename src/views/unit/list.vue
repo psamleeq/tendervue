@@ -302,7 +302,7 @@ export default {
 	methods: {
 		showMap(row) {
 			this.$router.push({
-				path: "/unit/genMap",
+				path: "/unit/genLaneMap",
 				query: { roadId: row.RoadId },
 			});
 		},
