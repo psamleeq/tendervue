@@ -69,7 +69,7 @@
 							<span slot="prepend">車道寬度</span>
 						</el-input>
 						<el-button-group style="margin-left: 5px">
-							<el-button type="success" size="small" :disabled="geoInfo.points.length == 0" @click="splitLane()">車道</el-button>
+							<!-- <el-button type="success" size="small" :disabled="geoInfo.points.length == 0" @click="splitLane()">車道</el-button> -->
 							<el-button type="success" size="small" :disabled="geoInfo.points.length == 0" @click="createBlocks()">切分</el-button>
 							<el-button type="info" size="small" @click="switchStep(-1)">返回</el-button>
 						</el-button-group>
@@ -539,7 +539,7 @@ export default {
 		setBlock() {
 			if(this.listQuery.roadCode == null || this.listQuery.roadCode.length == 0) {
 				this.$message({
-					message: "請輸入道路編碼",
+					message: "請輸入車道編碼",
 					type: "error",
 				});
 			} else { 
@@ -923,44 +923,42 @@ export default {
 			lineList.push(...Object.values(this.geoInfo.lines.laneLines).map(line => line.points));
 			const lineId = 3 - this.listQuery.baseLineId;
 			lineList.push(this.geoInfo.lines.baseLines[lineId].points.reverse());
-			// console.log(lineList);
+			console.log(lineList);
 
-			for (const [id, splitPList] of Object.entries(this.geoInfo.lines.laneLines)) {
-				for (const [index, border] of this.splitBlock(lineList).entries()) {
-					const area = calArea(border.flat());
-					let fillColor = "#90CAF9";
+			for (const [index, border] of this.splitBlock(lineList).entries()) {
+				const area = calArea(border.flat());
+				let fillColor = "#90CAF9";
 
-					// console.log(border.flat().map(point => ({ lat: point[1], lng: point[0] })));
-					const blockId = String(this.geoInfo.lastCode + index + 1).padStart(3, '0');
-					const block = {
-						blockId: blockId,
-						area: area,
-						points: border.flat().map(point => ({ lat: point[1], lng: point[0] })),
-						geometry: {
-							type: "Polygon",
-							coordinates: border
-						}
-					};
-					this.geoInfo.blocks.push(block);
+				// console.log(border.flat().map(point => ({ lat: point[1], lng: point[0] })));
+				const blockId = String(this.geoInfo.lastCode + index + 1).padStart(3, '0');
+				const block = {
+					blockId: blockId,
+					area: area,
+					points: border.flat().map(point => ({ lat: point[1], lng: point[0] })),
+					geometry: {
+						type: "Polygon",
+						coordinates: border
+					}
+				};
+				this.geoInfo.blocks.push(block);
 
-					const feature = {
-						"type": "Feature",
-						"properties": {
-							"stroke": "#555555",
-							"stroke-opacity": 0.5,
-							"stroke-width": 1,
-							"fill": fillColor,
-							"fill-opacity": 0.8,
-							"area": area,
-							"blockId": blockId
-						},
-						"geometry": {
-							"type": "Polygon",
-							"coordinates": border
-						}
-					};
-					geoJson.features.push(feature);
-				}
+				const feature = {
+					"type": "Feature",
+					"properties": {
+						"stroke": "#555555",
+						"stroke-opacity": 0.5,
+						"stroke-width": 1,
+						"fill": fillColor,
+						"fill-opacity": 0.8,
+						"area": area,
+						"blockId": blockId
+					},
+					"geometry": {
+						"type": "Polygon",
+						"coordinates": border
+					}
+				};
+				geoJson.features.push(feature);
 			}
 
 			return geoJson
