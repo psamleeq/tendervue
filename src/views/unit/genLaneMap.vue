@@ -750,15 +750,17 @@ export default {
 			for(let i = 1; i < pointPair[0].length - 2; i++) {
 				const points = pointPair.map(p => p[i]);
 				this.geoInfo.lines.laneLines[i] = { points };
-				this.polyLines.laneLines[i] = new google.maps.Polyline({
-					path: points,
-					geodesic: true,
-					strokeOpacity: 1,
-					strokeColor: '#000',
-					strokeWeight: 2,
-					zIndex: 1,
-					map: this.map
-				});
+
+				// 繪製車道線
+				// this.polyLines.laneLines[i] = new google.maps.Polyline({
+				// 	path: points,
+				// 	geodesic: true,
+				// 	strokeOpacity: 1,
+				// 	strokeColor: '#000',
+				// 	strokeWeight: 2,
+				// 	zIndex: 1,
+				// 	map: this.map
+				// });
 			}
 		},
 		createBlocks() {

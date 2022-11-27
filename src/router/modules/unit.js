@@ -15,9 +15,9 @@ const unitRouter = {
 	},
 	children: [
 		{
-			path: 'list',
-			component: () => import('@/views/unit/list'),
-			name: 'list',
+			path: 'roadUnit',
+			component: () => import('@/views/unit/roadUnit'),
+			name: 'roadUnit',
 			meta: { 
 				title: '道路單元',
 				roles: ['uRoad.viewer', 'uBlock.manager'],
@@ -31,6 +31,16 @@ const unitRouter = {
 			meta: {
 				title: '車道單元產生',
 				roles: ['uBlock.manager'],
+				isNew: true
+			}
+		},
+		{
+			path: 'laneUnit',
+			component: () => import('@/views/unit/laneUnit'),
+			name: 'laneUnit',
+			meta: {
+				title: '車道單元',
+				roles: ['uRoad.viewer', 'uBlock.manager'],
 				isNew: true
 			}
 		},

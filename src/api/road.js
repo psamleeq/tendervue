@@ -25,6 +25,14 @@ export function setLaneUnitGeo(data) {
 	})
 }
 
+export function getLaneUnit(query) {
+	return request({
+		url: '/road/laneUnit',
+		method: 'get',
+		params: query
+	})
+}
+
 export function setRoadUnitGeo(data) {
 	return request({
 		url: '/road/PCIUnit',
