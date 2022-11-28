@@ -472,7 +472,7 @@ export default {
 						for(const geo of response.data.result.unitList) geoJSON_Unit.features.push({
 							"type": "Feature",
 							"properties": {
-								"roadCode": geo.roadCode,
+								"laneCode": geo.laneCode,
 								"roadName": geo.roadName,
 							},
 							"geometry": JSON.parse(geo.geoJSON)
@@ -490,7 +490,7 @@ export default {
 
 						this.dataLayer.addListener('mouseover', (event) => {
 							// console.log(event);
-							this.infoWindow.setContent(`道路編碼: ${event.feature.j.roadCode}`);
+							this.infoWindow.setContent(`車道編碼: ${event.feature.j.laneCode}`);
 
 							const bounds = new google.maps.LatLngBounds();
 							event.feature.h.h[0].h.forEach(position => bounds.extend(position));
@@ -547,7 +547,7 @@ export default {
 				for(const block of this.selectBlock) {
 					unitList.push({
 						roadId: Number(this.geoInfo.roadId),
-						roadCode: `${this.listQuery.roadCode}${block.blockId}${this.listQuery.roadDir}`,
+						laneCode: `${this.listQuery.roadCode}${block.blockId}${this.listQuery.roadDir}`,
 						roadName: this.geoInfo.roadName,
 						geometry: JSON.stringify(block.geometry)
 					})
@@ -722,6 +722,7 @@ export default {
 		},
 		splitLane() {
 			this.resetLines();
+			this.geoInfo.lines.laneLines = {};
 			for(const polyline of Object.values(this.polyLines.laneLines)) polyline.setMap(null);
 
 			let pointPair = [];

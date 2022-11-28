@@ -33,6 +33,14 @@ export function getLaneUnit(query) {
 	})
 }
 
+export function getLaneUnitGeo(query) {
+	return request({
+		url: '/road/laneUnitGeo',
+		method: 'get',
+		params: query
+	})
+}
+
 export function setRoadUnitGeo(data) {
 	return request({
 		url: '/road/PCIUnit',

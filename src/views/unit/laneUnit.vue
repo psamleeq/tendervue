@@ -303,7 +303,7 @@ export default {
 		showMap(row) {
 			this.$router.push({
 				path: "/unit/genBlockMap",
-				query: { laneId: row.laneCode },
+				query: { laneCode: row.laneCode },
 			});
 		},
 		getList() {

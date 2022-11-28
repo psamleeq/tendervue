@@ -5,8 +5,8 @@
 			<h2 class="road-title">維護單元產生</h2>
 			<div class="filter-container">
 				<div class="filter-item">
-					<el-input v-model="listQuery.roadId" placeholder="請輸入">
-						<span slot="prepend">道路Id</span>
+					<el-input v-model="listQuery.laneCode" placeholder="請輸入">
+						<span slot="prepend">車道Id</span>
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="getList();">搜尋</el-button>
@@ -150,7 +150,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 const { calcDistance, calArea } = require('@/utils/geo-tools');
-import { getRoadUnitGeo, setRoadUnitGeo } from "@/api/road";
+import { getLaneUnitGeo, setRoadUnitGeo } from "@/api/road";
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -184,7 +184,7 @@ export default {
 			geoJSON_Split: {},
 			geoInfo: {
 				lastCode: 0,
-				roadId: 0,
+				laneCode: 0,
 				roadName: "",
 				area: 0,
 				points: [],
@@ -194,7 +194,7 @@ export default {
 			isShortBound: false,
 			boundary: [],
 			listQuery: {
-				roadId: null,
+				laneCode: null,
 				roadCode: null,
 				roadDir: 0,
 				splitLane: 3,
@@ -263,8 +263,8 @@ export default {
 		// 初始化Google Map
 		loader.load().then(() => {
 			this.initMap();
-			if (this.$route.query.roadId) {
-				this.listQuery.roadId = this.$route.query.roadId;
+			if (this.$route.query.laneCode) {
+				this.listQuery.laneCode = this.$route.query.laneCode;
 				this.getList();
 			}
 		}).catch(err => console.log("err: ", err));
@@ -425,9 +425,9 @@ export default {
 			}
 		},
 		getList() {
-			if(!Number(this.listQuery.roadId)) {
+			if(!Number(this.listQuery.laneCode)) {
 				this.$message({
-					message: "請輸入正確道路Id",
+					message: "請輸入正確車道Id",
 					type: "error",
 				});
 			} else {
@@ -435,9 +435,9 @@ export default {
 				this.clearAll();
 				this.markers = [];
 				this.polyLines = {};
-				this.$router.push({ query: { roadId: this.listQuery.roadId }});
+				this.$router.push({ query: { laneCode: this.listQuery.laneCode }});
 
-				getRoadUnitGeo({ roadId: this.listQuery.roadId }).then((response) => {
+				getLaneUnitGeo({ laneCode: this.listQuery.laneCode }).then((response) => {
 					if(response.data.result.geo.boundary == null) {
 						this.$message({
 							message: "查無資料",
@@ -447,12 +447,13 @@ export default {
 
 					} else {
 						this.boundaryJSON = JSON.parse(response.data.result.geo.boundary);
-						// console.log(this.boundaryJSON.coordinates[0]);
+						// console.log(this.boundaryJSON.coordinates);
 						// const bLat = { min: response.data.result.geo.latMin, max: response.data.result.geo.latMax };
 						// const bLng = { min: response.data.result.geo.lngMin, max: response.data.result.geo.lngMax };
 
 						this.geoInfo = {
 							roadId: response.data.result.geo.RoadId,
+							laneCode: response.data.result.geo.laneCode,
 							roadName: response.data.result.geo.roadName,
 							lastCode: response.data.result.lastCode,
 							area: response.data.result.geo.area,
@@ -524,7 +525,7 @@ export default {
 							fillOpacity: 0.4
 						});
 
-						const paths = resJSON.coordinates.flat().flat().map(point => ({ lat: point[1], lng: point[0] }));
+						const paths = resJSON.coordinates.flat().map(point => ({ lat: point[1], lng: point[0] }));
 						const bounds = new google.maps.LatLngBounds();
 						paths.forEach(position => bounds.extend(position));
 						this.map.fitBounds(bounds);
@@ -546,6 +547,7 @@ export default {
 				for(const block of this.selectBlock) {
 					unitList.push({
 						roadId: Number(this.geoInfo.roadId),
+						laneCode: Number(this.geoInfo.laneCode),
 						roadCode: `${this.listQuery.roadCode}${block.blockId}${this.listQuery.roadDir}`,
 						roadName: this.geoInfo.roadName,
 						geometry: JSON.stringify(block.geometry)
@@ -574,13 +576,13 @@ export default {
 		},
 		createMarkers() {
 			// 建立端點
-			for(const [ index, point ] of this.boundaryJSON.coordinates[0].entries()) {
+			for(const [ index, point ] of this.boundaryJSON.coordinates.entries()) {
 				const [ lng, lat ] = point;
 				// if(index != 0) this.geoInfo.lines[this.geoInfo.lines.length-1].push({ lat, lng });
 
 				// const limit = Math.pow(10, -5);
 				// if(Math.abs(bLat.min - lat) < limit || Math.abs(bLat.max - lat) < limit || Math.abs(bLng.min - lng) < limit|| Math.abs(bLng.max - lng) < limit) {
-					if(index < this.boundaryJSON.coordinates[0].length - 1) {
+					if(index < this.boundaryJSON.coordinates.length - 1) {
 					// this.geoInfo.points.push({ index: index, position: { lat, lng } });
 					// this.geoInfo.lines.push([{ lat, lng }]);
 					const marker = new google.maps.Marker({
@@ -658,7 +660,7 @@ export default {
 				this.boundary = this.geoInfo.points.reduce((acc, cur, id, arr) => {
 					const index = id+1 <= arr.length - 1 ? id+1 : 0;
 					const dist = calcDistance(cur.position, arr[index].position);
-					const endRange = arr[index].index != 0 ? arr[index].index : this.boundaryJSON.coordinates[0].length - 1;
+					const endRange = arr[index].index != 0 ? arr[index].index : this.boundaryJSON.coordinates.length - 1;
 					acc.push({ range: [ cur.index, endRange ], dist });
 
 					return acc;
@@ -674,7 +676,7 @@ export default {
 			this.polyLines = {};
 
 			let index = 0;
-			this.geoInfo.lines = this.boundaryJSON.coordinates[0].reduce((acc, cur, id, arr) => {
+			this.geoInfo.lines = this.boundaryJSON.coordinates.reduce((acc, cur, id, arr) => {
 				if(index > points.length - 1) return acc;
 				let range = points[index].range;
 				if(id < range[0]) return acc;
@@ -986,7 +988,7 @@ export default {
 			this.map.data.revertStyle();
 		},
 		lineIndex(min, index) {
-			const polyMax = this.boundaryJSON.coordinates[0].length - 1;
+			const polyMax = this.boundaryJSON.coordinates.length - 1;
 			const lineIndex = (min + index) % polyMax;
 			return lineIndex;
 		},
