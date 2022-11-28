@@ -62,9 +62,9 @@
 
 		<!-- 有問題案件列表 -->
 		<el-collapse v-if="!alreadyCreate && caseErrList.length != 0">
-			<el-collapse-item class="listLabel" title="需處理案件" name="1">
+			<el-collapse-item class="listLabel" title="待處理案件" name="1">
 				<template slot="title">
-					<span>需處理案件  (</span>
+					<span>待處理案件  (</span>
 					<span style="color: #F56C6C">無法匹配: {{ caseMinus.list.length + caseMinus.csv.length }}件</span>、
 					<span style="color: #E6A23C">重複案件: {{ listRepeat.length * 2 + Object.values(csvRepeatObj).reduce((acc, curr) => acc+=curr.length , 0) }}件</span>
 					)
@@ -406,7 +406,7 @@ export default {
 	computed: {
 		caseList() {
 			const errArr = this.caseErrList.map(l => l.CaseNo.length > 0 ? l.CaseNo : l.UploadCaseNo );
-			return this.list.filter(row => (row.CaseNo.length > 0 && !errArr.includes(row.CaseNo)) || (row.casetype != '1999' && row.UploadCaseNo && !errArr.includes(row.UploadCaseNo)));
+			return this.list.filter(row => (row.CaseNo.length > 0 && !errArr.includes(row.CaseNo)) || (row.CaseNo.length <= 0 && row.UploadCaseNo && !errArr.includes(row.UploadCaseNo)));
 		},
 		caseErrList() {
 			let caseErrList = [];
@@ -480,6 +480,7 @@ export default {
 			this.searchRange = date;
 
 			this.list = [];
+			this.listRepeat = [];
 			this.csvRepeatObj = {};
 			this.caseMinus = { 
 				list: [],
