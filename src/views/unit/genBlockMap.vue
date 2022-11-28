@@ -717,6 +717,7 @@ export default {
 					strokeOpacity: 1,
 					strokeColor: id == this.listQuery.baseLineId ? this.options.line.base.color : this.options.line.others.color,
 					strokeWeight: id == this.listQuery.baseLineId ? this.options.line.base.width : this.options.line.others.width,
+					index: 1,
 					map: this.map
 				});
 			}

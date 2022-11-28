@@ -2,7 +2,7 @@
 	<div class="lane-unitGen" v-loading="loading">
 		<div id="map" ref="map" />
 		<div class="header-bar">
-			<h2 class="road-title">維護單元產生</h2>
+			<h2 class="road-title">車道單元產生</h2>
 			<div class="filter-container">
 				<div class="filter-item">
 					<el-input v-model="listQuery.roadId" placeholder="請輸入">
@@ -152,7 +152,6 @@ import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 const { calcDistance, calArea } = require('@/utils/geo-tools');
 import { getRoadUnitGeo, setLaneUnitGeo } from "@/api/road";
-import { line } from 'echarts/lib/theme/dark';
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -710,6 +709,7 @@ export default {
 					strokeOpacity: 1,
 					strokeColor: id == this.listQuery.baseLineId ? this.options.line.base.color : this.options.line.others.color,
 					strokeWeight: id == this.listQuery.baseLineId ? this.options.line.base.width : this.options.line.others.width,
+					index: 1,
 					map: this.map
 				});
 			}
@@ -746,9 +746,9 @@ export default {
 					pointPair.push(pointList);
 				}
 			}
-			// console.log(pointPair);
 
-			for(let i = 1; i < pointPair[0].length - 2; i++) {
+			const length = Math.min(...pointPair.map(el => el.length));
+			for(let i = 1; i < length - 2; i++) {
 				const points = pointPair.map(p => p[i]);
 				this.geoInfo.lines.laneLines[i] = { points };
 
@@ -826,7 +826,7 @@ export default {
 				const line = this.geoInfo.lines.baseLines[id];
 				// console.log(id, line.points);
 				this.lineFilter[id].points = line.points.filter((_, i) => (this.selectPt[id].includes(this.lineIndex(line.range[0], i))));
-				// console.log(lineFilter[id].points);
+				// console.log(this.lineFilter[id].points);
 
 				// 變更線段
 				const path = this.lineFilter[id].points;
@@ -922,10 +922,10 @@ export default {
 			};
 
 			const lineList = [];
-			lineList.push(this.geoInfo.lines.baseLines[this.listQuery.baseLineId].points);
+			lineList.push(this.lineFilter[this.listQuery.baseLineId].points);
 			lineList.push(...Object.values(this.geoInfo.lines.laneLines).map(line => line.points));
 			const lineId = 3 - this.listQuery.baseLineId;
-			lineList.push(this.geoInfo.lines.baseLines[lineId].points.reverse());
+			lineList.push(this.lineFilter[lineId].points.reverse());
 			console.log(lineList);
 
 			for (const [index, border] of this.splitBlock(lineList).entries()) {
