@@ -66,7 +66,7 @@
 				<template slot="title">
 					<span>需處理案件  (</span>
 					<span style="color: #F56C6C">無法匹配: {{ caseMinus.list.length + caseMinus.csv.length }}件</span>、
-					<span style="color: #E6A23C">重複案件: {{ Object.values(csvRepeatObj).reduce((acc, curr) => acc+=curr.length , 0) }}件</span>
+					<span style="color: #E6A23C">重複案件: {{ listRepeat.length * 2 + Object.values(csvRepeatObj).reduce((acc, curr) => acc+=curr.length , 0) }}件</span>
 					)
 				</template>
 				<el-table
@@ -334,6 +334,7 @@ export default {
 			apiHeader: [ "UploadCaseNo", "CaseSN", "CaseDate", "DeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
 			tableSelect: [],
 			list: [],
+			listRepeat: [],
 			csvData: [],
 			csvFileList: [],
 			csvRepeatObj: {},
@@ -425,14 +426,21 @@ export default {
 				caseErrList.push({ ...caseItem, note: "無法匹配(csv)", edit: false });
 			}
 
-			for(const caseNo in this.csvRepeatObj) {
-				for(const uploadCaseNo of this.csvRepeatObj[caseNo]) {
-					const caseItem = this.list.filter(l => l.UploadCaseNo == uploadCaseNo)[0];
-					caseErrList.push({ ...caseItem, note: `重複案件: ${caseNo}`, edit: false });
+			for(const caseNo of this.listRepeat) {
+				const caseItem = this.list.filter(l => l.CaseNo == caseNo);
+				for(const caseSpec of caseItem) {
+					caseErrList.push({ ...caseSpec, note: `重複案件(DB): ${caseNo}`, edit: false });
 				}
 			}
 
-			return caseErrList.sort((a, b) => Number(a.UploadCaseNo) - Number(b.UploadCaseNo))
+			for(const caseNo in this.csvRepeatObj) {
+				for(const uploadCaseNo of this.csvRepeatObj[caseNo]) {
+					const caseItem = this.list.filter(l => l.UploadCaseNo == uploadCaseNo)[0];
+					caseErrList.push({ ...caseItem, note: `重複案件(csv): ${caseNo}`, edit: false });
+				}
+			}
+
+			return caseErrList
 		}
 	},
 	created() {
@@ -637,6 +645,10 @@ export default {
 			// const listCSNArr = this.list.map(l => l.CaseNo.length > 0 ?  l.CaseNo : l.UploadCaseNo);
 			const listCSNArr = this.list.map(l => l.CaseNo);
 			const csvCSNArr = this.csvData.map(d => d["來源編號"].length > 0 ? d["來源編號"] : d["案件編號"]);
+			this.listRepeat = this.list.reduce((list, curr, index ) => {
+				if(listCSNArr.indexOf(curr.CaseNo) != index) list.push(curr.CaseNo);
+				return list;
+			}, []);
 			this.csvRepeatObj = this.csvData.reduce((obj, curr, index ) => {
 				const firstIndex = csvCSNArr.indexOf(curr["來源編號"]);
 				if(moment(curr["查報日期"]).isSame(moment(this.searchDate)) && curr["來源編號"].length != 0 && csvCSNArr.indexOf(curr["來源編號"]) != index) {
