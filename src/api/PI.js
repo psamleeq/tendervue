@@ -24,3 +24,11 @@ export function setCaseList(id, data) {
 		data
 	})
 }
+
+export function archiveCaseList(data) {
+	return request({
+		url: `/PI/caseList`,
+		method: 'put',
+		data
+	})
+}
