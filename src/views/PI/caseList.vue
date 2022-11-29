@@ -66,9 +66,9 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">監造抽查 (15%)</div>
 						<div class="card-panel-num"> 
-							路面: {{ checkNum.SV.AC.check }} / {{ checkNum.SV.AC.total }} 
+							路面: {{ checkNum.SV.AC.check }} <span style="color: #F56C6C">({{ checkNum.SV.AC.fail }})</span> / {{ checkNum.SV.AC.total }} 
 							<br>
-							設施: {{ checkNum.SV.facility.check }} / {{ checkNum.SV.facility.total }}
+							設施: {{ checkNum.SV.facility.check }} <span style="color: #F56C6C">({{ checkNum.SV.facility.fail }})</span> / {{ checkNum.SV.facility.total }}
 						</div>
 					</div>
 				</div>
@@ -81,9 +81,9 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">機關抽查 (5%)</div>
 						<div class="card-panel-num">
-							路面: {{ checkNum.Organ.AC.check }} / {{ checkNum.Organ.AC.total }} 
+							路面: {{ checkNum.Organ.AC.check }} <span style="color: #F56C6C">({{ checkNum.Organ.AC.fail }})</span> / {{ checkNum.Organ.AC.total }} 
 							<br>
-							設施: {{ checkNum.Organ.facility.check }} / {{ checkNum.Organ.facility.total }}
+							設施: {{ checkNum.Organ.facility.check }} <span style="color: #F56C6C">({{ checkNum.Organ.facility.fail }})</span> / {{ checkNum.Organ.facility.total }}
 						</div>
 					</div>
 				</div>
@@ -489,20 +489,24 @@ export default {
 				SV: { 
 					AC: { 
 						check: this.list.filter(l => l.SVCheck != 0 && l.DeviceType == 1).length, 
+						fail: this.list.filter(l => l.SVCheck > 1 && l.DeviceType == 1).length,
 						total: Math.round(this.list.length * 0.15 * 0.6, 0) 
 					}, 
 					facility: { 
 						check: this.list.filter(l => l.SVCheck != 0 && l.DeviceType != 1).length, 
+						fail: this.list.filter(l => l.SVCheck > 1 && l.DeviceType != 1).length,
 						total: Math.round(this.list.length * 0.15 * 0.4, 0) 
 					} 
 				}, 
 				Organ: { 
 					AC: { 
 						check: this.list.filter(l => l.OrganCheck != 0 && l.DeviceType == 1).length, 
+						fail: this.list.filter(l => l.OrganCheck > 1 && l.DeviceType == 1).length,
 						total: Math.round(this.list.length * 0.05 * 0.6, 0) 
 					}, 
 					facility: {
 						check: this.list.filter(l => l.OrganCheck != 0 && l.DeviceType != 1).length, 
+						fail: this.list.filter(l => l.OrganCheck > 1 && l.DeviceType != 1).length,
 						total: Math.round(this.list.length * 0.05 * 0.4, 0) 
 					} 
 				} 
