@@ -6,7 +6,7 @@
 			<div class="filter-container">
 				<div class="filter-item">
 					<el-input v-model="listQuery.laneCode" placeholder="請輸入">
-						<span slot="prepend">車道Id</span>
+						<span slot="prepend">車道編碼</span>
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="getList();">搜尋</el-button>
@@ -46,6 +46,7 @@
 					<el-col :span="16">
 						<span v-if="key == 'area'">{{ geoInfo[key].toLocaleString() }} ㎡</span>
 						<span v-else>{{ geoInfo[key] }}</span>
+						<span v-if="key == 'roadName'"> (車道{{ geoInfo.laneId }})</span>
 					</el-col>
 				</el-row>
 				<el-row>
@@ -453,6 +454,7 @@ export default {
 
 						this.geoInfo = {
 							roadId: response.data.result.geo.RoadId,
+							laneId: response.data.result.geo.laneId,
 							laneCode: response.data.result.geo.laneCode,
 							roadName: response.data.result.geo.roadName,
 							lastCode: response.data.result.lastCode,
@@ -864,6 +866,11 @@ export default {
 					});
 				}
 			}
+			// console.log(pointList);
+
+			// 將最後兩格合併
+			const lastIndex = pointList.length - 1;
+			if(calcDistance(pointList[lastIndex-1].point, pointList[lastIndex].point) < this.listQuery.splitLen) pointList.splice(lastIndex-1, 1);
 			return pointList
 		},
 		// 切割線段 - 垂直點
@@ -945,7 +952,7 @@ export default {
 					const blockId = String(this.geoInfo.lastCode + index + 1).padStart(3, '0');
 					const block = {
 						blockId: blockId,
-						area: area,
+						area: Math.round(area * 100) / 100,
 						points: border.flat().map(point => ({ lat: point[1], lng: point[0] })),
 						geometry: {
 							type: "Polygon",
