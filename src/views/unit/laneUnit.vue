@@ -144,7 +144,7 @@ export default {
 				pageSize: 50,
 			},
 			headersFixed: {
-				laneId: {
+				id: {
 					name: "序號",
 					sortable: false,
 				},
@@ -158,6 +158,10 @@ export default {
 				},
 				roadName: {
 					name: "道路名稱",
+					sortable: true,
+				},
+				laneId: {
+					name: "車道",
 					sortable: true,
 				},
 			},

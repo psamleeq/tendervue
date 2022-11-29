@@ -122,12 +122,13 @@
 					@cell-mouse-enter="handleMouseEnter"
 					@cell-mouse-leave="handleMouseLeave"
 				>
-					<el-table-column type="selection" width="45" align="center" />
+					<el-table-column type="selection" min-width="35" align="center" />
 					<el-table-column
 						v-for="(text, key) in headersInfo.block"
 						:key="key"
 						:prop="key"
 						:label="text"
+						:min-width="key == 'blockId' ? 100 : key == 'laneId' ? 35 : 45"
 						align="center"
 						:formatter="formatter"
 					>
@@ -137,6 +138,9 @@
 									<span slot="prepend">{{ listQuery.roadCode || "-" }}</span>
 									<span slot="append">{{ listQuery.roadDir }}</span>
 								</el-input>
+							</span>
+							<span v-else-if="[ 'laneId' ].includes(column.property)" class="road-code">
+								<el-input v-model="row[column.property]" size="mini"/>
 							</span>
 							<span v-else>{{ row[column.property] || "-" }}</span>
 						</template>
@@ -183,7 +187,6 @@ export default {
 			geoJSON_Ori: {},
 			geoJSON_Split: {},
 			geoInfo: {
-				lastCode: 0,
 				roadId: 0,
 				roadName: "",
 				area: 0,
@@ -215,6 +218,7 @@ export default {
 				// },
 				block: {
 					blockId: "單位編碼",
+					laneId: "車道",
 					area: "面積"
 				}
 			},
@@ -454,7 +458,6 @@ export default {
 						this.geoInfo = {
 							roadId: response.data.result.geo.RoadId,
 							roadName: response.data.result.geo.roadName,
-							lastCode: response.data.result.lastCode,
 							area: response.data.result.geo.area,
 							points: [],
 							lines: { baseLines: {}, laneLines: {} },
@@ -546,6 +549,7 @@ export default {
 				for(const block of this.selectBlock) {
 					unitList.push({
 						roadId: Number(this.geoInfo.roadId),
+						laneId: Number(block.laneId),
 						laneCode: `${this.listQuery.roadCode}${block.blockId}${this.listQuery.roadDir}`,
 						roadName: this.geoInfo.roadName,
 						geometry: JSON.stringify(block.geometry)
@@ -739,6 +743,7 @@ export default {
 					let splitP = point;
 					for(let i = 0; i < times; i++) {
 						splitP = this.interpolation(splitP, footOfPer, this.listQuery.splitLane);
+						if (splitP.lat == -1 && splitP.lng == -1) continue;
 						pointList.push(splitP);
 					}
 
@@ -746,9 +751,12 @@ export default {
 					pointPair.push(pointList);
 				}
 			}
+			// console.log(pointPair);
 
 			const length = Math.min(...pointPair.map(el => el.length));
-			for(let i = 1; i < length - 2; i++) {
+			for(let i = 1; i < length - 1; i++) {
+				// console.log(calcDistance(pointPair[0][i], pointPair[0][i+1]));
+				if(i == length-2 && calcDistance(pointPair[0][i], pointPair[0][i+1]) < 3) continue;
 				const points = pointPair.map(p => p[i]);
 				this.geoInfo.lines.laneLines[i] = { points };
 
@@ -926,17 +934,19 @@ export default {
 			lineList.push(...Object.values(this.geoInfo.lines.laneLines).map(line => line.points));
 			const lineId = 3 - this.listQuery.baseLineId;
 			lineList.push(this.lineFilter[lineId].points.reverse());
-			console.log(lineList);
+			// console.log(lineList);
 
 			for (const [index, border] of this.splitBlock(lineList).entries()) {
 				const area = calArea(border.flat());
 				let fillColor = "#90CAF9";
 
 				// console.log(border.flat().map(point => ({ lat: point[1], lng: point[0] })));
-				const blockId = String(this.geoInfo.lastCode + index + 1).padStart(3, '0');
+				const laneId = index + 1;
+				const blockId = String(laneId).padStart(3, '0');
 				const block = {
 					blockId: blockId,
-					area: area,
+					laneId: laneId,
+					area: Math.round(area * 100) / 100,
 					points: border.flat().map(point => ({ lat: point[1], lng: point[0] })),
 					geometry: {
 						type: "Polygon",
