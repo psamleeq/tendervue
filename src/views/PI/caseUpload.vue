@@ -318,7 +318,7 @@ export default {
 					sortable: true
 				},
 				CaseType: {
-					name: "損壞情況",
+					name: "損壞情形",
 					sortable: false
 				},
 				BType: {
@@ -330,7 +330,7 @@ export default {
 					sortable: false
 				}
 			},
-			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情況" ],
+			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情形" ],
 			apiHeader: [ "UploadCaseNo", "CaseSN", "CaseDate", "DeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
 			tableSelect: [],
 			list: [],
@@ -686,7 +686,7 @@ export default {
 							}
 							l.UploadCaseNo = data["案件編號"];
 							l.CaseName = data["查報地點"];
-							l.CaseType = data["損壞情況"];
+							l.CaseType = data["損壞情形"];
 
 							csvRepeat[index] = true;
 						}
