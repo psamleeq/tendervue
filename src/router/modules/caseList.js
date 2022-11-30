@@ -2,7 +2,7 @@
 
 import Layout from '@/layout'
 
-const otherRouter = {
+const caseListRouter = {
 	path: '/caseList',
 	component: Layout,
 	redirect: '/PI/precipitation',
@@ -36,4 +36,4 @@ const otherRouter = {
 		},
 	]
 }
-export default otherRouter
+export default caseListRouter

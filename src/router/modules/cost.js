@@ -2,7 +2,7 @@
 
 import Layout from '@/layout'
 
-const roadRouter = {
+const costRouter = {
 	path: '/cost',
 	component: Layout,
 	redirect: '/cost/kit',
@@ -25,4 +25,4 @@ const roadRouter = {
 		}
 	]
 }
-export default roadRouter
+export default costRouter

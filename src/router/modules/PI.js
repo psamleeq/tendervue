@@ -2,7 +2,7 @@
 
 import Layout from '@/layout'
 
-const otherRouter = {
+const PIRouter = {
 	path: '/PIIndex',
 	component: Layout,
 	redirect: '/PI/precipitation',
@@ -97,50 +97,6 @@ const otherRouter = {
 			}
 		},
 		{
-			path: 'expAnalysis',
-			component: {
-				render: (c) => c('router-view')
-			},
-			name: 'expAnalysis',
-			redirect: 'noRedirect',
-			meta: { 
-				title: '經費分析', 
-				roles: ['PIcase.analyst']
-			},
-			children: [
-				{
-					path: 'estimate',
-					component: () => import('@/views/PI/expAnalysis/estimate'),
-					name: 'estimate',
-					meta: { 
-						title: '經費估算', 
-						roles: ['PIcase.analyst'],
-						isNew: true
-					}
-				},
-				{
-					path: 'execution',
-					component: () => import('@/views/PI/expAnalysis/execution'),
-					name: 'execution',
-					meta: { 
-						title: '經費執行', 
-						roles: ['PIcase.analyst'],
-						isNew: true 
-					}
-				},
-				{
-					path: 'compare',
-					component: () => import('@/views/PI/expAnalysis/compare'),
-					name: 'compare',
-					meta: { 
-						title: '經費(估算/執行)',
-						roles: ['PIcase.analyst'],
-						isNew: true 
-					}
-				}
-			]
-		},
-		{
 			path: 'inspectCase',
 			component: () => import('@/views/PI/inspectCase'),
 			name: 'inspectCase',
@@ -151,4 +107,4 @@ const otherRouter = {
 		},
 	]
 }
-export default otherRouter
+export default PIRouter

@@ -12,6 +12,7 @@ import caseRouter from './modules/case';
 import caseListRouter from './modules/caseList';
 import costRouter from './modules/cost';
 import PCIRouter from './modules/PCI';
+import expAnalysisRouter from './modules/expAnalysis';
 import PIRouter from './modules/PI';
 import otherRouter from './modules/other';
 import carRouter from './modules/car';
@@ -103,6 +104,7 @@ export const asyncRoutes = [
 	costRouter,
 	PCIRouter,
 	PIRouter,
+	expAnalysisRouter,
 	otherRouter,
 	carRouter,
   // 404 page must be placed at the end !!!
