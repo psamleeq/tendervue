@@ -566,7 +566,10 @@ export default {
 			let date = moment(this.searchDate).format("YYYY-MM-DD");
 			this.searchRange = date;
 
+			this.isArchive = false;
 			this.list = [];
+			this.resultList = [];
+
 			getCaseList({
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
