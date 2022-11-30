@@ -413,7 +413,7 @@ export default {
 			for(const caseNo of this.caseMinus.list) {
 				const caseItem = this.list.filter(l => l.CaseNo == caseNo)[0];
 				// const caseItem = this.list.filter(l => l.CaseNo.length > 0 ? l.CaseNo == caseNo : l.UploadCaseNo == caseNo )[0];
-				if(caseItem.UploadCaseNo == undefined) caseItem.UploadCaseNo = caseItem.CaseNo;
+				if(caseItem.UploadCaseNo == undefined && !isNaN(caseItem.CaseNo)) caseItem.UploadCaseNo = caseItem.CaseNo;
 				caseErrList.push({ ...caseItem, note: `無法匹配(DB) \n ${caseItem.casetype}`, edit: false });
 			}
 
