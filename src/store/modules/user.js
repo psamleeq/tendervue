@@ -56,7 +56,7 @@ const actions = {
 				}
 
 				const { roles, name, introduction } = data
-				let avatar = 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
+				const avatar = 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
 
 				// roles must be a non-empty array
 				if (!roles || roles.length <= 0) {

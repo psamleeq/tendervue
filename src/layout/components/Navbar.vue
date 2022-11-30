@@ -12,11 +12,8 @@
 		<div class="right-menu">
 			<template v-if="device !== 'mobile'">
 				<search id="header-search" class="right-menu-item" />
-
 				<error-log class="errLog-container right-menu-item hover-effect" />
-
 				<screenfull id="screenfull" class="right-menu-item hover-effect" />
-
 				<el-tooltip content="Global Size" effect="dark" placement="bottom">
 					<size-select id="size-select" class="right-menu-item hover-effect" />
 				</el-tooltip>
@@ -40,7 +37,7 @@
 				</div>
 				<el-dropdown-menu slot="dropdown">
 					<el-dropdown-item disabled>
-						<span style="color: #86c0fc"><span style="font-weight: bold">{{ userName }}</span>
+						<span style="color: #86c0fc"><span style="font-weight: bold">{{ username }}</span>
 							<!-- ({{ uid }}{{ role.includes('servant') || role.includes('chiefServant')  ? '子帳號' : '' }}) -->
 						</span>
 					</el-dropdown-item>
@@ -76,7 +73,7 @@ export default {
 	},
 	data() {
 		return {
-			userName: localStorage.getItem("userName"),
+			username: localStorage.getItem("username"),
 			uid: localStorage.getItem("uid"),
 			role: this.$store.getters.roles,
 			menuOpen: false,
