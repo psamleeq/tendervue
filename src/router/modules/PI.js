@@ -46,6 +46,16 @@ const PIRouter = {
 						roles: ['beta'],
 						vTag: 'Alpha' 
 					}
+				},
+				{
+					path: 'PI3_1_Att',
+					component: () => import('@/views/PI/perfReport/PI3_1_Att'),
+					name: 'PI3_1_Att',
+					meta: {
+						title: '日報表-PI3.1附件',
+						roles: ['beta'],
+						vTag: 'Alpha'
+					}
 				}
 			]
 		},
