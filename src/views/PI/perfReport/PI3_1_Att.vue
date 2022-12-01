@@ -57,7 +57,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
-import { getCaseCount } from "@/api/PI";
+// import { getCaseCount } from "@/api/PI";
 
 export default {
 	name: "PI2_1_Att",
@@ -144,28 +144,6 @@ export default {
 		this.initPDF();
 	},
 	methods: {
-		dateShortcuts(index) {
-			this.timeTabId = index;
-
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
-			};
-
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
-					break;
-			}
-			this.getList();
-		},
 		initPDF() {
 			fetch(`/assets/pdf/PI3-1.json?t=${Date.now()}`).then(async (response) => {
 				const domContainer = this.$refs.container.$el;
@@ -184,7 +162,7 @@ export default {
 
 				this.form = new Form({ domContainer, template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => console.log(arg));
-				this.getList();
+				// this.getList();
 			})
 		},
 		setPDFinputs() {
@@ -202,24 +180,25 @@ export default {
 			this.inputs.passNum = String(this.inputForm.checkNum - this.inputForm.failNum);
 
 			this.form.setInputs([this.inputs]);
+			this.form.render();
 		},
-		getList() {
-			this.loading = true;
+		// getList() {
+		// 	this.loading = true;
 
-			const date = moment(this.searchDate).format("YYYY-MM-DD");
-			this.list = [];
+		// 	const date = moment(this.searchDate).format("YYYY-MM-DD");
+		// 	this.list = [];
 
-			getCaseCount({
-				timeStart: date,
-				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
-			}).then(response => {
-				this.inputForm.caseReportTotal = Number(response.data.result.caseReportTotal);
+		// 	getCaseCount({
+		// 		timeStart: date,
+		// 		timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+		// 	}).then(response => {
+		// 		this.inputForm.caseReportTotal = Number(response.data.result.caseReportTotal);
 
-				this.setPDFinputs();
-				this.loading = false;
-			}).catch(err => this.loading = false);
-		},
-		async handleDownload() {
+		// 		this.setPDFinputs();
+		// 		this.loading = false;
+		// 	}).catch(err => this.loading = false);
+		// },
+		handleDownload() {
 			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
 				// console.log(pdf);

@@ -222,6 +222,7 @@ export default {
 				this.inputs[key] = this.inputForm[key] + ' 筆';
 			}
 			this.form.setInputs([this.inputs]);
+			this.form.render();
 		},
 		getList() {
 			this.loading = true;
@@ -239,7 +240,7 @@ export default {
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
-		async handleDownload() {
+		handleDownload() {
 			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
 				// console.log(pdf);
