@@ -60,24 +60,49 @@ const PIRouter = {
 			]
 		},
 		{
-			path: 'caseList',
-			component: () => import('@/views/PI/caseList'),
-			name: 'PICaseList',
+			path: 'caseCheck',
+			component: {
+				render: (c) => c('router-view')
+			},
+			name: 'caseCheck',
+			redirect: 'noRedirect',
 			meta: {
-				title: '案件列表', 
+				title: '案件稽核',
 				roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
 				isNew: true
-			}
-		},
-		{
-			path: 'caseUpload',
-			component: () => import('@/views/PI/caseUpload'),
-			name: 'PICaseUpload',
-			meta: { 
-				title: '案件上傳', 
-				roles: ['PIcase.editor'],
-				isNew: true 
-			}
+			},
+			children: [
+				{
+					path: 'caseList',
+					component: () => import('@/views/PI/caseCheck/caseList'),
+					name: 'PICaseList',
+					meta: {
+						title: '案件列表', 
+						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
+						isNew: true
+					}
+				},
+				{
+					path: 'checkResult',
+					component: () => import('@/views/PI/caseCheck/checkResult'),
+					name: 'PICheckResult',
+					meta: {
+						title: '稽核結果',
+						roles: ['PIcase.viewer'],
+						isNew: true
+					}
+				},
+				{
+					path: 'caseUpload',
+					component: () => import('@/views/PI/caseCheck/caseUpload'),
+					name: 'PICaseUpload',
+					meta: { 
+						title: '案件上傳', 
+						roles: ['PIcase.editor'],
+						isNew: true 
+					}
+				},
+			]
 		},
 		{
 			path: 'mCaseStatics',

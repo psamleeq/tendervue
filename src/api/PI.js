@@ -33,6 +33,14 @@ export function archiveCaseList(data) {
 	})
 }
 
+export function getCheckResult(query) {
+	return request({
+		url: 'PI/checkResult',
+		method: 'get',
+		params: query
+	})
+}
+
 // 成效指標報表
 export function getCaseCount(query) {
 	return request({
