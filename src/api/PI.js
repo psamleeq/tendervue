@@ -32,3 +32,12 @@ export function archiveCaseList(data) {
 		data
 	})
 }
+
+// 成效指標報表
+export function getCaseCount(query) {
+	return request({
+		url: 'PI/caseCount',
+		method: 'get',
+		params: query
+	})
+}

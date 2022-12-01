@@ -2,7 +2,6 @@
 import { login, logout, getInfo } from '@/api/auth'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
-import { Avatar } from 'element-ui'
 
 const state = {
 	token: getToken(),

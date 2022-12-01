@@ -14,41 +14,41 @@ const PIRouter = {
 		isNew: true
 	},
 	children: [
-		// {
-		// 	path: 'perfReport',
-		// 	component: {
-		// 		render: (c) => c('router-view')
-		// 	},
-		// 	name: 'perfReport',
-		// 	redirect: 'noRedirect',
-		// 	meta: { 
-		// 		title: '成效回報', 
-		// 		roles: ['beta'],
-		// 		vTag: 'Alpha' 
-		// 	},
-		// 	children: [
-		// 		// {
-		// 		// 	path: 'perfList',
-		// 		// 	component: () => import('@/views/PI/expAnalysis/estimate'),
-		// 		// 	name: 'perfList',
-		// 		// 	meta: { 
-		// 		// 		title: '成效資訊', 
-		// 		// 		roles: ['beta'],
-		// 		// 		vTag: 'Alpha' 
-		// 		// 	}
-		// 		// },
-		// 		{
-		// 			path: 'PI2_1_Att',
-		// 			component: () => import('@/views/PI/perfReport/PI2_1_Att'),
-		// 			name: 'PI2_1_Att',
-		// 			meta: { 
-		// 				title: '日報表-PI2.1附件', 
-		// 				roles: ['beta'],
-		// 				vTag: 'Alpha' 
-		// 			}
-		// 		}
-		// 	]
-		// },
+		{
+			path: 'perfReport',
+			component: {
+				render: (c) => c('router-view')
+			},
+			name: 'perfReport',
+			redirect: 'noRedirect',
+			meta: { 
+				title: '成效回報', 
+				roles: ['beta'],
+				vTag: 'Alpha' 
+			},
+			children: [
+				// {
+				// 	path: 'perfList',
+				// 	component: () => import('@/views/PI/expAnalysis/estimate'),
+				// 	name: 'perfList',
+				// 	meta: { 
+				// 		title: '成效資訊', 
+				// 		roles: ['beta'],
+				// 		vTag: 'Alpha' 
+				// 	}
+				// },
+				{
+					path: 'PI2_1_Att',
+					component: () => import('@/views/PI/perfReport/PI2_1_Att'),
+					name: 'PI2_1_Att',
+					meta: { 
+						title: '日報表-PI2.1附件', 
+						roles: ['beta'],
+						vTag: 'Alpha' 
+					}
+				}
+			]
+		},
 		{
 			path: 'caseList',
 			component: () => import('@/views/PI/caseList'),
