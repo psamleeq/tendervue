@@ -44,8 +44,10 @@
 			<el-col :span="10">
 				<el-card shadow="never" style="width: 400px; margin: 40px auto; padding: 5px 10px;">
 					<el-form :model="inputForm" label-width="100px">
+						<h2>通報資訊</h2>
+						<el-divider />
 						<el-form-item label="行政區">
-							<el-input v-model="inputs.district" @change="setPDFinputs" />
+							<el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
 
@@ -92,6 +94,8 @@ export default {
 		return {
 			loading: false,
 			timeTabId: 1,
+			initPage: 2,
+			PDFPageNum: 2,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
 			pickerOptions: {
@@ -141,12 +145,10 @@ export default {
 				date: '111年11月02日',
 				district: '中山區',
 				caseReportTotal: '0 筆',
-				caseReportImg: '',
 				ACTotal_Obs: '0 筆',
 				ACTotal_Reg: '0 筆',
 				facTotal_Obs: '0 筆',
 				facTotal_Reg: '0 筆',
-				caseReportImg_nco: '',
 				info1: '無',
 				info2: '無'
 			},
@@ -190,7 +192,7 @@ export default {
 			this.getList();
 		},
 		initPDF() {
-			fetch('/assets/pdf/PI2-1.json').then(async (response) => {
+			fetch(`/assets/pdf/PI2-1.json?t=${Date.now()}`).then(async (response) => {
 				const domContainer = this.$refs.container.$el;
 				const template = await response.json();
 
@@ -213,7 +215,9 @@ export default {
 		setPDFinputs() {
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			this.inputs.serialNumber = date.format("YYYYMMDD0102").slice(1);;
+			for(let i=0; i < this.PDFPageNum; i++) {
+				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
+			}
 			for(const key of [ 'caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg' ]) {
 				this.inputs[key] = this.inputForm[key] + ' 筆';
 			}
@@ -262,5 +266,16 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-// .PI2_1-Att
+.PI2_1-Att
+	.filter-container 
+		.filter-item
+			margin-right: 5px
+		.time-picker 
+			& > *
+				margin-right: 5px
+			.el-date-editor.el-input
+				width: 165px
+				.el-input__inner
+					width: 155px
+					padding: 0 10px
 </style>

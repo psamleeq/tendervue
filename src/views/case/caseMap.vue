@@ -438,7 +438,7 @@ export default {
 				});
 
 				this.dataLayer.PCIBlock.nco = new google.maps.Data();
-				this.dataLayer.PCIBlock.nco.loadGeoJson("/assets/json/PCIBlock_nco.geojson");
+				this.dataLayer.PCIBlock.nco.loadGeoJson(`/assets/json/PCIBlock_nco.geojson?t=${Date.now()}`);
 				this.dataLayer.PCIBlock.nco.setStyle({ 
 					strokeColor: '#78909C',
 					strokeWeight: 2,
