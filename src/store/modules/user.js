@@ -2,6 +2,7 @@
 import { login, logout, getInfo } from '@/api/auth'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
+import { Avatar } from 'element-ui'
 
 const state = {
 	token: getToken(),
@@ -56,11 +57,24 @@ const actions = {
 				}
 
 				const { roles, name, introduction } = data
-				const avatar = 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
+				let avatar = '/assets/gif/navnav.gif'
 
 				// roles must be a non-empty array
 				if (!roles || roles.length <= 0) {
 					reject('getInfo: roles must be a non-null array!')
+				}
+
+				const roleImgMap = {
+					'viewer': '/assets/gif/navnav.gif',
+					'analyst': '/assets/gif/kipi2.gif',
+					'editor': '/assets/gif/moosa.gif',
+					'beta': '/assets/gif/nony.gif'
+				};
+
+				for (const roleSpec in roleImgMap) {
+					for(const role of roles) {
+						if (role.includes(roleSpec)) avatar = roleImgMap[roleSpec];
+					}
 				}
 
 				commit('SET_ROLES', roles)
