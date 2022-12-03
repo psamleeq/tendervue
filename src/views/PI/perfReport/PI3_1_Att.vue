@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container PI2_1-Att" v-loading="loading">
+	<div class="app-container PI3_1-Att" v-loading="loading">
 		<h2>日報表-PI3.1附件</h2>
 		<div class="filter-container">
 			<el-button
@@ -60,7 +60,7 @@ import { Form } from '@pdfme/ui';
 // import { getCaseCount } from "@/api/PI";
 
 export default {
-	name: "PI2_1_Att",
+	name: "PI3_1_Att",
 	components: { },
 	data() {
 		return {
@@ -100,9 +100,6 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
-			listQuery: { },
-			headers: { },
-			list: [],
 			inputForm: {
 				checkVest: false,		// 反光背心
 				checkIdCard: false,	// 識別證
@@ -126,11 +123,6 @@ export default {
 				info1: '無未滿足',
 				info2: '無未滿足',
 				info3: '無未滿足'
-			},
-			options: {
-				contractType: {
-					9101: "中山區成效R1"
-				}
 			}
 		};
 	},
@@ -225,5 +217,5 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-// .PI2_1-Att
+// .PI3_1-Att
 </style>

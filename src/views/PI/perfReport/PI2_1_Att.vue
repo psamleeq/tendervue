@@ -128,9 +128,6 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
-			listQuery: { },
-			headers: { },
-			list: [],
 			inputForm: {
 				caseReportTotal: 0,
 				ACTotal_Obs: 0,
@@ -152,11 +149,6 @@ export default {
 				info1: '無',
 				info2: '無'
 			},
-			options: {
-				contractType: {
-					9101: "中山區成效R1"
-				}
-			}
 		};
 	},
 	computed: { },
