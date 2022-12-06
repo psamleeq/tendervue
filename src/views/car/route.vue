@@ -6,12 +6,12 @@
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
 			<div class="filter-container">
-				<el-select v-model="listQuery.contractId" @change="getCarList()">
+				<el-select v-model="listQuery.contractId" placeholder="請選擇">
 					<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
 				</el-select>
 
-				<el-select v-model="listQuery.carId" placeholder="請選擇車號">
-					<el-option v-for="(text, id) in options.carId" :key="`car_${id}`" :label="text" :value="Number(id)" />
+				<el-select v-model="listQuery.carId" placeholder="請選擇" @change="getCarList()">
+					<el-option v-for="(text, id) in options.carId[listQuery.contractId]" :key="`car_${id}`" :label="text" :value="Number(id)" />
 				</el-select> 
 
 				<!-- NOTE: 種類先隱藏 -->
@@ -213,13 +213,27 @@ export default {
 					// 2: "二標",
 					3: "三標",
 					// 4: "四標",
-					// 5: "五標",
+					5: "五標",
 					// 6: "六標"
 				},
 				carId: {
-					1: "ATE-5102",
-					2: "RDQ-6279",
-					3: "ATE-3192"
+					1: {
+						1: "ATE-5102",
+						2: "RDQ-6279",
+						3: "ATE-3192",
+					},
+					2: {
+						1: "ATE-3236",
+						2: "BFX-7552",
+					},
+					3: {
+						1: "ALV-3038",
+						2: "APD-3308",
+					},
+					5: {
+						1: "BPG-0891",
+						2: "BFX-7551",
+					}
 				},
 			},
 			carList: [],
