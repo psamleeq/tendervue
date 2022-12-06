@@ -73,6 +73,11 @@
 						<el-form-item label="正式區">
 							<el-input-number v-model="inputForm.facTotal_Reg" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
+						<el-divider />
+
+						<el-form-item label="起始頁碼">
+							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
+						</el-form-item>
 					</el-form>
 				</el-card>
 			</el-col>
@@ -95,7 +100,6 @@ export default {
 			loading: false,
 			timeTabId: 1,
 			initPage: 2,
-			PDFPageNum: 2,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
 			pickerOptions: {
@@ -128,6 +132,7 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
+			template: {},
 			inputForm: {
 				caseReportTotal: 0,
 				ACTotal_Obs: 0,
@@ -186,7 +191,7 @@ export default {
 		initPDF() {
 			fetch(`/assets/pdf/PI2-1.json?t=${Date.now()}`).then(async (response) => {
 				const domContainer = this.$refs.container.$el;
-				const template = await response.json();
+				this.template = await response.json();
 
 				const font = {
 					edukai: {
@@ -199,7 +204,7 @@ export default {
 					// }
 				};
 
-				this.form = new Form({ domContainer, template, inputs: [ this.inputs ], options: { font } });
+				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => console.log(arg));
 				this.getList();
 			})
@@ -207,7 +212,7 @@ export default {
 		setPDFinputs() {
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			for(let i=0; i < this.PDFPageNum; i++) {
+			for(let i=0; i < this.template.schemas.length; i++) {
 				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
 			for(const key of [ 'caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg' ]) {

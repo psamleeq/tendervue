@@ -45,6 +45,11 @@
 						<el-form-item label="原因">
 							<el-input v-model="inputs.reason" @change="setPDFinputs" />
 						</el-form-item>
+						<el-divider />
+
+						<el-form-item label="起始頁碼">
+							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
+						</el-form-item>
 					</el-form>
 				</el-card>
 			</el-col>
@@ -67,7 +72,6 @@ export default {
 			loading: false,
 			timeTabId: 1,
 			initPage: 5,
-			PDFPageNum: 3,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
 			pickerOptions: {
@@ -100,6 +104,7 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
+			template: {},
 			inputForm: {
 				checkVest: false,		// 反光背心
 				checkIdCard: false,	// 識別證
@@ -119,7 +124,7 @@ export default {
 				checkNum: '0',
 				passNum: '0',
 				failNum: '0',
-				reason: '',
+				reason: '無',
 				info1: '無未滿足',
 				info2: '無未滿足',
 				info3: '無未滿足'
@@ -139,7 +144,7 @@ export default {
 		initPDF() {
 			fetch(`/assets/pdf/PI3-1.json?t=${Date.now()}`).then(async (response) => {
 				const domContainer = this.$refs.container.$el;
-				const template = await response.json();
+				this.template = await response.json();
 
 				const font = {
 					edukai: {
@@ -152,15 +157,16 @@ export default {
 					// }
 				};
 
-				this.form = new Form({ domContainer, template, inputs: [ this.inputs ], options: { font } });
+				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => console.log(arg));
+				this.setPDFinputs();
 				// this.getList();
 			})
 		},
 		setPDFinputs() {
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			for(let i=0; i < this.PDFPageNum; i++) {
+			for(let i=0; i < this.template.schemas.length; i++) {
 				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
 			for(const key of [ 'checkVest', 'checkIdCard', 'checkWhistle' ]) {
