@@ -1,5 +1,5 @@
 <template>
-  <div class="car-route" v-loading="loading"> 
+	<div class="car-route" v-loading="loading"> 
 		<div class="header-bar">
 			<h2 class="route-title">車巡管理
 				<!-- <span v-if="carId.length != 0" class="route-info">車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span> -->
@@ -9,6 +9,10 @@
 				<el-select v-model="listQuery.contractId" @change="getCarList()">
 					<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
 				</el-select>
+
+				<el-select v-model="listQuery.carId" placeholder="請選擇車號">
+					<el-option v-for="(text, id) in options.carId" :key="`car_${id}`" :label="text" :value="Number(id)" />
+				</el-select> 
 
 				<!-- NOTE: 種類先隱藏 -->
 				<!-- <el-select v-model="listQuery.modeId" @change="getCarList()">
@@ -75,8 +79,8 @@
 							<el-col :span="8">{{ text }}: </el-col>
 							<el-col :span="16">
 								<span v-if="key == 'pathId'">週期{{ carInfo[key] }}</span>
+								<span v-else-if="key == 'carId'">{{ options.carId[carInfo[key]] }}</span>
 								<!-- NOTE: 測試DEMO用 -->
-								<span v-else-if="key == 'carId'">ATE-5102</span>
 								<span v-else-if="key == 'driverId'">王小明</span>
 								<span v-else>{{ carInfo[key] }}</span>
 							</el-col>
@@ -86,34 +90,34 @@
 			</el-col>
 		</el-row> 
 
-    <!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
-    <!-- <el-table
-      empty-text="目前沒有資料"
-      :data="list"
-      border
-      fit
-      highlight-current-row
-      :header-cell-style="{'background-color': '#F2F6FC'}"
-      stripe
-      style="width: 100%"
-    >
-      <el-table-column
-        v-for="(value, key) in headers"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
+		<!-- <el-table
+			empty-text="目前沒有資料"
+			:data="list"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
+			<el-table-column
+				v-for="(value, key) in headers"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
 				:formatter="formatter"
-        :sortable="value.sortable"
-      />
-    </el-table> -->
+				:sortable="value.sortable"
+			/>
+		</el-table> -->
 		<!-- <el-dialog v-el-drag-dialog class="streaming" :visible="true" width="720px" :modal="false" :modal-append-to-body="false" :append-to-body="false" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false" center> -->
 			<!-- <iframe width="720" height="405" src="https://www.youtube.com/embed/d148YHkaAGg?controls=0&autoplay=1&mute=1&rel=0&modestbranding=1" frameborder="0" allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" /> -->
 			<!-- <iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" width="720" height="405"></iframe>
 		</el-dialog> -->
 
-  </div>
+	</div>
 </template>
 
 <script>
@@ -136,11 +140,11 @@ if(!sessionStorage.devMode && process.env.VUE_APP_MAP_KEY != undefined) loaderOp
 const loader = new Loader(loaderOpt);
 
 export default {
-  name: "carRoute",
+	name: "carRoute",
 	directives: { elDragDialog },
-  data() {
-    return {
-      loading: false,
+	data() {
+		return {
+			loading: false,
 			mediaAPIUrl: process.env.VUE_APP_MEDIA_API,
 			mediaGCSUrl: process.env.VUE_APP_MEDIA_URL,
 			map: null,
@@ -186,16 +190,17 @@ export default {
 			listQuery: {
 				contractId: 1,
 				modeId: 3,
+				carId: 1,
 				inspectionId: ""
 			},
-      headers: {
+			headers: {
 				// id: "路線",
 				pathId: "週期",
 				carId: "車號",
 				driverId: "駕駛",
 				modeId: "巡查方式",
 				createdAt: "開始時間"
-      },
+			},
 			options: {
 				modeId: {
 					1: "手持巡查",
@@ -210,14 +215,19 @@ export default {
 					// 4: "四標",
 					// 5: "五標",
 					// 6: "六標"
-				}
+				},
+				carId: {
+					1: "ATE-5102",
+					2: "RDQ-6279",
+					3: "ATE-3192"
+				},
 			},
 			carList: [],
 			carVodList: [],
-      carInfo: [],
+			carInfo: [],
 			carTracks: []
-    };
-  },
+		};
+	},
 	computed: {
 		carId() {
 			const carFilterList = this.carList.filter(car => car.id == this.listQuery.inspectionId);
@@ -240,13 +250,13 @@ export default {
 	mounted() {
 		this.getCarList();
 	},
-  methods: {
+	methods: {
 		// init google map
 		initMap() {
 			// 預設顯示的地點：台北市政府親子劇場
 			const location = {
-			  lat: 25.0374865, // 經度
-			  lng: 121.5647688, // 緯度
+				lat: 25.0374865, // 經度
+				lng: 121.5647688, // 緯度
 			};
 
 			// 建立地圖
@@ -362,11 +372,12 @@ export default {
 			for(const marker of Object.values(this.markers).filter(marker => marker != null)) marker.setMap(null);
 
 			const date = moment(this.searchDate).format("YYYY-MM-DD");
-      this.searchRange = date;
+			this.searchRange = date;
 
 			getInspectionList({
 				contractId: this.listQuery.contractId,
 				modeId: this.listQuery.modeId,
+				carId: this.listQuery.carId,
 				date: date
 			}).then(response => {
 				if (response.data.list.length == 0) {
@@ -385,7 +396,7 @@ export default {
 				// this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
-    getCarInfo() {			
+		getCarInfo() {			
 			getSpecInspection(this.listQuery.inspectionId).then(response => {
 				if (Object.keys(response.data).length == 0) {
 					this.$message({
@@ -407,7 +418,7 @@ export default {
 				}
 				// this.loading = false;
 			}).catch(err => { this.loading = false; });
-    },
+		},
 		getCarVideo() {
 			fetch(`${this.mediaAPIUrl}WebRTCAppEE/rest/v2/vods/list/0/10?streamId=${this.carInfo.liveStreamId}&sort_by=date`).then((response) => (response.json()))
 				.then(response => {
@@ -418,9 +429,9 @@ export default {
 						vodUrl: `${this.mediaGCSUrl}${vod.vodName}`
 					})));
 
-					this.loading = false;
+					// this.loading = false;
 				}).catch(err => { this.loading = false; });
-    },
+		},
 		getCarTrack() {
 			// if(this.polyLine != undefined) this.polyLine.setMap(null);
 			// for(const marker of Object.values(this.markers)) marker.setMap(null);
@@ -456,32 +467,32 @@ export default {
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
-    },
+		},
 		formatter(row, column) {
-      if(Number(row[column.property])) return row[column.property].toLocaleString();
-      else return row[column.property];
-    },
-    formatTime(time) {
-      return moment(time).format("YYYY-MM-DD HH:mm:ss");
-    },
-    handleDownload() {
-      let tHeader = Object.values(this.headers);
-      let filterVal = Object.keys(this.headers);
-      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-      let data = this.formatJson(filterVal, this.list);
+			if(Number(row[column.property])) return row[column.property].toLocaleString();
+			else return row[column.property];
+		},
+		formatTime(time) {
+			return moment(time).format("YYYY-MM-DD HH:mm:ss");
+		},
+		handleDownload() {
+			let tHeader = Object.values(this.headers);
+			let filterVal = Object.keys(this.headers);
+			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+			let data = this.formatJson(filterVal, this.list);
 
-      import("@/vendor/Export2Excel").then((excel) => {
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-        });
-      });
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) => filterVal.map((j) => v[j]));
-    }
-  },
+			import("@/vendor/Export2Excel").then((excel) => {
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
+				});
+			});
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		}
+	},
 };
 </script>
 
