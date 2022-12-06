@@ -218,7 +218,6 @@ export default {
 
 			//Step2: 調整欄位
 			this.template.schemas.splice(lastIndex, 1);
-			console.log(this.template.schemas);
 			this.setTemplate();
 		},
 		setTemplate() {

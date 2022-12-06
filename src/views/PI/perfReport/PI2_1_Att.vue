@@ -232,6 +232,8 @@ export default {
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
 				this.inputForm.caseReportTotal = Number(response.data.result.caseReportTotal);
+				this.inputForm.ACTotal_Obs = Number(response.data.result.ACTotal_Obs);
+				this.inputForm.facTotal_Obs = Number(response.data.result.facTotal_Obs);
 
 				this.setPDFinputs();
 				this.loading = false;
