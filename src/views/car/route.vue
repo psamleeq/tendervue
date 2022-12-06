@@ -79,7 +79,7 @@
 							<el-col :span="8">{{ text }}: </el-col>
 							<el-col :span="16">
 								<span v-if="key == 'pathId'">週期{{ carInfo[key] }}</span>
-								<span v-else-if="key == 'carId'">{{ options.carId[carInfo[key]] }}</span>
+								<span v-else-if="key == 'carId'">{{ options.carId[carInfo.contractId][carInfo[key]] }}</span>
 								<!-- NOTE: 測試DEMO用 -->
 								<span v-else-if="key == 'driverId'">王小明</span>
 								<span v-else>{{ carInfo[key] }}</span>
