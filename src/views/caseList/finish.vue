@@ -25,6 +25,15 @@
 		
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
+		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
+			<div class="el-input-group__prepend">
+				<el-checkbox v-model="allHeaders" :indeterminate="partHeaders">欄位</el-checkbox>
+			</div>
+			<el-checkbox-group class="el-input__inner column-filter-item" v-model="headersCheckVal" style="line-height: 15px;">
+				<el-checkbox v-for="(value, key) in headers" :key="key" :label="key">{{ value.name }}</el-checkbox>
+			</el-checkbox-group>
+		</div>
+
 		<el-table
 			empty-text="目前沒有資料"
 			:data="list"
@@ -143,7 +152,7 @@ export default {
 				// },
 				CaseDate: {
 					name: "成案日期",
-					sortable: false,
+					sortable: false
 				},
 				// dispatchDate: {
 				// 	name: "派工日期",
@@ -167,10 +176,10 @@ export default {
 					sortable: false,
 					caseTypeFilter: [ 11, 12 ]
 				},
-				// warrantyDate: {
-				// 	name: "保固日期",
-				// 	sortable: false,
-				// },
+				warrantyDate: {
+					name: "保固日期",
+					sortable: false,
+				},
 				// dispatchArea: {
 				// 	name: "派工面積",
 				// 	sortable: false,
@@ -185,6 +194,8 @@ export default {
 				// }
 			},
 			list: [],
+			headersCheckVal: [],
+			allHeaders: true,
 			districtList: {
 				// 100: {
 				// 	"name": "中正區",
@@ -274,9 +285,16 @@ export default {
 		};
 	},
 	computed: {
+		partHeaders() {
+			return (this.headersCheckVal.length != 0 && this.headersCheckVal.length < Object.keys(this.headers).length);
+		},
 		headersFilter() {
+			if (this.headersCheckVal.length == 0) this.allHeaders = false;
+
 			let headersFilter = {};
 			Object.keys(this.headers).forEach(key => {
+				if(!this.headersCheckVal.includes(key)) return;
+				
 				const props = this.headers[key];
 				if(!props.hasOwnProperty('caseTypeFilter')) headersFilter[key] = props;
 				else if(props.caseTypeFilter.includes(this.caseTypeNow)) headersFilter[key] = props;
@@ -284,8 +302,9 @@ export default {
 			return headersFilter
 		}
 	},
-	mounted() {
-		// this.getList();
+	created() {
+		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers).filter(key => !['CaseDate', 'estFinishDate'].includes(key));
+		else this.headersCheckVal = [];
 	},
 	methods: {
 		getList() {
