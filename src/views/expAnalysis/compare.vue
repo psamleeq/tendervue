@@ -187,12 +187,11 @@ export default {
 						},
 						offset: [0, 20],
 						label: {
-							normal: {
-								show: index == 2,
-								color: '#fff',
-								position: 'insideBottom',
-								formatter: expType == "estList" ? '估算' : '執行'
-							}
+							show: index == 2,
+							distance: 3,
+							color: '#666',
+							position: 'bottom',
+							formatter: expType == "estList" ? '估算' : '執行'
 						}
 					});
 				}
@@ -206,7 +205,11 @@ export default {
 					type: "category",
 					data: monthList,
 					axisTick: {
-						alignWithLabel: true,
+						show: false,
+						// alignWithLabel: true
+					},
+					axisLabel: {
+						margin: 25
 					}
 				},
 				yAxis: {
