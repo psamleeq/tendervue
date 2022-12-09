@@ -39,7 +39,16 @@ const expAnalysisRouter = {
 				title: '經費(估算/執行)',
 				roles: ['PIcase.analyst']
 			}
-		}
+		},
+		{
+			path: 'assignCaseRatio',
+			component: () => import('@/views/expAnalysis/assignCaseRatio'),
+			name: 'ratio',
+			meta: {
+				title: '機關交辦金額統計',
+				roles: ['PIcase.analyst']
+			}
+		},
 	]
 }
 export default expAnalysisRouter

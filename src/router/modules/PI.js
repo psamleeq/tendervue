@@ -15,6 +15,51 @@ const PIRouter = {
 	},
 	children: [
 		{
+			path: 'caseCheck',
+			component: {
+				render: (c) => c('router-view')
+			},
+			name: 'caseCheck',
+			redirect: 'noRedirect',
+			meta: {
+				title: '案件稽核',
+				roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
+				isNew: true
+			},
+			children: [
+				{
+					path: 'caseList',
+					component: () => import('@/views/PI/caseCheck/caseList'),
+					name: 'PICaseList',
+					meta: {
+						title: '案件列表',
+						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
+						isNew: true
+					}
+				},
+				{
+					path: 'checkResult',
+					component: () => import('@/views/PI/caseCheck/checkResult'),
+					name: 'PICheckResult',
+					meta: {
+						title: '稽核結果',
+						roles: ['PIcase.viewer'],
+						isNew: true
+					}
+				},
+				{
+					path: 'caseUpload',
+					component: () => import('@/views/PI/caseCheck/caseUpload'),
+					name: 'PICaseUpload',
+					meta: {
+						title: '案件上傳',
+						roles: ['PIcase.editor'],
+						isNew: true
+					}
+				},
+			]
+		},
+		{
 			path: 'perfReport',
 			component: {
 				render: (c) => c('router-view')
@@ -22,7 +67,7 @@ const PIRouter = {
 			name: 'perfReport',
 			redirect: 'noRedirect',
 			meta: { 
-				title: '成效回報', 
+				title: '日報表', 
 				roles: ['beta'],
 				vTag: 'Alpha' 
 			},
@@ -42,7 +87,7 @@ const PIRouter = {
 					component: () => import('@/views/PI/perfReport/PI2_1_Att'),
 					name: 'PI2_1_Att',
 					meta: { 
-						title: '日報表-PI2.1附件', 
+						title: 'PI2.1附件', 
 						roles: ['beta'],
 						vTag: 'Alpha' 
 					}
@@ -52,56 +97,11 @@ const PIRouter = {
 					component: () => import('@/views/PI/perfReport/PI3_1_Att'),
 					name: 'PI3_1_Att',
 					meta: {
-						title: '日報表-PI3.1附件',
+						title: 'PI3.1附件',
 						roles: ['beta'],
 						vTag: 'Alpha'
 					}
 				}
-			]
-		},
-		{
-			path: 'caseCheck',
-			component: {
-				render: (c) => c('router-view')
-			},
-			name: 'caseCheck',
-			redirect: 'noRedirect',
-			meta: {
-				title: '案件稽核',
-				roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
-				isNew: true
-			},
-			children: [
-				{
-					path: 'caseList',
-					component: () => import('@/views/PI/caseCheck/caseList'),
-					name: 'PICaseList',
-					meta: {
-						title: '案件列表', 
-						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
-						isNew: true
-					}
-				},
-				{
-					path: 'checkResult',
-					component: () => import('@/views/PI/caseCheck/checkResult'),
-					name: 'PICheckResult',
-					meta: {
-						title: '稽核結果',
-						roles: ['PIcase.viewer'],
-						isNew: true
-					}
-				},
-				{
-					path: 'caseUpload',
-					component: () => import('@/views/PI/caseCheck/caseUpload'),
-					name: 'PICaseUpload',
-					meta: { 
-						title: '案件上傳', 
-						roles: ['PIcase.editor'],
-						isNew: true 
-					}
-				},
 			]
 		},
 		{
@@ -123,20 +123,11 @@ const PIRouter = {
 			}
 		},
 		{
-			path: 'assignCaseRatio',
-			component: () => import('@/views/PI/assignCaseRatio'),
-			name: 'ratio',
-			meta: { 
-				title: '交辦案件百分比',
-				roles: ['PIcase.analyst']
-			}
-		},
-		{
 			path: 'inspectCase',
 			component: () => import('@/views/PI/inspectCase'),
 			name: 'inspectCase',
 			meta: { 
-				title: '巡查統計',
+				title: '缺失分析',
 				roles: ['PIcase.analyst']
 			}
 		},

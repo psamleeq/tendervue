@@ -18,7 +18,7 @@ const PCIRouter = {
 				component: () => import('@/views/PCI/report'),
 				name: 'report',
 				meta: { 
-					title: '報表',
+					title: '單元報表',
 					roles: ['PCIanalyst.viewer']
 				}
 			},
@@ -27,7 +27,7 @@ const PCIRouter = {
 				component: () => import('@/views/PCI/trend'),
 				name: 'trend',
 				meta: { 
-					title: '趨勢圖',
+					title: '趨勢統計',
 					roles: ['PCIanalyst.viewer']
 				}
 			},
@@ -54,7 +54,7 @@ const PCIRouter = {
 				component: () => import('@/views/PCI/caseReport'),
 				name: 'caseReport',
 				meta: { 
-					title: '派工和PCI分析', 
+					title: '案件分析', 
 					roles: ['PCIanalyst.viewer'] 
 				}
 			}
