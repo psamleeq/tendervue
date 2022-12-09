@@ -189,9 +189,8 @@ export default {
 						label: {
 							normal: {
 								show: index == 2,
-								distance: 3,
-								color: '#333',
-								position: 'bottom',
+								color: '#fff',
+								position: 'insideBottom',
 								formatter: expType == "estList" ? '估算' : '執行'
 							}
 						}
@@ -208,9 +207,6 @@ export default {
 					data: monthList,
 					axisTick: {
 						alignWithLabel: true,
-					},
-					axisLabel: {
-						margin: 25
 					}
 				},
 				yAxis: {
