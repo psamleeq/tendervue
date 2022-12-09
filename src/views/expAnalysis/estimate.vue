@@ -318,7 +318,7 @@ export default {
     },
 		formatContent(row, key) {
 			if(key == "typeId") return this.typeMap[row[key]];
-      else if (row[key] == 0 || Number(row[key])) return row[key].toLocaleString();
+      else if (row[key] == 0 || Number(row[key])) return Number(row[key]).toLocaleString();
       else return "-";
     },
     handleDownload() {
