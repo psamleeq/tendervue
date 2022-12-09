@@ -11,7 +11,11 @@
 			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
-			<el-button class="filter-item" type="success" icon="el-icon-plus" @click="showAddKit = true">新增套組</el-button>
+			<el-tooltip class="item" effect="dark" content="請選擇合約並搜尋" placement="bottom" :disabled="list.length != 0">
+				<span>
+					<el-button class="filter-item" type="success" icon="el-icon-plus" :disabled="list.length == 0" @click="showAddKit = true">新增套組</el-button>
+				</span>
+			</el-tooltip>
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
 		</div>
 
@@ -94,19 +98,33 @@
 					v-for="(value, key) in detailHeaders"
 					:key="key"
 					:prop="key"
-					:min-width="['itemName'].includes(key) ? 100: 35"
+					:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
 					:label="value.name"
 					align="center"
 					:sortable="value.sortable"
 				>
 					<template slot-scope="{ row, column }">
-						<span v-if="['itemId', 'number'].includes(column.property) && (row.isEdit || row.editItem)" style="display: inline-flex; align-items: center;">
-							<el-input v-model="row[column.property]" size="mini" />
-							<el-tooltip v-if="column.property == 'itemId' && row[column.property].length != 0" effect="dark" placement="bottom" content="點選代入">
-								<el-button type="text" @click="getKitItem(row)">
-									<i class="el-icon-check" style="color: #67C23A" />
+						<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+							<span v-if="row.isEdit || row.editItem">
+								<el-input v-model="row[column.property]" size="mini" style="width: 55px"/>
+								<el-button v-if="row.editItem" class="btn-dialog" type="info" size="mini" @click="row.editItem = false;">取消</el-button>
+							</span>
+							<span v-else>
+								<span>{{ row[column.property] }}</span>
+								<el-button type="text" style="margin-left: 10px" size="mini" @click="row.editItem = true">
+									<i class="el-icon-edit" />
 								</el-button>
-							</el-tooltip>
+							</span>
+						</span>
+						<span v-else-if="['itemId'].includes(column.property) && row.isEdit">
+							<span v-if="row.isEdit || row.editItem">
+								<el-input v-model="row[column.property]" size="mini" />
+								<el-tooltip v-if="column.property == 'itemId' && row[column.property].length != 0" effect="dark" placement="bottom" content="點選代入">
+									<el-button type="text" @click="getKitItem(row)">
+										<i class="el-icon-check" style="color: #67C23A" />
+									</el-button>
+								</el-tooltip>
+							</span>
 						</span>
 						<span v-else>{{ row[column.property] }}</span>
 					</template>
@@ -118,10 +136,8 @@
 						</span>
 						<span v-else-if="row.editItem">
 							<el-button type="primary" size="mini" @click="row.editItem = false;">確定</el-button>
-							<el-button type="info" size="mini" @click="row.editItem = false;">取消</el-button>
 						</span>
 						<span v-else>
-							<el-button type="primary" style="margin-left: 10px" size="mini" @click="row.editItem = true">修改</el-button>
 							<el-button type="danger" size="mini" @click="delKitItem($index)">刪除</el-button>
 						</span>
 					</template>
@@ -463,4 +479,6 @@ export default {
 			// border: 1px solid #DFE6EC
 			background-color: #DFE6EC
 			margin: 10px 0 30px 0
+	.btn-dialog
+		padding: 5px 5px
 </style>
