@@ -442,12 +442,13 @@ export default {
 				this.$router.push({ query: { roadId: this.listQuery.roadId }});
 
 				getRoadUnitGeo({ roadId: this.listQuery.roadId }).then((response) => {
-					if(response.data.result.geo.boundary == null) {
+					if(Object.keys(response.data.result.geo).length == 0 || response.data.result.geo.boundary == null) {
 						this.$message({
 							message: "查無資料",
 							type: "error",
 						});
-						this.geoInfo.roadName = response.data.result.geo.roadName;
+						this.geoInfo.roadName = response.data.result.geo.roadName || "";
+						this.loading = false;
 
 					} else {
 						this.boundaryJSON = JSON.parse(response.data.result.geo.boundary);
