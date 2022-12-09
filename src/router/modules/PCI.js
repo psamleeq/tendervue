@@ -36,7 +36,7 @@ const PCIRouter = {
 				component: () => import('@/views/PCI/average'),
 				name: 'average',
 				meta: { 
-					title: 'PCI平均',
+					title: '變動統計',
 					roles: ['PCIanalyst.viewer']
 				}
 			},
@@ -45,7 +45,7 @@ const PCIRouter = {
 				component: () => import('@/views/PCI/share'),
 				name: 'share',
 				meta: { 
-					title: '每月份額',
+					title: '佔比統計',
 					roles: ['PCIanalyst.viewer']
 				}
 			},
