@@ -441,7 +441,7 @@ export default {
 				this.polyLines = { baseLines: {}, laneLines: {} };
 				this.$router.push({ query: { roadId: this.listQuery.roadId }});
 
-				getRoadUnitGeo({ roadId: this.listQuery.roadId }).then((response) => {
+				getRoadUnitGeo({ roadId: this.listQuery.roadId, splitType: 2 }).then((response) => {
 					if(Object.keys(response.data.result.geo).length == 0 || response.data.result.geo.boundary == null) {
 						this.$message({
 							message: "查無資料",

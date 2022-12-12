@@ -19,7 +19,7 @@ export function getRoadUnitGeo(query) {
 
 export function setLaneUnitGeo(data) {
 	return request({
-		url: '/road/laneUnit',
+		url: '/road/unitLane',
 		method: 'post',
 		data
 	})
@@ -27,7 +27,7 @@ export function setLaneUnitGeo(data) {
 
 export function getLaneUnit(query) {
 	return request({
-		url: '/road/laneUnit',
+		url: '/road/unitLane',
 		method: 'get',
 		params: query
 	})
@@ -35,15 +35,23 @@ export function getLaneUnit(query) {
 
 export function getLaneUnitGeo(query) {
 	return request({
-		url: '/road/laneUnitGeo',
+		url: '/road/unitLaneGeo',
 		method: 'get',
 		params: query
 	})
 }
 
-export function setRoadUnitGeo(data) {
+export function setLaneBlockGeo(data) {
 	return request({
-		url: '/road/PCIUnit',
+		url: '/road/unitLaneBlock',
+		method: 'post',
+		data
+	})
+}
+
+export function setRoadBlockGeo(data) {
+	return request({
+		url: '/road/unitRoadBlock',
 		method: 'post',
 		data
 	})

@@ -5,8 +5,10 @@
 			<h2 class="road-title">維護單元產生</h2>
 			<div class="filter-container">
 				<div class="filter-item">
-					<el-input v-model="listQuery.laneCode" placeholder="請輸入">
-						<span slot="prepend">車道編碼</span>
+					<el-input v-model="listQuery[options.codeType[listQuery.codeType].params]" placeholder="請輸入">
+						<el-select slot="prepend" v-model="listQuery.codeType" popper-class="type-select">
+							<el-option v-for="(value, type) in options.codeType" :key="type" :label="value.name" :value="Number(type)" />
+						</el-select>
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="getList();">搜尋</el-button>
@@ -150,8 +152,8 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-import { getLaneUnitGeo, setRoadUnitGeo } from "@/api/road";
 const { calcDistance, calArea, calVecAngle } = require('@/utils/geo-tools');
+import { getRoadUnitGeo, getLaneUnitGeo, setLaneBlockGeo, setRoadBlockGeo } from "@/api/road";
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -174,6 +176,7 @@ export default {
 			loading: false,
 			screenWidth: window.innerWidth,
 			stepOrder: 0,
+			splitType: 0,
 			areaLimit: [139, 325],
 			map: null,
 			dataLayer: null,
@@ -195,6 +198,8 @@ export default {
 			isShortBound: false,
 			boundary: [],
 			listQuery: {
+				codeType: 1,
+				roadId: null,
 				laneCode: null,
 				roadCode: null,
 				roadDir: 0,
@@ -220,6 +225,16 @@ export default {
 				}
 			},
 			options: {
+				codeType: {
+					1: {
+						name: "道路Id",
+						params: "roadId"
+					},
+					2: {
+						name: "車道編碼",
+						params: "laneCode"
+					}
+				},
 				line: {
 					base: {
 						color: "#EF5350",
@@ -239,7 +254,12 @@ export default {
 			iconStyle: { }
 		};
 	},
-	computed: { },
+	computed: { 
+		bJSONLevel() {
+			if(this.boundaryJSON.type == undefined ) return 0;
+			return this.boundaryJSON.type.includes('Multi') ? 1 : 0
+		}
+	},
 	watch: {
 		"listQuery.baseLineId"() {
 			for(const [ id, polyline ] of Object.entries(this.polyLines)) {
@@ -264,7 +284,13 @@ export default {
 		// 初始化Google Map
 		loader.load().then(() => {
 			this.initMap();
-			if (this.$route.query.laneCode) {
+
+			if (this.$route.query.roadId) {
+				this.listQuery.codeType = 1;
+				this.listQuery.roadId = this.$route.query.roadId;
+				this.getList();
+			}else if (this.$route.query.laneCode) {
+				this.listQuery.codeType = 2;
 				this.listQuery.laneCode = this.$route.query.laneCode;
 				this.getList();
 			}
@@ -426,9 +452,9 @@ export default {
 			}
 		},
 		getList() {
-			if(!Number(this.listQuery.laneCode)) {
+			if(!Number(this.listQuery.roadId) && !Number(this.listQuery.laneCode)) {
 				this.$message({
-					message: "請輸入正確車道Id",
+					message: "請輸入正確編碼",
 					type: "error",
 				});
 			} else {
@@ -436,108 +462,129 @@ export default {
 				this.clearAll();
 				this.markers = [];
 				this.polyLines = {};
-				this.$router.push({ query: { laneCode: this.listQuery.laneCode }});
+				this.splitType = this.listQuery.codeType;
 
-				getLaneUnitGeo({ laneCode: this.listQuery.laneCode }).then((response) => {
-					if(Object.keys(response.data.result.geo).length == 0 || response.data.result.geo.boundary == null) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-						this.geoInfo.roadName = response.data.result.geo.roadName || "";
+				if(this.listQuery.codeType == 1) {
+					const query = { roadId: this.listQuery.roadId };
+					this.$router.push({ query });
+					getRoadUnitGeo({ ...query, splitType: 1 }).then(response => {
+						if(Object.keys(response.data.result.geo).length == 0 || response.data.result.geo.boundary == null) {
+							this.$message({
+								message: "查無資料",
+								type: "error",
+							});
+							this.geoInfo.roadName = response.data.result.geo.roadName || "";
+							this.loading = false;
+
+						} else this.createBoundary(response.data)
+
 						this.loading = false;
+					}).catch(err => this.loading = false);
 
-					} else {
-						this.boundaryJSON = JSON.parse(response.data.result.geo.boundary);
-						// console.log(this.boundaryJSON.coordinates);
-						// const bLat = { min: response.data.result.geo.latMin, max: response.data.result.geo.latMax };
-						// const bLng = { min: response.data.result.geo.lngMin, max: response.data.result.geo.lngMax };
+				} else if(this.listQuery.codeType == 2) {
+					const query = { laneCode: this.listQuery.laneCode };
+					this.$router.push({ query });
 
-						this.geoInfo = {
-							roadId: response.data.result.geo.RoadId,
-							laneId: response.data.result.geo.laneId,
-							laneCode: response.data.result.geo.laneCode,
-							roadName: response.data.result.geo.roadName,
-							lastCode: response.data.result.lastCode,
-							area: response.data.result.geo.area,
-							points: [],
-							lines: [],
-							blocks: []
-						};
+					getLaneUnitGeo(query).then(response => {
+						if(Object.keys(response.data.result.geo).length == 0 || response.data.result.geo.boundary == null) {
+							this.$message({
+								message: "查無資料",
+								type: "error",
+							});
+							this.geoInfo.roadName = response.data.result.geo.roadName || "";
+							this.loading = false;
 
-						// 顯示該路段已完成區塊
-						let geoJSON_Unit = { 
-							"type": "FeatureCollection",
-							"name": "polyJSON",
-							"features": []
-						};
+						} else this.createBoundary(response.data)
 
-						for(const geo of response.data.result.unitList) geoJSON_Unit.features.push({
-							"type": "Feature",
-							"properties": {
-								"roadCode": geo.roadCode,
-								"roadName": geo.roadName,
-							},
-							"geometry": JSON.parse(geo.geoJSON)
-						})
-
-						this.dataLayer.addGeoJson(geoJSON_Unit);
-						this.dataLayer.setStyle({ 
-							strokeColor: '#D81B60',
-							strokeWeight: 2,
-							strokeOpacity: 1,
-							fillColor: '#607D8B',
-							fillOpacity: 0.4,
-							zIndex: 1
-						});
-
-						this.dataLayer.addListener('mouseover', (event) => {
-							// console.log(event);
-							this.infoWindow.setContent(`道路編碼: ${event.feature.j.roadCode}`);
-
-							const bounds = new google.maps.LatLngBounds();
-							event.feature.h.h[0].h.forEach(position => bounds.extend(position));
-							this.infoWindow.setPosition(bounds.getCenter());
-
-							this.infoWindow.open(this.map);
-						});
-
-						this.dataLayer.addListener('mouseout', (event) => {
-							this.infoWindow.close();
-						});
-
-						// 建立道路外框
-						const resJSON = JSON.parse(response.data.result.geo.geoJSON);
-						this.geoJSON_Ori = { 
-							"type": "FeatureCollection",
-							"name": "polyJSON",
-							"features": [
-								{
-									"type": "Feature",
-									"properties": {},
-									"geometry": resJSON
-								}
-							]
-						};
-						
-						this.map.data.addGeoJson(this.geoJSON_Ori);
-						this.map.data.setStyle({ 
-							strokeWeight: 1,
-							strokeOpacity: 0.5,
-							fillColor: '#409EFF',
-							fillOpacity: 0.4
-						});
-
-						const paths = resJSON.coordinates.flat().map(point => ({ lat: point[1], lng: point[0] }));
-						const bounds = new google.maps.LatLngBounds();
-						paths.forEach(position => bounds.extend(position));
-						this.map.fitBounds(bounds);
-						this.createMarkers();
-					}
-
-					this.loading = false;
-				}).catch(err => this.loading = false);
+						this.loading = false;
+					}).catch(err => this.loading = false);
+				}
 			}
+		},
+		createBoundary(geoData) {
+			this.boundaryJSON = JSON.parse(geoData.result.geo.boundary);
+
+			this.geoInfo = {
+				roadId: geoData.result.geo.RoadId,
+				laneId: geoData.result.geo.laneId,
+				laneCode: geoData.result.geo.laneCode,
+				roadName: geoData.result.geo.roadName,
+				lastCode: geoData.result.lastCode,
+				area: geoData.result.geo.area,
+				points: [],
+				lines: [],
+				blocks: []
+			};
+
+			// 顯示該路段已完成區塊
+			let geoJSON_Unit = { 
+				"type": "FeatureCollection",
+				"name": "polyJSON",
+				"features": []
+			};
+
+			for(const geo of geoData.result.unitList) geoJSON_Unit.features.push({
+				"type": "Feature",
+				"properties": {
+					"roadCode": geo.roadCode,
+					"roadName": geo.roadName,
+				},
+				"geometry": JSON.parse(geo.geoJSON)
+			})
+
+			this.dataLayer.addGeoJson(geoJSON_Unit);
+			this.dataLayer.setStyle({ 
+				strokeColor: '#D81B60',
+				strokeWeight: 2,
+				strokeOpacity: 1,
+				fillColor: '#607D8B',
+				fillOpacity: 0.4,
+				zIndex: 1
+			});
+
+			this.dataLayer.addListener('mouseover', (event) => {
+				// console.log(event);
+				this.infoWindow.setContent(`道路編碼: ${event.feature.j.roadCode}`);
+
+				const bounds = new google.maps.LatLngBounds();
+				event.feature.h.h[0].h.forEach(position => bounds.extend(position));
+				this.infoWindow.setPosition(bounds.getCenter());
+
+				this.infoWindow.open(this.map);
+			});
+
+			this.dataLayer.addListener('mouseout', (event) => {
+				this.infoWindow.close();
+			});
+
+			// 建立道路外框
+			const resJSON = JSON.parse(geoData.result.geo.geoJSON);
+			this.geoJSON_Ori = { 
+				"type": "FeatureCollection",
+				"name": "polyJSON",
+				"features": [
+					{
+						"type": "Feature",
+						"properties": {},
+						"geometry": resJSON
+					}
+				]
+			};
+			
+			this.map.data.addGeoJson(this.geoJSON_Ori);
+			this.map.data.setStyle({ 
+				strokeWeight: 1,
+				strokeOpacity: 0.5,
+				fillColor: '#409EFF',
+				fillOpacity: 0.4
+			});
+
+			const level = resJSON.type.includes('Multi') ? 2 : 1;
+			const paths = resJSON.coordinates.flat(level).map(point => ({ lat: point[1], lng: point[0] }));
+			const bounds = new google.maps.LatLngBounds();
+			paths.forEach(position => bounds.extend(position));
+			this.map.fitBounds(bounds);
+			this.createMarkers();
 		},
 		setBlock() {
 			if(this.listQuery.roadCode == null || this.listQuery.roadCode.length == 0) {
@@ -550,7 +597,6 @@ export default {
 				for(const block of this.selectBlock) {
 					unitList.push({
 						roadId: Number(this.geoInfo.roadId),
-						laneCode: Number(this.geoInfo.laneCode),
 						roadCode: `${this.listQuery.roadCode}${block.blockId}${this.listQuery.roadDir}`,
 						roadName: this.geoInfo.roadName,
 						geometry: JSON.stringify(block.geometry)
@@ -558,18 +604,36 @@ export default {
 				}
 				// console.log(unitList);
 
-				setRoadUnitGeo({ unitList }).then(response => {
-					if ( response.statusCode == 20000 ) {
-						this.$message({
-							message: "新增成功",
-							type: "success",
-						});
+				if(this.splitType == 1) {
+					setRoadBlockGeo({ unitList }).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "新增成功",
+								type: "success",
+							});
 
-						this.stepOrder = 3;
-						this.getList();
-					} 
-				}).catch(err => console.log(err))
+							this.stepOrder = 3;
+							this.getList();
+						} 
+					}).catch(err => console.log(err))
+
+				} else if(this.splitType == 2) {
+
+					unitList.forEach(unit => unit.laneCode = Number(this.geoInfo.laneCode));
+
+					setLaneBlockGeo({ unitList }).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "新增成功",
+								type: "success",
+							});
+
+							this.stepOrder = 3;
+							this.getList();
+						} 
+					}).catch(err => console.log(err))
 				}
+			}
 		},
 		switchStep(index) {
 			// console.log(index, this.stepOrder);
@@ -579,13 +643,13 @@ export default {
 		},
 		createMarkers() {
 			// 建立端點
-			for(const [ index, point ] of this.boundaryJSON.coordinates.entries()) {
+			for(const [ index, point ] of this.boundaryJSON.coordinates.flat(this.bJSONLevel).entries()) {
 				const [ lng, lat ] = point;
 				// if(index != 0) this.geoInfo.lines[this.geoInfo.lines.length-1].push({ lat, lng });
 
 				// const limit = Math.pow(10, -5);
 				// if(Math.abs(bLat.min - lat) < limit || Math.abs(bLat.max - lat) < limit || Math.abs(bLng.min - lng) < limit|| Math.abs(bLng.max - lng) < limit) {
-					if(index < this.boundaryJSON.coordinates.length - 1) {
+					if(index < this.boundaryJSON.coordinates.flat(this.bJSONLevel).length - 1) {
 					// this.geoInfo.points.push({ index: index, position: { lat, lng } });
 					// this.geoInfo.lines.push([{ lat, lng }]);
 					const marker = new google.maps.Marker({
@@ -663,7 +727,7 @@ export default {
 				this.boundary = this.geoInfo.points.reduce((acc, cur, id, arr) => {
 					const index = id+1 <= arr.length - 1 ? id+1 : 0;
 					const dist = calcDistance(cur.position, arr[index].position);
-					const endRange = arr[index].index != 0 ? arr[index].index : this.boundaryJSON.coordinates.length - 1;
+					const endRange = arr[index].index != 0 ? arr[index].index : this.boundaryJSON.coordinates.flat(this.bJSONLevel).length - 1;
 					acc.push({ range: [ cur.index, endRange ], dist });
 
 					return acc;
@@ -679,7 +743,7 @@ export default {
 			this.polyLines = {};
 
 			let index = 0;
-			this.geoInfo.lines = this.boundaryJSON.coordinates.reduce((acc, cur, id, arr) => {
+			this.geoInfo.lines = this.boundaryJSON.coordinates.flat(this.bJSONLevel).reduce((acc, cur, id, arr) => {
 				if(index > points.length - 1) return acc;
 				let range = points[index].range;
 				if(id < range[0]) return acc;
@@ -1003,7 +1067,7 @@ export default {
 			this.map.data.revertStyle();
 		},
 		lineIndex(min, index) {
-			const polyMax = this.boundaryJSON.coordinates.length - 1;
+			const polyMax = this.boundaryJSON.coordinates.flat(this.bJSONLevel).length - 1;
 			const lineIndex = (min + index) % polyMax;
 			return lineIndex;
 		},
@@ -1038,6 +1102,16 @@ export default {
 			text-shadow: 0px 0px 5px white
 			text-stroke: 0.6px white
 			-webkit-text-stroke: 0.6px white
+		.el-select
+			width: 85px
+			.el-input__inner
+				padding-left: 3px
+				padding-right: 10px
+				text-align: center
+			.el-input__suffix
+				right: 0
+				margin-right: -3px
+				transform: scale(0.7)
 		.step-box
 			width: 600px
 			margin-left: 100px

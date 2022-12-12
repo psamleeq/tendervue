@@ -92,7 +92,7 @@
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<el-button class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">地圖</el-button>
-						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini"  round @click="showMapViewer(row)" />
+						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
 					</el-button-group>
 				</template>
 			</el-table-column>
