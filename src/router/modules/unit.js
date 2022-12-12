@@ -53,6 +53,16 @@ const unitRouter = {
 				roles: ['uBlock.manager'],
 				isNew: true
 			}
+		},
+		{
+			path: 'blockUnit',
+			component: () => import('@/views/unit/blockUnit'),
+			name: 'blockUnit',
+			meta: {
+				title: '維護單元',
+				roles: ['uRoad.viewer', 'uBlock.manager'],
+				isNew: true
+			}
 		}
 	]
 }

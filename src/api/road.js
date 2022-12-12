@@ -57,6 +57,22 @@ export function setRoadBlockGeo(data) {
 	})
 }
 
+export function getBlockUnit(query) {
+	return request({
+		url: '/road/unitBlock',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setBlockUnit(id, data) {
+	return request({
+		url: `/road/unitBlock/${id}`,
+		method: 'put',
+		data
+	})
+}
+
 // PCI地圖
 export function getPCIBlock(query) {
 	return request({
