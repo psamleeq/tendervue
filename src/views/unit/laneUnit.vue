@@ -80,7 +80,7 @@
 
 		<el-divider />
 
-		<h4>道路單元數：{{ total }}</h4>
+		<h4>車道單元數：{{ total }}</h4>
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1075px; min-width: 500px">
@@ -107,11 +107,12 @@
 				:key="key"
 				:prop="key"
 				:label="value.name"
+				:min-width="value.minWidth"
 				align="center"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			/>
-			<el-table-column label="操作" align="center">
+			<el-table-column label="操作" align="center" width="80">
 				<template slot-scope="{ row }">
 					<div v-if="row.unitNum != 0">區塊數: {{ row.unitNum }}</div>
 					<el-button :type="row.unitNum == 0 ? 'primary' : 'info' " plain size="mini" round @click="showMap(row)">切分</el-button>
@@ -145,16 +146,24 @@ export default {
 			},
 			headersFixed: {
 				id: {
-					name: "序號",
+					name: "Id",
 					sortable: false,
+					minWidth: 40
 				},
 				laneCode: {
-					name: "單元編號",
+					name: "車道編號",
 					sortable: true,
+					minWidth: 80
+				},
+				RoadId: {
+					name: "道路Id",
+					sortable: true,
+					minWidth: 60
 				},
 				dist: {
 					name: "行政區",
 					sortable: true,
+					minWidth: 60
 				},
 				roadName: {
 					name: "道路名稱",
@@ -163,6 +172,7 @@ export default {
 				laneId: {
 					name: "車道",
 					sortable: true,
+					minWidth: 30
 				},
 			},
 			headersOpt: {
@@ -181,22 +191,27 @@ export default {
 				lane: {
 					name: "車道數量",
 					sortable: false,
+					minWidth: 30
 				},
 				width: {
 					name: "計畫路寬",
 					sortable: true,
+					minWidth: 60
 				},
 				widthReal: {
 					name: "實際路寬",
 					sortable: true,
+					minWidth: 60
 				},
 				length: {
 					name: "區段長度",
 					sortable: true,
+					minWidth: 60
 				},
 				area: {
 					name: "道路面積",
 					sortable: true,
+					minWidth: 60
 				},
 				areaCross: {
 					name: "道路面積(扣除路口重覆)",
@@ -298,7 +313,7 @@ export default {
 	},
 	created() {
 		this.listQuery.distList = Object.keys(this.districtList);
-		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headersOpt);
+		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headersOpt).filter(key => !['areaCross'].includes(key));
 		else this.headersCheckVal = [];
 
 		this.getList();
@@ -373,7 +388,7 @@ export default {
 			if (this.listQuery.widthType == 1) query.width = this.listQuery.width;
 			else if (this.listQuery.widthType == 2) query.widthReal = this.listQuery.width;
 
-			getRoadUnit(query).then((response) => {
+			getLaneUnit(query).then((response) => {
 				let list = response.data.list;
 				list.forEach(l => l.dist = this.districtList[l.zip].name);
 
