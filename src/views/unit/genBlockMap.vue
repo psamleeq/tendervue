@@ -150,8 +150,8 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-const { calcDistance, calArea } = require('@/utils/geo-tools');
 import { getLaneUnitGeo, setRoadUnitGeo } from "@/api/road";
+const { calcDistance, calArea, calVecAngle } = require('@/utils/geo-tools');
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -884,6 +884,12 @@ export default {
 				for (let i = linesPosSpec.length - 1; i >= 0; i--) {
 					if (i - 1 < 0) pointList.push({ index: 0, point: linesPosSpec[0] });
 					else {
+						//解決垂直線投影
+						const vector1 = { lat: linesPosSpec[i].lat - linesPosSpec[i-1].lat, lng: linesPosSpec[i].lng - linesPosSpec[i-1].lng };
+						const vector2 = { lat: splitP.point.lat - splitPList[index-1].point.lat, lng: splitP.point.lng - splitPList[index-1].point.lng };
+						const angle = calVecAngle(vector1, vector2);
+						if(Math.abs(angle-180) >= 45 ) continue;
+
 						const footOfPer = this.getFootOfPer(linesPosSpec[i], linesPosSpec[i-1], splitP.point);
 						// console.log(i, JSON.stringify(linesPosSpec[i]), JSON.stringify(linesPosSpec[i-1]), JSON.stringify(splitP.point), JSON.stringify(footOfPer));
 						if (footOfPer.lat == -1 && footOfPer.lng == -1) continue;

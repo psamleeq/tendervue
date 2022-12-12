@@ -154,7 +154,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-const { calcDistance, calArea } = require('@/utils/geo-tools');
+const { calcDistance, calArea, calVecAngle } = require('@/utils/geo-tools');
 import { getRoadUnitGeo, setLaneUnitGeo } from "@/api/road";
 
 // 載入 Google Map API
@@ -528,7 +528,7 @@ export default {
 							fillOpacity: 0.4
 						});
 
-						const paths = resJSON.coordinates.flat().flat().map(point => ({ lat: point[1], lng: point[0] }));
+						const paths = resJSON.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
 						const bounds = new google.maps.LatLngBounds();
 						paths.forEach(position => bounds.extend(position));
 						this.map.fitBounds(bounds);
@@ -889,8 +889,14 @@ export default {
 				for (let i = linesPosSpec.length - 1; i >= 0; i--) {
 					if (i - 1 < 0) pointList.push({ index: 0, point: linesPosSpec[0] });
 					else {
+						//解決垂直線投影
+						const vector1 = { lat: linesPosSpec[i].lat - linesPosSpec[i-1].lat, lng: linesPosSpec[i].lng - linesPosSpec[i-1].lng };
+						const vector2 = { lat: splitP.lat - splitPList[index-1].lat, lng: splitP.lng - splitPList[index-1].lng };
+						const angle = calVecAngle(vector1, vector2);
+						if(Math.abs(angle-180) >= 45 ) continue;
+
 						const footOfPer = this.getFootOfPer(linesPosSpec[i], linesPosSpec[i-1], splitP);
-						// console.log(i, JSON.stringify(linesPosSpec[i]), JSON.stringify(linesPosSpec[i-1]), JSON.stringify(splitP.point), JSON.stringify(footOfPer));
+						// console.log(i, angle, JSON.stringify(linesPosSpec[i]), JSON.stringify(linesPosSpec[i-1]), JSON.stringify(splitP), JSON.stringify(footOfPer));
 						if (footOfPer.lat == -1 && footOfPer.lng == -1) continue;
 						pointInfo.index = i;
 

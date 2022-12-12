@@ -65,6 +65,20 @@ module.exports = {
 	},
 
 	/**
+ * 計算兩向量夾角
+ * @param {{lat: number, lng: number}} vector1
+ * @param {{lat: number, lng: number}} vector2
+ * @returns {number}
+ */
+	calVecAngle: function (vector1, vector2) {
+		const dot = vector1.lng * vector2.lng + vector1.lat * vector2.lat;
+		const det = vector1.lng * vector2.lng - vector1.lat * vector2.lat;
+		let angle = Math.atan2(det, dot) / Math.PI * 180;
+		if (angle < 0) angle += 360;
+		return angle;
+	},
+
+	/**
 	 * 計算面積
 	 * @param {Array<number[]>} points 
 	 * @returns {number}
