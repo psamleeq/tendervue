@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-report" v-loading="loading">
-		<h2>派工和PCI分析</h2>
+		<h2>案件分析</h2>
 		<aside>資料初始為2022年6月</aside>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">

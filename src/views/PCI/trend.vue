@@ -1,6 +1,6 @@
 <template>
   <div class="app-container PCI-trend" v-loading="loading">
-    <h2>PCI趨勢圖</h2>
+    <h2>趨勢統計</h2>
 		<aside>資料初始為2022年6月</aside>
     <div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">

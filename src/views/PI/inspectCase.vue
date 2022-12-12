@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container inspect-case" v-loading="loading">
-		<h2>巡查統計</h2>
+		<h2>缺失分析</h2>
 		<aside>資料初始為2022年6月，未來規劃將此頁面移動至「缺失管理」。</aside>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
