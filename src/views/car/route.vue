@@ -437,7 +437,7 @@ export default {
 			fetch(`${this.mediaAPIUrl}WebRTCAppEE/rest/v2/vods/list/0/10?streamId=${this.carInfo.liveStreamId}&sort_by=date`).then((response) => (response.json()))
 				.then(response => {
 					// console.log(response);
-					this.carVodList.push(...response.map(vod => ({
+					this.carVodList.push(...response.sort((a,b) => (a.startTime - b.startTime)).map(vod => ({
 						time: vod.startTime,
 						label: this.formatTime(vod.startTime).split(" ")[1],
 						vodUrl: `${this.mediaGCSUrl}${vod.vodName}`
