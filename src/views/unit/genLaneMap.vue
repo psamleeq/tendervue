@@ -893,7 +893,7 @@ export default {
 						const vector1 = { lat: linesPosSpec[i].lat - linesPosSpec[i-1].lat, lng: linesPosSpec[i].lng - linesPosSpec[i-1].lng };
 						const vector2 = { lat: splitP.lat - splitPList[index-1].lat, lng: splitP.lng - splitPList[index-1].lng };
 						const angle = calVecAngle(vector1, vector2);
-						if(Math.abs(angle-180) >= 45 ) continue;
+						if(Math.abs(angle-180) >= 50 ) continue;
 
 						const footOfPer = this.getFootOfPer(linesPosSpec[i], linesPosSpec[i-1], splitP);
 						// console.log(i, angle, JSON.stringify(linesPosSpec[i]), JSON.stringify(linesPosSpec[i-1]), JSON.stringify(splitP), JSON.stringify(footOfPer));

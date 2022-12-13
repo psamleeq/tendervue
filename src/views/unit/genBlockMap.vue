@@ -48,7 +48,7 @@
 					<el-col :span="16">
 						<span v-if="key == 'area'">{{ geoInfo[key].toLocaleString() }} ㎡</span>
 						<span v-else>{{ geoInfo[key] }}</span>
-						<span v-if="key == 'roadName'"> (車道{{ geoInfo.laneId }})</span>
+						<span v-if="splitType == 2 && key == 'roadName'"> (車道{{ geoInfo.laneId }})</span>
 					</el-col>
 				</el-row>
 				<el-row>
@@ -952,10 +952,10 @@ export default {
 						const vector1 = { lat: linesPosSpec[i].lat - linesPosSpec[i-1].lat, lng: linesPosSpec[i].lng - linesPosSpec[i-1].lng };
 						const vector2 = { lat: splitP.point.lat - splitPList[index-1].point.lat, lng: splitP.point.lng - splitPList[index-1].point.lng };
 						const angle = calVecAngle(vector1, vector2);
-						if(Math.abs(angle-180) >= 45 ) continue;
+						if(Math.abs(angle-180) >= 50 ) continue;
 
 						const footOfPer = this.getFootOfPer(linesPosSpec[i], linesPosSpec[i-1], splitP.point);
-						// console.log(i, JSON.stringify(linesPosSpec[i]), JSON.stringify(linesPosSpec[i-1]), JSON.stringify(splitP.point), JSON.stringify(footOfPer));
+						// console.log(i, angle, JSON.stringify(linesPosSpec[i]), JSON.stringify(linesPosSpec[i-1]), JSON.stringify(splitP.point), JSON.stringify(footOfPer));
 						if (footOfPer.lat == -1 && footOfPer.lng == -1) continue;
 						pointInfo.index = i;
 
