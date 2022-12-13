@@ -1,51 +1,51 @@
 <template>
-  <div class="app-container mCase-statics" v-loading="loading">
-    <h2>維護數量</h2>
+	<div class="app-container mCase-statics" v-loading="loading">
+		<h2>維護數量</h2>
 		<aside>資料初始為2022年6月</aside>
-    <div class="filter-container">
+		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-      <!-- <el-button
-        class="filter-item"
-        type="info"
-        icon="el-icon-document"
-        :circle="screenWidth<567"
-        @click="handleDownload"
-      >輸出報表</el-button> -->
-    </div>
-    
-    <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			<!-- <el-button
+				class="filter-item"
+				type="info"
+				icon="el-icon-document"
+				:circle="screenWidth<567"
+				@click="handleDownload"
+			>輸出報表</el-button> -->
+		</div>
+		
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
 		<div class="chart" ref="chart" />
 
-    <el-table
-      empty-text="目前沒有資料"
-      :data="list"
-      border
-      fit
-      highlight-current-row
-      :header-cell-style="{'background-color': '#F2F6FC'}"
-      stripe
-      style="width: 100%"
-    >
-      <!-- <el-table-column 
-        v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
-      align="center" fixed/>-->
-      <el-table-column
-        v-for="(value, key) in headers"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
+		<el-table
+			empty-text="目前沒有資料"
+			:data="list"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
+			<!-- <el-table-column 
+				v-for="header in Object.keys(headers['fixed'])" :prop="header" :label="headers[reportCate]['fixed'][header]"
+			align="center" fixed/>-->
+			<el-table-column
+				v-for="(value, key) in headers"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
 				:formatter="formatter"
-        :sortable="value.sortable"
-      />
-    </el-table>
+				:sortable="value.sortable"
+			/>
+		</el-table>
 
-  </div>
+	</div>
 </template>
 
 <script>
@@ -78,25 +78,25 @@ import { dateWatcher } from "@/utils/pickerOptions";
 // ]
 
 export default {
-  name: "mCaseStatics",
+	name: "mCaseStatics",
 	components: { TimePicker },
-  data() {
-    return {
-      loading: false,
-      timeTabId: 4,
-      dateTimePickerVisible: false,
-      screenWidth: window.innerWidth,
-      daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
-      searchRange: "",
+	data() {
+		return {
+			loading: false,
+			timeTabId: 4,
+			dateTimePickerVisible: false,
+			screenWidth: window.innerWidth,
+			daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
+			searchRange: "",
 			listQuery: {
 				dist: 104
-      },
-      headers: {
+			},
+			headers: {
 				type: {
 					name: "類型",
 					sortable: false
 				},
-        count: {
+				count: {
 					name: "數量",
 					sortable: false,
 					chartType: 'line'
@@ -106,8 +106,8 @@ export default {
 					sortable: false,
 					chartType: 'bar'
 				}
-      },
-      list: [],
+			},
+			list: [],
 			typeMap: {
 				hotRepair: "熱再生修復(m2)",
 				AC: "AC鉋鋪(m2)",
@@ -165,8 +165,8 @@ export default {
 				// }
 			},
 			chart: null
-    };
-  },
+		};
+	},
 	mounted() {
 		this.chart = echarts.init(this.$refs.chart, 'macarons', {
 			width: 'auto',
@@ -174,33 +174,33 @@ export default {
 		});
 		this.getList();
 	},
-  methods: {
-    getList() {
-      this.loading = true;
+	methods: {
+		getList() {
+			this.loading = true;
 			dateWatcher(this.daterange);
 
-      let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-      let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-      this.searchRange = startDate + " - " + endDate;
+			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
 
-      this.list = [];
-      getCaseReport({
-        timeStart: startDate,
-        timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-      }).then((response) => {
-        if (response.data.list.length == 0) {
-          this.$message({
-            message: "查無資料",
-            type: "error",
-          });
-        } else {
+			this.list = [];
+			getCaseReport({
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
 					const obj = response.data.list;
-          this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], count: obj[key].count, area: Math.floor(obj[key].area * 100) / 100 }) );
-          this.setChartOptions();
-        }
-        this.loading = false;
-      }).catch(err => { this.loading = false; });
-    },
+					this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], count: obj[key].count, area: Math.floor(obj[key].area * 100) / 100 }) );
+					this.setChartOptions();
+				}
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		},
 		setChartOptions() {
 			const headerFilter = Object.fromEntries(Object.entries(this.headers).filter(([key, _]) => key != "type"));
 			let legend = [];
@@ -232,7 +232,17 @@ export default {
 						boundaryGap: false,
 						axisTick: {
 							alignWithLabel: true
-						},	
+						},
+						splitLine: {
+							lineStyle: {
+								color: ['#bbb'],
+								type: 'dashed',
+								opacity: 0.3
+							}
+						},
+						splitArea: {
+							show: false
+						}
 					},
 					{
 						name: '數量',
@@ -241,6 +251,12 @@ export default {
 						boundaryGap: false,
 						axisTick: {
 							alignWithLabel: true
+						},
+						splitLine: {
+							show: false
+						},
+						splitArea: {
+							show: false
 						}
 					},
 				],
@@ -249,23 +265,23 @@ export default {
 					type: 'category',
 					data: this.list.map(l => l.type),
 					axisTick: {
-            show: false
+						show: false
 					}
 				},
 				tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross'
-          },
-          padding: [5, 10]
-        },
+					trigger: 'axis',
+					axisPointer: {
+						type: 'cross'
+					},
+					padding: [5, 10]
+				},
 				grid: {
 					top: 55,
 					bottom: 20,
-          left: 30,
-          right: 100,
-          containLabel: true
-        },
+					left: 30,
+					right: 100,
+					containLabel: true
+				},
 				legend: { data: legend },
 				series: series
 			};
@@ -273,30 +289,30 @@ export default {
 			this.chart.setOption(options);
 		},
 		formatter(row, column) {
-      if(Number(row[column.property])) return row[column.property].toLocaleString();
-      else return row[column.property];
-    },
-    formatTime(time) {
-      return moment(time).utc().format("YYYY-MM-DD");
-    },
-    handleDownload() {
-      let tHeader = Object.values(this.headers);
-      let filterVal = Object.keys(this.headers);
-      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-      let data = this.formatJson(filterVal, this.list);
+			if(Number(row[column.property])) return row[column.property].toLocaleString();
+			else return row[column.property];
+		},
+		formatTime(time) {
+			return moment(time).utc().format("YYYY-MM-DD");
+		},
+		handleDownload() {
+			let tHeader = Object.values(this.headers);
+			let filterVal = Object.keys(this.headers);
+			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+			let data = this.formatJson(filterVal, this.list);
 
-      import("@/vendor/Export2Excel").then((excel) => {
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-        });
-      });
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) => filterVal.map((j) => v[j]));
-    },
-  },
+			import("@/vendor/Export2Excel").then((excel) => {
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
+				});
+			});
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		},
+	},
 };
 </script>
 
