@@ -435,7 +435,9 @@ export default {
 
 			for(const caseNo in this.csvRepeatObj) {
 				for(const uploadCaseNo of this.csvRepeatObj[caseNo]) {
-					const caseItem = this.list.filter(l => l.UploadCaseNo == uploadCaseNo)[0];
+					const caseFilter = this.csvData.filter(d =>  d["案件編號"] == uploadCaseNo)[0];
+					let caseItem = {};
+					Object.keys(this.headers).forEach(key => caseItem[key] = caseFilter[this.headers[key].name]);
 					caseErrList.push({ ...caseItem, note: `重複案件(csv): ${caseNo}`, edit: false });
 				}
 			}
@@ -646,7 +648,7 @@ export default {
 			// const listCSNArr = this.list.map(l => l.CaseNo.length > 0 ?  l.CaseNo : l.UploadCaseNo);
 			const listCSNArr = this.list.map(l => l.CaseNo);
 			const csvCSNArr = this.csvData.map(d => d["來源編號"].length > 0 ? d["來源編號"] : d["案件編號"]);
-			this.listRepeat = this.list.reduce((list, curr, index ) => {
+			this.listRepeat = this.list.reduce((list, curr, index) => {
 				if(listCSNArr.indexOf(curr.CaseNo) != index) list.push(curr.CaseNo);
 				return list;
 			}, []);
