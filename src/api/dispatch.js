@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 套組列表
 export function getCostKit(query) {
 	return request({
-		url: '/cost/kit',
+		url: '/dispatch/kit',
 		method: 'get',
 		params: query
 	})
@@ -12,7 +12,7 @@ export function getCostKit(query) {
 // 套組細項
 export function getCostKitDetail(query) {
 	return request({
-		url: '/cost/kitDetail',
+		url: '/dispatch/kitDetail',
 		method: 'get',
 		params: query
 	})

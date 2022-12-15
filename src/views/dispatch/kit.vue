@@ -3,10 +3,14 @@
 		<h2>計價套組</h2>
 		<div class="filter-container">
 			<div class="filter-item">
-				<span class="filter-label">使用合約</span>
-				<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇">
-					<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
-				</el-select>
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>合約</span>
+					</div>
+					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇">
+						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
+					</el-select>
+				</div>
 			</div>
 			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
 
@@ -178,7 +182,7 @@
 <script>
 import moment from "moment";
 import { getDteamMap, getKitItemMap } from "@/api/type";
-import { getCostKit, getCostKitDetail } from "@/api/cost";
+import { getCostKit, getCostKitDetail } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 
@@ -199,7 +203,7 @@ export default {
 			// 	moment().endOf("year").toDate(),
 			// ],
 			// searchRange: "",
-			comfirmType: 0, //del: 0, add: 1
+			confirmType: 0, //del: 0, add: 1
 			listQuery: {
 				dteamSN: null,
 				pageCurrent: 1,
@@ -438,11 +442,8 @@ export default {
 	.filter-container
 		.filter-item
 			margin-right: 5px
-			.filter-label
-				color: #909399
 			.dteam-select
 				width: 520px
-				margin-left: 5px
 				.el-input__inner
 					padding-left: 10px
 					text-align: left

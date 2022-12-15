@@ -2,20 +2,21 @@
 
 import Layout from '@/layout'
 
-const costRouter = {
-	path: '/cost',
+const dispatchRouter = {
+	path: '/dispatch',
 	component: Layout,
-	redirect: '/cost/kit',
-	name: 'cost',
+	redirect: '/dispatch/assign',
+	name: 'dispatch',
 	meta: {
-		title: '計價管理',
-		icon: 'el-icon-money',
-		roles: ['beta']
+		title: '派工管理',
+		icon: 'clipboard-account-outline',
+		roles: ['beta'],
+		vTag: 'Alpha'
 	},
 	children: [
 		{
 			path: 'kit',
-			component: () => import('@/views/cost/kit'),
+			component: () => import('@/views/dispatch/kit'),
 			name: 'kit',
 			meta: { 
 				title: '計價套組', 
@@ -25,4 +26,4 @@ const costRouter = {
 		}
 	]
 }
-export default costRouter
+export default dispatchRouter

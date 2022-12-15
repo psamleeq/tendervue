@@ -10,7 +10,7 @@ import Layout from '@/layout';
 import unitRouter from './modules/unit';
 import caseRouter from './modules/case';
 import caseListRouter from './modules/caseList';
-import costRouter from './modules/cost';
+import dispatchRouter from './modules/dispatch';
 import PCIRouter from './modules/PCI';
 import expAnalysisRouter from './modules/expAnalysis';
 import PIRouter from './modules/PI';
@@ -101,7 +101,7 @@ export const asyncRoutes = [
 	unitRouter,
 	caseRouter,
 	caseListRouter,
-	costRouter,
+	dispatchRouter,
 	PCIRouter,
 	PIRouter,
 	expAnalysisRouter,
