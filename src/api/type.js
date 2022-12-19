@@ -10,6 +10,15 @@ export function getDistGeo(query) {
 }
 
 // 合約Map
+export function getWClassMap(query) {
+	return request({
+		url: '/type/workClass',
+		method: 'get',
+		params: query
+	})
+}
+
+// 合約Map
 export function getDteamMap(query) {
 	return request({
 		url: '/type/dteamMap',

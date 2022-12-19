@@ -23,6 +23,16 @@ const dispatchRouter = {
 				roles: ['beta'],
 				vTag: 'Alpha' 
 			}
+		},
+		{
+			path: 'assign',
+			component: () => import('@/views/dispatch/assign'),
+			name: 'assign',
+			meta: {
+				title: '主任派工',
+				roles: ['beta'],
+				vTag: 'Alpha'
+			}
 		}
 	]
 }

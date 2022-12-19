@@ -17,3 +17,12 @@ export function getCostKitDetail(query) {
 		params: query
 	})
 }
+
+// 可派工列表
+export function getDispatchList(query) {
+	return request({
+		url: '/dispatch/list',
+		method: 'get',
+		params: query
+	})
+}
