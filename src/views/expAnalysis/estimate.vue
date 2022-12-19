@@ -108,7 +108,7 @@ import moment from "moment";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/pie');
-import { getExpType, addExpType, delExpType, getExpExecution, getExpEstimate, setExpEstimate, delExpEstimate } from "@/api/case";
+import { getExpType, addExpType, delExpType, getExpEstimate, setExpEstimate, delExpEstimate } from "@/api/case";
 
 export default {
   name: "expEstimate",

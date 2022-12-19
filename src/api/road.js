@@ -73,15 +73,6 @@ export function setBlockUnit(id, data) {
 	})
 }
 
-// PCI地圖
-export function getPCIBlock(query) {
-	return request({
-		url: '/road/PCIBlock',
-		method: 'get',
-		params: query
-	})
-}
-
 // 缺失管理
 export function getRoadCaseType(query) {
 	return request({
@@ -119,6 +110,15 @@ export function getRoadCaseGeo(query) {
 export function getRoadStatus(query) {
 	return request({
 		url: '/road/status',
+		method: 'get',
+		params: query
+	})
+}
+
+// PCI地圖
+export function getPCIBlock(query) {
+	return request({
+		url: '/road/PCIBlock',
 		method: 'get',
 		params: query
 	})
