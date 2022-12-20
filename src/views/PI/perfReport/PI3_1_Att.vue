@@ -44,7 +44,7 @@
 							<el-collapse-item v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`" class="collapse-label" :title="`${inputForm.serialNumber} (P${index+1})`" :name="index">
 								<template slot="title">
 									<span>{{ inputForm.serialNumber }} (P{{ index+1 }})</span>
-									<el-button class="btn-remove" type="danger" size="mini" icon="el-icon-minus" plain :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage(index)" />
+									<el-button class="btn-remove" type="danger" size="mini" plain :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage(index)">刪除</el-button>
 									<!-- <el-button type="text" style="margin-left: 5px" :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage"><i class="el-icon-close" style="color: #F56C6C" /></el-button> -->
 								</template>
 								<!-- <el-divider>{{ inputForm.serialNumber }} (P{{ index+1 }})</el-divider> -->
@@ -340,14 +340,20 @@ export default {
 	.collapse-label
 		width: 100%
 		.el-collapse-item__header
-			padding: 5px
+			padding: 5px 25px
 			background-color: #F2F6FC
+			position: relative
 			&.is-active
 				background-color: rgba(#F2F6FC, 0.5)
 				transition: 0.5s
+			.el-collapse-item__arrow
+				position: absolute
+				left: 5px
 			.btn-remove
 				margin-left: 5px
 				padding: 3px 5px
+				position: absolute
+				right: 20px
 		.el-collapse-item__content
 			height: 100%
 			padding-bottom: 5px
