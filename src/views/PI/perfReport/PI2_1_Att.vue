@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container PI2_1-Att" v-loading="loading">
-		<h2>日報表-PI2.1附件</h2>
+		<h2>PI2.1附件</h2>
 		<div class="filter-container">
 			<span class="time-picker">
 				<el-button-group v-if="!dateTimePickerVisible">
@@ -46,12 +46,15 @@
 					<el-form :model="inputForm" label-width="100px">
 						<h2>通報資訊</h2>
 						<el-divider />
-						<el-form-item label="行政區">
-							<el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" />
+						<el-form-item label="起始頁碼">
+							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
 
 						<h3>廠商通報</h3>
+						<el-form-item label="行政區">
+							<el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" />
+						</el-form-item>
 						<el-form-item label="本日通報">
 							<el-input-number v-model="inputForm.caseReportTotal" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
@@ -72,11 +75,6 @@
 						</el-form-item>
 						<el-form-item label="正式區">
 							<el-input-number v-model="inputForm.facTotal_Reg" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-
-						<el-form-item label="起始頁碼">
-							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
 						</el-form-item>
 					</el-form>
 				</el-card>
@@ -143,7 +141,8 @@ export default {
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約', 
 				companyName: '聖東營造股份有限公司',
-				serialNumber: '1111102102',
+				serialNumber1: '1111102102',
+				serialNumber2: '1111102103',
 				date: '111年11月02日',
 				district: '中山區',
 				caseReportTotal: '0 筆',
@@ -205,7 +204,11 @@ export default {
 				};
 
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => console.log(arg));
+				this.form.onChangeInput(arg => {
+					console.log(arg);
+					// if(['contractName', 'companyName', 'serialNumber', 'date', 'district'].includes(arg.key)) this.inputs[arg.key] = arg.value;
+					if(['caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+				});
 				this.getList();
 			})
 		},
