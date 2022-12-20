@@ -108,78 +108,72 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['estFinishDate'].includes(key) ? 170 : ['estWorkingTime'].includes(key) ? 220 : null"
+				:width="['estFinishDate'].includes(key) ? 220 : null"
 				:min-width="['CaseName'].includes(key) ? 80 : null"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
-					<!-- <span v-if="[ 'estFinishDate', 'estWorkingDate' ].includes(column.property)">
-						<el-input v-model="row[column.property]" maxlength="16" show-word-limit style="width: 285px" />
-						<el-button type="text" @click=" row.edit = false; rowActive = row; editNote();">
-							<i class="el-icon-success" />
-						</el-button>
-						<el-button type="text" @click=" row = false; getList();">
-							<i class="el-icon-error" />
-						</el-button>
-					</span> -->
 					<span v-if="[ 'estFinishDate' ].includes(column.property)">
-						<el-date-picker v-model="row.estFinishDate" type="date" placeholder="選擇日期" style="width: 100%" />
-					</span>
-					<span v-else-if="[ 'estWorkingTime' ].includes(column.property)">
-						<el-time-picker v-model="row.estWorkingTime" is-range range-separator="至"  start-placeholder="開始時間" end-placeholder="結束時間" placeholder="選擇時間" style="width: 100%" />
+						<el-row type="flex" align="middle">
+							<el-col :span="18"><el-date-picker v-model="row.estFinishDate" type="date" placeholder="選擇日期" style="width: 100%" /></el-col>
+							<el-col :span="6"><el-tag class="btn-tag" :type="row.detailTime ? 'success': 'info'" @click="row.detailTime = !row.detailTime">時段</el-tag></el-col>
+						</el-row>
+						<el-time-picker v-if="row.detailTime" v-model="row.estWorkingTime" is-range range-separator="至"  start-placeholder="開始時間" end-placeholder="結束時間" placeholder="選擇時間" style="width: 100%" />
 					</span>
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
-						<!-- <el-link v-if="[ 'estFinishDate', 'estWorkingDate', 'account0', 'elength', 'blength' ].includes(column.property)" @click="row.edit = true">
-							<i class="el-icon-edit" />
-						</el-link> -->
 					</span>
 				</template>
 			</el-table-column>
 
 			<!-- 道路、熱再生 -->
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" align="center">
-				<el-table-column label="算式" width="500" align="center">
-					<template slot-scope="{ row }">
-						<el-row v-if="row.accountflag0 == '1'" :gutter="5" type="flex" align="middle">
-							<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.accountflag0 = '0'; calArea(row);">自訂</el-tag></el-col>
-							<el-col :span="20"><el-input v-model="row.account0" @change="calArea(row)" /></el-col>
-						</el-row>
-						<el-row v-else :gutter="5" type="flex" align="middle">
-							<el-col :span="4"><el-tag class="btn-tag" @click="row.accountflag0 = '1'; calArea(row);">簡單</el-tag></el-col>
-							<el-col :span="8"><el-input v-model="row.elength" @change="calArea(row)" /></el-col>
-							<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
-							<el-col :span="8"><el-input v-model="row.blength" @change="calArea(row)" /></el-col>
-						</el-row>
-					</template>
-				</el-table-column>
-				<el-table-column label="面積" width="65" align="center">
-					<template slot-scope="{ row }">
-						<!-- <el-input v-model="row.acsum0" /> -->
-						<span>{{ row.acsum0 }}</span>
-					</template>
-				</el-table-column>
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
+				<template slot-scope="{ row }">
+					<el-row v-if="row.accountflag0 == '1'" :gutter="5" type="flex" align="middle">
+						<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.accountflag0 = '0'; calArea(row);">自訂</el-tag></el-col>
+						<el-col :span="20"><el-input v-model="row.account0" @change="calArea(row)" /></el-col>
+					</el-row>
+					<el-row v-else :gutter="5" type="flex" align="middle">
+						<el-col :span="4"><el-tag class="btn-tag" @click="row.accountflag0 = '1'; calArea(row);">簡單</el-tag></el-col>
+						<el-col :span="8"><el-input v-model="row.elength" @change="calArea(row)" /></el-col>
+						<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
+						<el-col :span="8"><el-input v-model="row.blength" @change="calArea(row)" /></el-col>
+					</el-row>
+				</template>
+			</el-table-column>
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="85" align="center">
+				<template slot-scope="{ row }">
+					<!-- <el-input v-model="row.acsum0" /> -->
+					<span>{{ row.acsum0 }}</span>
+				</template>
 			</el-table-column>
 
 			<!-- 設施 -->
+			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
+				<template slot-scope="{ row }">
+					<el-checkbox v-model="row.isUrgent" />
+				</template>
+			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
 				<template slot-scope="{ row }">
-					<el-checkbox v-model="checked">急件</el-checkbox>
 					<el-input v-model="row.c5type" />
 				</template>
 			</el-table-column>
-			<el-table-column v-if="deviceTypeNow == 3" label="計價套組" align="center">
+			
+			<el-table-column label="動作" align="center">
 				<template slot-scope="{ row }">
-					<el-button type="primary" @click="editKit()">選擇套組</el-button>
+					<el-button-group>
+						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
+						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<el-button type="info" size="mini" @click="beforeEdit(row)">檢視</el-button>
+					</el-button-group>
 				</template>
 			</el-table-column>
-			
-			<!-- <el-table-column label="動作" align="center">
-				<template slot-scope="{ row }">
-					<el-button type="primary" style="margin-left: 10px" size="mini" @click="beforeEdit(row)">修改</el-button>
-					<el-button type="danger" size="mini" @click=" rowActive = row; showConfirm = true;">刪除</el-button>
+
+			<el-table-column type="expand" width="1" align="center">
+				<template slot-scope="props">
 				</template>
-			</el-table-column> -->
+			</el-table-column>
 		</el-table>
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
@@ -263,10 +257,10 @@ export default {
 					name: "預計完工日期",
 					sortable: false
 				},
-				estWorkingTime: {
-					name: "預計施作時段",
-					sortable: false
-				},
+				// estWorkingTime: {
+				// 	name: "預計施作時段",
+				// 	sortable: false
+				// },
 				// account0: {
 				// 	name: "複雜算式",
 				// 	sortable: false
@@ -342,6 +336,9 @@ export default {
 			if(this.checkList[index]) this.$refs.assignTable.toggleRowSelection(row, true);
 			else this.$refs.assignTable.toggleRowSelection(row, false);
 		},
+		toggleExpand(row) {
+			this.$refs.assignTable.toggleRowExpansion(row)
+		},
 		getList() {
 			this.loading = true;
 			this.list = [];
@@ -371,12 +368,12 @@ export default {
 					this.checkList = Array.from({ length: this.list.length }, () => false);
 					this.deviceTypeNow = this.listQuery.deviceType;
 
-					// this.list.forEach(l => {
+					this.list.forEach(l => {
 					// 	l.reccreatetime = this.formatTime(l.reccreatetime);
-					// 	this.$set(l, "kitNote", "");
-					// 	this.$set(l, "editKit", false);
+						this.$set(l, "detailTime", false);
+						this.$set(l, "isUrgent", false);
 					// 	this.$set(l, "editNote", false);
-					// })
+					})
 
 					getWClassMap({ deviceType: this.listQuery.deviceType}).then(response => {
 						this.options.WClassMap = response.data.wClassMap;
@@ -396,10 +393,10 @@ export default {
 		},
 		beforeEdit(row) {
 			this.rowActive = row; 
-			this.loading = true;
+			// this.loading = true;
 
-			this.detail = [];
-			Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isEdit: true });
+			// this.detail = [];
+			// Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isEdit: true });
 
 		},
 		formatTime(time) {
