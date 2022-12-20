@@ -302,6 +302,12 @@ export default {
 			return headersFilter
 		}
 	},
+	watch: {
+		allHeaders(val) {
+			if (val) this.headersCheckVal = Object.keys(this.headers);
+			else this.headersCheckVal = [];
+		}
+	},
 	created() {
 		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers).filter(key => !['CaseDate', 'estFinishDate'].includes(key));
 		else this.headersCheckVal = [];
