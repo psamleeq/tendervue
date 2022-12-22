@@ -1,0 +1,561 @@
+<template>
+	<div class="app-container job-ticket" v-loading="loading">
+		<h2>製作派工單</h2>
+		<div class="filter-container">
+			<div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>類型</span>
+					</div>
+					<el-select v-model.number="listQuery.deviceType" placeholder="請選擇" popper-class="type-select" style="width: 100px">
+						<el-option v-for="(name, id) in options.deviceType" :key="id" :value="Number(id)" :label="name" />
+					</el-select>
+				</div>
+			</div>
+
+			<span class="filter-item">
+				<div style="font-size: 12px; color: #909399">派工日期</div>
+				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			</span>
+			<br />
+
+			<div class="filter-item">
+				<div v-if="listQuery.filterType == 1" class="select-contract">
+					<el-select v-model="listQuery.filterType" popper-class="type-select">
+						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
+					</el-select>
+					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
+					</el-select>
+				</div>
+				
+				<el-input
+					v-else
+					v-model="listQuery.filterStr"
+					placeholder="請輸入"
+					style="width: 300px"
+				>
+					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
+						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
+					</el-select>
+				</el-input>
+			</div>
+			
+			<!-- <div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>合約</span>
+					</div>
+					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
+					</el-select>
+				</div>
+			</div> -->
+
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
+			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
+		</div>
+
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+
+		<div class="filter-container">
+			<div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>廠商</span>
+					</div>
+					<el-select v-model.number="listQuery.workClass" placeholder="請選擇" popper-class="type-select" style="width: 100px">
+						<el-option v-for="(name, id) in options.WClassMap" :key="id" :value="Number(id)" :label="name" />
+					</el-select>
+				</div>
+			</div>
+			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.workClass) > 0">
+				<span>
+					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="createPdf()">製作派工單</el-button>
+				</span>
+			</el-tooltip>
+		</div>
+
+		<el-table
+			ref="assignTable"
+			empty-text="目前沒有資料"
+			:data="list"
+			:key="deviceTypeNow"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{ 'background-color': '#F2F6FC' }"
+			stripe
+			style="width: 100%"
+			@selection-change="handleCheckedChange"
+		>
+			<el-table-column type="selection" width="60" align="center" fixed>
+				<template slot-scope="{ row, $index }">
+					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
+					<span>{{ $index + 1 }}</span>
+				</template>
+			</el-table-column>
+			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
+			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
+				<template slot-scope="{ row }">
+					<span>{{ row.CaseNo }}</span>
+					<br>
+					<span style="color: #909399; font-size: 12px">{{ row.DName }} ({{ row.CaseType }})</span>
+				</template>
+			</el-table-column>
+
+			<el-table-column
+				v-for="(value, key) in headers"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
+				:min-width="['CaseName'].includes(key) ? 80 : null"
+				:sortable="value.sortable"
+			>
+				<template slot-scope="{ row, column }">
+					<span v-if="[ 'account0' ].includes(column.property)">
+						<span v-if="row.accountflag0 == '1'">{{ row.account0 }}</span>
+						<span v-else>{{ row.elength }} * {{ row.blength }}</span>
+					</span>
+					<span v-else>
+						<span>{{ row[column.property] || "-" }}</span>
+					</span>
+				</template>
+			</el-table-column>
+
+			<!-- 設施 -->
+			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
+				<template slot-scope="{ row }">
+					<el-checkbox v-model="row.isUrgent" />
+				</template>
+			</el-table-column>
+			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
+				<template slot-scope="{ row }">
+					<el-input v-model="row.c5type" />
+				</template>
+			</el-table-column>
+			
+			<el-table-column label="動作" align="center">
+				<template slot-scope="{ row }">
+					<el-button-group>
+						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
+						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<el-button type="info" size="mini" @click="beforeEdit(row)">檢視</el-button>
+					</el-button-group>
+				</template>
+			</el-table-column>
+
+			<el-table-column type="expand" width="1" align="center">
+				<template slot-scope="props">
+				</template>
+			</el-table-column>
+		</el-table>
+
+		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
+
+		<!-- Dialog: 新增套組 -->
+		<el-dialog width="1000px" title="預覽" :visible.sync="showJobTicket">
+
+			<div ref="pdfViewer" />
+
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="showJobTicket = false">取消</el-button>
+				<el-button type="primary" @click="downloadPdf()">確定</el-button>
+			</div>
+		</el-dialog>
+
+		<!-- Dialog: 確認-->
+		<el-dialog width="300px" title="確認" :visible.sync="showConfirm">
+			<span>是否刪除{{ rowActive.serialno }} - {{ rowActive.kitName }} </span>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="showConfirm = false">取消</el-button>
+				<el-button type="primary" @click="editKit()">確定</el-button>
+			</div>
+		</el-dialog>
+	</div>
+</template>
+
+<script>
+import moment from "moment";
+import { jsPDF } from 'jspdf';
+import { applyPlugin } from 'jspdf-autotable';
+applyPlugin(jsPDF);
+// import { font } from '/public/assets/font/NotoSerifCJKtc-Regular-normal.js';
+import { font } from '/public/assets/font/edukai-4.0-normal.js'
+import { Viewer } from '@pdfme/ui';
+import { getDteamMap, getWClassMap } from "@/api/type";
+import { getJobTicketV0 } from "@/api/dispatch";
+import TimePicker from "@/components/TimePicker";
+// import Pagination from "@/components/Pagination";
+
+export default {
+	name: "jobTicket",
+	components: { TimePicker },
+	data() {
+		return {
+			loading: false,
+			showJobTicket: true,
+			showConfirm: false,
+			timeTabId: 1,
+			dateTimePickerVisible: false,
+			screenWidth: window.innerWidth,
+			daterange: [
+				moment().subtract(1, 'd').startOf("day").toDate(),
+				moment().subtract(1, 'd').endOf("day").toDate(),
+			],
+			searchRange: "",
+			deviceTypeNow: 1,
+			listQuery: {
+				filterType: 1,
+				filterStr: null,
+				dteamSN: null,
+				deviceType: 1,
+				workClass: null,
+				// pageCurrent: 1,
+				// pageSize: 50,
+			},
+			headers: {
+				// CaseSN: {
+				// 	name: "申請單號",
+				// 	sortable: true,
+				// },
+				// CaseNo: {
+				// 	name: "案件編號",
+				// 	sortable: true,
+				// },
+				// CaseType: {
+				// 	name: "查報來源",
+				// 	sortable: false,
+				// },
+				// DName: {
+				// 	name: "案件類型",
+				// 	sortable: false,
+				// },
+				company: {
+					name: "廠商",
+					sortable: false
+				},
+				CaseName: {
+					name: "案件地點",
+					sortable: false
+				},
+				assignDate: {
+					name: "主任派工日期",
+					sortable: false
+				},
+				estFinishDate: {
+					name: "預計完工日期",
+					sortable: false
+				},
+				// estWorkingTime: {
+				// 	name: "預計施作時段",
+				// 	sortable: false
+				// },
+				account0: {
+					name: "算式",
+					sortable: false,
+					deviceType: [1, 2]
+				},
+				// elength: {
+				// 	name: "預計長度",
+				// 	sortable: false
+				// },
+				// blength: {
+				// 	name: "預計寬度",
+				// 	sortable: false
+				// },
+				acsum0: {
+					name: "預估面積",
+					sortable: false,
+					deviceType: [1, 2]
+				},
+				delmuch0: {
+					name: "刨鋪深度",
+					sortable: false,
+					deviceType: [1, 2]
+				},
+				tonne: {
+					name: "頓數",
+					sortable: false,
+					deviceType: [1, 2]
+				}
+			},
+			// total: 0,
+			list: [],
+			detail: [],
+			rowActive: {},
+			checkIndeterminate: false,
+			checkList: [],
+			tableSelect: [],
+			options: {
+				DteamMap: {},
+				WClassMap: {},
+				deviceType: {
+					1: "道路",
+					2: "熱再生",
+					3: "設施",
+					4: "標線"
+				},
+				filterType: {
+					1: "合約",
+					2: "通報單號",
+					3: "地點(關鍵字)"
+				}
+			}
+		};
+	},
+	computed: {	},
+	watch: { },
+	async created() {
+		// init jsPDF
+		const readBlob = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  }
+		this.pdfDoc = new jsPDF();
+		const fontBString = await fetch('/assets/font/edukai-4.0.ttf')
+			// .then(res => res.arrayBuffer())
+			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
+			.then(res => res.blob())
+			.then(blob => readBlob(blob))
+			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7));
+		// console.log(fontBString);
+
+		this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+		this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+		this.pdfDoc.setFont("edukai");
+
+		getDteamMap().then(response => {
+			this.options.DteamMap = response.data.DteamMap;
+		});
+	},
+	mounted() {
+		this.showJobTicket = false;
+	},
+	methods: {
+		async handleCheckedChange(val) {
+			this.tableSelect = val;
+			if(this.tableSelect.length == this.list.length) this.tableSelect.forEach((_, index) => this.$set(this.checkList, index, true));
+			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
+		},
+		cellCheckBox(row, index) {
+			if(this.checkList[index]) this.$refs.assignTable.toggleRowSelection(row, true);
+			else this.$refs.assignTable.toggleRowSelection(row, false);
+		},
+		toggleExpand(row) {
+			this.$refs.assignTable.toggleRowExpansion(row)
+		},
+		getList() {
+			this.loading = true;
+			this.list = [];
+			this.listQuery.workClass = null;
+			this.options.WClassMap = {};
+
+			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
+
+			getJobTicketV0({
+				dteamSN: this.listQuery.filterType == 1 ? this.listQuery.dteamSN : null,
+				reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				deviceType: this.listQuery.deviceType,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+			}).then(response => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+					this.total = 0;
+				} else {
+					this.list = response.data.list;
+					this.checkList = Array.from({ length: this.list.length }, () => false);
+					this.deviceTypeNow = this.listQuery.deviceType;
+
+					this.list.forEach(l => {
+					// 	l.reccreatetime = this.formatTime(l.reccreatetime);
+						// this.$set(l, "detailTime", false);
+						// this.$set(l, "isUrgent", false);
+						this.$set(l, "tonne", Math.round(l.acsum0*l.delmuch0*0.01*2.36*10) / 10);
+					})
+
+					getWClassMap({ deviceType: this.listQuery.deviceType}).then(response => {
+						this.options.WClassMap = response.data.wClassMap;
+					})
+				}
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
+		formatTime(time) {
+			return moment(time).format("YYYY-MM-DD HH:MM:ss");
+		},
+		async createPdf() {
+			this.pdfDoc.addPage();
+			this.pdfDoc.deletePage(1);
+
+			const fontSize = 14;
+			const lineSize = (fontSize + 2) * 0.35;
+			const [ width, height ] = [ 210, 297 ];
+
+			this.pdfDoc.setFontSize(fontSize+4);
+			this.pdfDoc.setCharSpace(2);
+			this.pdfDoc.text('道路(AC) 維修派工單', (width - 50 * 2 + lineSize * 4) /2, 20);
+			this.pdfDoc.setFontSize(fontSize);
+			this.pdfDoc.setCharSpace(0);
+			const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
+			this.pdfDoc.text(`${today} 派工單號：-------`, width - 50 - lineSize * 12, lineSize + 30);
+			this.pdfDoc.autoTable({ 
+				head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+				body: this.tableSelect.map((l, i) => [i+1, l.assignDate, l.CaseNo, l.BTName, l.CaseName, l.accountflag0 == '1' ? l.account0 : `${l.elength}*${l.blength}`, l.acsum0, l.delmuch0, l.tonne ]),
+				styles: { font: "edukai", lineWidth: 0.2 },
+				headStyles: { halign: 'center' },
+				startY:  lineSize * 2 + 30
+			});
+
+			this.pdfDoc.setLineDashPattern([2, 1], 0);
+			this.pdfDoc.setDrawColor('#999999');
+			this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
+			this.pdfDoc.setLineDashPattern([0], 0);
+
+			const splitTable = this.tableSelect.reduce((acc, cur) => {
+				if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+				else acc.push([cur]);
+				return acc;
+			}, [[]]);
+
+			for(const [index, table] of splitTable.entries()) {
+				let startY = this.pdfDoc.lastAutoTable.finalY + 20 * Number(index == 0);
+				if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
+				console.log(startY);
+
+				this.pdfDoc.autoTable({ 
+					head: [ table.map(l => l.CaseNo) ],
+					body: [ table.map(l => l.PicPath3) ],
+					theme: 'plain',
+					styles: { font: "edukai", lineWidth: 0.2 },
+					headStyles: { halign: 'center' },
+					bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
+					didDrawCell: async (data) => {
+						if(data.cell.section === 'body') {
+							// console.log(data);
+							this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+						}
+					},
+					startY
+				});
+			}
+
+			this.showJobTicket = true;
+			new Viewer({ 
+				domContainer: this.$refs.pdfViewer, 
+				template: { 
+					basePdf: this.pdfDoc.output('bloburl'), 
+					schemas: [{ }]
+				},
+				inputs: [{ }] 
+			});
+			// this.$refs.pdfViewer.setAttribute('src', pdfDoc.output('bloburl'));
+			// pdfDoc.output('dataurlnewwindow'); 
+
+			// this.pdfDoc.save("維修派工單.pdf");
+			// const blob = new Blob([pdfBytes.buffer], { type: 'application/pdf' });
+			// window.open(URL.createObjectURL(blob));
+
+			// TODO: 下載PDF
+			// const filename = "維修派工單.pdf"; 
+			// const file = new File([blob], filename, { type: 'application/pdf' });
+			// const link = document.createElement('a');
+			// const url = URL.createObjectURL(file);
+			// link.href = url;
+			// link.download = file.name;
+			// document.body.appendChild(link);
+			// link.click();
+			// document.body.removeChild(link);
+			// URL.revokeObjectURL(url);
+		},
+		downloadPdf() {
+			this.pdfDoc.save("維修派工單.pdf");
+		},
+		async handleDownload() {
+			// await this.dateWatcher();
+
+			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+
+			getRoadUnit({
+				pageCurrent: 1,
+				pageSize: this.total
+			}).then((response) => {
+				let list = response.data.list;
+				list.forEach(l => l.dist = this.districtList[l.zip].name);
+
+				const tHeader = Object.values(this.headers).map((h) => h.name);
+				const filterVal = Object.keys(this.headers);
+				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+				const data = this.formatJson(filterVal, list);
+
+				import("@/vendor/Export2Excel").then((excel) => {
+					excel.export_json_to_excel({
+						header: tHeader,
+						data,
+					});
+				});
+			});
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		},
+	},
+};
+</script>
+
+<style lang="sass">
+*
+	// border: 1px solid #000
+	// box-sizing: border-box
+.job-ticket
+	.filter-container
+		.filter-item
+			margin-right: 5px
+			.select-contract
+				.el-select:first-child .el-input__inner
+					background-color: #F5F7FA
+					color: #909399
+					border-right: none
+					border-top-right-radius: 0
+					border-bottom-right-radius: 0
+					&:focus
+						border-color: #DCDFE6
+				.el-select:last-child .el-input__inner
+					border-top-left-radius: 0
+					border-bottom-left-radius: 0
+					padding-left: 10px
+					text-align: left
+			.el-select
+				width: 110px
+				.el-input__inner
+					padding-left: 3px
+					padding-right: 10px
+					text-align: center
+				.el-input__suffix
+					right: 0
+					// margin-right: -5px
+					transform: scale(0.7)
+				&.dteam-select
+					width: 520px
+	.el-table
+		.input-length, .input-width
+			max-width: 60px
+		.btn-tag
+			cursor: pointer
+	.btn-dialog
+		padding: 5px 5px
+</style>

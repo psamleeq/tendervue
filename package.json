@@ -41,6 +41,8 @@
 		"js-cookie": "2.2.0",
 		"jschardet": "^3.0.0",
 		"jsonlint": "1.6.3",
+		"jspdf": "^2.5.1",
+		"jspdf-autotable": "^3.5.28",
 		"jszip": "3.2.1",
 		"moment": "^2.29.4",
 		"normalize.css": "7.0.0",

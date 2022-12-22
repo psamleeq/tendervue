@@ -34,3 +34,12 @@ export function getDispatchList(query) {
 		params: query
 	})
 }
+
+// 廠商派工單列表
+export function getJobTicketV0(query) {
+	return request({
+		url: '/dispatchV0/jobTicket',
+		method: 'get',
+		params: query
+	})
+}
