@@ -25,9 +25,19 @@ const dispatchRouter = {
 			}
 		},
 		{
-			path: 'assign',
-			component: () => import('@/views/dispatch/assign'),
-			name: 'assign',
+			path: 'planV0',
+			component: () => import('@/views/dispatch/plan_rm100'),
+			name: 'planV0',
+			meta: {
+				title: '主任派工_V0',
+				roles: ['beta'],
+				vTag: 'Alpha'
+			}
+		},
+		{
+			path: 'plan',
+			component: () => import('@/views/dispatch/plan'),
+			name: 'plan',
 			meta: {
 				title: '主任派工',
 				roles: ['beta'],

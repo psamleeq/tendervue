@@ -13,7 +13,10 @@
 				</div>
 			</div>
 
-			<time-picker class="filter-item" shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			<span class="filter-item">
+				<div style="font-size: 12px; color: #909399">成案日期</div>
+				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			</span>
 			<br />
 
 			<div class="filter-item">
@@ -86,7 +89,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column type="selection" width="55" align="center" fixed>
+			<el-table-column type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
 					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
@@ -98,7 +101,7 @@
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
 					<br>
-					<span style="color: #909399; font-size: 12px">{{ row.DName }} ({{ row.CaseType }})</span>
+					<span style="color: #909399; font-size: 12px">{{ row.DName }} ({{ row.casetype }})</span>
 				</template>
 			</el-table-column>
 
@@ -108,14 +111,14 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['estFinishDate'].includes(key) ? 220 : null"
-				:min-width="['CaseName'].includes(key) ? 80 : null"
+				:width="['DateDeadline'].includes(key) ? 220 : null"
+				:min-width="['Place'].includes(key) ? 80 : null"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
-					<span v-if="[ 'estFinishDate' ].includes(column.property)">
+					<span v-if="[ 'DateDeadline' ].includes(column.property)">
 						<el-row type="flex" align="middle">
-							<el-col :span="18"><el-date-picker v-model="row.estFinishDate" type="date" placeholder="選擇日期" style="width: 100%" /></el-col>
+							<el-col :span="18"><el-date-picker v-model="row.DateDeadline" type="date" placeholder="選擇日期" style="width: 100%" /></el-col>
 							<el-col :span="6"><el-tag class="btn-tag" :type="row.detailTime ? 'success': 'info'" @click="row.detailTime = !row.detailTime">時段</el-tag></el-col>
 						</el-row>
 						<el-time-picker v-if="row.detailTime" v-model="row.estWorkingTime" is-range range-separator="至"  start-placeholder="開始時間" end-placeholder="結束時間" placeholder="選擇時間" style="width: 100%" />
@@ -129,34 +132,34 @@
 			<!-- 道路、熱再生 -->
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
 				<template slot-scope="{ row }">
-					<el-row v-if="row.accountflag0 == '1'" :gutter="5" type="flex" align="middle">
-						<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.accountflag0 = '0'; calArea(row);">自訂</el-tag></el-col>
-						<el-col :span="20"><el-input v-model="row.account0" @change="calArea(row)" /></el-col>
+					<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
+						<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
+						<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
 					</el-row>
 					<el-row v-else :gutter="5" type="flex" align="middle">
-						<el-col :span="4"><el-tag class="btn-tag" @click="row.accountflag0 = '1'; calArea(row);">簡單</el-tag></el-col>
-						<el-col :span="8"><el-input v-model="row.elength" @change="calArea(row)" /></el-col>
+						<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
+						<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
 						<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
-						<el-col :span="8"><el-input v-model="row.blength" @change="calArea(row)" /></el-col>
+						<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
 					</el-row>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="85" align="center">
 				<template slot-scope="{ row }">
 					<!-- <el-input v-model="row.acsum0" /> -->
-					<span>{{ row.acsum0 }}</span>
+					<span>{{ row.MillingArea }}</span>
 				</template>
 			</el-table-column>
 
 			<!-- 設施 -->
 			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
 				<template slot-scope="{ row }">
-					<el-checkbox v-model="row.isUrgent" />
+					<el-checkbox v-model="row.isPressing" />
 				</template>
 			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
 				<template slot-scope="{ row }">
-					<el-input v-model="row.c5type" />
+					<el-input v-model="row.Notes" />
 				</template>
 			</el-table-column>
 			
@@ -249,11 +252,11 @@ export default {
 				// 	name: "案件類型",
 				// 	sortable: false,
 				// },
-				CaseName: {
+				Place: {
 					name: "案件地點",
 					sortable: false
 				},
-				estFinishDate: {
+				DateDeadline: {
 					name: "預計完工日期",
 					sortable: false
 				},
@@ -369,9 +372,9 @@ export default {
 					this.deviceTypeNow = this.listQuery.deviceType;
 
 					this.list.forEach(l => {
-					// 	l.reccreatetime = this.formatTime(l.reccreatetime);
+						l.DateDeadline = this.formatTime(l.DateDeadline);
 						this.$set(l, "detailTime", false);
-						this.$set(l, "isUrgent", false);
+						this.$set(l, "editFormula", l.MillingFormula != '0');
 					// 	this.$set(l, "editNote", false);
 					})
 
@@ -383,13 +386,13 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		calArea(row) {
-			const replaceObj = { " ": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
+			const replaceObj = { " ": "", "m": "", "M": "", "=": "", "＝": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
 			"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
 			
-			if(row.accountflag0 == '1') {
-				for(const key in replaceObj) row.account0 = row.account0.replaceAll(key, replaceObj[key]);
-				row.acsum0 = Math.round(new Function(`return ${row.account0}`)() * 100) / 100 || "-";
-			} else row.acsum0 = row.elength * row.blength || "-";
+			if(row.editFormula) {
+				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
+				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100 || "-";
+			} else row.MillingArea = row.MillingLength * row.MillingWidth || "-";
 		},
 		beforeEdit(row) {
 			this.rowActive = row; 
@@ -400,7 +403,8 @@ export default {
 
 		},
 		formatTime(time) {
-			return moment(time).format("YYYY-MM-DD HH:MM:ss");
+			const m = moment(time);
+			return m.isValid() ? m.format("YYYY/MM/DD") : "" ;
 		},
 		async handleDownload() {
 			// await this.dateWatcher();

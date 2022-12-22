@@ -70,7 +70,7 @@
 					</el-form>
 				</el-card>
 			</el-col>
-			<el-col :span="14" ref="container" />
+			<el-col :span="14" ref="container" id="container" />
 		</el-row>
 	</div>
 </template>
@@ -79,7 +79,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument } from 'pdf-lib';
 // import { getCaseCount } from "@/api/PI";
 
 export default {

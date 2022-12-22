@@ -182,7 +182,7 @@
 <script>
 import moment from "moment";
 import { getDteamMap, getKitItemMap } from "@/api/type";
-import { getCostKit, getCostKitDetail } from "@/api/dispatch";
+import { getCostKitV0, getCostKitDetailV0 } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 
@@ -297,7 +297,7 @@ export default {
 			} else {
 				this.loading = true;
 				this.list = [];
-				getCostKit({
+				getCostKitV0({
 					dteamSN: this.listQuery.dteamSN,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
@@ -334,7 +334,7 @@ export default {
 			this.detail = [];
 			Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isEdit: true });
 			
-			getCostKitDetail({
+			getCostKitDetailV0({
 				kitSN: this.rowActive.serialno,
 			}).then((response) => {
 				this.detail = response.data.list;

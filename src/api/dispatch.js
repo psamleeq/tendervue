@@ -1,24 +1,32 @@
 import request from '@/utils/request'
 
 // 套組列表
-export function getCostKit(query) {
+export function getCostKitV0(query) {
 	return request({
-		url: '/dispatch/kit',
+		url: '/dispatchV0/kit',
 		method: 'get',
 		params: query
 	})
 }
 
 // 套組細項
-export function getCostKitDetail(query) {
+export function getCostKitDetailV0(query) {
 	return request({
-		url: '/dispatch/kitDetail',
+		url: '/dispatchV0/kitDetail',
 		method: 'get',
 		params: query
 	})
 }
 
-// 可派工列表
+// 主任派工列表
+export function getDispatchListV0(query) {
+	return request({
+		url: '/dispatchV0/list',
+		method: 'get',
+		params: query
+	})
+}
+
 export function getDispatchList(query) {
 	return request({
 		url: '/dispatch/list',
