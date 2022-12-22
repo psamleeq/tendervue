@@ -447,6 +447,18 @@ export default {
 	.filter-container
 		.filter-item
 			margin-right: 5px
+			.el-select
+				width: 110px
+				.el-input__inner
+					padding-left: 3px
+					padding-right: 10px
+					text-align: center
+				.el-input__suffix
+					right: 0
+					// margin-right: -5px
+					transform: scale(0.7)
+				&.dteam-select
+					width: 520px
 			.select-contract
 				.el-select:first-child .el-input__inner
 					background-color: #F5F7FA
@@ -461,18 +473,6 @@ export default {
 					border-bottom-left-radius: 0
 					padding-left: 10px
 					text-align: left
-			.el-select
-				width: 110px
-				.el-input__inner
-					padding-left: 3px
-					padding-right: 10px
-					text-align: center
-				.el-input__suffix
-					right: 0
-					// margin-right: -5px
-					transform: scale(0.7)
-				&.dteam-select
-					width: 520px
 	.el-table
 		.input-length, .input-width
 			max-width: 60px
