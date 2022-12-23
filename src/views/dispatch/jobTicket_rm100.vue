@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container job-ticket" v-loading="loading">
+	<div class="app-container job-ticket-V0" v-loading="loading">
 		<h2>製作派工單</h2>
 		<div class="filter-container">
 			<div class="filter-item">
@@ -182,8 +182,6 @@ import moment from "moment";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
-// import { font } from '/public/assets/font/NotoSerifCJKtc-Regular-normal.js';
-import { font } from '/public/assets/font/edukai-4.0-normal.js'
 import { Viewer } from '@pdfme/ui';
 import { getDteamMap, getWClassMap } from "@/api/type";
 import { getJobTicketV0 } from "@/api/dispatch";
@@ -191,7 +189,7 @@ import TimePicker from "@/components/TimePicker";
 // import Pagination from "@/components/Pagination";
 
 export default {
-	name: "jobTicket",
+	name: "jobTicketV0",
 	components: { TimePicker },
 	data() {
 		return {
@@ -461,24 +459,6 @@ export default {
 				},
 				inputs: [{ }] 
 			});
-			// this.$refs.pdfViewer.setAttribute('src', pdfDoc.output('bloburl'));
-			// pdfDoc.output('dataurlnewwindow'); 
-
-			// this.pdfDoc.save("維修派工單.pdf");
-			// const blob = new Blob([pdfBytes.buffer], { type: 'application/pdf' });
-			// window.open(URL.createObjectURL(blob));
-
-			// TODO: 下載PDF
-			// const filename = "維修派工單.pdf"; 
-			// const file = new File([blob], filename, { type: 'application/pdf' });
-			// const link = document.createElement('a');
-			// const url = URL.createObjectURL(file);
-			// link.href = url;
-			// link.download = file.name;
-			// document.body.appendChild(link);
-			// link.click();
-			// document.body.removeChild(link);
-			// URL.revokeObjectURL(url);
 		},
 		downloadPdf() {
 			this.pdfDoc.save("維修派工單.pdf");
@@ -521,7 +501,7 @@ export default {
 *
 	// border: 1px solid #000
 	// box-sizing: border-box
-.job-ticket
+.job-ticket-V0
 	.filter-container
 		.filter-item
 			margin-right: 5px

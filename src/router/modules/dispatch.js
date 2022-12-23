@@ -15,11 +15,11 @@ const dispatchRouter = {
 	},
 	children: [
 		{
-			path: 'kit',
-			component: () => import('@/views/dispatch/kit'),
-			name: 'kit',
+			path: 'kitV0',
+			component: () => import('@/views/dispatch/kit_rm100'),
+			name: 'kitV0',
 			meta: { 
-				title: '計價套組', 
+				title: '計價套組_V0', 
 				roles: ['beta'],
 				vTag: 'Alpha' 
 			}

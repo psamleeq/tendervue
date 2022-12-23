@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container case-assign" v-loading="loading">
-		<h2>主任派工</h2>
+	<div class="app-container case-plan-V0" v-loading="loading">
+		<h2>主任派工_V0</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -209,7 +209,7 @@ import TimePicker from "@/components/TimePicker";
 // import Pagination from "@/components/Pagination";
 
 export default {
-	name: "caseAssign",
+	name: "casePlanV0",
 	components: { TimePicker },
 	data() {
 		return {
@@ -443,7 +443,7 @@ export default {
 *
 	// border: 1px solid #000
 	// box-sizing: border-box
-.case-assign
+.case-plan-V0
 	.filter-container
 		.filter-item
 			margin-right: 5px

@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container cost-kit" v-loading="loading">
-		<h2>計價套組</h2>
+	<div class="app-container cost-kit-V0" v-loading="loading">
+		<h2>計價套組_V0</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -187,7 +187,7 @@ import { getCostKitV0, getCostKitDetailV0 } from "@/api/dispatch";
 import Pagination from "@/components/Pagination";
 
 export default {
-	name: "costKit",
+	name: "costKitV0",
 	components: { Pagination },
 	data() {
 		return {
@@ -438,7 +438,7 @@ export default {
 // 	border: 1px solid #000
 // 	box-sizing: border-box
 
-.cost-kit
+.cost-kit-V0
 	.filter-container
 		.filter-item
 			margin-right: 5px

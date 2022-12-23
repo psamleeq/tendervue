@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container case-assign" v-loading="loading">
+	<div class="app-container case-plan" v-loading="loading">
 		<h2>主任派工</h2>
 		<div class="filter-container">
 			<div class="filter-item">
@@ -444,7 +444,7 @@ export default {
 *
 	// border: 1px solid #000
 	// box-sizing: border-box
-.case-assign
+.case-plan
 	.filter-container
 		.filter-item
 			margin-right: 5px
