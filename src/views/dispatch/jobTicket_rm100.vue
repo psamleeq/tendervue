@@ -275,7 +275,7 @@ export default {
 					deviceType: [1, 2]
 				},
 				tonne: {
-					name: "頓數",
+					name: "噸數",
 					sortable: false,
 					deviceType: [1, 2]
 				}
@@ -411,11 +411,43 @@ export default {
 			const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
 			this.pdfDoc.text(`${today} 派工單號：-------`, width - 50 - lineSize * 12, lineSize + 30);
 			this.pdfDoc.autoTable({ 
-				head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
-				body: this.tableSelect.map((l, i) => [i+1, l.assignDate, l.CaseNo, l.BTName, l.CaseName, l.accountflag0 == '1' ? l.account0 : `${l.elength}*${l.blength}`, l.acsum0, l.delmuch0, l.tonne ]),
+				// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+				body: this.tableSelect.map((l, i) => ({ 
+					order: i+1, 
+					assignDate: l.assignDate, 
+					CaseNo: l.CaseNo, 
+					BTName: l.BTName, 
+					CaseName: l.CaseName, 
+					account0: (l.accountflag0 == '1') ? l.account0 : `${l.elength}*${l.blength}`, 
+					acsum0: l.acsum0, 
+					delmuch0: l.delmuch0,
+					tonne: l.tonne 
+				})),
+				columns: [
+					{ header: '順序', dataKey: 'order' },
+					{ header: '主任派工日', dataKey: 'assignDate' },
+					{ header: '道管編號', dataKey: 'CaseNo' },
+					{ header: '損壞類別', dataKey: 'BTName' },
+					{ header: '維修地點', dataKey: 'CaseName' },
+					{ header: '算式', dataKey: 'account0' },
+					{ header: '面積', dataKey: 'acsum0' },
+					{ header: '深度', dataKey: 'delmuch0' },
+					{ header: '噸數', dataKey: 'tonne' }
+				],
 				styles: { font: "edukai", lineWidth: 0.2 },
 				headStyles: { halign: 'center' },
-				startY:  lineSize * 2 + 30
+				columnStyles: {
+					order: { halign: 'center', valign: 'middle', cellWidth: 12 },
+					assignDate: { halign: 'center', valign: 'middle', cellWidth: 24 },
+					CaseNo: { halign: 'center', valign: 'middle', cellWidth: 26 },
+					BTName: { halign: 'center', valign: 'middle', cellWidth: 20 },
+					CaseName: { cellWidth: 30 },
+					acsum0: { halign: 'center', valign: 'middle', cellWidth: 14 },
+					delmuch0: { halign: 'center', valign: 'middle', cellWidth: 14 },
+					tonne: { halign: 'center', valign: 'middle', cellWidth: 14 }
+				},
+				startY:  lineSize * 2 + 30,
+				rowPageBreak: 'avoid'
 			});
 
 			this.pdfDoc.setLineDashPattern([2, 1], 0);
@@ -430,8 +462,8 @@ export default {
 			}, [[]]);
 
 			for(const [index, table] of splitTable.entries()) {
-				let startY = this.pdfDoc.lastAutoTable.finalY + 20 * Number(index == 0);
-				if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
+				let startY = this.pdfDoc.lastAutoTable.finalY + 15 * Number(index == 0);
+				// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
 				// console.log(startY);
 
 				this.pdfDoc.autoTable({ 
@@ -447,7 +479,8 @@ export default {
 							this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 						}
 					},
-					startY
+					startY ,
+					pageBreak: 'avoid'
 				});
 			}
 
