@@ -375,6 +375,7 @@ export default {
 					// 	l.reccreatetime = this.formatTime(l.reccreatetime);
 						this.$set(l, "detailTime", false);
 						this.$set(l, "isUrgent", false);
+						l.estFinishDate = (l.estFinishDate == '0') ? moment(Number(l.CaseNo.substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').toDate() : l.estFinishDate;
 					// 	this.$set(l, "editNote", false);
 					})
 

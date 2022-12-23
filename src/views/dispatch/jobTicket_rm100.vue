@@ -106,7 +106,7 @@
 			</el-table-column>
 
 			<el-table-column
-				v-for="(value, key) in headers"
+				v-for="(value, key) in headersFilter"
 				:key="key"
 				:prop="key"
 				:label="value.name"
@@ -124,24 +124,12 @@
 					</span>
 				</template>
 			</el-table-column>
-
-			<!-- 設施 -->
-			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
-				<template slot-scope="{ row }">
-					<el-checkbox v-model="row.isUrgent" />
-				</template>
-			</el-table-column>
-			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
-				<template slot-scope="{ row }">
-					<el-input v-model="row.c5type" />
-				</template>
-			</el-table-column>
 			
 			<el-table-column label="動作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
-						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<!-- <el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button> -->
 						<el-button type="info" size="mini" @click="beforeEdit(row)">檢視</el-button>
 					</el-button-group>
 				</template>
@@ -156,7 +144,7 @@
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
 		<!-- Dialog: 新增套組 -->
-		<el-dialog width="1000px" title="預覽" :visible.sync="showJobTicket">
+		<el-dialog width="800px" title="預覽" :visible.sync="showJobTicket">
 
 			<div ref="pdfViewer" />
 
@@ -182,7 +170,7 @@ import moment from "moment";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
-import { Viewer } from '@pdfme/ui';
+import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getDteamMap, getWClassMap } from "@/api/type";
 import { getJobTicketV0 } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
@@ -254,7 +242,7 @@ export default {
 				account0: {
 					name: "算式",
 					sortable: false,
-					deviceType: [1, 2]
+					deviceTypeFilter: [1, 2]
 				},
 				// elength: {
 				// 	name: "預計長度",
@@ -267,17 +255,27 @@ export default {
 				acsum0: {
 					name: "預估面積",
 					sortable: false,
-					deviceType: [1, 2]
+					deviceTypeFilter: [1, 2]
 				},
 				delmuch0: {
 					name: "刨鋪深度",
 					sortable: false,
-					deviceType: [1, 2]
+					deviceTypeFilter: [1, 2]
 				},
 				tonne: {
 					name: "噸數",
 					sortable: false,
-					deviceType: [1, 2]
+					deviceTypeFilter: [1, 2]
+				},
+				isUrgent: {
+					name: "急件",
+					sortable: false,
+					deviceTypeFilter: [ 3 ]
+				},
+				c5type: {
+					name: "工程概述",
+					sortable: false,
+					deviceTypeFilter: [ 3 ]
 				}
 			},
 			// total: 0,
@@ -304,27 +302,40 @@ export default {
 			}
 		};
 	},
-	computed: {	},
+	computed: {	
+		headersFilter() {
+			let headersFilter = {};
+			Object.keys(this.headers).forEach(key => {
+				const props = this.headers[key];
+				if(!props.hasOwnProperty('deviceTypeFilter')) headersFilter[key] = props;
+				else if(props.deviceTypeFilter.includes(this.deviceTypeNow)) headersFilter[key] = props;
+			})
+			return headersFilter
+		}
+	},
 	watch: { },
 	async created() {
-		// init jsPDF
+		// 讀入字型
 		const readBlob = (blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  }
-		this.pdfDoc = new jsPDF();
-		const fontBString = await fetch('/assets/font/edukai-4.0.ttf')
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onloadend = () => resolve(reader.result);
+				reader.readAsDataURL(blob);
+			});
+		};
+
+		this.fontBString = await fetch('/assets/font/edukai-4.0.ttf')
 			// .then(res => res.arrayBuffer())
 			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
 			.then(res => res.blob())
 			.then(blob => readBlob(blob))
 			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7));
-		// console.log(fontBString);
+			// console.log(this.fontBString);
+		
+		// init jsPDF
+		this.pdfDoc = new jsPDF();
 
-		this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+		this.pdfDoc.addFileToVFS("edukai.ttf", this.fontBString);
 		this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
 		this.pdfDoc.setFont("edukai");
 
@@ -334,6 +345,18 @@ export default {
 	},
 	mounted() {
 		this.showJobTicket = false;
+
+		this.$nextTick(() => {
+			// init Viewer
+			this.viewer = new Viewer({ 
+				domContainer: this.$refs.pdfViewer, 
+				template: { 
+					basePdf: BLANK_PDF,
+					schemas: [{ }]
+				},
+				inputs: [{ }] 
+			});
+		});
 	},
 	methods: {
 		async handleCheckedChange(val) {
@@ -381,6 +404,7 @@ export default {
 					// 	l.reccreatetime = this.formatTime(l.reccreatetime);
 						// this.$set(l, "detailTime", false);
 						// this.$set(l, "isUrgent", false);
+						l.estFinishDate = (l.estFinishDate == '0') ? moment(Number(l.CaseNo.substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY/MM/DD") : l.estFinishDate;
 						this.$set(l, "tonne", Math.round(l.acsum0*l.delmuch0*0.01*2.36*10) / 10);
 					})
 
@@ -399,10 +423,11 @@ export default {
 			this.pdfDoc.addPage();
 			while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 
+			// PDF排版
 			const fontSize = 14;
 			const lineSize = (fontSize + 2) * 0.35;
 			const { width, height } = this.pdfDoc.internal.pageSize;
-
+			
 			this.pdfDoc.setFontSize(fontSize+4);
 			this.pdfDoc.setCharSpace(2);
 			this.pdfDoc.text('道路(AC) 維修派工單', (width - 50 * 2 + lineSize * 4) /2, 20);
@@ -462,7 +487,7 @@ export default {
 			}, [[]]);
 
 			for(const [index, table] of splitTable.entries()) {
-				let startY = this.pdfDoc.lastAutoTable.finalY + 15 * Number(index == 0);
+				let startY = this.pdfDoc.lastAutoTable.finalY + 20 * Number(index == 0);
 				// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
 				// console.log(startY);
 
@@ -484,16 +509,12 @@ export default {
 				});
 			}
 
+			this.viewer.updateTemplate({ 
+				basePdf: this.pdfDoc.output('bloburl'), 
+				schemas: [{ }]
+			});
 			this.loading = false;
 			this.showJobTicket = true;
-			new Viewer({ 
-				domContainer: this.$refs.pdfViewer, 
-				template: { 
-					basePdf: this.pdfDoc.output('bloburl'), 
-					schemas: [{ }]
-				},
-				inputs: [{ }] 
-			});
 		},
 		downloadPdf() {
 			this.pdfDoc.save("維修派工單.pdf");
