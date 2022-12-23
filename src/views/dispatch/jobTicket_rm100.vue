@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container job-ticket-V0" v-loading="loading">
-		<h2>製作派工單</h2>
+		<h2>製作派工單_V0</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -395,12 +395,13 @@ export default {
 			return moment(time).format("YYYY-MM-DD HH:MM:ss");
 		},
 		async createPdf() {
+			this.loading = true;
 			this.pdfDoc.addPage();
-			this.pdfDoc.deletePage(1);
+			while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 
 			const fontSize = 14;
 			const lineSize = (fontSize + 2) * 0.35;
-			const [ width, height ] = [ 210, 297 ];
+			const { width, height } = this.pdfDoc.internal.pageSize;
 
 			this.pdfDoc.setFontSize(fontSize+4);
 			this.pdfDoc.setCharSpace(2);
@@ -431,7 +432,7 @@ export default {
 			for(const [index, table] of splitTable.entries()) {
 				let startY = this.pdfDoc.lastAutoTable.finalY + 20 * Number(index == 0);
 				if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
-				console.log(startY);
+				// console.log(startY);
 
 				this.pdfDoc.autoTable({ 
 					head: [ table.map(l => l.CaseNo) ],
@@ -450,6 +451,7 @@ export default {
 				});
 			}
 
+			this.loading = false;
 			this.showJobTicket = true;
 			new Viewer({ 
 				domContainer: this.$refs.pdfViewer, 
