@@ -71,7 +71,7 @@
 			</div>
 			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.workClass) > 0">
 				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="createPdf()">製作派工單</el-button>
+					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="previewPdf()">製作派工單</el-button>
 				</span>
 			</el-tooltip>
 		</div>
@@ -430,121 +430,129 @@ export default {
 			return moment(time).format("YYYY-MM-DD HH:MM:ss");
 		},
 		async createPdf() {
-			this.loading = true;
-			
-			// PDF排版
-			const fontSize = 14;
-			const lineSize = (fontSize + 2) * 0.35;
-			const { width, height } = this.pdfDoc.internal.pageSize;
+			return new Promise((resolve, reject) => {
+				// PDF排版
+				const fontSize = 14;
+				const lineSize = (fontSize + 2) * 0.35;
+				const { width, height } = this.pdfDoc.internal.pageSize;
 
-			const splitTable = this.tableSelect.reduce((acc, cur) => {
-				if(acc[acc.length-1].length < 8) acc[acc.length-1].push(cur);
-				else acc.push([cur]);
-				return acc;
-			}, [[]]);
-
-			for(const [ pageIndex, table ] of splitTable.entries()) {
-				this.pdfDoc.addPage();
-				while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
-
-				this.pdfDoc.setFontSize(fontSize+4);
-				this.pdfDoc.setCharSpace(2);
-				this.pdfDoc.text(`${this.options.deviceType[this.deviceTypeNow]} 維修派工單`, width / 2, 20, { align: 'center' });
-				this.pdfDoc.setFontSize(fontSize);
-				this.pdfDoc.setCharSpace(0);
-				const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
-				this.pdfDoc.text(`${today} 派工單號：-------`, width - 15, lineSize + 25, { align: 'right' });
-
-				this.pdfDoc.autoTable({ 
-					// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
-					body: table.map((l, i) => ({ 
-						order: (i+1) + 8*pageIndex, 
-						assignDate: l.assignDate, 
-						CaseNo: l.CaseNo, 
-						BTName: l.BTName, 
-						CaseName: l.CaseName, 
-						account0: (l.accountflag0 == '1') ? l.account0 : `${l.elength}*${l.blength}`, 
-						acsum0: l.acsum0, 
-						delmuch0: l.delmuch0,
-						tonne: l.tonne 
-					})),
-					columns: [
-						{ header: '順序', dataKey: 'order' },
-						{ header: '主任派工日', dataKey: 'assignDate' },
-						{ header: '道管編號', dataKey: 'CaseNo' },
-						{ header: '損壞類別', dataKey: 'BTName' },
-						{ header: '維修地點', dataKey: 'CaseName' },
-						{ header: '算式', dataKey: 'account0' },
-						{ header: '面積', dataKey: 'acsum0' },
-						{ header: '深度', dataKey: 'delmuch0' },
-						{ header: '噸數', dataKey: 'tonne' }
-					],
-					styles: { font: "edukai", lineWidth: 0.2 },
-					headStyles: { halign: 'center' },
-					columnStyles: {
-						order: { halign: 'center', valign: 'middle', cellWidth: 12 },
-						assignDate: { halign: 'center', valign: 'middle', cellWidth: 24 },
-						CaseNo: { halign: 'center', valign: 'middle', cellWidth: 26 },
-						BTName: { halign: 'center', valign: 'middle', cellWidth: 20 },
-						CaseName: { cellWidth: 30 },
-						acsum0: { halign: 'center', valign: 'middle', cellWidth: 14 },
-						delmuch0: { halign: 'center', valign: 'middle', cellWidth: 14 },
-						tonne: { halign: 'center', valign: 'middle', cellWidth: 14 }
-					},
-					startY:  lineSize * 2 + 25,
-					rowPageBreak: 'avoid'
-				});
-
-				// this.pdfDoc.setLineDashPattern([2, 1], 0);
-				// this.pdfDoc.setDrawColor('#999999');
-				// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
-				// this.pdfDoc.setLineDashPattern([0], 0);
-
-				const splitImgTable = table.reduce((acc, cur) => {
-					if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+				const splitTable = this.tableSelect.reduce((acc, cur) => {
+					if(acc[acc.length-1].length < 8) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
 				}, [[]]);
 
-				for(const [imgIndex, imgTable] of splitImgTable.entries()) {
-					// let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
-					// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
-					// console.log(startY);
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+
+					this.pdfDoc.setFontSize(fontSize+4);
+					this.pdfDoc.setCharSpace(2);
+					this.pdfDoc.text(`${this.options.deviceType[this.deviceTypeNow]} 維修派工單`, width / 2, 20, { align: 'center' });
+					this.pdfDoc.setFontSize(fontSize);
+					this.pdfDoc.setCharSpace(0);
+					const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
+					this.pdfDoc.text(`${today} 派工單號：-------`, width - 15, lineSize + 25, { align: 'right' });
 
 					this.pdfDoc.autoTable({ 
-						head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
-						// body: [ imgTable.map(l => l.PicPath3) ],
-						body: [ imgTable.map(l => l.CaseNo) ],
-						theme: 'plain',
+						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						body: table.map((l, i) => ({ 
+							order: (i+1) + 8*pageIndex, 
+							assignDate: l.assignDate, 
+							CaseNo: l.CaseNo, 
+							BTName: l.BTName, 
+							CaseName: l.CaseName, 
+							account0: (l.accountflag0 == '1') ? l.account0 : `${l.elength}*${l.blength}`, 
+							acsum0: l.acsum0, 
+							delmuch0: l.delmuch0,
+							tonne: l.tonne 
+						})),
+						columns: [
+							{ header: '順序', dataKey: 'order' },
+							{ header: '主任派工日', dataKey: 'assignDate' },
+							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '損壞類別', dataKey: 'BTName' },
+							{ header: '維修地點', dataKey: 'CaseName' },
+							{ header: '算式', dataKey: 'account0' },
+							{ header: '面積', dataKey: 'acsum0' },
+							{ header: '深度', dataKey: 'delmuch0' },
+							{ header: '噸數', dataKey: 'tonne' }
+						],
 						styles: { font: "edukai", lineWidth: 0.2 },
 						headStyles: { halign: 'center' },
-						bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
-						didDrawCell: async (data) => {
-							if(data.cell.section === 'body') {
-								// console.log(data);
-								// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
-								this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
-							}
+						columnStyles: {
+							order: { halign: 'center', valign: 'middle', cellWidth: 12 },
+							assignDate: { halign: 'center', valign: 'middle', cellWidth: 24 },
+							CaseNo: { halign: 'center', valign: 'middle', cellWidth: 26 },
+							BTName: { halign: 'center', valign: 'middle', cellWidth: 20 },
+							CaseName: { cellWidth: 30 },
+							acsum0: { halign: 'center', valign: 'middle', cellWidth: 14 },
+							delmuch0: { halign: 'center', valign: 'middle', cellWidth: 14 },
+							tonne: { halign: 'center', valign: 'middle', cellWidth: 14 }
 						},
-						startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
-						pageBreak: 'avoid'
+						startY:  lineSize * 2 + 25,
+						rowPageBreak: 'avoid'
 					});
+
+					// this.pdfDoc.setLineDashPattern([2, 1], 0);
+					// this.pdfDoc.setDrawColor('#999999');
+					// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
+					// this.pdfDoc.setLineDashPattern([0], 0);
+
+					const splitImgTable = table.reduce((acc, cur) => {
+						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
+
+					for(const [imgIndex, imgTable] of splitImgTable.entries()) {
+						// let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
+						// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
+						// console.log(startY);
+
+						this.pdfDoc.autoTable({ 
+							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
+							// body: [ imgTable.map(l => l.PicPath3) ],
+							body: [ imgTable.map(l => l.CaseNo) ],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.2 },
+							headStyles: { halign: 'center' },
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
+							didDrawCell: async (data) => {
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								}
+							},
+							startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
+							pageBreak: 'avoid'
+						});
+					}
 				}
-			}
 
-			// 頁數
-			this.pdfDoc.setFontSize(fontSize-2);
-			for(let pageNo=1; pageNo <= this.pdfDoc.internal.getNumberOfPages(); pageNo++) {
-				this.pdfDoc.setPage(pageNo); 
-				this.pdfDoc.text(`${pageNo} of ${this.pdfDoc.internal.getNumberOfPages()}`, width/2, height-10, { align: 'center' } );
-			}
+				// 頁數
+				this.pdfDoc.setFontSize(fontSize-2);
+				for(let pageNo=1; pageNo <= this.pdfDoc.internal.getNumberOfPages(); pageNo++) {
+					this.pdfDoc.setPage(pageNo); 
+					this.pdfDoc.text(`${pageNo} of ${this.pdfDoc.internal.getNumberOfPages()}`, width/2, height-10, { align: 'center' } );
+				}
 
-			this.viewer.updateTemplate({ 
-				basePdf: this.pdfDoc.output('bloburl'), 
-				schemas: [{ }]
+				this.viewer.updateTemplate({ 
+					basePdf: this.pdfDoc.output('bloburl'), 
+					schemas: [{ }]
+				});
+
+				resolve();
 			});
-			this.loading = false;
-			this.showJobTicket = true;
+		},
+		previewPdf() {
+			this.loading = true;
+
+			this.createPdf().then(() => {
+				this.loading = false;
+				this.showJobTicket = true;
+			})
 		},
 		downloadPdf() {
 			this.pdfDoc.save("維修派工單.pdf");
