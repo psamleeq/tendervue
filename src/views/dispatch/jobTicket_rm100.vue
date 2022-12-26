@@ -311,6 +311,17 @@ export default {
 				else if(props.deviceTypeFilter.includes(this.deviceTypeNow)) headersFilter[key] = props;
 			})
 			return headersFilter
+		},
+		//img preload
+		imgDOMObj() {
+			let imgDOMObj = {};
+			this.tableSelect.forEach(l => { 
+				let image = new Image();
+				image.src = `/assets/testPic/${l.PicPath3}`;
+				imgDOMObj[l.CaseNo] = image;
+			});
+
+			return imgDOMObj;
 		}
 	},
 	watch: { },
@@ -420,15 +431,7 @@ export default {
 		},
 		async createPdf() {
 			this.loading = true;
-
-			//img preload
-			let imgDOMObj = {};
-			this.tableSelect.forEach(l => { 
-				let image = new Image();
-				image.src = `/assets/testPic/${l.PicPath3}`;
-				imgDOMObj[l.CaseNo] = image;
-			});
-
+			
 			// PDF排版
 			const fontSize = 14;
 			const lineSize = (fontSize + 2) * 0.35;
@@ -520,7 +523,7 @@ export default {
 							if(data.cell.section === 'body') {
 								// console.log(data);
 								// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
-								this.pdfDoc.addImage(imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 							}
 						},
 						startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
