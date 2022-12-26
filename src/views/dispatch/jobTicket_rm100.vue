@@ -420,8 +420,14 @@ export default {
 		},
 		async createPdf() {
 			this.loading = true;
+
 			//img preload
-			this.tableSelect.forEach(l => { (new Image()).src = `/assets/testPic/${l.PicPath3}` });
+			let imgDOMObj = {};
+			this.tableSelect.forEach(l => { 
+				let image = new Image();
+				image.src = `/assets/testPic/${l.PicPath3}`;
+				imgDOMObj[l.CaseNo] = image;
+			});
 
 			// PDF排版
 			const fontSize = 14;
@@ -449,7 +455,7 @@ export default {
 				this.pdfDoc.autoTable({ 
 					// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 					body: table.map((l, i) => ({ 
-						order: i+1, 
+						order: (i+1) + 8*pageIndex, 
 						assignDate: l.assignDate, 
 						CaseNo: l.CaseNo, 
 						BTName: l.BTName, 
@@ -498,13 +504,14 @@ export default {
 				}, [[]]);
 
 				for(const [imgIndex, imgTable] of splitImgTable.entries()) {
-					let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
+					// let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
 					// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
 					// console.log(startY);
 
 					this.pdfDoc.autoTable({ 
-						head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex} - ${l.CaseNo}`)) ],
-						body: [ imgTable.map(l => l.PicPath3) ],
+						head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
+						// body: [ imgTable.map(l => l.PicPath3) ],
+						body: [ imgTable.map(l => l.CaseNo) ],
 						theme: 'plain',
 						styles: { font: "edukai", lineWidth: 0.2 },
 						headStyles: { halign: 'center' },
@@ -512,10 +519,11 @@ export default {
 						didDrawCell: async (data) => {
 							if(data.cell.section === 'body') {
 								// console.log(data);
-								this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								this.pdfDoc.addImage(imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 							}
 						},
-						startY,
+						startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
 						pageBreak: 'avoid'
 					});
 				}
