@@ -186,8 +186,12 @@ export default {
 					name: "損壞態樣",
 					sortable: false
 				},
-				BrokeType: {
-					name: "損壞程度",
+				// BrokeType: {
+				// 	name: "損壞程度",
+				// 	sortable: false
+				// },
+				BrokeStatus: {
+					name: "損壞狀況",
 					sortable: false
 				},
 				PCIValue: {
@@ -259,10 +263,15 @@ export default {
 			options: {
 				DeviceType: {},
 				BType: {},
-				BrokeType: {
-					1: "輕度",
-					2: "中度",
-					3: "重度"
+				// BrokeType: {
+				// 	1: "輕度",
+				// 	2: "中度",
+				// 	3: "重度"
+				// },
+				BrokeStatus: {
+					1: "觀察", //輕度
+					2: "短期改善", //中度
+					3: "立即改善", //重度
 				},
 				resultType: {
 					1: "合格",
@@ -341,7 +350,8 @@ export default {
 			if(column.property == 'organAssign') return row[column.property] == 1 ? '是' : '-';
 			else if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
-			else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+			else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];
 			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
 			else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
@@ -359,7 +369,8 @@ export default {
 				l.DeviceType = this.options.DeviceType[l.DeviceType];
 				l.organAssign =  l.organAssign == 1 ? "是" : "";
 				l.BType = this.options.BType[l.BType];
-				l.BrokeType = this.options.BrokeType[l.BrokeType];
+				// l.BrokeType = this.options.BrokeType[l.BrokeType];
+				l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
 				l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
 
 				const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;

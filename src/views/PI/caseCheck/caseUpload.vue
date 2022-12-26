@@ -139,8 +139,8 @@
 									</el-link>
 								</template>
 							</span>
-							<span v-else-if="[ 'DeviceType', 'BType', 'BrokeType' ].includes(column.property)">
-								<el-select v-model.number="row[column.property]">
+							<span v-else-if="[ 'DeviceType', 'BType', 'BrokeType', 'BrokeStatus' ].includes(column.property)">
+								<el-select v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]">
 									<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 								</el-select>
 							</span>
@@ -325,8 +325,12 @@ export default {
 					name: "損壞態樣",
 					sortable: false
 				},
-				BrokeType: {
-					name: "損壞程度",
+				// BrokeType: {
+				// 	name: "損壞程度",
+				// 	sortable: false
+				// }
+				BrokeStatus: {
+					name: "損壞狀況",
 					sortable: false
 				}
 			},
@@ -399,6 +403,11 @@ export default {
 					1: "輕度",
 					2: "中度",
 					3: "重度"
+				},
+				BrokeStatus: {
+					1: "觀察", //輕度
+					2: "短期改善", //中度
+					3: "立即改善", //重度
 				}
 			}
 		};
@@ -553,8 +562,12 @@ export default {
 			for(const val of value) {
 				let msgArr = [];
 				for(const column in this.headers) {
-					if(!['CaseNo', 'organAssign'].includes(column) && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
+					if(!['CaseNo', 'organAssign', 'BrokeStatus'].includes(column) && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
 				}
+
+				//驗證BrokeType
+				if(!val.BrokeType) msgArr.push(`「${this.headers.BrokeStatus.name}」`);
+
 				if(msgArr.length > 0) {
 					this.$message({
 						type: "warning",
@@ -569,7 +582,8 @@ export default {
 		formatter(row, column) {
 			if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
-			else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+			else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];
 			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
 			else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
