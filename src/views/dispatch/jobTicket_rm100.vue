@@ -313,17 +313,6 @@ export default {
 			})
 			return headersFilter
 		},
-		//img preload
-		imgDOMObj() {
-			let imgDOMObj = {};
-			this.tableSelect.forEach(l => { 
-				let image = new Image();
-				image.src = `/assets/testPic/${l.PicPath3}`;
-				imgDOMObj[l.CaseNo] = image;
-			});
-
-			return imgDOMObj;
-		}
 	},
 	watch: { },
 	async created() {
@@ -384,6 +373,15 @@ export default {
 		toggleExpand(row) {
 			this.$refs.assignTable.toggleRowExpansion(row)
 		},
+		imgPreload() {
+			//img preload
+			this.imgDOMObj = {};
+			this.list.forEach(l => { 
+				let image = new Image();
+				image.src = `/assets/testPic/${l.PicPath3}`;
+				this.imgDOMObj [l.CaseNo] = image;
+			});
+		},
 		getList() {
 			this.loading = true;
 			this.list = [];
@@ -420,6 +418,8 @@ export default {
 						l.estFinishDate = (l.estFinishDate == '0') ? moment(Number(l.CaseNo.substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY/MM/DD") : l.estFinishDate;
 						this.$set(l, "tonne", Math.round(l.acsum0*l.delmuch0*0.01*2.36*10) / 10);
 					})
+
+					this.imgPreload();
 
 					getWClassMap({ deviceType: this.listQuery.deviceType}).then(response => {
 						this.options.WClassMap = response.data.wClassMap;
