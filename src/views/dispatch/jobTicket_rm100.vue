@@ -151,6 +151,16 @@
 				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
 			</div>
 		</el-dialog>
+
+		<!-- Dialog: PDF預覽 -->
+		<el-dialog width="800px" title="預覽" :visible.sync="showJobTicket">
+			<div ref="pdfViewer" />
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="showJobTicket = false">取消</el-button>
+				<el-button type="primary" @click="downloadPdf()">確定</el-button>
+			</div>
+		</el-dialog>
+
 	</div>
 </template>
 
@@ -626,6 +636,8 @@ export default {
 			max-width: 60px
 		.btn-tag
 			cursor: pointer
+		.el-table__expand-icon
+			display: none
 	.btn-dialog
 		padding: 5px 5px
 </style>

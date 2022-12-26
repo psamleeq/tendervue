@@ -479,6 +479,8 @@ export default {
 			max-width: 60px
 		.btn-tag
 			cursor: pointer
+		.el-table__expand-icon
+			display: none
 	.btn-dialog
 		padding: 5px 5px
 </style>
