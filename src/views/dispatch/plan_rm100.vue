@@ -77,7 +77,7 @@
 		</div>
 
 		<el-table
-			ref="assignTable"
+			ref="planTable"
 			empty-text="目前沒有資料"
 			:data="list"
 			:key="deviceTypeNow"
@@ -168,7 +168,7 @@
 					<el-button-group>
 						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
 						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
-						<el-button type="info" size="mini" @click="beforeEdit(row)">檢視</el-button>
+						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
@@ -181,21 +181,12 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
-		<!-- Dialog: 新增套組 -->
-		<el-dialog width="400px" title="新增套組" :visible.sync="showDispatch">
-
+		<!-- Dialog: 案件檢視 -->
+		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
+			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" />
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showDispatch = false">取消</el-button>
-				<el-button type="primary" @click="addKit()">確定</el-button>
-			</div>
-		</el-dialog>
-
-		<!-- Dialog: 確認-->
-		<el-dialog width="300px" title="確認" :visible.sync="showConfirm">
-			<span>是否刪除{{ rowActive.serialno }} - {{ rowActive.kitName }} </span>
-			<div slot="footer" class="dialog-footer">
-				<el-button @click="showConfirm = false">取消</el-button>
-				<el-button type="primary" @click="editKit()">確定</el-button>
+				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
+				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
 			</div>
 		</el-dialog>
 	</div>
@@ -206,16 +197,17 @@ import moment from "moment";
 import { getDteamMap, getWClassMap } from "@/api/type";
 import { getDispatchListV0 } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
+import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
 
 export default {
 	name: "casePlanV0",
-	components: { TimePicker },
+	components: { TimePicker, CaseDetail },
 	data() {
 		return {
 			loading: false,
 			showDispatch: false,
-			showEdit: false,
+			showDetailDialog: true,
 			showConfirm: false,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
@@ -283,7 +275,7 @@ export default {
 			},
 			// total: 0,
 			list: [],
-			detail: [],
+			// detail: [],
 			rowActive: {},
 			checkIndeterminate: false,
 			checkList: [],
@@ -301,7 +293,7 @@ export default {
 					1: "合約",
 					2: "通報單號",
 					3: "地點(關鍵字)"
-				}
+				},
 			}
 		};
 	},
@@ -311,6 +303,9 @@ export default {
 		getDteamMap().then(response => {
 			this.options.DteamMap = response.data.DteamMap;
 		});
+	},
+	mounted() {
+		this.showDetailDialog = false;
 	},
 	methods: {
 		async handleCheckedChange(val) {
@@ -336,11 +331,11 @@ export default {
 			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
 		},
 		cellCheckBox(row, index) {
-			if(this.checkList[index]) this.$refs.assignTable.toggleRowSelection(row, true);
-			else this.$refs.assignTable.toggleRowSelection(row, false);
+			if(this.checkList[index]) this.$refs.planTable.toggleRowSelection(row, true);
+			else this.$refs.planTable.toggleRowSelection(row, false);
 		},
 		toggleExpand(row) {
-			this.$refs.assignTable.toggleRowExpansion(row)
+			this.$refs.planTable.toggleRowExpansion(row)
 		},
 		getList() {
 			this.loading = true;
@@ -385,6 +380,10 @@ export default {
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		showDetail(row) {
+			this.loading = true;
+			this.$refs.caseDetail.getDetail(row);
 		},
 		calArea(row) {
 			const replaceObj = { " ": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",

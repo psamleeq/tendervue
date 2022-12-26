@@ -1,5 +1,14 @@
 import request from '@/utils/request'
 
+// 案件詳細
+export function getCaseDetailV0(query) {
+	return request({
+		url: '/dispatchV0/detail',
+		method: 'get',
+		params: query
+	})
+}
+
 // 套組列表
 export function getCostKitV0(query) {
 	return request({

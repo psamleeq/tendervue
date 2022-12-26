@@ -130,7 +130,7 @@
 					<el-button-group>
 						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
 						<!-- <el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button> -->
-						<el-button type="info" size="mini" @click="beforeEdit(row)">檢視</el-button>
+						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
@@ -143,23 +143,12 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
-		<!-- Dialog: 新增套組 -->
-		<el-dialog width="800px" title="預覽" :visible.sync="showJobTicket">
-
-			<div ref="pdfViewer" />
-
+		<!-- Dialog: 案件檢視 -->
+		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
+			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" />
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showJobTicket = false">取消</el-button>
-				<el-button type="primary" @click="downloadPdf()">確定</el-button>
-			</div>
-		</el-dialog>
-
-		<!-- Dialog: 確認-->
-		<el-dialog width="300px" title="確認" :visible.sync="showConfirm">
-			<span>是否刪除{{ rowActive.serialno }} - {{ rowActive.kitName }} </span>
-			<div slot="footer" class="dialog-footer">
-				<el-button @click="showConfirm = false">取消</el-button>
-				<el-button type="primary" @click="editKit()">確定</el-button>
+				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
+				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
 			</div>
 		</el-dialog>
 	</div>
@@ -174,15 +163,17 @@ import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getDteamMap, getWClassMap } from "@/api/type";
 import { getJobTicketV0 } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
+import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
 
 export default {
 	name: "jobTicketV0",
-	components: { TimePicker },
+	components: { TimePicker, CaseDetail },
 	data() {
 		return {
 			loading: false,
 			showJobTicket: true,
+			showDetailDialog: true,
 			showConfirm: false,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
@@ -356,6 +347,7 @@ export default {
 	},
 	mounted() {
 		this.showJobTicket = false;
+		this.showDetailDialog = false;
 
 		this.$nextTick(() => {
 			// init Viewer
@@ -425,6 +417,10 @@ export default {
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		showDetail(row) {
+			this.loading = true;
+			this.$refs.caseDetail.getDetail(row);
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:MM:ss");
