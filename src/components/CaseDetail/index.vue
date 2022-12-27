@@ -58,6 +58,7 @@ export default {
 				reporter: "查報人員",
 				CaseName: "案件地點",
 				CaseStatus: "案件類型",
+				CaseProcess: "案件流程",
 				acsum0: "預估面積",
 				delmuch0: "預估刨鋪深度",
 				delmuch: "實際刨鋪深度",
@@ -119,7 +120,36 @@ export default {
 
 					for(const key in this.headersDetail) {
 						if(key == 'CaseStatus') this.detail.push({ column: this.headersDetail[key], content: `${this.options.RoadType[caseObj.RoadType]} ${caseObj.DName} ${caseObj.BTName} ${this.options.BrokeType[caseObj.BrokeType]}` });
-						else if(key == 'position') this.detail.push({ column: this.headersDetail[key], content: `(${caseObj.XX}, ${caseObj.YY})`});
+						else if(key == 'CaseProcess') {
+							let content = "";
+
+							// 主任派工
+							if(caseObj.CType0 == "0" && ((caseObj.CType4 == "0" || caseObj.CType4 == "8" ) && caseObj.SCType1Flag == "0")) content += "主任未派工、";
+							else if (caseObj.CType0 == "1") content += `主任 ${caseObj.CType0date} 已派工、`;
+
+							// 工班施工
+							if(caseObj.CType1 == "0" && ((caseObj.CType4 == "0" || caseObj.CType4 == "8" ) && caseObj.SCType1Flag == "0")) content += "工班未派施工、";
+							else if (caseObj.CType1 == "1") content += `工班 ${caseObj.CType1date} 已派施工、`;
+
+							// 已報完工
+							if(caseObj.CType2 == "0" && ((caseObj.CType4 == "0" || caseObj.CType4 == "8" ) && caseObj.SCType1Flag == "0")) content += "未報完工、";
+							else if (caseObj.CType2 == "1") {
+								if(caseObj.page4t != null) content += `實際完工日期: ${caseObj.page4t}, 道管完工日期: ${caseObj.CType2date}、`;
+								else content += `${caseObj.CType2date} 已報完工、`
+							}
+
+							// 坑洞臨補
+							if(caseObj.SCType2Flag == "1") content += "坑洞臨補  ";
+							else if(caseObj.SCType2Flag == "2") content += "坑洞臨補已完工、";
+
+							// 熱再生
+							if(caseObj.CType4 == "1") content += `熱再生主任已派工、`;
+							else if(caseObj.CType4 == "2") content += `熱再生 ${caseObj.CType4date} 已派施工、`;
+							else if(caseObj.CType4 == "3") content += `熱再生 ${caseObj.CType4date} 已派施工，熱再生 ${caseObj.page4t} 已完工、`;
+
+							content = content.replace(/、$/, "");
+							this.detail.push({ column: this.headersDetail[key], content });
+						} else if(key == 'position') this.detail.push({ column: this.headersDetail[key], content: `(${caseObj.XX}, ${caseObj.YY})`});
 						else if(['paperkind', 'run1tflag'].includes(key)) this.detail.push({ column: this.headersDetail[key], content: this.options[key][caseObj[key]] });
 						else this.detail.push({ column: this.headersDetail[key], content: caseObj[key] });
 					}
