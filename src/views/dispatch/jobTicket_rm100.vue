@@ -316,6 +316,8 @@ export default {
 	},
 	watch: { },
 	async created() {
+		getDteamMap().then(response => { this.options.DteamMap = response.data.DteamMap });
+		
 		// 讀入字型
 		const readBlob = (blob) => {
 			return new Promise((resolve, reject) => {
@@ -325,24 +327,20 @@ export default {
 			});
 		};
 
-		this.fontBString = await fetch('/assets/font/edukai-4.0.ttf')
+		fetch('/assets/font/edukai-4.0.ttf')
 			// .then(res => res.arrayBuffer())
 			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
 			.then(res => res.blob())
 			.then(blob => readBlob(blob))
-			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7));
-			// console.log(this.fontBString);
-		
-		// init jsPDF
-		this.pdfDoc = new jsPDF();
+			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7)).then(fontBString => {
+				// console.log(fontBString);
 
-		this.pdfDoc.addFileToVFS("edukai.ttf", this.fontBString);
-		this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
-		this.pdfDoc.setFont("edukai");
-
-		getDteamMap().then(response => {
-			this.options.DteamMap = response.data.DteamMap;
-		});
+				// init jsPDF
+				this.pdfDoc = new jsPDF();
+				this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+				this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+				this.pdfDoc.setFont("edukai");
+			});
 	},
 	mounted() {
 		this.showJobTicket = false;
