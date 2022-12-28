@@ -53,6 +53,16 @@ const dispatchRouter = {
 				roles: ['beta'],
 				vTag: 'Alpha'
 			}
+		},
+		{
+			path: 'finRegisterV0',
+			component: () => import('@/views/dispatch/finRegister_rm100'),
+			name: 'finRegisterV0',
+			meta: {
+				title: '完工登錄_V0',
+				roles: ['beta'],
+				vTag: 'Alpha'
+			}
 		}
 	]
 }

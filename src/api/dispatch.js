@@ -52,3 +52,12 @@ export function getJobTicketV0(query) {
 		params: query
 	})
 }
+
+// 完工登錄列表
+export function getFinRegisterV0(query) {
+	return request({
+		url: '/dispatchV0/finRegister',
+		method: 'get',
+		params: query
+	})
+}

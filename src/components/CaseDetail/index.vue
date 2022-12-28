@@ -116,7 +116,7 @@ export default {
 					});
 				} else {
 					const caseObj = response.data.list[0];
-					console.log(caseObj);
+					// console.log(caseObj);
 
 					for(const key in this.headersDetail) {
 						if(key == 'CaseStatus') this.detail.push({ column: this.headersDetail[key], content: `${this.options.RoadType[caseObj.RoadType]} ${caseObj.DName} ${caseObj.BTName} ${this.options.BrokeType[caseObj.BrokeType]}` });
