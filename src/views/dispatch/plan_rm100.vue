@@ -147,7 +147,7 @@
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="85" align="center">
 				<template slot-scope="{ row }">
 					<!-- <el-input v-model="row.acsum0" /> -->
-					<span>{{ row.acsum0 }}</span>
+					<span>{{ row.acsum0 || "-" }}</span>
 				</template>
 			</el-table-column>
 
@@ -391,8 +391,8 @@ export default {
 			
 			if(row.accountflag0 == '1') {
 				for(const key in replaceObj) row.account0 = row.account0.replaceAll(key, replaceObj[key]);
-				row.acsum0 = Math.round(new Function(`return ${row.account0}`)() * 100) / 100 || "-";
-			} else row.acsum0 = row.elength * row.blength || "-";
+				row.acsum0 = Math.round(new Function(`return ${row.account0}`)() * 100) / 100;
+			} else row.acsum0 = row.elength * row.blength;
 		},
 		beforeEdit(row) {
 			this.rowActive = row; 

@@ -55,11 +55,31 @@ const dispatchRouter = {
 			}
 		},
 		{
+			path: 'jobTicket',
+			component: () => import('@/views/dispatch/jobTicket'),
+			name: 'jobTicket',
+			meta: {
+				title: '製作派工單',
+				roles: ['beta'],
+				vTag: 'Alpha'
+			}
+		},
+		{
 			path: 'finRegisterV0',
 			component: () => import('@/views/dispatch/finRegister_rm100'),
 			name: 'finRegisterV0',
 			meta: {
 				title: '完工登錄_V0',
+				roles: ['beta'],
+				vTag: 'Alpha'
+			}
+		},
+		{
+			path: 'finRegister',
+			component: () => import('@/views/dispatch/finRegister'),
+			name: 'finRegister',
+			meta: {
+				title: '完工登錄',
 				roles: ['beta'],
 				vTag: 'Alpha'
 			}

@@ -53,10 +53,26 @@ export function getJobTicketV0(query) {
 	})
 }
 
+export function getJobTicket(query) {
+	return request({
+		url: '/dispatch/jobTicket',
+		method: 'get',
+		params: query
+	})
+}
+
 // 完工登錄列表
 export function getFinRegisterV0(query) {
 	return request({
 		url: '/dispatchV0/finRegister',
+		method: 'get',
+		params: query
+	})
+}
+
+export function getFinRegister(query) {
+	return request({
+		url: '/dispatch/finRegister',
 		method: 'get',
 		params: query
 	})

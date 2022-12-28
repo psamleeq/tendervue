@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container case-plan" v-loading="loading">
-		<h2>主任派工</h2>
+	<div class="app-container job-ticket" v-loading="loading">
+		<h2>製作派工單</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -14,7 +14,7 @@
 			</div>
 
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">成案日期</div>
+				<div style="font-size: 12px; color: #909399">派工日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<br />
@@ -71,7 +71,7 @@
 			</div>
 			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.workClass) > 0">
 				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="showAddKit = true">分派</el-button>
+					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="previewPdf()">製作派工單</el-button>
 				</span>
 			</el-tooltip>
 		</div>
@@ -106,60 +106,22 @@
 			</el-table-column>
 
 			<el-table-column
-				v-for="(value, key) in headers"
+				v-for="(value, key) in headersFilter"
 				:key="key"
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['DateDeadline'].includes(key) ? 220 : null"
 				:min-width="['Place'].includes(key) ? 80 : null"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
-					<span v-if="[ 'DateDeadline' ].includes(column.property)">
-						<el-row type="flex" align="middle">
-							<el-col :span="18"><el-date-picker v-model="row.DateDeadline" type="date" placeholder="選擇日期" style="width: 100%" /></el-col>
-							<el-col :span="6"><el-tag class="btn-tag" :type="row.detailTime ? 'success': 'info'" @click="row.detailTime = !row.detailTime">時段</el-tag></el-col>
-						</el-row>
-						<el-time-picker v-if="row.detailTime" v-model="row.estWorkingTime" is-range range-separator="至"  start-placeholder="開始時間" end-placeholder="結束時間" placeholder="選擇時間" style="width: 100%" />
+					<span v-if="[ 'MillingFormula' ].includes(column.property)">
+						<span v-if="row.MillingFormula != '0'">{{ row.MillingFormula }}</span>
+						<span v-else>{{ row.MillingLength }} * {{ row.MillingWidth }}</span>
 					</span>
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
 					</span>
-				</template>
-			</el-table-column>
-
-			<!-- 道路、熱再生 -->
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
-				<template slot-scope="{ row }">
-					<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
-						<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
-						<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
-					</el-row>
-					<el-row v-else :gutter="5" type="flex" align="middle">
-						<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
-						<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
-						<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
-						<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
-					</el-row>
-				</template>
-			</el-table-column>
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="85" align="center">
-				<template slot-scope="{ row }">
-					<!-- <el-input v-model="row.MillingArea" /> -->
-					<span>{{ row.MillingArea || "-" }}</span>
-				</template>
-			</el-table-column>
-
-			<!-- 設施 -->
-			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
-				<template slot-scope="{ row }">
-					<el-checkbox v-model="row.isPressing" />
-				</template>
-			</el-table-column>
-			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
-				<template slot-scope="{ row }">
-					<el-input v-model="row.Notes" />
 				</template>
 			</el-table-column>
 			
@@ -167,8 +129,8 @@
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
-						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
-						<el-button type="info" size="mini" @click="beforeEdit(row)">檢視</el-button>
+						<!-- <el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button> -->
+						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
@@ -181,41 +143,47 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
-		<!-- Dialog: 新增套組 -->
-		<el-dialog width="400px" title="新增套組" :visible.sync="showDispatch">
-
+		<!-- Dialog: 案件檢視 -->
+		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
+			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" />
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showDispatch = false">取消</el-button>
-				<el-button type="primary" @click="addKit()">確定</el-button>
+				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
+				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
 			</div>
 		</el-dialog>
 
-		<!-- Dialog: 確認-->
-		<el-dialog width="300px" title="確認" :visible.sync="showConfirm">
-			<span>是否刪除{{ rowActive.serialno }} - {{ rowActive.kitName }} </span>
+		<!-- Dialog: PDF預覽 -->
+		<el-dialog width="800px" title="預覽" :visible.sync="showJobTicket">
+			<div ref="pdfViewer" />
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showConfirm = false">取消</el-button>
-				<el-button type="primary" @click="editKit()">確定</el-button>
+				<el-button @click="showJobTicket = false">取消</el-button>
+				<el-button type="primary" @click="downloadPdf()">確定</el-button>
 			</div>
 		</el-dialog>
+
 	</div>
 </template>
 
 <script>
 import moment from "moment";
+import { jsPDF } from 'jspdf';
+import { applyPlugin } from 'jspdf-autotable';
+applyPlugin(jsPDF);
+import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getDteamMap, getWClassMap } from "@/api/type";
-import { getDispatchList } from "@/api/dispatch";
+import { getJobTicket } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
+import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
 
 export default {
-	name: "caseAssign",
-	components: { TimePicker },
+	name: "jobTicket",
+	components: { TimePicker, CaseDetail },
 	data() {
 		return {
 			loading: false,
-			showDispatch: false,
-			showEdit: false,
+			showJobTicket: true,
+			showDetailDialog: true,
 			showConfirm: false,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
@@ -244,7 +212,7 @@ export default {
 				// 	name: "案件編號",
 				// 	sortable: true,
 				// },
-				// casetype: {
+				// CaseType: {
 				// 	name: "查報來源",
 				// 	sortable: false,
 				// },
@@ -252,8 +220,16 @@ export default {
 				// 	name: "案件類型",
 				// 	sortable: false,
 				// },
+				Contractor: {
+					name: "廠商",
+					sortable: false
+				},
 				Place: {
 					name: "案件地點",
+					sortable: false
+				},
+				DatePlan: {
+					name: "主任派工日期",
 					sortable: false
 				},
 				DateDeadline: {
@@ -264,10 +240,11 @@ export default {
 				// 	name: "預計施作時段",
 				// 	sortable: false
 				// },
-				// MillingFormula: {
-				// 	name: "複雜算式",
-				// 	sortable: false
-				// },
+				MillingFormula: {
+					name: "算式",
+					sortable: false,
+					deviceTypeFilter: [1, 2]
+				},
 				// MillingLength: {
 				// 	name: "預計長度",
 				// 	sortable: false
@@ -276,10 +253,31 @@ export default {
 				// 	name: "預計寬度",
 				// 	sortable: false
 				// },
-				// MillingArea: {
-				// 	name: "預估面積",
-				// 	sortable: false
-				// },
+				MillingArea: {
+					name: "預估面積",
+					sortable: false,
+					deviceTypeFilter: [1, 2]
+				},
+				MillingDepth: {
+					name: "刨鋪深度",
+					sortable: false,
+					deviceTypeFilter: [1, 2]
+				},
+				tonne: {
+					name: "噸數",
+					sortable: false,
+					deviceTypeFilter: [1, 2]
+				},
+				IsPressing: {
+					name: "急件",
+					sortable: false,
+					deviceTypeFilter: [ 3 ]
+				},
+				Notes: {
+					name: "工程概述",
+					sortable: false,
+					deviceTypeFilter: [ 3 ]
+				}
 			},
 			// total: 0,
 			list: [],
@@ -305,32 +303,63 @@ export default {
 			}
 		};
 	},
-	computed: {	},
+	computed: {	
+		headersFilter() {
+			let headersFilter = {};
+			Object.keys(this.headers).forEach(key => {
+				const props = this.headers[key];
+				if(!props.hasOwnProperty('deviceTypeFilter')) headersFilter[key] = props;
+				else if(props.deviceTypeFilter.includes(this.deviceTypeNow)) headersFilter[key] = props;
+			})
+			return headersFilter
+		},
+	},
 	watch: { },
-	created() { 
-		getDteamMap().then(response => {
-			this.options.DteamMap = response.data.DteamMap;
+	async created() {
+		getDteamMap().then(response => { this.options.DteamMap = response.data.DteamMap });
+		
+		// 讀入字型
+		const readBlob = (blob) => {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onloadend = () => resolve(reader.result);
+				reader.readAsDataURL(blob);
+			});
+		};
+
+		fetch('/assets/font/edukai-4.0.ttf')
+			// .then(res => res.arrayBuffer())
+			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
+			.then(res => res.blob())
+			.then(blob => readBlob(blob))
+			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7)).then(fontBString => {
+				// console.log(fontBString);
+
+				// init jsPDF
+				this.pdfDoc = new jsPDF();
+				this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+				this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+				this.pdfDoc.setFont("edukai");
+			});
+	},
+	mounted() {
+		this.showJobTicket = false;
+		this.showDetailDialog = false;
+
+		this.$nextTick(() => {
+			// init Viewer
+			this.viewer = new Viewer({ 
+				domContainer: this.$refs.pdfViewer, 
+				template: { 
+					basePdf: BLANK_PDF,
+					schemas: [{ }]
+				},
+				inputs: [{ }] 
+			});
 		});
 	},
 	methods: {
 		async handleCheckedChange(val) {
-			// const delay = (n) => new Promise( r => setTimeout(r, n*1000));
-
-			// for(const val of value) {
-			// 	let msgArr = [];
-			// 	for(const column in this.headers) {
-			// 		if(!['CaseNo', 'organAssign'].includes(column) && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
-			// 	}
-			// 	if(msgArr.length > 0) {
-			// 		this.$message({
-			// 			type: "warning",
-			// 			message: `請填入${val.UploadCaseNo}的${msgArr.join("、")}`
-			// 		});
-
-			// 		await delay(0.5);
-			// 	}
-			// }
-
 			this.tableSelect = val;
 			if(this.tableSelect.length == this.list.length) this.tableSelect.forEach((_, index) => this.$set(this.checkList, index, true));
 			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
@@ -342,6 +371,15 @@ export default {
 		toggleExpand(row) {
 			this.$refs.assignTable.toggleRowExpansion(row)
 		},
+		imgPreload() {
+			//img preload
+			this.imgDOMObj = {};
+			this.list.forEach(l => { 
+				let image = new Image();
+				image.src = `/assets/testPic/${l.ImgZoomOut}`;
+				this.imgDOMObj [l.CaseNo] = image;
+			});
+		},
 		getList() {
 			this.loading = true;
 			this.list = [];
@@ -352,7 +390,7 @@ export default {
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
-			getDispatchList({
+			getJobTicket({
 				dteamSN: this.listQuery.filterType == 1 ? this.listQuery.dteamSN : null,
 				reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
@@ -372,11 +410,13 @@ export default {
 					this.deviceTypeNow = this.listQuery.deviceType;
 
 					this.list.forEach(l => {
-						l.DateDeadline = this.formatTime(l.DateDeadline);
-						this.$set(l, "detailTime", false);
-						this.$set(l, "editFormula", l.MillingFormula != '0');
-					// 	this.$set(l, "editNote", false);
+						l.DatePlan = this.formatDate(l.DatePlan);
+						// this.$set(l, "detailTime", false);
+						l.DateDeadline = (l.DateDeadline == null) ? moment(Number(String(l.CaseNo).substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY/MM/DD") : this.formatDate(l.DateDeadline);
+						this.$set(l, "tonne", Math.round(l.MillingArea*l.MillingDepth*0.01*2.36*10) / 10);
 					})
+
+					this.imgPreload();
 
 					getWClassMap({ deviceType: this.listQuery.deviceType}).then(response => {
 						this.options.WClassMap = response.data.wClassMap;
@@ -385,26 +425,140 @@ export default {
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
-		calArea(row) {
-			const replaceObj = { " ": "", "m": "", "M": "", "=": "", "＝": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
-			"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
-			
-			if(row.editFormula) {
-				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
-				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100;
-			} else row.MillingArea = row.MillingLength * row.MillingWidth;
+		showDetail(row) {
+			this.loading = true;
+			this.$refs.caseDetail.getDetail(row);
 		},
-		beforeEdit(row) {
-			this.rowActive = row; 
-			// this.loading = true;
-
-			// this.detail = [];
-			// Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isEdit: true });
-
+		formatDate(time) {
+			return moment(time).format("YYYY-MM-DD");
 		},
-		formatTime(time) {
-			const m = moment(time);
-			return m.isValid() ? m.format("YYYY/MM/DD") : "" ;
+		async createPdf() {
+			return new Promise((resolve, reject) => {
+				// PDF排版
+				const fontSize = 14;
+				const lineSize = (fontSize + 2) * 0.35;
+				const { width, height } = this.pdfDoc.internal.pageSize;
+
+				const splitTable = this.tableSelect.reduce((acc, cur) => {
+					if(acc[acc.length-1].length < 8) acc[acc.length-1].push(cur);
+					else acc.push([cur]);
+					return acc;
+				}, [[]]);
+
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+
+					this.pdfDoc.setFontSize(fontSize+4);
+					this.pdfDoc.setCharSpace(2);
+					this.pdfDoc.text(`${this.options.deviceType[this.deviceTypeNow]} 維修派工單`, width / 2, 20, { align: 'center' });
+					this.pdfDoc.setFontSize(fontSize);
+					this.pdfDoc.setCharSpace(0);
+					const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
+					this.pdfDoc.text(`${today} 派工單號：-------`, width - 15, lineSize + 25, { align: 'right' });
+
+					this.pdfDoc.autoTable({ 
+						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						body: table.map((l, i) => ({ 
+							order: (i+1) + 8*pageIndex, 
+							DatePlan: l.DatePlan, 
+							CaseNo: l.CaseNo, 
+							DistressName: l.DistressName, 
+							Place: l.Place, 
+							MillingFormula: (l.MillingFormula != '0') ? l.MillingFormula : `${l.MillingLength}*${l.MillingWidth}`, 
+							MillingArea: l.MillingArea, 
+							MillingDepth: l.MillingDepth,
+							tonne: l.tonne 
+						})),
+						columns: [
+							{ header: '順序', dataKey: 'order' },
+							{ header: '主任派工日', dataKey: 'DatePlan' },
+							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '損壞類別', dataKey: 'DistressName' },
+							{ header: '維修地點', dataKey: 'Place' },
+							{ header: '算式', dataKey: 'MillingFormula' },
+							{ header: '面積', dataKey: 'MillingArea' },
+							{ header: '深度', dataKey: 'MillingDepth' },
+							{ header: '噸數', dataKey: 'tonne' }
+						],
+						styles: { font: "edukai", lineWidth: 0.2 },
+						headStyles: { halign: 'center' },
+						columnStyles: {
+							order: { halign: 'center', valign: 'middle', cellWidth: 12 },
+							DatePlan: { halign: 'center', valign: 'middle', cellWidth: 24 },
+							CaseNo: { halign: 'center', valign: 'middle', cellWidth: 26 },
+							DistressName: { halign: 'center', valign: 'middle', cellWidth: 20 },
+							Place: { cellWidth: 30 },
+							MillingArea: { halign: 'center', valign: 'middle', cellWidth: 14 },
+							MillingDepth: { halign: 'center', valign: 'middle', cellWidth: 14 },
+							tonne: { halign: 'center', valign: 'middle', cellWidth: 14 }
+						},
+						startY:  lineSize * 2 + 25,
+						rowPageBreak: 'avoid'
+					});
+
+					// this.pdfDoc.setLineDashPattern([2, 1], 0);
+					// this.pdfDoc.setDrawColor('#999999');
+					// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
+					// this.pdfDoc.setLineDashPattern([0], 0);
+
+					const splitImgTable = table.reduce((acc, cur) => {
+						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
+
+					for(const [imgIndex, imgTable] of splitImgTable.entries()) {
+						// let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
+						// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
+						// console.log(startY);
+
+						this.pdfDoc.autoTable({ 
+							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
+							// body: [ imgTable.map(l => l.ImgZoomOut) ],
+							body: [ imgTable.map(l => l.CaseNo) ],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.2 },
+							headStyles: { halign: 'center' },
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
+							didDrawCell: async (data) => {
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								}
+							},
+							startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
+							pageBreak: 'avoid'
+						});
+					}
+				}
+
+				// 頁數
+				this.pdfDoc.setFontSize(fontSize-2);
+				for(let pageNo=1; pageNo <= this.pdfDoc.internal.getNumberOfPages(); pageNo++) {
+					this.pdfDoc.setPage(pageNo); 
+					this.pdfDoc.text(`${pageNo} of ${this.pdfDoc.internal.getNumberOfPages()}`, width/2, height-10, { align: 'center' } );
+				}
+
+				this.viewer.updateTemplate({ 
+					basePdf: this.pdfDoc.output('bloburl'), 
+					schemas: [{ }]
+				});
+
+				resolve();
+			});
+		},
+		previewPdf() {
+			this.loading = true;
+
+			this.createPdf().then(() => {
+				this.loading = false;
+				this.showJobTicket = true;
+			})
+		},
+		downloadPdf() {
+			this.pdfDoc.save("維修派工單.pdf");
 		},
 		async handleDownload() {
 			// await this.dateWatcher();
@@ -444,7 +598,7 @@ export default {
 *
 	// border: 1px solid #000
 	// box-sizing: border-box
-.case-plan
+.job-ticket
 	.filter-container
 		.filter-item
 			margin-right: 5px

@@ -1,8 +1,9 @@
 <template>
-	<div class="app-container case-plan" v-loading="loading">
-		<h2>主任派工</h2>
+	<div class="app-container finish-register" v-loading="loading">
+		<h2>完工登錄</h2>
 		<div class="filter-container">
 			<div class="filter-item">
+				<!-- TODO: 設施未完成 -->
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<span>類型</span>
@@ -14,7 +15,7 @@
 			</div>
 
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">成案日期</div>
+				<div style="font-size: 12px; color: #909399">派工日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<br />
@@ -71,13 +72,13 @@
 			</div>
 			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.workClass) > 0">
 				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="showAddKit = true">分派</el-button>
+					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="showAddKit = true">完工登錄</el-button>
 				</span>
 			</el-tooltip>
 		</div>
 
 		<el-table
-			ref="assignTable"
+			ref="planTable"
 			empty-text="目前沒有資料"
 			:data="list"
 			:key="deviceTypeNow"
@@ -96,9 +97,11 @@
 				</template>
 			</el-table-column>
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
-			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="planCode" label="派工單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
+					<span>{{ row.CaseSN }}</span>
+					<br>
 					<span>{{ row.CaseNo }}</span>
 					<br>
 					<span style="color: #909399; font-size: 12px">{{ row.DName }} ({{ row.casetype }})</span>
@@ -111,17 +114,14 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['DateDeadline'].includes(key) ? 220 : null"
 				:min-width="['Place'].includes(key) ? 80 : null"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
-					<span v-if="[ 'DateDeadline' ].includes(column.property)">
-						<el-row type="flex" align="middle">
-							<el-col :span="18"><el-date-picker v-model="row.DateDeadline" type="date" placeholder="選擇日期" style="width: 100%" /></el-col>
-							<el-col :span="6"><el-tag class="btn-tag" :type="row.detailTime ? 'success': 'info'" @click="row.detailTime = !row.detailTime">時段</el-tag></el-col>
-						</el-row>
-						<el-time-picker v-if="row.detailTime" v-model="row.estWorkingTime" is-range range-separator="至"  start-placeholder="開始時間" end-placeholder="結束時間" placeholder="選擇時間" style="width: 100%" />
+					<span v-if="[ 'SCType1Flag' ].includes(column.property)">
+						<span v-if="row[column.property] == '3'">已完工</span>
+						<span v-else-if="row[column.property] == '2'">已派工</span>
+						<el-checkbox v-else v-model="row[column.property]" :true-label="1" :false-label="0" />
 					</span>
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
@@ -130,7 +130,7 @@
 			</el-table-column>
 
 			<!-- 道路、熱再生 -->
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="400" align="center">
 				<template slot-scope="{ row }">
 					<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
 						<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
@@ -144,17 +144,129 @@
 					</el-row>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="85" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="面積" width="80" align="center">
 				<template slot-scope="{ row }">
 					<!-- <el-input v-model="row.MillingArea" /> -->
 					<span>{{ row.MillingArea || "-" }}</span>
 				</template>
 			</el-table-column>
 
+			<!-- 道路 -->
+			<el-table-column v-if="deviceTypeNow == '1'" label="完工備註" width="230" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.edit">
+						<el-row :gutter="5" v-for="(keyArr, index) in options.workmemoOrder" :key="`memo_${index}`">
+							<span v-for="key in keyArr.filter(key => key != 'uNotes')" :key="key">
+								<el-col :span="6" style="line-height: 32px">{{ options.workmemo[key] }}</el-col>
+								<el-col :span="6">
+									<el-input v-model="row.memoObj[key]" size="mini" />
+								</el-col>
+							</span>
+						</el-row>
+						<el-row :gutter="5">
+							<el-col :span="6" style="line-height: 32px">{{ options.workmemo.uNotes }}</el-col>
+							<el-col :span="18">
+								<el-input v-model="row.memoObj.uNotes" size="mini" />
+							</el-col>
+						</el-row>
+						<el-button type="text" @click="rowActive = row">
+							<i class="el-icon-success" />
+						</el-button>
+						<el-button type="text" @click="row.edit = false">
+							<i class="el-icon-error" />
+						</el-button>
+					</span>
+					<el-row :gutter="5" v-else>
+						<el-col :span="22">
+							<span v-if="options.workmemoOrder.flat().filter(key => key != 'uNotes' && row.memoObj[key] != 0).length != 0">
+								<el-row :gutter="5">
+									<span v-for="key in options.workmemoOrder.flat().filter(key => key != 'uNotes' && row.memoObj[key] != 0)" :key="key">
+										<el-col :span="6">{{ options.workmemo[key] }}</el-col>
+										<el-col :span="6">
+											<span>{{ row.memoObj[key] }}</span>
+										</el-col>
+									</span>
+								</el-row>
+								<el-row v-if="row.memoObj.uNotes && row.memoObj.uNotes.length != 0" :gutter="5">
+									<el-col :span="6">{{ options.workmemo.uNotes }}</el-col>
+									<el-col :span="18">
+										<span>{{ row.memoObj.uNotes }}</span>
+									</el-col>
+								</el-row>
+							</span>
+							<span v-else> - </span>
+						</el-col>
+						<el-col :span="2">
+							<el-link @click="row.edit = true" style="margin-left: 5px">
+								<i class="el-icon-edit" />
+							</el-link>
+						</el-col>
+					</el-row>
+				</template>
+			</el-table-column>
+			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="80" align="center">
+				<template slot-scope="{ row }">
+					<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
+						<el-option v-for="value in [0, 5, 10]" :key="value" :label="value" :value="value"/>
+					</el-select>
+				</template>
+			</el-table-column>
+			<el-table-column v-if="deviceTypeNow == '1'" label="使用粒料" width="240" align="center">
+				<template slot-scope="{ row }">
+					<el-row :gutter="5">
+						<el-col :span="6" style="line-height: 28px">粒料3/4</el-col>
+						<el-col :span="6">
+							<el-select v-model="row.Aggregate34" size="mini" popper-class="type-select">
+								<el-option v-for="value in [0, 5, 10]" :key="value" :label="value" :value="value"/>
+							</el-select>
+						</el-col>
+						<el-col :span="6" style="line-height: 28px">粒料3/8</el-col>
+						<el-col :span="6">
+							<el-select v-model="row.Aggregate38" size="mini" popper-class="type-select">
+								<el-option v-for="value in [0, 5, 10]" :key="value" :label="value" :value="value"/>
+							</el-select>
+						</el-col>
+					</el-row>
+					<hr>
+					<el-checkbox v-model="row.SamplingL1" :true-label="1" :false-label="0">一級抽料</el-checkbox>
+					<el-row :gutter="5">
+						<el-col :span="8">
+							<el-select v-model="row.SamplingL1Type" size="mini" popper-class="type-select" :disabled="row.SamplingL1 == 0">
+								<el-option v-for="value in ['3/8', '3/4']" :key="value" :label="value" :value="value"/>
+							</el-select>
+						</el-col>
+						<el-col :span="8">
+							<el-input v-model="row.SamplingL1Value" size="mini" :disabled="row.SamplingL1 == 0" />
+						</el-col>
+						<el-col :span="8">
+							<el-select v-model="row.SamplingL1Unit" size="mini" popper-class="type-select" :disabled="row.SamplingL1 == 0">
+								<el-option v-for="value in ['噸', 'm3']" :key="value" :label="value" :value="value"/>
+							</el-select>
+						</el-col>
+					</el-row>
+					<el-checkbox v-model="row.SamplingL2" :true-label="'1'" :false-label="'0'">二級抽料</el-checkbox>
+					<el-row :gutter="5">
+						<el-col :span="8">
+							<el-select v-model="row.SamplingL2Type" size="mini" popper-class="type-select" :disabled="row.SamplingL2 == 0">
+								<el-option v-for="value in ['3/8', '3/4']" :key="value" :label="value" :value="value"/>
+							</el-select>
+						</el-col>
+						<el-col :span="8">
+							<el-input v-model="row.SamplingL2Value" size="mini" :disabled="row.SamplingL2 == 0" />
+						</el-col>
+						<el-col :span="8">
+							<el-select v-model="row.SamplingL2Unit" size="mini" popper-class="type-select" :disabled="row.SamplingL2 == 0">
+								<el-option v-for="value in ['噸', 'm3']" :key="value" :label="value" :value="value"/>
+							</el-select>
+						</el-col>
+					</el-row>
+				</template>
+			</el-table-column>
+
 			<!-- 設施 -->
 			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
 				<template slot-scope="{ row }">
-					<el-checkbox v-model="row.isPressing" />
+					<el-checkbox v-model="row.IsPressing" />
 				</template>
 			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
@@ -168,7 +280,7 @@
 					<el-button-group>
 						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
 						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
-						<el-button type="info" size="mini" @click="beforeEdit(row)">檢視</el-button>
+						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
@@ -181,21 +293,12 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
-		<!-- Dialog: 新增套組 -->
-		<el-dialog width="400px" title="新增套組" :visible.sync="showDispatch">
-
+		<!-- Dialog: 案件檢視 -->
+		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
+			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" />
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showDispatch = false">取消</el-button>
-				<el-button type="primary" @click="addKit()">確定</el-button>
-			</div>
-		</el-dialog>
-
-		<!-- Dialog: 確認-->
-		<el-dialog width="300px" title="確認" :visible.sync="showConfirm">
-			<span>是否刪除{{ rowActive.serialno }} - {{ rowActive.kitName }} </span>
-			<div slot="footer" class="dialog-footer">
-				<el-button @click="showConfirm = false">取消</el-button>
-				<el-button type="primary" @click="editKit()">確定</el-button>
+				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
+				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
 			</div>
 		</el-dialog>
 	</div>
@@ -204,18 +307,19 @@
 <script>
 import moment from "moment";
 import { getDteamMap, getWClassMap } from "@/api/type";
-import { getDispatchList } from "@/api/dispatch";
+import { getFinRegister } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
+import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
 
 export default {
-	name: "caseAssign",
-	components: { TimePicker },
+	name: "finRegister",
+	components: { TimePicker, CaseDetail },
 	data() {
 		return {
 			loading: false,
 			showDispatch: false,
-			showEdit: false,
+			showDetailDialog: true,
 			showConfirm: false,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
@@ -227,7 +331,7 @@ export default {
 			searchRange: "",
 			deviceTypeNow: 1,
 			listQuery: {
-				filterType: 1,
+				filterType: 2,
 				filterStr: null,
 				dteamSN: null,
 				deviceType: 1,
@@ -256,34 +360,14 @@ export default {
 					name: "案件地點",
 					sortable: false
 				},
-				DateDeadline: {
-					name: "預計完工日期",
+				SCType1Flag: {
+					name: "補繪標線",
 					sortable: false
-				},
-				// estWorkingTime: {
-				// 	name: "預計施作時段",
-				// 	sortable: false
-				// },
-				// MillingFormula: {
-				// 	name: "複雜算式",
-				// 	sortable: false
-				// },
-				// MillingLength: {
-				// 	name: "預計長度",
-				// 	sortable: false
-				// },
-				// MillingWidth: {
-				// 	name: "預計寬度",
-				// 	sortable: false
-				// },
-				// MillingArea: {
-				// 	name: "預估面積",
-				// 	sortable: false
-				// },
+				}
 			},
 			// total: 0,
 			list: [],
-			detail: [],
+			// detail: [],
 			rowActive: {},
 			checkIndeterminate: false,
 			checkList: [],
@@ -298,10 +382,20 @@ export default {
 					4: "標線"
 				},
 				filterType: {
-					1: "合約",
-					2: "通報單號",
+					// 1: "合約",
+					2: "派工單號",
 					3: "地點(關鍵字)"
-				}
+				},
+				workmemo: {
+					"uStacker": "堆高機",
+					"uDigger": "挖土機",
+					"uPaver": "鋪裝機",
+					"uRoller": "壓路機",
+					"uSprinkler": "灑水車",
+					"uNotes": "備註"
+				},
+				workmemoOrder: [ ["uStacker", "uDigger"], ["uPaver", "uRoller"], ["uSprinkler"], ["uNotes"] ],
+
 			}
 		};
 	},
@@ -311,6 +405,9 @@ export default {
 		getDteamMap().then(response => {
 			this.options.DteamMap = response.data.DteamMap;
 		});
+	},
+	mounted() {
+		this.showDetailDialog = false;
 	},
 	methods: {
 		async handleCheckedChange(val) {
@@ -336,11 +433,11 @@ export default {
 			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
 		},
 		cellCheckBox(row, index) {
-			if(this.checkList[index]) this.$refs.assignTable.toggleRowSelection(row, true);
-			else this.$refs.assignTable.toggleRowSelection(row, false);
+			if(this.checkList[index]) this.$refs.planTable.toggleRowSelection(row, true);
+			else this.$refs.planTable.toggleRowSelection(row, false);
 		},
 		toggleExpand(row) {
-			this.$refs.assignTable.toggleRowExpansion(row)
+			this.$refs.planTable.toggleRowExpansion(row)
 		},
 		getList() {
 			this.loading = true;
@@ -352,9 +449,9 @@ export default {
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
-			getDispatchList({
+			getFinRegister({
 				dteamSN: this.listQuery.filterType == 1 ? this.listQuery.dteamSN : null,
-				reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				dispatchSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				deviceType: this.listQuery.deviceType,
 				timeStart: startDate,
@@ -372,10 +469,20 @@ export default {
 					this.deviceTypeNow = this.listQuery.deviceType;
 
 					this.list.forEach(l => {
-						l.DateDeadline = this.formatTime(l.DateDeadline);
-						this.$set(l, "detailTime", false);
 						this.$set(l, "editFormula", l.MillingFormula != '0');
-					// 	this.$set(l, "editNote", false);
+
+						let memoObj = { "uStacker": '0', "uDigger": '0', "uPaver": '0', "uRoller": '0', "uSprinkler": '0', "uNotes": "" }; 
+						this.options.workmemoOrder.forEach(key => { memoObj[key] = l[key]; })
+
+						this.$set(l, "memoObj", memoObj);
+						this.$set(l, "SamplingL1Type", "");
+						this.$set(l, "SamplingL1Value", 0);
+						this.$set(l, "SamplingL1Unit", "");
+
+						this.$set(l, "SamplingL2Type", "");
+						this.$set(l, "SamplingL2Value", 0);
+						this.$set(l, "SamplingL2Unit", "");
+						this.$set(l, "edit", false);
 					})
 
 					getWClassMap({ deviceType: this.listQuery.deviceType}).then(response => {
@@ -385,8 +492,12 @@ export default {
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
+		showDetail(row) {
+			this.loading = true;
+			this.$refs.caseDetail.getDetail(row);
+		},
 		calArea(row) {
-			const replaceObj = { " ": "", "m": "", "M": "", "=": "", "＝": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
+			const replaceObj = { " ": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
 			"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
 			
 			if(row.editFormula) {
@@ -403,8 +514,7 @@ export default {
 
 		},
 		formatTime(time) {
-			const m = moment(time);
-			return m.isValid() ? m.format("YYYY/MM/DD") : "" ;
+			return moment(time).format("YYYY-MM-DD HH:MM:ss");
 		},
 		async handleDownload() {
 			// await this.dateWatcher();
@@ -441,10 +551,13 @@ export default {
 </script>
 
 <style lang="sass">
-*
-	// border: 1px solid #000
-	// box-sizing: border-box
-.case-plan
+// *
+// 	border: 1px solid #000
+// 	box-sizing: border-box
+.type-select .el-select-dropdown__item
+	padding: 0 5px
+	text-align: center
+.finish-register
 	.filter-container
 		.filter-item
 			margin-right: 5px
@@ -481,6 +594,28 @@ export default {
 			cursor: pointer
 		.el-table__expand-icon
 			display: none
+		.el-select
+			// width: 85px
+			.el-input__inner
+				padding-left: 8px
+				padding-right: 10px
+			.el-input__suffix
+				right: 0
+				margin-right: -3px
+				transform: scale(0.7)
+		.el-checkbox
+			margin-right: 0
+		.el-icon-edit
+			color: #67C23A
+			margin-bottom: 5px
+			&:hover
+				color: white
+				background-color: #67C23A
+				border-radius: 50%
+		.el-icon-success
+			margin-right: -10px
+		.el-icon-error
+			color: #F56C6C
 	.btn-dialog
 		padding: 5px 5px
 </style>
