@@ -8,7 +8,7 @@
 						<span>合約</span>
 					</div>
 					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇">
-						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
+						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
 			</div>
@@ -181,7 +181,7 @@
 
 <script>
 import moment from "moment";
-import { getDteamMap, getKitItemMap } from "@/api/type";
+import { getTenderMap, getKitItemMap } from "@/api/type";
 import { getCostKitV0, getCostKitDetailV0 } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
@@ -265,7 +265,7 @@ export default {
 			},
 			rowActive: {},
 			options: {
-				DteamMap: {}
+				tenderMap: {}
 			}
 		};
 	},
@@ -279,8 +279,8 @@ export default {
 	},
 	watch: { },
 	created() { 
-		getDteamMap().then(response => {
-			this.options.DteamMap = response.data.DteamMap;
+		getTenderMap().then(response => {
+			this.options.tenderMap = response.data.tenderMap;
 		});
 	},
 	methods: {

@@ -306,7 +306,7 @@
 
 <script>
 import moment from "moment";
-import { getDteamMap, getWClassMap } from "@/api/type";
+import { getTenderMap, getWClassMap } from "@/api/type";
 import { getFinRegister } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
@@ -402,7 +402,7 @@ export default {
 	computed: {	},
 	watch: { },
 	created() { 
-		getDteamMap().then(response => {
+		getTenderMap().then(response => {
 			this.options.DteamMap = response.data.DteamMap;
 		});
 	},

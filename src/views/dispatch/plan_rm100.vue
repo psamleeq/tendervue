@@ -25,7 +25,7 @@
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
 					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
-						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
+						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
 				
@@ -47,7 +47,7 @@
 						<span>合約</span>
 					</div>
 					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
-						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
+						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
 			</div> -->
@@ -194,7 +194,7 @@
 
 <script>
 import moment from "moment";
-import { getDteamMap, getWClassMap } from "@/api/type";
+import { getTenderMap, getWClassMap } from "@/api/type";
 import { getDispatchListV0 } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
@@ -281,7 +281,7 @@ export default {
 			checkList: [],
 			tableSelect: [],
 			options: {
-				DteamMap: {},
+				tenderMap: {},
 				WClassMap: {},
 				deviceType: {
 					1: "道路",
@@ -300,8 +300,8 @@ export default {
 	computed: {	},
 	watch: { },
 	created() { 
-		getDteamMap().then(response => {
-			this.options.DteamMap = response.data.DteamMap;
+		getTenderMap().then(response => {
+			this.options.tenderMap = response.data.tenderMap;
 		});
 	},
 	mounted() {
