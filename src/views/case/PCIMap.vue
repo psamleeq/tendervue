@@ -5,6 +5,17 @@
 			<h2 class="map-title">查核地圖</h2>
 			<div class="filter-container">
 				<div class="filter-item">
+					<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
+						<div class="el-input-group__prepend">
+							<span>合約</span>
+						</div>
+						<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select" @input="changeTender()">
+							<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
+						</el-select>
+					</div>
+				</div>
+				<br>
+				<div class="filter-item">
 					<el-input v-model="listQuery.filterId" placeholder="請輸入">
 						<!-- <span slot="prepend">缺失編號</span> -->
 						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
@@ -53,7 +64,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-// import { getDistGeo } from "@/api/type";
+import { getTenderMap, getTenderBlock } from "@/api/type";
 import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
 import { calPCI } from "@/api/tool";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -88,7 +99,9 @@ export default {
 			// geoJSON: {},
 			caseInfo: [],
 			selectCase: {},
+			blockArr: [],
 			listQuery: {
+				dteamSN: null,
 				filterType: 1,
 				filterId: null
 			},
@@ -107,6 +120,7 @@ export default {
 				depth: "深度(cm)"
 			},
 			options: { 
+				tenderMap: {},
 				PCILevel: {
 					6: {
 						text: "veryGood",
@@ -207,10 +221,13 @@ export default {
 	computed: { },
 	watch: { },
 	created() {
-		this.dataLayer = { 
-			PCIBlock: {}
-		};
+		this.dataLayer = { PCIBlock: {} };
 		this.geoJSON = {};
+		getTenderMap().then(response => {
+			this.options.tenderMap = response.data.tenderMap;
+			if(Object.keys(this.options.tenderMap).length > 0) this.listQuery.dteamSN = Object.keys(this.options.tenderMap)[0];
+			if(this.listQuery.dteamSN) this.changeTender();
+		});
 	},
 	async mounted() {
 		this.loading = true;
@@ -388,9 +405,18 @@ export default {
 
 				this.dataLayer.district = new google.maps.Data({ map: this.map });
 				this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
+
+				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
+				this.dataLayer.case = new google.maps.Data({ map: this.map });
+			})
+		},
+		changeTender() {
+			getTenderBlock({ dteamSN: this.listQuery.dteamSN }).then(response => { 
+				this.blockArr = response.data.blockArr; 
 				this.dataLayer.district.setStyle(feature => {
 					// console.log(feature);
-					const condition = feature.j.TOWNNAME == '中山區'
+					const condition = this.blockArr.includes(feature.j.TOWNNAME);
+
 					return {
 						strokeColor: "#827717",
 						strokeWeight: 3,
@@ -400,10 +426,7 @@ export default {
 						zIndex: 0
 					}
 				});
-
-				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
-				this.dataLayer.case = new google.maps.Data({ map: this.map });
-			})
+			});
 		},
 		async getList() {
 			this.loading = true;
@@ -692,13 +715,22 @@ export default {
 				right: 0
 				margin-right: -3px
 				transform: scale(0.7)
+		.select-contract
+			.el-select
+				&.dteam-select
+					width: 520px
+				.el-input__inner
+					border-top-left-radius: 0
+					border-bottom-left-radius: 0
+					padding-left: 10px
+					text-align: left
 	.info-box
 		position: absolute
 		width: 250px
 		// background-color: rgba(white, 0.7)
 		z-index: 1
 		&.left
-			top: 140px
+			top: 180px
 			left: 15px
 		&.right
 			top: 140px

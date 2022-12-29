@@ -9,7 +9,7 @@ export function getDistGeo(query) {
 	})
 }
 
-// 合約Map
+// 施工廠商Map
 export function getWClassMap(query) {
 	return request({
 		url: '/type/workClass',
@@ -22,6 +22,15 @@ export function getWClassMap(query) {
 export function getTenderMap(query) {
 	return request({
 		url: '/type/tenderMap',
+		method: 'get',
+		params: query
+	})
+}
+
+// 合約區域
+export function getTenderBlock(query) {
+	return request({
+		url: '/type/tenderBlock',
 		method: 'get',
 		params: query
 	})
