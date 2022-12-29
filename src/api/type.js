@@ -19,9 +19,9 @@ export function getWClassMap(query) {
 }
 
 // 合約Map
-export function getDteamMap(query) {
+export function getTenderMap(query) {
 	return request({
-		url: '/type/dteamMap',
+		url: '/type/tenderMap',
 		method: 'get',
 		params: query
 	})

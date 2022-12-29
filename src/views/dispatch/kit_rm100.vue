@@ -8,7 +8,7 @@
 						<span>合約</span>
 					</div>
 					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇">
-						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
+						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
 			</div>
@@ -265,7 +265,7 @@ export default {
 			},
 			rowActive: {},
 			options: {
-				tenderMap: {}
+				DteamMap: {}
 			}
 		};
 	},
@@ -280,7 +280,7 @@ export default {
 	watch: { },
 	created() { 
 		getTenderMap().then(response => {
-			this.options.tenderMap = response.data.tenderMap;
+			this.options.DteamMap = response.data.DteamMap;
 		});
 	},
 	methods: {
