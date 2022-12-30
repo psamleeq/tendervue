@@ -50,6 +50,24 @@ const PCIRouter = {
 				}
 			},
 			{
+				path: 'shareBarChart',
+				component: () => import('@/views/PCI/shareBarChart'),
+				name: 'shareBarChart',
+				meta: { 
+					title: '佔比統計(長方圖)',
+					roles: ['PCIanalyst.viewer']
+				}
+			},
+			{
+				path: 'iriDataDemo',
+				component: () => import('@/views/PCI/iriDataDemo'),
+				name: 'iriDataDemo',
+				meta: { 
+					title: 'IRI數據(Demo)',
+					roles: ['PCIanalyst.viewer']
+				}
+			},
+			{
 				path: 'caseReport',
 				component: () => import('@/views/PCI/caseReport'),
 				name: 'caseReport',
