@@ -66,7 +66,6 @@ import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 import { getTenderMap, getTenderBlock } from "@/api/type";
 import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
-import { calPCI } from "@/api/tool";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API

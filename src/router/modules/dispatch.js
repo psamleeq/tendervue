@@ -14,26 +14,16 @@ const dispatchRouter = {
 		vTag: 'Alpha'
 	},
 	children: [
-		{
-			path: 'kitV0',
-			component: () => import('@/views/dispatch/kit_rm100'),
-			name: 'kitV0',
-			meta: { 
-				title: '計價套組_V0', 
-				roles: ['beta'],
-				vTag: 'Alpha' 
-			}
-		},
-		{
-			path: 'planV0',
-			component: () => import('@/views/dispatch/plan_rm100'),
-			name: 'planV0',
-			meta: {
-				title: '主任派工_V0',
-				roles: ['beta'],
-				vTag: 'Alpha'
-			}
-		},
+		// {
+		// 	path: 'kit',
+		// 	component: () => import('@/views/dispatch/kit'),
+		// 	name: 'kit',
+		// 	meta: {
+		// 		title: '計價套組',
+		// 		roles: ['beta'],
+		// 		vTag: 'Alpha'
+		// 	}
+		// },
 		{
 			path: 'plan',
 			component: () => import('@/views/dispatch/plan'),
@@ -45,31 +35,11 @@ const dispatchRouter = {
 			}
 		},
 		{
-			path: 'jobTicketV0',
-			component: () => import('@/views/dispatch/jobTicket_rm100'),
-			name: 'jobTicketV0',
-			meta: {
-				title: '製作派工單_V0',
-				roles: ['beta'],
-				vTag: 'Alpha'
-			}
-		},
-		{
 			path: 'jobTicket',
 			component: () => import('@/views/dispatch/jobTicket'),
 			name: 'jobTicket',
 			meta: {
 				title: '製作派工單',
-				roles: ['beta'],
-				vTag: 'Alpha'
-			}
-		},
-		{
-			path: 'finRegisterV0',
-			component: () => import('@/views/dispatch/finRegister_rm100'),
-			name: 'finRegisterV0',
-			meta: {
-				title: '完工登錄_V0',
 				roles: ['beta'],
 				vTag: 'Alpha'
 			}
