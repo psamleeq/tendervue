@@ -97,7 +97,7 @@
 				</template>
 			</el-table-column>
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
-			<el-table-column prop="planCode" label="派工單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="OrderSN" label="派工單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseSN }}</span>
