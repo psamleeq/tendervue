@@ -16,7 +16,7 @@ const dispatchRouter = {
 	children: [
 		{
 			path: 'kitV0',
-			component: () => import('@/views/dispatch/kit_rm100'),
+			component: () => import('@/views/dispatchV0/kit_rm100'),
 			name: 'kitV0',
 			meta: { 
 				title: '計價套組_V0', 
@@ -26,7 +26,7 @@ const dispatchRouter = {
 		},
 		{
 			path: 'planV0',
-			component: () => import('@/views/dispatch/plan_rm100'),
+			component: () => import('@/views/dispatchV0/plan_rm100'),
 			name: 'planV0',
 			meta: {
 				title: '主任派工_V0',
@@ -36,7 +36,7 @@ const dispatchRouter = {
 		},
 		{
 			path: 'jobTicketV0',
-			component: () => import('@/views/dispatch/jobTicket_rm100'),
+			component: () => import('@/views/dispatchV0/jobTicket_rm100'),
 			name: 'jobTicketV0',
 			meta: {
 				title: '製作派工單_V0',
@@ -46,7 +46,7 @@ const dispatchRouter = {
 		},
 		{
 			path: 'finRegisterV0',
-			component: () => import('@/views/dispatch/finRegister_rm100'),
+			component: () => import('@/views/dispatchV0/finRegister_rm100'),
 			name: 'finRegisterV0',
 			meta: {
 				title: '完工登錄_V0',
