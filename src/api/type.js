@@ -36,6 +36,23 @@ export function getTenderBlock(query) {
 	})
 }
 
+// 合約區間
+export function getTenderRound(query) {
+	return request({
+		url: '/type/tenderRound',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setTenderRound(id, data) {
+	return request({
+		url: `/type/tenderRound/${id}`,
+		method: 'put',
+		data
+	})
+}
+
 // 類型Map
 export function getTypeMap(query) {
 	return request({

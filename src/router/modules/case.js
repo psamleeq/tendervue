@@ -45,6 +45,16 @@ const caseRouter = {
 			}
 		},
 		{
+			path: 'PCIManager',
+			component: () => import('@/views/case/PCIManager'),
+			name: 'PCIManager',
+			meta: {
+				title: 'PCI管理',
+				roles: ['distress.inspector'],
+				vTag: 'Alpha' 
+			}
+		},
+		{
 			path: 'PCIMap',
 			component: () => import('@/views/case/PCIMap'),
 			name: 'PCIMap',
