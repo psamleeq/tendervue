@@ -133,7 +133,7 @@ export default {
       timeTabId: 2,
       dateTimePickerVisible: false,
       screenWidth: window.innerWidth,
-      daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
+      daterange: [ moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
       searchRange: "",
 			listQuery: {
 				dist: 104

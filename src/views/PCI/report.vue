@@ -169,21 +169,36 @@ export default {
 				// 	"engName": "Wenshan"
 				// }
 			},
-			yearShortcuts: {
+			// yearShortcuts: {
+			// 	2022: {
+			// 		dateStart: "2022/6/1",
+			// 		// dateEnd: "2022/12/31"
+			// 	}
+			// }
+		};
+	},
+	computed: {
+		yearShortcuts() {
+			const startYear = 2022;
+			const diff = moment().diff(moment([startYear]), 'years');
+			let yearShortcuts = {
 				2022: {
 					dateStart: "2022/6/1",
 					// dateEnd: "2022/12/31"
 				}
-			}
-		};
+			};
+			for(let i = 1; i <= diff; i++) yearShortcuts[startYear+i] = {};
+
+			return yearShortcuts;
+		},
 	},
 	created() {
 		this.getList();
 	},
 	methods: {
 		async dateWatcher() {
-			const dateStart = this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().startOf("y");
-			let dateEnd = this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().endOf("y");
+			const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
+			let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
 			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().endOf("d").toDate();
 			this.daterange = [ dateStart, dateEnd ];
 

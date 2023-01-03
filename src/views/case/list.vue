@@ -401,8 +401,8 @@ export default {
 	created() {
 		getRoadCaseType().then(response => {
 			// this.listQuery.caseType = JSON.parse(JSON.stringify(response.data.list));
-			this.options.caseType = JSON.parse(JSON.stringify(response.data.list));
-			for(const type of this.options.caseType) this.listQuery.caseType.push({ name: type, checked: false, level: 0 });
+			this.options.caseType = JSON.parse(JSON.stringify(response.data.list.filter(l => l && l.length != 0)));
+			for(const type of this.options.caseType) if(type && type.length != 0) this.listQuery.caseType.push({ name: type, checked: false, level: 0 });
 			this.getList();
 		});
 		// this.listQuery.distList = Object.keys(this.districtList);
