@@ -176,7 +176,7 @@ export default {
 	},
 	methods: {
 		initPDF() {
-			fetch(`/assets/pdf/PI3-1.json?t=${Date.now()}`).then(async (response) => {
+			fetch(`/assets/pdf/PI3_1-Att.json?t=${Date.now()}`).then(async (response) => {
 				const domContainer = this.$refs.container.$el;
 				this.template = await response.json();
 
@@ -194,6 +194,8 @@ export default {
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {
 					console.log(arg);
+					// const key = arg.key.slice(0, arg.key.length-1);
+					// const index = arg.key.slice(arg.key.length-1);
 					const [key, index] = arg.key.split(/([a-zA-Z]+)(\d?)/g).filter(s => s.length > 0);
 					// console.log(key, index);
 					// if(index == undefined) this.inputs[arg.key] = arg.value;
@@ -212,10 +214,10 @@ export default {
 			const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
 
-			const addTemplate = await fetch(`/assets/pdf/PI3-1-1.json?t=${Date.now()}`).then(response => response.json());
+			const addTemplate = await fetch(`/assets/pdf/PI3_1-Att_1.json?t=${Date.now()}`).then(response => response.json());
 			const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
-			// const addPdfBytes = await fetch(`/assets/pdf/PI3-1-1.pdf?t=${Date.now()}`).then(res => res.arrayBuffer());
+			// const addPdfBytes = await fetch(`/assets/pdf/PI3_1-Att_1.pdf?t=${Date.now()}`).then(res => res.arrayBuffer());
 			// const add_pdf = await PDFDocument.load(addPdfBytes);
 			const mergedPdf = await PDFDocument.create();
 
@@ -250,6 +252,7 @@ export default {
 			const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
 			index = (index != undefined) ? index : ori_pdf.getPageCount()-2;
+			// const lastIndex = ori_pdf.getPageCount()-2;
 			ori_pdf.removePage(index);
 
 			this.template.basePdf = await ori_pdf.saveAsBase64({ dataUri: true });
@@ -357,4 +360,11 @@ export default {
 		.el-collapse-item__content
 			height: 100%
 			padding-bottom: 5px
+					
+	// .el-row
+	// 	position: relative
+	// 	height: 100%
+	// 	#container
+	// 		position: relative
+	// 		height: 100%
 </style>

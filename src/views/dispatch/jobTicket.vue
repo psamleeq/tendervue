@@ -157,7 +157,7 @@
 			<div ref="pdfViewer" />
 			<div slot="footer" class="dialog-footer">
 				<el-button @click="showJobTicket = false">取消</el-button>
-				<el-button type="primary" @click="downloadPdf()">確定</el-button>
+				<el-button type="primary" @click="downloadPdf()">確定列印</el-button>
 			</div>
 		</el-dialog>
 
@@ -455,7 +455,8 @@ export default {
 					this.pdfDoc.setFontSize(fontSize);
 					this.pdfDoc.setCharSpace(0);
 					const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
-					this.pdfDoc.text(`${today} 派工單號：-------`, width - 15, lineSize + 25, { align: 'right' });
+					this.pdfDoc.text(`${today} 派工單號：           `, width - 15, lineSize + 25, { align: 'right' });
+					this.pdfDoc.text(`(預覽列印)`, width - 15, lineSize + 25, { align: 'right' });
 
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
