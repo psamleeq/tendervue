@@ -19,37 +19,36 @@ export function getCostKitV0(query) {
 }
 
 // 套組細項
-
-// 主任派工列表
-export function getDispatchList(query) {
+export function getCostKitDetailV0(query) {
 	return request({
-		url: '/dispatch/list',
+		url: '/dispatchV0/kitDetail',
 		method: 'get',
 		params: query
 	})
 }
 
-export function setDispatchList(data) {
+// 主任派工列表
+export function getDispatchListV0(query) {
 	return request({
-		url: '/dispatch/list',
-		method: 'post',
-		data
+		url: '/dispatchV0/list',
+		method: 'get',
+		params: query
 	})
 }
 
 // 廠商派工單列表
-export function getJobTicket(query) {
+export function getJobTicketV0(query) {
 	return request({
-		url: '/dispatch/jobTicket',
+		url: '/dispatchV0/jobTicket',
 		method: 'get',
 		params: query
 	})
 }
 
 // 完工登錄列表
-export function getFinRegister(query) {
+export function getFinRegisterV0(query) {
 	return request({
-		url: '/dispatch/finRegister',
+		url: '/dispatchV0/finRegister',
 		method: 'get',
 		params: query
 	})

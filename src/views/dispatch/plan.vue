@@ -29,12 +29,7 @@
 					</el-select>
 				</div>
 				
-				<el-input
-					v-else
-					v-model="listQuery.filterStr"
-					placeholder="請輸入"
-					style="width: 300px"
-				>
+				<el-input v-else v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
 					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>

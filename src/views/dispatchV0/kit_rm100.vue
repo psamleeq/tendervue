@@ -182,7 +182,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getKitItemMap } from "@/api/type";
-import { getCostKitV0, getCostKitDetailV0 } from "@/api/dispatch";
+import { getCostKitV0, getCostKitDetailV0 } from "@/api/dispatchV0";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 

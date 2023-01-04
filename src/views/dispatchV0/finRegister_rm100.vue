@@ -315,7 +315,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getWClassMap } from "@/api/type";
-import { getFinRegisterV0 } from "@/api/dispatch";
+import { getFinRegisterV0 } from "@/api/dispatchV0";
 import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
