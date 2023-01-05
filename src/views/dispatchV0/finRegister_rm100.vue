@@ -65,14 +65,14 @@
 					<div class="el-input-group__prepend">
 						<span>廠商</span>
 					</div>
-					<el-select v-model.number="listQuery.workClass" placeholder="請選擇" popper-class="type-select" style="width: 100px">
+					<el-select v-model.number="listQuery.contractor" placeholder="請選擇" popper-class="type-select" style="width: 100px">
 						<el-option v-for="(name, id) in options.guildMap" :key="id" :value="Number(id)" :label="name" />
 					</el-select>
 				</div>
 			</div>
-			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.workClass) > 0">
+			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.contractor) > 0">
 				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="showAddKit = true">完工登錄</el-button>
+					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.contractor) == 0" @click="showAddKit = true">完工登錄</el-button>
 				</span>
 			</el-tooltip>
 		</div>
@@ -343,7 +343,7 @@ export default {
 				filterStr: null,
 				dteamSN: null,
 				deviceType: 1,
-				workClass: null,
+				contractor: null,
 				// pageCurrent: 1,
 				// pageSize: 50,
 			},
@@ -469,7 +469,7 @@ export default {
 		getList() {
 			this.loading = true;
 			this.list = [];
-			this.listQuery.workClass = null;
+			this.listQuery.contractor = null;
 
 			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
