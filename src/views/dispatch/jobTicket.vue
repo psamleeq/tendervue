@@ -24,7 +24,7 @@
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
-					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select" clearable @clear="listQuery.tenderId = null">
 						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
@@ -46,7 +46,7 @@
 					<div class="el-input-group__prepend">
 						<span>合約</span>
 					</div>
-					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select">
 						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
@@ -197,7 +197,7 @@ export default {
 			listQuery: {
 				filterType: 1,
 				filterStr: null,
-				dteamSN: null,
+				tenderId: null,
 				deviceType: 1,
 				workClass: null,
 				// pageCurrent: 1,
@@ -458,24 +458,26 @@ export default {
 					this.pdfDoc.text(`${today} 派工單號：           `, width - 15, lineSize + 25, { align: 'right' });
 					this.pdfDoc.text(`(預覽列印)`, width - 15, lineSize + 25, { align: 'right' });
 
-					this.pdfDoc.autoTable({ 
-						columns: [
-							{ header: '總面積', dataKey: 'areaSUMTitle' },
-							{ header: String(areaSUM), dataKey: 'areaSUM' },
-							{ header: '總噸數', dataKey: 'tonneSUMTitle' },
-							{ header: String(tonneSUM), dataKey: 'tonneSUM' },
-						],
-						theme: 'plain',
-						styles: { font: "edukai", valign: 'middle', cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.5 },
-						headStyles: { halign: 'center' },
-						columnStyles: {
-							areaSUMTitle: { halign: 'center', cellWidth: 32 },
-							areaSUM: { halign: 'center', cellWidth: 16 },
-							tonneSUMTitle: { halign: 'center', cellWidth: 32 },
-							tonneSUM: { halign: 'center', cellWidth: 16 }
-						},
-						startY:  lineSize * 2 + 25
-					});
+					if(pageIndex == 0) {
+						this.pdfDoc.autoTable({ 
+							columns: [
+								{ header: '總面積', dataKey: 'areaSUMTitle' },
+								{ header: String(Math.floor(areaSUM*10)/10), dataKey: 'areaSUM' },
+								{ header: '總噸數', dataKey: 'tonneSUMTitle' },
+								{ header: String(Math.floor(tonneSUM*10)/10), dataKey: 'tonneSUM' },
+							],
+							theme: 'plain',
+							styles: { font: "edukai", valign: 'middle', cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.5 },
+							headStyles: { halign: 'center' },
+							columnStyles: {
+								areaSUMTitle: { halign: 'center', cellWidth: 32 },
+								areaSUM: { halign: 'center', cellWidth: 16 },
+								tonneSUMTitle: { halign: 'center', cellWidth: 32 },
+								tonneSUM: { halign: 'center', cellWidth: 16 }
+							},
+							startY:  lineSize * 2 + 25
+						});
+					}
 
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],

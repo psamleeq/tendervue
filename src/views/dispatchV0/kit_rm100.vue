@@ -7,7 +7,7 @@
 					<div class="el-input-group__prepend">
 						<span>合約</span>
 					</div>
-					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇">
+					<el-select v-model="listQuery.dteamSN" class="dteam-select" popper-class="type-select" placeholder="請選擇">
 						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
@@ -279,9 +279,7 @@ export default {
 	},
 	watch: { },
 	created() { 
-		getTenderMap().then(response => {
-			this.options.tenderMap = response.data.tenderMap;
-		});
+		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap});
 	},
 	methods: {
 		getList() {
@@ -437,7 +435,9 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-
+.type-select .el-select-dropdown__item
+	padding: 0 5px
+	text-align: center
 .cost-kit-V0
 	.filter-container
 		.filter-item

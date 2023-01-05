@@ -24,7 +24,7 @@
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
-					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select" clearable @clear="listQuery.tenderId = null">
 						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
@@ -41,7 +41,7 @@
 					<div class="el-input-group__prepend">
 						<span>合約</span>
 					</div>
-					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select">
 						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
@@ -224,7 +224,7 @@ export default {
 			listQuery: {
 				filterType: 1,
 				filterStr: null,
-				dteamSN: null,
+				tenderId: null,
 				deviceType: 1,
 				contractor: null,
 				// pageCurrent: 1,
@@ -347,7 +347,7 @@ export default {
 			this.searchRange = startDate + " - " + endDate;
 
 			getDispatchList({
-				dteamSN: this.listQuery.filterType == 1 ? this.listQuery.dteamSN : null,
+				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
 				reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				deviceType: this.listQuery.deviceType,
