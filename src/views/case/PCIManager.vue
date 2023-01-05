@@ -8,7 +8,7 @@
 						<div class="el-input-group__prepend">
 							<span>合約</span>
 						</div>
-						<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+						<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select">
 							<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 						</el-select>
 					</div>
@@ -97,7 +97,7 @@ export default {
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
 			listQuery: {
-				dteamSN: null,
+				tenderId: null,
 				blockId: null
 			},
 			headers: {
@@ -126,7 +126,7 @@ export default {
 		getTenderMap().then(response => {
 			this.options.tenderMap = response.data.tenderMap;
 			if(Object.keys(this.options.tenderMap).length > 0) {
-				this.listQuery.dteamSN = Object.keys(this.options.tenderMap)[0];
+				this.listQuery.tenderId = Object.keys(this.options.tenderMap)[0];
 				this.getList();
 			}
 		});
@@ -139,7 +139,7 @@ export default {
 			this.loading = true;
 			this.list = [];
 
-			getTenderRound({ dteamSN: this.listQuery.dteamSN }).then(response => {
+			getTenderRound({ tenderId: this.listQuery.tenderId }).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",

@@ -4,6 +4,17 @@
 		<div class="header-bar">
 			<h2 class="case-title">缺失地圖</h2>
 			<div class="filter-container">
+				<div class="filter-item">
+					<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
+							<div class="el-input-group__prepend">
+								<span>合約</span>
+							</div>
+						<el-select v-model.number="listQuery.tenderRound" class="dteam-select" popper-class="type-select" @input="changeTender()">
+							<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
+						</el-select>
+					</div>
+				</div>
+				<br>
 				<div class="filter-item filter">
 					<div>PCI切塊</div>
 					<el-checkbox-group v-model="listQuery.blockType" size="mini" @change="switchBlockType">
@@ -21,6 +32,7 @@
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
 			</div>
+			<span v-if="caseInfo.length != 0" style="background-color: #F2F6FC; margin: 0 5px; opacity: 0.8;">查詢期間：{{ searchRange }}</span>
 		</div>
 
 		<!-- <el-card class="info-box right">
@@ -72,7 +84,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-// import { getDistGeo } from "@/api/type";
+import { getTenderRound } from "@/api/type";
 import { getRoadCaseGeo, setRoadCase } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
@@ -97,7 +109,6 @@ export default {
 			loading: false,
 			showImgViewer: false,
 			screenWidth: window.innerWidth,
-			areaLimit: [139, 325],
 			// map: null,
 			currCaseId: null,
 			imgUrls: [],
@@ -108,7 +119,10 @@ export default {
 			// geoJSON: {},
 			caseInfo: [],
 			selectCase: {},
+			geoJSONFilter: {},
+			searchRange: "",
 			listQuery: {
+				tenderRound: 91001,
 				filterType: 1,
 				filterId: null,
 				blockType: [1]
@@ -125,6 +139,7 @@ export default {
 				}
 			},
 			options: { 
+				tenderRoundMap : {},
 				blockMap: {
 					1: "超鉞",
 					2: "新工處"
@@ -171,7 +186,10 @@ export default {
 						name: ["其他"],
 						color: "#607D8B"
 					}
-				]
+				],
+				districtMap: {
+					104: "中山區"
+				}
 			}
 		};
 	},
@@ -202,33 +220,11 @@ export default {
 			set(val) {
 				Object.values(this.selectCase).forEach(caseInfo => caseInfo.level = val);
 			}
-		},
-		geoJSONFilter() {
-			let geoJSONFilter = { features: [] };
-			if(Object.keys(this.geoJSON.case).length > 0) {
-				geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON.case));
-				const selectCaseList = Object.keys(this.selectCase).filter(caseName => this.selectCase[caseName].switch);
-				const selectCaseLvMap = selectCaseList.reduce((acc, cur) => { 
-					acc[cur] = this.selectCase[cur].level == 0 ? this.selectCase[cur].level : this.options.levelMap[this.selectCase[cur].level];
-					return acc
-				}, {});
-
-				geoJSONFilter.features = geoJSONFilter.features.filter(feature => {
-					const caseName = feature.properties.caseName;
-					const caseLevel = feature.properties.caseLevel;
-					const levelFilter= selectCaseLvMap[feature.properties.caseName];
-
-					return (selectCaseList.includes(caseName)) && (levelFilter == 0 || caseLevel == levelFilter);
-				});
-			}
-			return geoJSONFilter;
 		}
 	},
 	watch: { },
 	created() {
-		this.dataLayer = { 
-			PCIBlock: {}
-		};
+		this.dataLayer = {  PCIBlock: {} };
 		this.geoJSON = {};
 	},
 	async mounted() {
@@ -252,7 +248,17 @@ export default {
 				this.listQuery.filterType = 2;
 				this.listQuery.filterId = this.$route.query.blockId;
 			}
-			this.getList();
+			getTenderRound().then(response => {
+				this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+					const roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`
+					acc[roundId] = { name: `${cur.tenderName} Round${cur.round}`, tenderId: cur.tenderId, zipCode: cur.ZipCode, roundStart: cur.roundStart, roundEnd: cur.roundEnd };
+					return acc;
+				}, {});
+
+				if(this.$route.query.tenderRound) this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
+				else this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				this.changeTender(true);
+			});
 		}).catch(err => console.log("err: ", err));
 	},
 	methods: {
@@ -275,7 +281,7 @@ export default {
 					center: location, // 中心點座標
 					zoom: 14, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
 					maxZoom: 24,
-					minZoom: 13,
+					minZoom: 12,
 					/*
 						roadmap 顯示默認道路地圖視圖。
 						satellite 顯示 Google 地球衛星圖像。
@@ -395,7 +401,8 @@ export default {
 
 				// 載入區域GeoJson
 				this.dataLayer.mask = new google.maps.Data({ map: this.map });
-				this.dataLayer.mask.loadGeoJson(`/assets/json/NewTaipei.geojson?t=${Date.now()}`);
+				// this.dataLayer.mask.loadGeoJson(`/assets/json/NewTaipei.geojson?t=${Date.now()}`);
+				this.dataLayer.mask.loadGeoJson(`/assets/json/Taiwan.geojson?t=${Date.now()}`);
 				this.dataLayer.mask.setStyle({
 					strokeColor: "#000000",
 					strokeWeight: 0,
@@ -409,25 +416,14 @@ export default {
 				this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
 				// console.log(JSON.stringify(this.distGeoJSON));
 				// console.log(distGeoJSON);
-				this.dataLayer.district.setStyle(feature => {
-					// console.log(feature);
-					const condition = feature.j.TOWNNAME == '中山區'
-					return {
-						strokeColor: "#827717",
-						strokeWeight: 3,
-						strokeOpacity: 0.2,
-						fillColor: "#000000",
-						fillOpacity: condition ? 0 : 0.7,
-						zIndex: 0
-					}
-				});
 
 				// 載入切塊GeoJson
+				// const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
 				this.dataLayer.PCIBlock.bell = new google.maps.Data();
-				this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_104.geojson?t=${Date.now()}`, null, () => {
-					this.switchBlockType();
-					this.search();
-				});
+				// this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_${zipCode}.geojson?t=${Date.now()}`, null, () => {
+				// 	this.switchBlockType();
+				// 	this.search();
+				// });
 				this.dataLayer.PCIBlock.bell.setStyle({ 
 					strokeColor: '#FFF',
 					strokeWeight: 1,
@@ -438,7 +434,7 @@ export default {
 				});
 
 				this.dataLayer.PCIBlock.nco = new google.maps.Data();
-				this.dataLayer.PCIBlock.nco.loadGeoJson(`/assets/json/PCIBlock_nco.geojson?t=${Date.now()}`);
+				// this.dataLayer.PCIBlock.nco.loadGeoJson(`/assets/json/PCIBlock_nco_${zipCode}.geojson?t=${Date.now()}`);
 				this.dataLayer.PCIBlock.nco.setStyle({ 
 					strokeColor: '#78909C',
 					strokeWeight: 2,
@@ -448,13 +444,60 @@ export default {
 				});
 			})
 		},
+		changeTender() {
+			this.dataLayer.district.setStyle(feature => {
+				// console.log(feature);
+				const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].includes(feature.j.TOWNNAME);
+
+				return {
+					strokeColor: "#827717",
+					strokeWeight: 3,
+					strokeOpacity: 0.2,
+					fillColor: "#000000",
+					fillOpacity: condition ? 0 : 0.7,
+					zIndex: 0
+				}
+			});
+
+			this.switchBlockType(true);
+			this.getList();
+		},
+		getGeoJSONFilter() {
+			this.geoJSONFilter = { features: [] };
+			if(this.geoJSON.case != undefined && Object.keys(this.geoJSON.case).length > 0) {
+				this.geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON.case));
+				const selectCaseList = Object.keys(this.selectCase).filter(caseName => this.selectCase[caseName].switch);
+				const selectCaseLvMap = selectCaseList.reduce((acc, cur) => { 
+					acc[cur] = this.selectCase[cur].level == 0 ? this.selectCase[cur].level : this.options.levelMap[this.selectCase[cur].level];
+					return acc
+				}, {});
+
+				this.geoJSONFilter.features = this.geoJSONFilter.features.filter(feature => {
+					const caseName = feature.properties.caseName;
+					const caseLevel = feature.properties.caseLevel;
+					const levelFilter= selectCaseLvMap[feature.properties.caseName];
+
+					return (selectCaseList.includes(caseName)) && (levelFilter == 0 || caseLevel == levelFilter);
+				});
+			}
+		},
 		async getList() {
 			this.loading = true;
 			this.clearAll();
 			this.markers = [];
 			this.polyLines = {};
 
-			getRoadCaseGeo().then(async (response) => {
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
+			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
+
+			getRoadCaseGeo({
+				tenderId: tenderRound.tenderId,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+			}).then(async (response) => {
 				if(Object.keys(response.data.geoJSON).length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -494,6 +537,7 @@ export default {
 
 					this.geoJSON.case = JSON.parse(response.data.geoJSON);
 					// console.log(this.geoJSON.case);
+					this.getGeoJSONFilter();
 					this.map.data.addGeoJson(this.geoJSON.case);
 					// this.map.data.setStyle({ 
 					// 	strokeColor: '#009688',
@@ -559,15 +603,15 @@ export default {
 					// 	this.infoWindow.open(this.map);
 					// });
 				}
-				// this.loading = false;
 				// this.switchBlockType();
-				// await this.focusMap();
+				await this.focusMap();
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
 		removeCaseStatus() {
 			// console.log(this.currCaseId);
-			setRoadCase(this.currCaseId, {type: 8}).then(response => {
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			setRoadCase(this.currCaseId, { tenderId: tenderRound.tenderId, type: 8 }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",
@@ -580,10 +624,22 @@ export default {
 				this.getList();
 			})
 		},
-		switchBlockType() {
+		switchBlockType(init = false) {
 			for(const block of Object.values(this.dataLayer.PCIBlock)) {
 				block.revertStyle();
 				block.setMap(null);
+			}
+
+			if(init) {
+				this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
+				this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
+
+				const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
+				this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_${zipCode}.geojson?t=${Date.now()}`, null, () => {
+					this.search();
+				});
+				// this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_${zipCode}.geojson?t=${Date.now()}`);
+				this.dataLayer.PCIBlock.nco.loadGeoJson(`/assets/json/PCIBlock_nco_${zipCode}.geojson?t=${Date.now()}`);
 			}
 
 			if(this.listQuery.blockType.includes(1)) this.dataLayer.PCIBlock.bell.setMap(this.map);
@@ -591,6 +647,7 @@ export default {
 		},
 		caseFilter() {
 			this.clearAll();
+			this.getGeoJSONFilter();
 			this.map.data.addGeoJson(this.geoJSONFilter);
 		},
 		async search() {
@@ -612,7 +669,7 @@ export default {
 				} 
 
 				if(this.listQuery.filterType == 1) {
-					this.$router.push({ query: { caseId: this.listQuery.filterId }});
+					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, caseId: this.listQuery.filterId }});
 					const caseSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.caseId == this.listQuery.filterId))[0];
 					if(caseSpec == undefined ) {
 						this.$message({
@@ -709,10 +766,10 @@ export default {
 			this.infoWindow.open(this.map);
 		},
 		clearAll() {
-			for(const block of Object.values(this.dataLayer.PCIBlock)) {
-				block.revertStyle();
-				block.setMap(null);
-			}
+			// for(const block of Object.values(this.dataLayer.PCIBlock)) {
+			// 	block.revertStyle();
+			// 	block.setMap(null);
+			// }
 
 			this.infoWindow.close();
 			this.map.data.forEach(feature => this.map.data.remove(feature));
@@ -736,7 +793,7 @@ export default {
 // 	box-sizing: border-box
 .type-select .el-select-dropdown__item
 	padding: 0 5px
-	text-align: center
+	text-align: left
 .road-case
 	position: relative
 	height: 100%
@@ -769,17 +826,23 @@ export default {
 				right: 0
 				margin-right: -3px
 				transform: scale(0.7)
+		.select-contract
+			.el-select
+				&.dteam-select
+					width: 520px
+				.el-input__inner
+					border-top-left-radius: 0
+					border-bottom-left-radius: 0
+					padding-left: 10px
+					text-align: left
 	.info-box
 		position: absolute
 		width: 250px
 		background-color: rgba(white, 0.7)
 		z-index: 1
 		&.left
-			top: 140px
+			top: 200px
 			left: 15px
-		&.right
-			top: 140px
-			right: 20px
 		.el-card__body
 			padding: 2px
 			.color-box

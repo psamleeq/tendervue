@@ -9,8 +9,8 @@
 						<div class="el-input-group__prepend">
 							<span>合約</span>
 						</div>
-						<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select" @input="changeTender()">
-							<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
+						<el-select v-model="listQuery.tenderRound" class="dteam-select" placeholder="請選擇" popper-class="type-select" @input="changeTender()">
+							<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
 						</el-select>
 					</div>
 				</div>
@@ -64,7 +64,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-import { getTenderMap } from "@/api/type";
+import { getTenderRound } from "@/api/type";
 import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
@@ -99,7 +99,7 @@ export default {
 			caseInfo: [],
 			selectCase: {},
 			listQuery: {
-				dteamSN: null,
+				tenderRound: 91001,
 				filterType: 1,
 				filterId: null
 			},
@@ -118,8 +118,7 @@ export default {
 				depth: "深度(cm)"
 			},
 			options: { 
-				tenderMap: {},
-				zipCodeMap: {},
+				tenderRoundMap : {},
 				PCILevel: {
 					6: {
 						text: "veryGood",
@@ -214,7 +213,7 @@ export default {
 						color: "#607D8B"
 					}
 				],
-				blockMap: {
+				districtMap: {
 					104: "中山區"
 				}
 			}
@@ -225,12 +224,6 @@ export default {
 	created() {
 		this.dataLayer = { PCIBlock: {} };
 		this.geoJSON = {};
-		getTenderMap().then(response => {
-			this.options.tenderMap = response.data.tenderMap;
-			this.options.zipCodeMap = response.data.zipCodeMap;
-			if(Object.keys(this.options.tenderMap).length > 0) this.listQuery.dteamSN = Object.keys(this.options.tenderMap)[0];
-			if(this.listQuery.dteamSN) this.changeTender();
-		});
 	},
 	async mounted() {
 		this.loading = true;
@@ -253,7 +246,17 @@ export default {
 				this.listQuery.filterType = 2;
 				this.listQuery.filterId = this.$route.query.roadName;
 			}
-			this.getList();
+			getTenderRound().then(response => {
+				this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+					const roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`
+					acc[roundId] = { name: `${cur.tenderName} Round${cur.round}`, tenderId: cur.tenderId, zipCode: cur.ZipCode, roundStart: cur.roundStart, roundEnd: cur.roundEnd };
+					return acc;
+				}, {});
+
+				if(this.$route.query.tenderRound) this.listQuery.tenderRound = this.$route.query.tenderRound;
+				else this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				this.changeTender();
+			});
 		}).catch(err => console.log("err: ", err));
 	},
 	methods: {
@@ -417,8 +420,8 @@ export default {
 		changeTender() {
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const tenderBlock = this.options.zipCodeMap[this.listQuery.dteamSN];
-				const condition = tenderBlock == 1001 || this.options.blockMap[tenderBlock].includes(feature.j.TOWNNAME);
+				const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].includes(feature.j.TOWNNAME);
 
 				return {
 					strokeColor: "#827717",
@@ -429,15 +432,26 @@ export default {
 					zIndex: 0
 				}
 			});
+
+			this.getList();
 		},
 		async getList() {
 			this.loading = true;
 			this.clearAll();
-
-			// 載入case GeoJSON
 			this.markers = [];
 			this.polyLines = {};
-			getRoadCaseGeo().then(response => {
+
+			// 載入case GeoJSON
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
+			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
+			
+			getRoadCaseGeo({
+				tenderId: tenderRound.tenderId,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+			}).then(response => {
 				if(Object.keys(response.data.geoJSON).length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -684,7 +698,7 @@ export default {
 // 	box-sizing: border-box
 .type-select .el-select-dropdown__item
 	padding: 0 5px
-	text-align: center
+	text-align: left
 .PCI-map
 	position: relative
 	height: 100%

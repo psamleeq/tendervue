@@ -3,21 +3,19 @@
 		<h2>缺失列表</h2>
 		<div class="filter-container">
 			<div class="filter-item">
-				<div v-if="listQuery.filterType == 1" class="select-contract">
-					<el-select v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
-					<el-select v-model="listQuery.contractType" popper-class="type-select" style="width: 115px">
-						<el-option v-for="(name, type) in options.contractType" :key="type" :label="name" :value="Number(type)" />
+				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
+						<div class="el-input-group__prepend">
+							<span>合約</span>
+						</div>
+					<el-select v-model.number="listQuery.tenderRound" class="dteam-select" popper-class="type-select">
+						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
 					</el-select>
 				</div>
-				
-				<el-tooltip v-else effect="dark" content="不填為查詢全部" placement="bottom-end">
-					<el-input
-						v-model="listQuery.filterStr"
-						placeholder="請輸入"
-						style="width: 200px"
-					>
+			</div>
+
+			<div class="filter-item">
+				<el-tooltip effect="dark" content="不填為查詢全部" placement="bottom-end">
+					<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 200px">
 						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
 							<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 						</el-select>
@@ -44,7 +42,7 @@
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 		</div>
 
-		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -156,6 +154,7 @@
 
 <script>
 import moment from "moment";
+import { getTenderRound } from "@/api/type";
 import { getRoadCaseType, getRoadCaseList, setRoadCase } from "@/api/road";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
@@ -182,11 +181,11 @@ export default {
 			// 	moment().month(5).startOf("month").toDate(),
 			// 	moment().endOf("year").toDate(),
 			// ],
-			// searchRange: "",
+			searchRange: "",
 			listQuery: {
 				filter: false,
 				filterType: 1,
-				contractType: 9101,
+				tenderRound: 91001,
 				filterStr: null,
 				caseType: [],
 				pageCurrent: 1,
@@ -241,65 +240,12 @@ export default {
 				1: "順向",
 				2: "逆向",
 			},
-			districtList: {
-				100: {
-					name: "中正區",
-					engName: "Zhongzheng",
-				},
-				103: {
-					name: "大同區",
-					engName: "Datong",
-				},
-				104: {
-					name: "中山區",
-					engName: "Zhongshan",
-				},
-				105: {
-					name: "松山區",
-					engName: "Songshan",
-				},
-				106: {
-					name: "大安區",
-					engName: "Da’an",
-				},
-				108: {
-					name: "萬華區",
-					engName: "Wanhua",
-				},
-				110: {
-					name: "信義區",
-					engName: "Xinyi",
-				},
-				111: {
-					name: "士林區",
-					engName: "Shilin",
-				},
-				112: {
-					name: "北投區",
-					engName: "Beitou",
-				},
-				114: {
-					name: "內湖區",
-					engName: "Neihu",
-				},
-				115: {
-					name: "南港區",
-					engName: "Nangang",
-				},
-				116: {
-					name: "文山區",
-					engName: "Wenshan",
-				},
-			},
 			options: {
 				filterType: {
-					1: "合約",
-					2: "缺失編號",
-					3: "道路名稱"
+					1: "缺失編號",
+					2: "道路名稱"
 				},
-				contractType: {
-					9101: "中山區成效R1"
-				},
+				tenderRoundMap : {},
 				caseTitle: {
 					0: {
 						name: "龜裂",
@@ -403,12 +349,20 @@ export default {
 			// this.listQuery.caseType = JSON.parse(JSON.stringify(response.data.list));
 			this.options.caseType = JSON.parse(JSON.stringify(response.data.list.filter(l => l && l.length != 0)));
 			for(const type of this.options.caseType) if(type && type.length != 0) this.listQuery.caseType.push({ name: type, checked: false, level: 0 });
-			this.getList();
 		});
-		// this.listQuery.distList = Object.keys(this.districtList);
+
+		getTenderRound().then(response => {
+			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+				const roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`
+				acc[roundId] = { name: `${cur.tenderName} Round${cur.round}`, tenderId: cur.tenderId, roundStart: cur.roundStart, roundEnd: cur.roundEnd };
+				return acc;
+			}, {});
+
+			this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+		});
 		
 	},
-	mounted(){
+	mounted() {
 		this.dialogMapVisible = false;
 	},
 	methods: {
@@ -422,7 +376,7 @@ export default {
 		showMap(row) {
 			this.$router.push({
 				path: "/case/caseMap",
-				query: { caseId: row.caseId },
+				query: { tenderRound: this.listQuery.tenderRound, caseId: row.caseId },
 			});
 		},
 		showMapViewer(row) {
@@ -466,21 +420,23 @@ export default {
 		},
 		getList() {
 			this.loading = true;
-
-			// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-			// this.searchRange = startDate + " - " + endDate;
-
 			this.list = [];
+
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
+			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
 
 			let query = {
 				filter: this.listQuery.filter,
+				tenderId: tenderRound.tenderId,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 			};
-
-			if(this.listQuery.filterType == 2 && this.listQuery.filterStr.length != 0) query.caseId = this.listQuery.filterStr;
-			if(this.listQuery.filterType == 3 && this.listQuery.filterStr.length != 0) query.roadName = this.listQuery.filterStr;
+			if(this.listQuery.filterType == 1 && this.listQuery.filterStr && this.listQuery.filterStr.length != 0) query.caseId = this.listQuery.filterStr;
+			if(this.listQuery.filterType == 2 && this.listQuery.filterStr && this.listQuery.filterStr.length != 0) query.roadName = this.listQuery.filterStr;
 			if(this.listQuery.caseType.length != 0) query.caseType = JSON.stringify(this.listQuery.caseType);
 
 			getRoadCaseList(query).then(response => {
@@ -526,7 +482,8 @@ export default {
 		},
 		setCaseStatus(row, type) {
 			// console.log(this.currCaseId);
-			setRoadCase(row.caseId, { type }).then(response => {
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			setRoadCase(row.caseId, { tenderId: tenderRound.tenderId, type }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",
@@ -616,7 +573,7 @@ export default {
 // 	box-sizing: border-box
 .type-select .el-select-dropdown__item
 	padding: 0 5px
-	text-align: center
+	text-align: left
 .imgHover
 	max-width: 800px
 	height: 400px
@@ -634,18 +591,11 @@ export default {
 					right: 0
 					margin-right: -3px
 					transform: scale(0.7)
-			.select-contract
-				.el-select:first-child .el-input__inner
-					background-color: #F5F7FA
-					color: #909399
-					border-right: none
-					border-top-right-radius: 0
-					border-bottom-right-radius: 0
-					&:focus
-						border-color: #DCDFE6
-				.el-select:last-child .el-input__inner
-					border-top-left-radius: 0
-					border-bottom-left-radius: 0
+				&.dteam-select
+					width: 520px
+					.el-input__inner
+						padding-left: 10px
+						text-align: left
 	.btn-action
 		margin-left: 5px
 		padding: 5px
