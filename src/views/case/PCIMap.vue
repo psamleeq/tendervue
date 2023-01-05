@@ -64,7 +64,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-import { getTenderMap, getTenderBlock } from "@/api/type";
+import { getTenderMap } from "@/api/type";
 import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
@@ -98,7 +98,6 @@ export default {
 			// geoJSON: {},
 			caseInfo: [],
 			selectCase: {},
-			blockArr: [],
 			listQuery: {
 				dteamSN: null,
 				filterType: 1,
@@ -120,6 +119,7 @@ export default {
 			},
 			options: { 
 				tenderMap: {},
+				zipCodeMap: {},
 				PCILevel: {
 					6: {
 						text: "veryGood",
@@ -213,7 +213,10 @@ export default {
 						name: ["其他"],
 						color: "#607D8B"
 					}
-				]
+				],
+				blockMap: {
+					104: "中山區"
+				}
 			}
 		};
 	},
@@ -224,6 +227,7 @@ export default {
 		this.geoJSON = {};
 		getTenderMap().then(response => {
 			this.options.tenderMap = response.data.tenderMap;
+			this.options.zipCodeMap = response.data.zipCodeMap;
 			if(Object.keys(this.options.tenderMap).length > 0) this.listQuery.dteamSN = Object.keys(this.options.tenderMap)[0];
 			if(this.listQuery.dteamSN) this.changeTender();
 		});
@@ -272,7 +276,7 @@ export default {
 					center: location, // 中心點座標
 					zoom: 14, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
 					maxZoom: 24,
-					minZoom: 13,
+					minZoom: 12,
 					/*
 						roadmap 顯示默認道路地圖視圖。
 						satellite 顯示 Google 地球衛星圖像。
@@ -392,7 +396,8 @@ export default {
 
 				// 載入區域GeoJson
 				this.dataLayer.mask = new google.maps.Data({ map: this.map });
-				this.dataLayer.mask.loadGeoJson(`/assets/json/NewTaipei.geojson?t=${Date.now()}`);
+				// this.dataLayer.mask.loadGeoJson(`/assets/json/NewTaipei.geojson?t=${Date.now()}`);
+				this.dataLayer.mask.loadGeoJson(`/assets/json/Taiwan.geojson?t=${Date.now()}`);
 				this.dataLayer.mask.setStyle({
 					strokeColor: "#000000",
 					strokeWeight: 0,
@@ -410,21 +415,19 @@ export default {
 			})
 		},
 		changeTender() {
-			getTenderBlock({ dteamSN: this.listQuery.dteamSN }).then(response => { 
-				this.blockArr = response.data.blockArr; 
-				this.dataLayer.district.setStyle(feature => {
-					// console.log(feature);
-					const condition = this.blockArr.includes(feature.j.TOWNNAME);
+			this.dataLayer.district.setStyle(feature => {
+				// console.log(feature);
+				const tenderBlock = this.options.zipCodeMap[this.listQuery.dteamSN];
+				const condition = tenderBlock == 1001 || this.options.blockMap[tenderBlock].includes(feature.j.TOWNNAME);
 
-					return {
-						strokeColor: "#827717",
-						strokeWeight: 3,
-						strokeOpacity: 0.2,
-						fillColor: "#000000",
-						fillOpacity: condition ? 0 : 0.7,
-						zIndex: 0
-					}
-				});
+				return {
+					strokeColor: "#827717",
+					strokeWeight: 3,
+					strokeOpacity: 0.2,
+					fillColor: "#000000",
+					fillOpacity: condition ? 0 : 0.7,
+					zIndex: 0
+				}
 			});
 		},
 		async getList() {

@@ -27,15 +27,6 @@ export function getTenderMap(query) {
 	})
 }
 
-// 合約區域
-export function getTenderBlock(query) {
-	return request({
-		url: '/type/tenderBlock',
-		method: 'get',
-		params: query
-	})
-}
-
 // 合約區間
 export function getTenderRound(query) {
 	return request({
