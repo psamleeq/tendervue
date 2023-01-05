@@ -60,7 +60,7 @@
 						<span>廠商</span>
 					</div>
 					<el-select v-model.number="listQuery.workClass" placeholder="請選擇" popper-class="type-select" style="width: 100px">
-						<el-option v-for="(name, id) in options.WClassMap" :key="id" :value="Number(id)" :label="name" />
+						<el-option v-for="(name, id) in options.guildMap" :key="id" :value="Number(id)" :label="name" />
 					</el-select>
 				</div>
 			</div>
@@ -198,8 +198,8 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getWClassMap } from "@/api/type";
 import { getDispatchList } from "@/api/dispatch";
+import { getTenderMap, getGuildMap } from "@/api/type";
 import TimePicker from "@/components/TimePicker";
 // import Pagination from "@/components/Pagination";
 
@@ -285,7 +285,7 @@ export default {
 			tableSelect: [],
 			options: {
 				tenderMap: {},
-				WClassMap: {},
+				guildMap: {},
 				deviceType: {
 					1: "道路",
 					2: "熱再生",
@@ -303,9 +303,8 @@ export default {
 	computed: {	},
 	watch: { },
 	created() { 
-		getTenderMap().then(response => {
-			this.options.tenderMap = response.data.tenderMap;
-		});
+		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
+		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
 	},
 	methods: {
 		async handleCheckedChange(val) {
@@ -341,7 +340,6 @@ export default {
 			this.loading = true;
 			this.list = [];
 			this.listQuery.workClass = null;
-			this.options.WClassMap = {};
 
 			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
@@ -371,10 +369,6 @@ export default {
 						this.$set(l, "detailTime", false);
 						this.$set(l, "editFormula", l.MillingFormula != '0');
 					// 	this.$set(l, "editNote", false);
-					})
-
-					getWClassMap({ deviceType: this.listQuery.deviceType}).then(response => {
-						this.options.WClassMap = response.data.wClassMap;
 					})
 				}
 				this.loading = false;

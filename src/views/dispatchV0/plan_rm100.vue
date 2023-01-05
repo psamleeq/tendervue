@@ -65,7 +65,7 @@
 						<span>廠商</span>
 					</div>
 					<el-select v-model.number="listQuery.workClass" placeholder="請選擇" popper-class="type-select" style="width: 100px">
-						<el-option v-for="(name, id) in options.WClassMap" :key="id" :value="Number(id)" :label="name" />
+						<el-option v-for="(name, id) in options.guildMap" :key="id" :value="Number(id)" :label="name" />
 					</el-select>
 				</div>
 			</div>
@@ -194,7 +194,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getWClassMap } from "@/api/type";
+import { getTenderMap, getGuildMap } from "@/api/type";
 import { getDispatchListV0 } from "@/api/dispatchV0";
 import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
@@ -282,7 +282,7 @@ export default {
 			tableSelect: [],
 			options: {
 				tenderMap: {},
-				WClassMap: {},
+				guildMap: {},
 				deviceType: {
 					1: "道路",
 					2: "熱再生",
@@ -300,9 +300,8 @@ export default {
 	computed: {	},
 	watch: { },
 	created() { 
-		getTenderMap().then(response => {
-			this.options.tenderMap = response.data.tenderMap;
-		});
+		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
+		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
 	},
 	mounted() {
 		this.showDetailDialog = false;
@@ -341,7 +340,6 @@ export default {
 			this.loading = true;
 			this.list = [];
 			this.listQuery.workClass = null;
-			this.options.WClassMap = {};
 
 			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
@@ -372,10 +370,6 @@ export default {
 						this.$set(l, "isUrgent", false);
 						l.estFinishDate = (l.estFinishDate == '0') ? moment(Number(l.CaseNo.substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').toDate() : l.estFinishDate;
 					// 	this.$set(l, "editNote", false);
-					})
-
-					getWClassMap({ deviceType: this.listQuery.deviceType}).then(response => {
-						this.options.WClassMap = response.data.wClassMap;
 					})
 				}
 				this.loading = false;

@@ -10,9 +10,9 @@ export function getDistGeo(query) {
 }
 
 // 施工廠商Map
-export function getWClassMap(query) {
+export function getGuildMap(query) {
 	return request({
-		url: '/type/workClass',
+		url: '/type/guild',
 		method: 'get',
 		params: query
 	})

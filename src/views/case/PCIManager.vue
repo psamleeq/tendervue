@@ -39,7 +39,7 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="[ 'roundStart', 'roundEnd' ].includes(column.property) && row.edit">
-						<el-date-picker v-model="row[column.property]" type="date" value-format="yyyy-MM-dd" placeholder="選擇時間" style="width: 80%" />
+						<el-date-picker v-model="row[column.property]" type="date" value-format="yyyy-MM-dd" placeholder="選擇日期" style="width: 80%" />
 						<!-- <el-input v-model="row[column.property]" size="mini" style="width: 100px" /> -->
 						<el-button type="text" @click="row.edit = false; setRoundTime(row);">
 							<i class="el-icon-success" />
