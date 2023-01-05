@@ -110,10 +110,10 @@
 				:min-width="['Place'].includes(key) ? 80 : null"
 				:sortable="value.sortable"
 			>
-				<template slot-scope="{ row, column }">
+				<!-- <template slot-scope="{ row, column }">
 					<span v-if="[ 'DateDeadline' ].includes(column.property)">
 						<el-row type="flex" align="middle">
-							<el-col :span="18"><el-date-picker v-model="row.DateDeadline" type="date" placeholder="選擇日期" style="width: 100%" /></el-col>
+							<el-col :span="18"><el-date-picker v-model="row.DateDeadline" type="date" value-format="yyyy-MM-dd" placeholder="選擇日期" style="width: 100%" /></el-col>
 							<el-col :span="6"><el-tag class="btn-tag" :type="row.detailTime ? 'success': 'info'" @click="row.detailTime = !row.detailTime">時段</el-tag></el-col>
 						</el-row>
 						<el-time-picker v-if="row.detailTime" v-model="row.estWorkingTime" is-range range-separator="至"  start-placeholder="開始時間" end-placeholder="結束時間" placeholder="選擇時間" style="width: 100%" />
@@ -121,7 +121,7 @@
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
 					</span>
-				</template>
+				</template> -->
 			</el-table-column>
 
 			<!-- 道路、熱再生 -->
@@ -168,6 +168,15 @@
 				</template>
 			</el-table-column>
 
+			<el-table-column label="是否退件" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.IsReturn">
+						前ㄧ分派時間: <span>{{ row.PrevPlanDate }}</span>
+					</span>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+
 			<el-table-column type="expand" width="1" align="center">
 				<template slot-scope="props">
 				</template>
@@ -176,21 +185,12 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
-		<!-- Dialog: 新增套組 -->
-		<el-dialog width="400px" title="新增套組" :visible.sync="showDispatch">
-
-			<div slot="footer" class="dialog-footer">
-				<el-button @click="showDispatch = false">取消</el-button>
-				<el-button type="primary" @click="addKit()">確定</el-button>
-			</div>
-		</el-dialog>
-
 		<!-- Dialog: 確認-->
 		<el-dialog width="300px" title="確認" :visible.sync="showConfirm">
-			<span>是否刪除{{ rowActive.serialno }} - {{ rowActive.kitName }} </span>
+			<span>確認將 {{ tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") }} 分派給 {{ options.guildMap[listQuery.contractor] }}?</span>
 			<div slot="footer" class="dialog-footer">
 				<el-button @click="showConfirm = false">取消</el-button>
-				<el-button type="primary" @click="editKit()">確定</el-button>
+				<el-button type="primary" @click="dispatch()">確定</el-button>
 			</div>
 		</el-dialog>
 	</div>
@@ -198,8 +198,8 @@
 
 <script>
 import moment from "moment";
-import { getDispatchList } from "@/api/dispatch";
 import { getTenderMap, getGuildMap } from "@/api/type";
+import { getDispatchList, setDispatchList } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 // import Pagination from "@/components/Pagination";
 
@@ -251,10 +251,10 @@ export default {
 					name: "案件地點",
 					sortable: false
 				},
-				DateDeadline: {
-					name: "預計完工日期",
-					sortable: false
-				},
+				// DateDeadline: {
+				// 	name: "預計完工日期",
+				// 	sortable: false
+				// },
 				// estWorkingTime: {
 				// 	name: "預計施作時段",
 				// 	sortable: false
@@ -283,6 +283,7 @@ export default {
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect: [],
+			apiHeader: [ "SerialNo", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea" ],
 			options: {
 				tenderMap: {},
 				guildMap: {},
@@ -366,6 +367,7 @@ export default {
 
 					this.list.forEach(l => {
 						l.DateDeadline = this.formatTime(l.DateDeadline);
+						l.PrevPlanDate = this.formatTime(l.PrevPlanDate);
 						this.$set(l, "detailTime", false);
 						this.$set(l, "editFormula", l.MillingFormula != '0');
 					// 	this.$set(l, "editNote", false);
@@ -383,13 +385,39 @@ export default {
 				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100;
 			} else row.MillingArea = row.MillingLength * row.MillingWidth;
 		},
-		beforeEdit(row) {
-			this.rowActive = row; 
-			// this.loading = true;
+		caseFilterList(list) {
+			// console.log(list);
+			let caseFilterList = [];
+			for(const row of list) {
+				let caseItem = {};
+				for(const key of this.apiHeader) caseItem[key] = row[key];
+				caseFilterList.push(caseItem);
+			}
 
-			// this.detail = [];
-			// Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isEdit: true });
+			return caseFilterList;
+		},
+		dispatch() {
+			this.showConfirm = false;
+			this.loading = true;
 
+			// console.log(this.options.guildMap[this.listQuery.contractor]);
+
+			setDispatchList({
+				Contractor: this.listQuery.contractor,
+				caseList: this.caseFilterList(this.tableSelect)
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "建立成功",
+						type: "success",
+					});
+
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
 		},
 		formatTime(time) {
 			const m = moment(time);
