@@ -8,7 +8,7 @@
 						<div class="el-input-group__prepend">
 							<span>合約</span>
 						</div>
-						<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select" @input="changeTender()">
+						<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
 							<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 						</el-select>
 					</div>
@@ -137,6 +137,7 @@ export default {
 	methods: {
 		getList() {
 			this.loading = true;
+			this.list = [];
 
 			getTenderRound({ dteamSN: this.listQuery.dteamSN }).then(response => {
 				if (response.data.list.length == 0) {
