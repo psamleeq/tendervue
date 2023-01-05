@@ -13,11 +13,11 @@
 				</div>
 			</div>
 
-			<span class="filter-item">
+			<!-- <span class="filter-item">
 				<div style="font-size: 12px; color: #909399">派工日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
-			<br />
+			<br /> -->
 
 			<div class="filter-item">
 				<div v-if="listQuery.filterType == 1" class="select-contract">
@@ -232,10 +232,10 @@ export default {
 					name: "主任派工日期",
 					sortable: false
 				},
-				DateDeadline: {
-					name: "預計完工日期",
-					sortable: false
-				},
+				// DateDeadline: {
+				// 	name: "預計完工日期",
+				// 	sortable: false
+				// },
 				// estWorkingTime: {
 				// 	name: "預計施作時段",
 				// 	sortable: false
@@ -413,7 +413,7 @@ export default {
 						l.DatePlan = this.formatDate(l.DatePlan);
 						// this.$set(l, "detailTime", false);
 						l.DateDeadline = (l.DateDeadline == null) ? moment(Number(String(l.CaseNo).substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY/MM/DD") : this.formatDate(l.DateDeadline);
-						this.$set(l, "tonne", Math.round(l.MillingArea*l.MillingDepth*0.01*2.36*10) / 10);
+						this.$set(l, "tonne", Math.round(l.MillingArea*l.MillingDepth*0.01*2.25*10) / 10);
 					})
 
 					this.imgPreload();
@@ -435,7 +435,11 @@ export default {
 				const lineSize = (fontSize + 2) * 0.35;
 				const { width, height } = this.pdfDoc.internal.pageSize;
 
+				let tonneSUM = 0;
+				let areaSUM = 0;
 				const splitTable = this.tableSelect.reduce((acc, cur) => {
+					tonneSUM += cur.tonne;
+					areaSUM += cur.MillingArea;
 					if(acc[acc.length-1].length < 8) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
@@ -454,41 +458,55 @@ export default {
 					this.pdfDoc.text(`${today} 派工單號：           `, width - 15, lineSize + 25, { align: 'right' });
 					this.pdfDoc.text(`(預覽列印)`, width - 15, lineSize + 25, { align: 'right' });
 
+					if(pageIndex == 0) table.splice(0, 0, { MillingArea: areaSUM, tonne: 0 });
+
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
-							order: (i+1) + 8*pageIndex, 
-							DatePlan: l.DatePlan, 
-							CaseNo: l.CaseNo, 
+							order: (pageIndex == 0 && i == 0) ? "" : (i+1) + 8*pageIndex, 
+							// DatePlan: l.DatePlan, 
+							CaseNo: (pageIndex == 0 && i == 0) ? "合計" : l.CaseNo, 
+							Postal_vil: l.Postal_vil,
 							DistressName: l.DistressName, 
 							Place: l.Place, 
-							MillingFormula: (l.MillingFormula != '0') ? l.MillingFormula : `${l.MillingLength}*${l.MillingWidth}`, 
+							MillingFormula: (pageIndex == 0 && i == 0) ? "" : (l.MillingFormula != '0') ? l.MillingFormula : `${l.MillingLength}*${l.MillingWidth}`, 
 							MillingArea: l.MillingArea, 
 							MillingDepth: l.MillingDepth,
-							tonne: l.tonne 
+							tonne: (pageIndex == 0 && i == 0) ? "" :  l.tonne,
+							tonneRemain: Math.round((tonneSUM -= l.tonne)*10)/10
 						})),
 						columns: [
 							{ header: '順序', dataKey: 'order' },
-							{ header: '主任派工日', dataKey: 'DatePlan' },
+							// { header: '主任派工日', dataKey: 'DatePlan' },
 							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '里別', dataKey: 'Postal_vil' },
 							{ header: '損壞類別', dataKey: 'DistressName' },
 							{ header: '維修地點', dataKey: 'Place' },
-							{ header: '算式', dataKey: 'MillingFormula' },
-							{ header: '面積', dataKey: 'MillingArea' },
-							{ header: '深度', dataKey: 'MillingDepth' },
-							{ header: '噸數', dataKey: 'tonne' }
+							{ header: '預估算式', dataKey: 'MillingFormula' },
+							{ header: '預估面積', dataKey: 'MillingArea' },
+							{ header: '預估深度', dataKey: 'MillingDepth' },
+							{ header: '噸數\n2.25', dataKey: 'tonne' },
+							{ header: '剩餘噸數', dataKey: 'tonneRemain' },
+							{ header: '實際算式', dataKey: 'acuMillingFormula' },
+							{ header: '實際面積', dataKey: 'acuMillingArea' },
+							{ header: '補繪標線', dataKey: 'marker' }
 						],
-						styles: { font: "edukai", lineWidth: 0.2 },
+						styles: { font: "edukai", valign: 'middle', fontSize: 9, cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.2 },
 						headStyles: { halign: 'center' },
 						columnStyles: {
-							order: { halign: 'center', valign: 'middle', cellWidth: 12 },
-							DatePlan: { halign: 'center', valign: 'middle', cellWidth: 24 },
-							CaseNo: { halign: 'center', valign: 'middle', cellWidth: 26 },
-							DistressName: { halign: 'center', valign: 'middle', cellWidth: 20 },
-							Place: { cellWidth: 30 },
-							MillingArea: { halign: 'center', valign: 'middle', cellWidth: 14 },
-							MillingDepth: { halign: 'center', valign: 'middle', cellWidth: 14 },
-							tonne: { halign: 'center', valign: 'middle', cellWidth: 14 }
+							order: { halign: 'center', cellWidth: 6 },
+							// DatePlan: { halign: 'center', cellWidth: 24 },
+							CaseNo: { halign: 'center', cellWidth: 22 },
+							Postal_vil: { halign: 'center', cellWidth: 12 },
+							DistressName: { halign: 'center', cellWidth: 10 },
+							MillingFormula: { cellWidth: 26 },
+							MillingArea: { halign: 'center', cellWidth: 10 },
+							MillingDepth: { halign: 'center', cellWidth: 10 },
+							tonne: { halign: 'center', cellWidth: 10 },
+							tonneRemain: { halign: 'center', cellWidth: 10 },
+							acuMillingFormula: { cellWidth: 16 },
+							acuMillingArea: { halign: 'center', cellWidth: 10 },
+							marker: { halign: 'center', cellWidth: 10 }
 						},
 						startY:  lineSize * 2 + 25,
 						rowPageBreak: 'avoid'
@@ -498,6 +516,8 @@ export default {
 					// this.pdfDoc.setDrawColor('#999999');
 					// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
 					// this.pdfDoc.setLineDashPattern([0], 0);
+
+					if(pageIndex == 0) table.splice(0, 1);
 
 					const splitImgTable = table.reduce((acc, cur) => {
 						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);

@@ -414,7 +414,7 @@ export default {
 						// this.$set(l, "detailTime", false);
 						// this.$set(l, "isUrgent", false);
 						l.estFinishDate = (l.estFinishDate == '0') ? moment(Number(l.CaseNo.substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY/MM/DD") : l.estFinishDate;
-						this.$set(l, "tonne", Math.round(l.acsum0*l.delmuch0*0.01*2.36*10) / 10);
+						this.$set(l, "tonne", Math.round(l.acsum0*l.delmuch0*0.01*2.25*10) / 10);
 					})
 
 					this.imgPreload();
@@ -436,7 +436,11 @@ export default {
 				const lineSize = (fontSize + 2) * 0.35;
 				const { width, height } = this.pdfDoc.internal.pageSize;
 
+				let tonneSUM = 0;
+				let areaSUM = 0;
 				const splitTable = this.tableSelect.reduce((acc, cur) => {
+					tonneSUM += cur.tonne;
+					areaSUM += cur.acsum0;
 					if(acc[acc.length-1].length < 8) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
@@ -454,41 +458,55 @@ export default {
 					const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
 					this.pdfDoc.text(`${today} 派工單號：-------`, width - 15, lineSize + 25, { align: 'right' });
 
+					if(pageIndex == 0) table.splice(0, 0, { acsum0: areaSUM, tonne: 0 });
+
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
-							order: (i+1) + 8*pageIndex, 
-							assignDate: l.assignDate, 
-							CaseNo: l.CaseNo, 
+							order: (pageIndex == 0 && i == 0) ? "" : (i+1) + 8*pageIndex, 
+							// assignDate: l.assignDate, 
+							CaseNo: (pageIndex == 0 && i == 0) ? "合計" : l.CaseNo, 
+							lining: l.lining,
 							BTName: l.BTName, 
 							CaseName: l.CaseName, 
-							account0: (l.accountflag0 == '1') ? l.account0 : `${l.elength}*${l.blength}`, 
+							account0: (pageIndex == 0 && i == 0) ? "" : (l.accountflag0 == '1') ? l.account0 : `${l.elength}*${l.blength}`, 
 							acsum0: l.acsum0, 
 							delmuch0: l.delmuch0,
-							tonne: l.tonne 
+							tonne: (pageIndex == 0 && i == 0) ? "" : l.tonne,
+							tonneRemain: Math.round((tonneSUM -= l.tonne)*10)/10
 						})),
 						columns: [
 							{ header: '順序', dataKey: 'order' },
-							{ header: '主任派工日', dataKey: 'assignDate' },
+							// { header: '主任派工日', dataKey: 'assignDate' },
 							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '里別', dataKey: 'lining' },
 							{ header: '損壞類別', dataKey: 'BTName' },
 							{ header: '維修地點', dataKey: 'CaseName' },
-							{ header: '算式', dataKey: 'account0' },
-							{ header: '面積', dataKey: 'acsum0' },
-							{ header: '深度', dataKey: 'delmuch0' },
-							{ header: '噸數', dataKey: 'tonne' }
+							{ header: '預估算式', dataKey: 'account0' },
+							{ header: '預估面積', dataKey: 'acsum0' },
+							{ header: '預估深度', dataKey: 'delmuch0' },
+							{ header: '噸數\n2.25', dataKey: 'tonne' },
+							{ header: '剩餘噸數', dataKey: 'tonneRemain' },
+							{ header: '實際算式', dataKey: 'account' },
+							{ header: '實際面積', dataKey: 'acsum' },
+							{ header: '補繪標線', dataKey: 'SCType1Flag' }
 						],
-						styles: { font: "edukai", lineWidth: 0.2 },
+						styles: { font: "edukai", valign: 'middle', fontSize: 9, cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.2 },
 						headStyles: { halign: 'center' },
 						columnStyles: {
-							order: { halign: 'center', valign: 'middle', cellWidth: 12 },
-							assignDate: { halign: 'center', valign: 'middle', cellWidth: 24 },
-							CaseNo: { halign: 'center', valign: 'middle', cellWidth: 26 },
-							BTName: { halign: 'center', valign: 'middle', cellWidth: 20 },
-							CaseName: { cellWidth: 30 },
-							acsum0: { halign: 'center', valign: 'middle', cellWidth: 14 },
-							delmuch0: { halign: 'center', valign: 'middle', cellWidth: 14 },
-							tonne: { halign: 'center', valign: 'middle', cellWidth: 14 }
+							order: { halign: 'center', cellWidth: 6 },
+							// assignDate: { halign: 'center', cellWidth: 24 },
+							CaseNo: { halign: 'center', cellWidth: 22 },
+							lining: { halign: 'center', cellWidth: 12 },
+							BTName: { halign: 'center',  cellWidth: 10 },
+							account0: { cellWidth: 26 },
+							acsum0: { halign: 'center', cellWidth: 10 },
+							delmuch0: { halign: 'center', cellWidth: 10 },
+							tonne: { halign: 'center', cellWidth: 10 },
+							tonneRemain: { halign: 'center', cellWidth: 10 },
+							account: { cellWidth: 16 },
+							acsum: { halign: 'center', cellWidth: 10 },
+							SCType1Flag: { halign: 'center', cellWidth: 10 }
 						},
 						startY:  lineSize * 2 + 25,
 						rowPageBreak: 'avoid'
@@ -498,6 +516,8 @@ export default {
 					// this.pdfDoc.setDrawColor('#999999');
 					// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
 					// this.pdfDoc.setLineDashPattern([0], 0);
+
+					if(pageIndex == 0) table.splice(0, 1);
 
 					const splitImgTable = table.reduce((acc, cur) => {
 						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
