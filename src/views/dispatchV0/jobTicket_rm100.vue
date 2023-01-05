@@ -458,21 +458,38 @@ export default {
 					const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
 					this.pdfDoc.text(`${today} 派工單號：-------`, width - 15, lineSize + 25, { align: 'right' });
 
-					if(pageIndex == 0) table.splice(0, 0, { acsum0: areaSUM, tonne: 0 });
+					this.pdfDoc.autoTable({ 
+						columns: [
+							{ header: '總面積', dataKey: 'areaSUMTitle' },
+							{ header: String(areaSUM), dataKey: 'areaSUM' },
+							{ header: '總噸數', dataKey: 'tonneSUMTitle' },
+							{ header: String(tonneSUM), dataKey: 'tonneSUM' },
+						],
+						theme: 'plain',
+						styles: { font: "edukai", valign: 'middle', cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.5 },
+						headStyles: { halign: 'center' },
+						columnStyles: {
+							areaSUMTitle: { halign: 'center', cellWidth: 32 },
+							areaSUM: { halign: 'center', cellWidth: 16 },
+							tonneSUMTitle: { halign: 'center', cellWidth: 32 },
+							tonneSUM: { halign: 'center', cellWidth: 16 }
+						},
+						startY:  lineSize * 2 + 25
+					});
 
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
-							order: (pageIndex == 0 && i == 0) ? "" : (i+1) + 8*pageIndex, 
+							order: (i+1) + 8*pageIndex, 
 							// assignDate: l.assignDate, 
-							CaseNo: (pageIndex == 0 && i == 0) ? "合計" : l.CaseNo, 
+							CaseNo: l.CaseNo, 
 							lining: l.lining,
 							BTName: l.BTName, 
 							CaseName: l.CaseName, 
-							account0: (pageIndex == 0 && i == 0) ? "" : (l.accountflag0 == '1') ? l.account0 : `${l.elength}*${l.blength}`, 
+							account0: (l.accountflag0 == '1') ? l.account0 : `${l.elength}*${l.blength}`, 
 							acsum0: l.acsum0, 
 							delmuch0: l.delmuch0,
-							tonne: (pageIndex == 0 && i == 0) ? "" : l.tonne,
+							tonne: l.tonne,
 							tonneRemain: Math.round((tonneSUM -= l.tonne)*10)/10
 						})),
 						columns: [
@@ -508,7 +525,7 @@ export default {
 							acsum: { halign: 'center', cellWidth: 10 },
 							SCType1Flag: { halign: 'center', cellWidth: 10 }
 						},
-						startY:  lineSize * 2 + 25,
+						startY: this.pdfDoc.lastAutoTable.finalY + 2,
 						rowPageBreak: 'avoid'
 					});
 
@@ -516,8 +533,6 @@ export default {
 					// this.pdfDoc.setDrawColor('#999999');
 					// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
 					// this.pdfDoc.setLineDashPattern([0], 0);
-
-					if(pageIndex == 0) table.splice(0, 1);
 
 					const splitImgTable = table.reduce((acc, cur) => {
 						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
