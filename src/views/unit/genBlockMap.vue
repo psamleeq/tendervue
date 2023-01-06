@@ -190,6 +190,7 @@ export default {
 				lastCode: 0,
 				laneCode: 0,
 				roadName: "",
+				lane: 0,
 				area: 0,
 				points: [],
 				lines: [],
@@ -510,6 +511,7 @@ export default {
 				laneCode: geoData.result.geo.laneCode,
 				roadName: geoData.result.geo.roadName,
 				lastCode: geoData.result.lastCode,
+				lane: geoData.result.geo.lane,
 				area: geoData.result.geo.area,
 				points: [],
 				lines: [],
@@ -599,6 +601,9 @@ export default {
 						roadId: Number(this.geoInfo.roadId),
 						roadCode: `${this.listQuery.roadCode}${block.blockId}${this.listQuery.roadDir}`,
 						roadName: this.geoInfo.roadName,
+						lane: this.geoInfo.lane,
+						area: block.area,
+						length: block.length,
 						geometry: JSON.stringify(block.geometry)
 					})
 				}
@@ -973,6 +978,7 @@ export default {
 		splitBlock(splitPList1, splitPList2, line1, line2) {
 			const limit = Math.max(splitPList1.length, splitPList2.length);
 			let borders = [];
+			let lenArr = [];
 			// console.log(splitPList1, splitPList2);
 			
 			for (let i = 0; i < limit - 1; i++) {
@@ -993,6 +999,7 @@ export default {
 				let border = [[splitPList1Curr.point.lng, splitPList1Curr.point.lat]];
 				for (let a = splitPList1Curr.index + 1; a <= splitPList1Next.index; a++) border.push([line1[a].lng, line1[a].lat]);
 				border.push([splitPList1Next.point.lng, splitPList1Next.point.lat]);
+				lenArr.push(this.calcLineLen(border.map(point => ({ lat: point[1], lng: point[0] }))));
 				border.push([splitPList2Next.point.lng, splitPList2Next.point.lat]);
 				// for (let b = splitPList2Next.index; b >= splitPList2Curr.index + 1; b--) border.push([line2[b].lng, line2[b].lat]);
 				for (let b = splitPList2Next.index; b <= splitPList2Curr.index - 1; b++) border.push([line2[b].lng, line2[b].lat]);
@@ -1003,7 +1010,7 @@ export default {
 				// console.log(border);
 				borders.push([ border ]);
 			}
-			return borders
+			return { borders, lenArr }
 		},
 		getGeoJson(splitPObj) {
 			let geoJson = {
@@ -1014,7 +1021,8 @@ export default {
 
 			for (const [id, splitPList] of Object.entries(splitPObj)) {
 				if(id == this.listQuery.baseLineId) continue;
-				for (const [index, border] of this.splitBlock(splitPObj[this.listQuery.baseLineId], splitPList, this.lineFilter[this.listQuery.baseLineId].points, this.lineFilter[id].points).entries()) {
+				const { borders, lenArr } = this.splitBlock(splitPObj[this.listQuery.baseLineId], splitPList, this.lineFilter[this.listQuery.baseLineId].points, this.lineFilter[id].points);
+				for (const [index, border ] of borders.entries()) {
 					const area = calArea(border.flat());
 					let fillColor = "#90CAF9";
 					if(area < this.areaLimit[0] || area > this.areaLimit[1]) fillColor = "#EF5350";
@@ -1024,6 +1032,7 @@ export default {
 					const block = {
 						blockId: blockId,
 						area: Math.round(area * 100) / 100,
+						length: Math.round(lenArr[index]*100) / 100,
 						points: border.flat().map(point => ({ lat: point[1], lng: point[0] })),
 						geometry: {
 							type: "Polygon",

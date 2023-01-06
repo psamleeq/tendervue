@@ -182,11 +182,6 @@ export default {
 					name: "結束道路",
 					sortable: false,
 				},
-				lane: {
-					name: "車道數量",
-					sortable: false,
-					minWidth: 30
-				},
 				width: {
 					name: "計畫路寬",
 					sortable: true,
@@ -197,13 +192,18 @@ export default {
 					sortable: true,
 					minWidth: 60
 				},
+				lane: {
+					name: "車道數量",
+					sortable: false,
+					minWidth: 30
+				},
 				length: {
-					name: "區段長度",
+					name: "區塊長度",
 					sortable: true,
 					minWidth: 60
 				},
 				area: {
-					name: "道路面積",
+					name: "區塊面積",
 					sortable: true,
 					minWidth: 60
 				},

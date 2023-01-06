@@ -189,6 +189,7 @@ export default {
 			geoInfo: {
 				roadId: 0,
 				roadName: "",
+				lane: 0,
 				area: 0,
 				points: [],
 				lines: { baseLines: {}, laneLines: {} },
@@ -459,6 +460,7 @@ export default {
 						this.geoInfo = {
 							roadId: response.data.result.geo.RoadId,
 							roadName: response.data.result.geo.roadName,
+							lane: response.data.result.geo.lane,
 							area: response.data.result.geo.area,
 							points: [],
 							lines: { baseLines: {}, laneLines: {} },
@@ -553,6 +555,9 @@ export default {
 						laneId: Number(block.laneId),
 						laneCode: `${this.listQuery.roadCode}${block.blockId}${this.listQuery.roadDir}`,
 						roadName: this.geoInfo.roadName,
+						lane: this.geoInfo.lane,
+						area: block.area,
+						length: block.length,
 						geometry: JSON.stringify(block.geometry)
 					})
 				}
@@ -945,6 +950,7 @@ export default {
 
 			for (const [index, border] of this.splitBlock(lineList).entries()) {
 				const area = calArea(border.flat());
+				const length = this.calcLineLen(lineList[index]);
 				let fillColor = "#90CAF9";
 
 				// console.log(border.flat().map(point => ({ lat: point[1], lng: point[0] })));
@@ -954,6 +960,7 @@ export default {
 					blockId: blockId,
 					laneId: laneId,
 					area: Math.round(area * 100) / 100,
+					length: Math.round(length*100) / 100,
 					points: border.flat().map(point => ({ lat: point[1], lng: point[0] })),
 					geometry: {
 						type: "Polygon",
