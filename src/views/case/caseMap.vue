@@ -17,7 +17,7 @@
 				<br>
 				<div class="filter-item filter">
 					<div>PCI切塊</div>
-					<el-checkbox-group v-model="listQuery.blockType" size="mini" @change="switchBlockType">
+					<el-checkbox-group v-model="listQuery.blockType" size="mini" @change="switchBlockType()">
 						<el-checkbox-button v-for="(block, type) in options.blockMap" :label="Number(type)" :key="type">{{ block }}</el-checkbox-button>
 					</el-checkbox-group>
 				</div>
@@ -445,6 +445,8 @@ export default {
 			})
 		},
 		changeTender() {
+			this.switchBlockType(true);
+
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
 				const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
@@ -459,8 +461,6 @@ export default {
 					zIndex: 0
 				}
 			});
-
-			this.switchBlockType(true);
 			this.getList();
 		},
 		getGeoJSONFilter() {

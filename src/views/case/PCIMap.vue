@@ -541,7 +541,7 @@ export default {
 			}).catch(err => this.loading = false);
 
 			// 載入PCI切塊 GeoJson
-			getPCIBlock().then(async (response) => {
+			getPCIBlock({ tenderId: tenderRound.tenderId }).then(async (response) => {
 				// console.log("getPCIBlock");
 				if(Object.keys(response.data.geoJSON).length == 0) {
 					this.$message({
@@ -677,7 +677,7 @@ export default {
 		clearAll() {
 			this.infoWindow.close();
 
-			for(const layer of Object.values(this.dataLayer)) layer.forEach(feature => this.dataLayer.case.remove(feature));
+			for(const type of [ "PCIBlock", "case" ]) this.dataLayer[type].forEach(feature => this.dataLayer[type].remove(feature));
 			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
 			for(const markers of this.markers) markers.setMap(null);
 		},
