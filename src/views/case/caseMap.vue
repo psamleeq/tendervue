@@ -52,7 +52,7 @@
 					</el-select>
 				</el-col>
 			</el-row>
-			<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
+			<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${info.caseName}_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
 				<el-col :span="10" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
 				<el-col :span="5">
 					<span v-if="selectCase[info.caseName].level == 0">{{ info.total }}</span>
