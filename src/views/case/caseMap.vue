@@ -639,7 +639,9 @@ export default {
 					this.search();
 				});
 				// this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_${zipCode}.geojson?t=${Date.now()}`);
-				this.dataLayer.PCIBlock.nco.loadGeoJson(`/assets/json/PCIBlock_nco_${zipCode}.geojson?t=${Date.now()}`);
+				this.dataLayer.PCIBlock.nco.loadGeoJson(`/assets/json/PCIBlock_nco_${zipCode}.geojson?t=${Date.now()}`, null, () => {
+					this.search();
+				});
 			}
 
 			if(this.listQuery.blockType.includes(1)) this.dataLayer.PCIBlock.bell.setMap(this.map);
