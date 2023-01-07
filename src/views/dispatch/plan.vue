@@ -279,7 +279,6 @@ export default {
 			// total: 0,
 			list: [],
 			detail: [],
-			rowActive: {},
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect: [],

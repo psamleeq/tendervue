@@ -46,6 +46,14 @@ export function getJobTicket(query) {
 	})
 }
 
+export function confirmJobTicket(data) {
+	return request({
+		url: '/dispatch/jobConfirm',
+		method: 'post',
+		data
+	})
+}
+
 // 完工登錄列表
 export function getFinRegister(query) {
 	return request({

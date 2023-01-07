@@ -16,8 +16,18 @@
 			<!-- <span class="filter-item">
 				<div style="font-size: 12px; color: #909399">派工日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-			</span>
-			<br /> -->
+			</span> -->
+			<div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>廠商</span>
+					</div>
+					<el-select v-model.number="listQuery.contractor" placeholder="請選擇" popper-class="type-select" style="width: 100px">
+						<el-option v-for="(name, id) in options.guildMap" :key="id" :value="Number(id)" :label="name" />
+					</el-select>
+				</div>
+			</div>
+			<br />
 
 			<div class="filter-item">
 				<div v-if="listQuery.filterType == 1" class="select-contract">
@@ -29,12 +39,7 @@
 					</el-select>
 				</div>
 				
-				<el-input
-					v-else
-					v-model="listQuery.filterStr"
-					placeholder="請輸入"
-					style="width: 300px"
-				>
+				<el-input v-else v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
 					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
@@ -56,31 +61,101 @@
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
 		</div>
 
-		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
-		<div class="filter-container">
-			<div class="filter-item">
-				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
-						<span>廠商</span>
-					</div>
-					<el-select v-model.number="listQuery.workClass" placeholder="請選擇" popper-class="type-select" style="width: 100px">
-						<el-option v-for="(name, id) in options.guildMap" :key="id" :value="Number(id)" :label="name" />
-					</el-select>
-				</div>
-			</div>
-			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.workClass) > 0">
-				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.workClass) == 0" @click="previewPdf()">製作派工單</el-button>
-				</span>
-			</el-tooltip>
-		</div>
-
+		<h3>已選取案件</h3>
 		<el-table
-			ref="assignTable"
+			ref="selectTable"
 			empty-text="目前沒有資料"
-			:data="list"
-			:key="deviceTypeNow"
+			:data="tableSelect"
+			:key="`selectCase_${deviceTypeNow}`"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{ 'background-color': '#F2F6FC' }"
+			stripe
+			style="width: 100%"
+		>
+			<el-table-column label="順序" width="60" align="center" fixed>
+				<template slot-scope="{ row }">
+					<el-select v-model="row.OrderIndexNew" placeholder="請選擇" size="mini" :disabled="tableSelect.length <= 1" @change="changeOrder(row)">
+						<el-option v-for="index in Array.from({ length: tableSelect.length }, (_, i) => i+1 ).filter(i => i != row.OrderIndex)" :key="`order_${index}`" :label="index" :value="index" />
+					</el-select>
+				</template>
+			</el-table-column>
+
+			<el-table-column prop="index" width="60" align="center" fixed>
+				<template slot="header">
+					<span v-if="tableSelect.length == 0"> - </span>
+					<el-checkbox v-else v-model="checkAll" :indeterminate="indeterminate" :disabled="list.length == 0 || tableSelect.length == 0" :key="`checkAll_${checkAll}`"/>
+				</template>
+				<template slot-scope="{ row }">
+					<el-checkbox v-model="checkList[row.index-1]" :key="`list_${row.index}`" style="margin-right: 5px" @change="cellCheckBox(row)" />
+					<span>{{ row.index }}</span>
+				</template>
+			</el-table-column>
+
+			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
+				<template slot-scope="{ row }">
+					<span>{{ row.CaseNo }}</span>
+					<br>
+					<span style="color: #909399; font-size: 12px">{{ row.DName }} ({{ row.casetype }})</span>
+				</template>
+			</el-table-column>
+
+			<el-table-column
+				v-for="(value, key) in headersFilter"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
+				:min-width="['Place'].includes(key) ? 80 : null"
+				:sortable="value.sortable"
+			>
+				<template slot-scope="{ row, column }">
+					<span v-if="[ 'MillingFormula' ].includes(column.property)">
+						<span v-if="row.MillingFormula != '0'">{{ row.MillingFormula }}</span>
+						<span v-else>{{ row.MillingLength }} * {{ row.MillingWidth }}</span>
+					</span>
+					<span v-else>
+						<span>{{ row[column.property] || "-" }}</span>
+					</span>
+				</template>
+			</el-table-column>
+			
+			<el-table-column label="動作" align="center">
+				<template slot-scope="{ row }">
+					<el-button-group>
+						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
+						<!-- <el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button> -->
+						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
+					</el-button-group>
+				</template>
+			</el-table-column>
+
+			<el-table-column type="expand" width="1" align="center">
+				<template slot-scope="props">
+				</template>
+			</el-table-column>
+		</el-table>
+
+		<br>
+
+		<el-tooltip effect="dark" content="請選擇案件" placement="bottom" :disabled="tableSelect.length != 0">
+			<div>
+				<el-button class="btn-previewPdf" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">製作派工單</el-button>
+			</div>
+		</el-tooltip>
+
+		<el-divider />
+
+		<h3>主任派工案件</h3>
+		<el-table
+			ref="confirmTable"
+			empty-text="目前沒有資料"
+			:data="listFilter"
+			:key="`allCase_${deviceTypeNow}`"
 			border
 			fit
 			highlight-current-row
@@ -89,10 +164,14 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column type="selection" width="60" align="center" fixed>
-				<template slot-scope="{ row, $index }">
-					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
-					<span>{{ $index + 1 }}</span>
+			<el-table-column width="60" align="center" fixed>
+				<template slot="header">
+					<span v-if="listFilter.length == 0"> - </span>
+					<el-checkbox v-else v-model="checkAll" :indeterminate="indeterminate" :key="`checkAll_${checkAll}`" :disabled="list.length == 0 || listFilter.length == 0" />
+				</template>
+				<template slot-scope="{ row }">
+					<el-checkbox v-model="checkList[row.index-1]" :key="`list_${row.index}`" style="margin-right: 5px" @change="cellCheckBox(row)" />
+					<span>{{ row.index }}</span>
 				</template>
 			</el-table-column>
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
@@ -169,37 +248,38 @@ import moment from "moment";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
+import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getJobTicket } from "@/api/dispatch";
-import TimePicker from "@/components/TimePicker";
+import { getJobTicket, confirmJobTicket } from "@/api/dispatch";
+// import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
 
 export default {
 	name: "jobTicket",
-	components: { TimePicker, CaseDetail },
+	components: { CaseDetail },
 	data() {
 		return {
 			loading: false,
 			showJobTicket: true,
 			showDetailDialog: true,
 			showConfirm: false,
-			timeTabId: 1,
-			dateTimePickerVisible: false,
+			// timeTabId: 1,
 			screenWidth: window.innerWidth,
-			daterange: [
-				moment().subtract(1, 'd').startOf("day").toDate(),
-				moment().subtract(1, 'd').endOf("day").toDate(),
-			],
+			// daterange: [
+			// 	moment().subtract(1, 'd').startOf("day").toDate(),
+			// 	moment().subtract(1, 'd').endOf("day").toDate(),
+			// ],
 			searchRange: "",
 			deviceTypeNow: 1,
+			contractorNow: 0,
 			listQuery: {
 				filterType: 1,
 				filterStr: null,
 				tenderId: null,
 				deviceType: 1,
-				workClass: null,
+				contractor: null,
 				// pageCurrent: 1,
 				// pageSize: 50,
 			},
@@ -282,10 +362,10 @@ export default {
 			// total: 0,
 			list: [],
 			detail: [],
-			rowActive: {},
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect: [],
+			apiHeader: [ "SerialNo", "OrderIndex" ],
 			options: {
 				tenderMap: {},
 				guildMap: {},
@@ -313,6 +393,26 @@ export default {
 			})
 			return headersFilter
 		},
+		listFilter() {
+			const SNFilter = this.tableSelect.map(row => row.SerialNo);
+			return this.list.filter(row => !SNFilter.includes(row.SerialNo));
+		},
+		checkAll: {
+			get() {
+				return this.list.length > 0 && this.tableSelect.length == this.list.length;
+			},
+			set(newVal) {
+				if(newVal) this.tableSelect = this.list;
+				else this.tableSelect = [];
+
+				this.checkList = this.checkList.map(() => newVal);
+				this.resetOrder();
+			}
+			
+		},
+		indeterminate() {
+			return this.tableSelect.length > 0 && this.tableSelect.length < this.list.length;
+		}
 	},
 	watch: { },
 	async created() {
@@ -332,8 +432,26 @@ export default {
 			// .then(res => res.arrayBuffer())
 			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
 			.then(res => res.blob())
-			.then(blob => readBlob(blob))
-			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7)).then(fontBString => {
+			.then(async(blob) => { 
+				this.viewer = new Viewer({ 
+					domContainer: this.$refs.pdfViewer, 
+					template: { 
+						basePdf: BLANK_PDF,
+						schemas: [{ }]
+					},
+					inputs: [{ }],
+					options: {
+						font:{
+							edukai: {
+								data: await blob.arrayBuffer(),
+								fallback: true
+							}
+						}
+					}
+				});
+
+				return readBlob(blob); 
+			}).then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7)).then(fontBString => {
 				// console.log(fontBString);
 
 				// init jsPDF
@@ -347,30 +465,52 @@ export default {
 		this.showJobTicket = false;
 		this.showDetailDialog = false;
 
-		this.$nextTick(() => {
-			// init Viewer
-			this.viewer = new Viewer({ 
-				domContainer: this.$refs.pdfViewer, 
-				template: { 
-					basePdf: BLANK_PDF,
-					schemas: [{ }]
-				},
-				inputs: [{ }] 
-			});
-		});
+		// this.$nextTick(async () => {
+		// 	// init Viewer
+		// 	this.viewer = new Viewer({ 
+		// 		domContainer: this.$refs.pdfViewer, 
+		// 		template: { 
+		// 			basePdf: BLANK_PDF,
+		// 			schemas: [{ }]
+		// 		},
+		// 		inputs: [{ }],
+		// 		options: {
+		// 			font:{
+		// 				edukai: {
+		// 					data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+		// 					fallback: true
+		// 				}
+		// 			}
+		// 		}
+		// 	});
+		// });
 	},
 	methods: {
 		async handleCheckedChange(val) {
 			this.tableSelect = val;
 			if(this.tableSelect.length == this.list.length) this.tableSelect.forEach((_, index) => this.$set(this.checkList, index, true));
 			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
+
+			this.resetOrder();
 		},
-		cellCheckBox(row, index) {
-			if(this.checkList[index]) this.$refs.assignTable.toggleRowSelection(row, true);
-			else this.$refs.assignTable.toggleRowSelection(row, false);
+		cellCheckBox(row) {
+			// if(this.checkList[row.index-1]) this.$refs.confirmTable.toggleRowSelection(row, true);
+			// else this.$refs.confirmTable.toggleRowSelection(row, false);
+			if(this.checkList[row.index-1]) this.tableSelect.push(row);
+			else this.tableSelect = this.tableSelect.filter(selectRow => selectRow.index != row.index);
+
+			this.resetOrder();
 		},
 		toggleExpand(row) {
-			this.$refs.assignTable.toggleRowExpansion(row)
+			this.$refs.confirmTable.toggleRowExpansion(row)
+		},
+		changeOrder(row) {
+			this.tableSelect.splice(row.OrderIndex - 1, 1);
+			this.tableSelect.splice(row.OrderIndexNew - 1, 0, row);
+			this.resetOrder();
+		},
+		resetOrder() {
+			for(const [ index, row ] of this.tableSelect.entries()) row.OrderIndex = row.OrderIndexNew = index + 1;
 		},
 		imgPreload() {
 			//img preload
@@ -382,44 +522,57 @@ export default {
 			});
 		},
 		getList() {
-			this.loading = true;
-			this.list = [];
-			this.listQuery.workClass = null;
+			if (!Number(this.listQuery.contractor)) {
+				this.$message({
+					message: "請選擇廠商",
+					type: "error",
+				});
+			} else {
+				this.loading = true;
+				this.list = [];
+				this.tableSelect = [];
+				this.contractorNow = this.listQuery.contractor;
 
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
+				// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+				// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+				// this.searchRange = startDate + " - " + endDate;
+				
+				getJobTicket({
+					contractor: this.listQuery.contractor,
+					tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
+					reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					deviceType: this.listQuery.deviceType,
+					// timeStart: startDate,
+					// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+				}).then(response => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+						this.total = 0;
+					} else {
+						this.list = response.data.list;
+						this.checkList = Array.from({ length: this.list.length }, () => false);
+						this.deviceTypeNow = this.listQuery.deviceType;
 
-			getJobTicket({
-				dteamSN: this.listQuery.filterType == 1 ? this.listQuery.dteamSN : null,
-				reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				deviceType: this.listQuery.deviceType,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-			}).then(response => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-					this.total = 0;
-				} else {
-					this.list = response.data.list;
-					this.checkList = Array.from({ length: this.list.length }, () => false);
-					this.deviceTypeNow = this.listQuery.deviceType;
+						this.list.forEach((l, i) => {
+							l.Contractor = this.options.guildMap[l.Contractor];
+							l.DatePlan = this.formatDate(l.DatePlan);
+							// this.$set(l, "detailTime", false);
+							l.DateDeadline = (l.DateDeadline == null) ? moment(Number(String(l.CaseNo).substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY/MM/DD") : this.formatDate(l.DateDeadline);
+							this.$set(l, "index", i+1);
+							this.$set(l, "OrderIndex", i+1);
+							this.$set(l, "OrderIndexNew", i+1);
+							this.$set(l, "tonne", Math.round(l.MillingArea*l.MillingDepth*0.01*2.25*10) / 10);
+						})
 
-					this.list.forEach(l => {
-						l.DatePlan = this.formatDate(l.DatePlan);
-						// this.$set(l, "detailTime", false);
-						l.DateDeadline = (l.DateDeadline == null) ? moment(Number(String(l.CaseNo).substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY/MM/DD") : this.formatDate(l.DateDeadline);
-						this.$set(l, "tonne", Math.round(l.MillingArea*l.MillingDepth*0.01*2.25*10) / 10);
-					})
-
-					this.imgPreload();
-				}
-				this.loading = false;
-			}).catch(err => this.loading = false);
+						this.imgPreload();
+					}
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			}
 		},
 		showDetail(row) {
 			this.loading = true;
@@ -456,7 +609,7 @@ export default {
 					this.pdfDoc.setCharSpace(0);
 					const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
 					this.pdfDoc.text(`${today} 派工單號：           `, width - 15, lineSize + 25, { align: 'right' });
-					this.pdfDoc.text(`(預覽列印)`, width - 15, lineSize + 25, { align: 'right' });
+					// this.pdfDoc.text(`(預覽列印)`, width - 15, lineSize + 25, { align: 'right' });
 
 					if(pageIndex == 0) {
 						this.pdfDoc.autoTable({ 
@@ -575,11 +728,6 @@ export default {
 					this.pdfDoc.text(`${pageNo} of ${this.pdfDoc.internal.getNumberOfPages()}`, width/2, height-10, { align: 'center' } );
 				}
 
-				this.viewer.updateTemplate({ 
-					basePdf: this.pdfDoc.output('bloburl'), 
-					schemas: [{ }]
-				});
-
 				resolve();
 			});
 		},
@@ -587,38 +735,88 @@ export default {
 			this.loading = true;
 
 			this.createPdf().then(() => {
+				this.viewer.updateTemplate({ 
+					basePdf: this.pdfDoc.output('bloburl'), 
+					schemas: [
+						{
+							"OrderSN": {
+								"type": "text",
+								"position": {
+									"x": 167.64,
+									"y": 26
+								},
+								"width": 27.24,
+								"height": 6.12,
+								"fontSize": 14,
+								"alignment": "center"
+							}
+						}
+					]
+				});
+				this.viewer.setInputs([{ "OrderSN": "(預覽列印)" }]);
+
 				this.loading = false;
 				this.showJobTicket = true;
 			})
 		},
-		downloadPdf() {
-			this.pdfDoc.save("維修派工單.pdf");
+		caseFilterList(list) {
+			// console.log(list);
+			let caseFilterList = [];
+			for(const row of list) {
+				let caseItem = {};
+				for(const key of this.apiHeader) caseItem[key] = row[key];
+				caseFilterList.push(caseItem);
+			}
+
+			return caseFilterList;
 		},
-		async handleDownload() {
-			// await this.dateWatcher();
+		downloadPdf() {
+			this.$confirm(`確認列印派工單？`, "確認", { showClose: false })
+				.then(() => {
+					confirmJobTicket({
+						OrderType: this.deviceTypeNow,
+						Contractor: this.contractorNow,
+						caseList: this.caseFilterList(this.tableSelect)
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "確認成功",
+								type: "success",
+							});
 
-			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-
-			getRoadUnit({
-				pageCurrent: 1,
-				pageSize: this.total
-			}).then((response) => {
-				let list = response.data.list;
-				list.forEach(l => l.dist = this.districtList[l.zip].name);
-
-				const tHeader = Object.values(this.headers).map((h) => h.name);
-				const filterVal = Object.keys(this.headers);
-				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-				const data = this.formatJson(filterVal, list);
-
-				import("@/vendor/Export2Excel").then((excel) => {
-					excel.export_json_to_excel({
-						header: tHeader,
-						data,
+							const orderSN = response.data.OrderSN;
+							this.viewer.setInputs([{ "OrderSN": String(orderSN) }]);
+							this.showJobTicket = false;
+							this.handleDownload(`維修派工單_${orderSN}.pdf`);
+							// this.pdfDoc.save(`維修派工單_${orderSN}.pdf`);
+						} else {
+							this.$message({
+								message: "確認失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
 					});
-				});
+				}).catch(err => {});
+		},
+		handleDownload(filename) {
+			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
+				// console.log(pdf);
+				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
+				// window.open(URL.createObjectURL(blob));
+
+				const file = new File([blob], filename, { type: 'application/pdf' });
+				const link = document.createElement('a');
+				const url = URL.createObjectURL(file);
+				link.href = url;
+				link.download = file.name;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
 			});
 		},
 		formatJson(filterVal, jsonData) {
@@ -629,23 +827,23 @@ export default {
 </script>
 
 <style lang="sass">
-*
-	// border: 1px solid #000
-	// box-sizing: border-box
+// *
+// 	border: 1px solid #000
+// 	box-sizing: border-box
 .job-ticket
+	.el-select
+		.el-input__inner
+			padding-left: 3px
+			padding-right: 10px
+			text-align: center
+		.el-input__suffix
+			right: 0
+			transform: scale(0.7)
 	.filter-container
 		.filter-item
 			margin-right: 5px
 			.el-select
 				width: 110px
-				.el-input__inner
-					padding-left: 3px
-					padding-right: 10px
-					text-align: center
-				.el-input__suffix
-					right: 0
-					// margin-right: -5px
-					transform: scale(0.7)
 				&.dteam-select
 					width: 520px
 			.select-contract
@@ -662,6 +860,10 @@ export default {
 					border-bottom-left-radius: 0
 					padding-left: 10px
 					text-align: left
+	.btn-previewPdf
+		position: relative
+		left: 50%
+		transform: translateX(-50%)
 	.el-table
 		.input-length, .input-width
 			max-width: 60px
