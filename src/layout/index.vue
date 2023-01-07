@@ -43,10 +43,10 @@
               auto-complete="new-password"
             />
           </el-form-item>
-          <el-form-item prop="comfirmedPassword">
+          <el-form-item prop="confirmedPassword">
             <el-input
               class="filter-item"
-              v-model="list.comfirmedPassword"
+              v-model="list.confirmedPassword"
               placeholder="確認新密碼"
               type="password"
               show-password
@@ -57,7 +57,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="isShowChangePassword = false">取消</el-button>
-        <el-button type="primary" @click="changePassword">確定</el-button>
+        <el-button type="primary" @click="changePassword()">確定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -68,7 +68,7 @@ import RightPanel from "@/components/RightPanel";
 import { AppMain, Navbar, Settings, Sidebar, TagsView } from "./components";
 import ResizeMixin from "./mixin/ResizeHandler";
 import { mapState } from "vuex";
-// import { changePassword } from "@/api/auth";
+import { changePassword } from "@/api/auth";
 
 export default {
   name: "Layout",
@@ -89,7 +89,7 @@ export default {
         callback();
       }
     };
-    const validateComfirmedPassword = (rule, value, callback) => {
+    const validateconfirmedPassword = (rule, value, callback) => {
       if (value != this.list.changePassword) {
         callback(new Error("兩次輸入的密碼不同"));
       } else {
@@ -106,7 +106,7 @@ export default {
       list: {
         originPassword: "",
         changePassword: "",
-        comfirmedPassword: "",
+        confirmedPassword: "",
         guildId: "",
       },
       listRules: {
@@ -117,11 +117,11 @@ export default {
             validator: validateChangePassword,
           },
         ],
-        comfirmedPassword: [
+        confirmedPassword: [
           {
             required: true,
             trigger: "blur",
-            validator: validateComfirmedPassword,
+            validator: validateconfirmedPassword,
           },
         ],
       },
@@ -157,36 +157,34 @@ export default {
           message: "密碼不能少於6位數字",
           type: "error",
         });
-      } else if (this.list.changePassword != this.list.comfirmedPassword) {
+      } else if (this.list.changePassword != this.list.confirmedPassword) {
         this.$message({
           message: "兩次輸入的密碼不同",
           type: "error",
         });
       } else {
         this.isShowChangePassword = false;
-        // changePassword({
-        //   username: localStorage.getItem("username"),
-        //   oldPwd: this.list.originPassword,
-        //   newPwd: this.list.changePassword,
-        // }).then((response) => {
-        //   if (response.statusCode == 20000) {
-        //     this.list = {
-        //       originPassword: "",
-        //       changePassword: "",
-        //       comfirmedPassword: "",
-        //       guildId: "",
-        //     };
-        //     this.$message({
-        //       message: "修改成功",
-        //       type: "success",
-        //     });
-        //   } else {
-        //     this.$message({
-        //       message: "修改失敗",
-        //       type: "error",
-        //     });
-        //   }
-        // });
+        changePassword({
+          oldPwd: this.list.originPassword,
+          newPwd: this.list.changePassword,
+        }).then((response) => {
+          if (response.statusCode == 20000) {
+            this.list = {
+              originPassword: "",
+              changePassword: "",
+              confirmedPassword: "",
+            };
+            this.$message({
+              message: "修改成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              message: "修改失敗",
+              type: "error",
+            });
+          }
+        });
       }
     },
   },
