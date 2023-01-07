@@ -73,6 +73,12 @@
 				</template>
 			</el-table-column> -->
 
+			<el-table-column v-if="!isAllCompleted" label="退回" width="60" align="center" fixed>
+				<template slot-scope="{ row }">
+					<el-button v-if="!row.edit" type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
+				</template>
+			</el-table-column>
+
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
 			<el-table-column prop="OrderSN" label="派工單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
@@ -318,7 +324,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getFinRegister, finRegisterSpec, finRegister } from "@/api/dispatch";
+import { getFinRegister, finRegisterSpec, finRegister, revokeDispatch } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -599,6 +605,31 @@ export default {
 					});
 				}).catch(err => {});
 		},
+		removeDispatch(row) {
+			this.$confirm(`確認退回 案件編號${row.CaseNo} 的派工?`, "確認", { showClose: false })
+				.then(() => {
+					revokeDispatch({
+						deviceType: this.deviceTypeNow,
+						serialNo: row.SerialNo
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "退回成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "退回失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					});
+				}).catch(err => {});
+		}
 	},
 };
 </script>

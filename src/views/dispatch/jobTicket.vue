@@ -164,6 +164,11 @@
 				</template>
 			</el-table-column>
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
+			<el-table-column label="退回" width="60" align="center" fixed>
+				<template slot-scope="{ row }">
+					<el-button type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
+				</template>
+			</el-table-column>
 			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
@@ -240,7 +245,7 @@ applyPlugin(jsPDF);
 import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getJobTicket, confirmJobTicket } from "@/api/dispatch";
+import { getJobTicket, confirmJobTicket, revokeDispatch } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -777,6 +782,31 @@ export default {
 				URL.revokeObjectURL(url);
 			});
 		},
+		removeDispatch(row) {
+			this.$confirm(`確認退回 案件編號${row.CaseNo}?`, "確認", { showClose: false })
+				.then(() => {
+					revokeDispatch({
+						deviceType: this.deviceTypeNow,
+						serialNo: row.SerialNo
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "退回成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "退回失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					});
+				}).catch(err => {});
+		}
 	},
 };
 </script>

@@ -37,6 +37,14 @@ export function setDispatchList(data) {
 	})
 }
 
+export function revokeDispatch(data) {
+	return request({
+		url: '/dispatch/revoke',
+		method: 'delete',
+		data
+	})
+}
+
 // 廠商派工單列表
 export function getJobTicket(query) {
 	return request({
