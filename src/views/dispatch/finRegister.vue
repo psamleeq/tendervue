@@ -14,52 +14,10 @@
 				</div>
 			</div>
 
-			<span class="filter-item">
+			<!-- <span class="filter-item">
 				<div style="font-size: 12px; color: #909399">派工日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-			</span>
-			<br />
-
-			<div class="filter-item">
-				<div v-if="listQuery.filterType == 1" class="select-contract">
-					<el-select v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
-					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select" clearable @clear="listQuery.tenderId = null">
-						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
-					</el-select>
-				</div>
-				
-				<el-input
-					v-else
-					v-model="listQuery.filterStr"
-					placeholder="請輸入"
-					style="width: 300px"
-				>
-					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
-				</el-input>
-			</div>
-			
-			<!-- <div class="filter-item">
-				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
-						<span>合約</span>
-					</div>
-					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select">
-						<el-option v-for="(name, id) in options.DteamMap" :key="id" :value="id" :label="name" />
-					</el-select>
-				</div>
-			</div> -->
-
-			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
-			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
-		</div>
-
-		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
-
-		<div class="filter-container">
+			</span> -->
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
@@ -70,12 +28,31 @@
 					</el-select>
 				</div>
 			</div>
-			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.contractor) > 0">
-				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.contractor) == 0" @click="showAddKit = true">完工登錄</el-button>
-				</span>
-			</el-tooltip>
+			<br>
+
+			<div class="filter-item">
+				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px" >
+					<span slot="prepend">派工單號</span>
+				</el-input>
+			</div>
+			
+			<!-- <div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>合約</span>
+					</div>
+					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
+					</el-select>
+				</div>
+			</div> -->
+
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
+			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
 		</div>
+
+		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+		<h4 v-if="list.length != 0">總面積 {{ Math.round(caseSum.areaSUM*10)/10 }}，總噸數: {{ Math.round(caseSum.tonneSUM*10)/10 }}</h4>
 
 		<el-table
 			ref="planTable"
@@ -88,14 +65,14 @@
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
 			stripe
 			style="width: 100%"
-			@selection-change="handleCheckedChange"
 		>
-			<el-table-column type="selection" width="60" align="center" fixed>
+			<!-- <el-table-column type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
 					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
 				</template>
-			</el-table-column>
+			</el-table-column> -->
+
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
 			<el-table-column prop="OrderSN" label="派工單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
@@ -114,6 +91,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
+				:width="['SCType1Flag'].includes(key) ? 50 : null"
 				:min-width="['Place'].includes(key) ? 80 : null"
 				:sortable="value.sortable"
 			>
@@ -132,16 +110,22 @@
 			<!-- 道路、熱再生 -->
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="400" align="center">
 				<template slot-scope="{ row }">
-					<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
-						<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
-						<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
-					</el-row>
-					<el-row v-else :gutter="5" type="flex" align="middle">
-						<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
-						<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
-						<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
-						<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
-					</el-row>
+					<span v-if="row.edit">
+						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
+							<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
+							<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
+						</el-row>
+						<el-row v-else :gutter="5" type="flex" align="middle">
+							<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
+							<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
+							<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
+							<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
+						</el-row>
+					</span>
+					<span v-else>
+						<span v-if="row.MillingFormula != '0'">{{ row.MillingFormula }}</span>
+						<span v-else>{{ row.MillingLength }} * {{ row.MillingWidth }}</span>
+					</span>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="面積" width="80" align="center">
@@ -159,107 +143,124 @@
 							<span v-for="key in keyArr.filter(key => key != 'uNotes')" :key="key">
 								<el-col :span="6" style="line-height: 32px">{{ options.workmemo[key] }}</el-col>
 								<el-col :span="6">
-									<el-input v-model="row.memoObj[key]" size="mini" />
+									<el-input v-model.number="row[key]" size="mini" />
 								</el-col>
 							</span>
 						</el-row>
 						<el-row :gutter="5">
 							<el-col :span="6" style="line-height: 32px">{{ options.workmemo.uNotes }}</el-col>
 							<el-col :span="18">
-								<el-input v-model="row.memoObj.uNotes" size="mini" />
+								<el-input v-model="row.uNotes" size="mini" />
 							</el-col>
 						</el-row>
-						<el-button type="text" @click="rowActive = row">
-							<i class="el-icon-success" />
-						</el-button>
-						<el-button type="text" @click="row.edit = false">
-							<i class="el-icon-error" />
-						</el-button>
 					</span>
 					<el-row :gutter="5" v-else>
-						<el-col :span="22">
-							<span v-if="options.workmemoOrder.flat().filter(key => key != 'uNotes' && row.memoObj[key] != 0).length != 0">
-								<el-row :gutter="5">
-									<span v-for="key in options.workmemoOrder.flat().filter(key => key != 'uNotes' && row.memoObj[key] != 0)" :key="key">
-										<el-col :span="6">{{ options.workmemo[key] }}</el-col>
-										<el-col :span="6">
-											<span>{{ row.memoObj[key] }}</span>
-										</el-col>
-									</span>
-								</el-row>
-								<el-row v-if="row.memoObj.uNotes && row.memoObj.uNotes.length != 0" :gutter="5">
-									<el-col :span="6">{{ options.workmemo.uNotes }}</el-col>
-									<el-col :span="18">
-										<span>{{ row.memoObj.uNotes }}</span>
-									</el-col>
-								</el-row>
-							</span>
-							<span v-else> - </span>
-						</el-col>
-						<el-col :span="2">
-							<el-link @click="row.edit = true" style="margin-left: 5px">
-								<i class="el-icon-edit" />
-							</el-link>
-						</el-col>
+						<span v-if="options.workmemoOrder.flat().filter(key => key != 'uNotes' && row[key] != 0).length != 0">
+							<el-row :gutter="5">
+								<span v-for="key in options.workmemoOrder.flat().filter(key => key != 'uNotes' && row[key] != 0)" :key="key">
+									<el-col :span="6">{{ options.workmemo[key] }}</el-col>
+									<el-col :span="6" class="item-content">{{ row[key] }}</el-col>
+								</span>
+							</el-row>
+							<el-row v-if="row.uNotes && row.uNotes.length != 0" :gutter="5">
+								<el-col :span="6">{{ options.workmemo.uNotes }}</el-col>
+								<el-col :span="18" class="item-content">{{ row.uNotes }}</el-col>
+							</el-row>
+						</span>
+						<span v-else> - </span>
 					</el-row>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="80" align="center">
 				<template slot-scope="{ row }">
-					<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
-						<el-option v-for="value in [0, 5, 10]" :key="value" :label="value" :value="value"/>
-					</el-select>
+					<span v-if="row.edit">
+						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
+							<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
+						</el-select>
+					</span>
+					<span v-else>{{ row.MillingDepth }}</span>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == '1'" label="使用粒料" width="240" align="center">
 				<template slot-scope="{ row }">
-					<el-row :gutter="5">
-						<el-col :span="6" style="line-height: 28px">粒料3/4</el-col>
-						<el-col :span="6">
-							<el-select v-model="row.Aggregate34" size="mini" popper-class="type-select">
-								<el-option v-for="value in [0, 5, 10]" :key="value" :label="value" :value="value"/>
-							</el-select>
-						</el-col>
-						<el-col :span="6" style="line-height: 28px">粒料3/8</el-col>
-						<el-col :span="6">
-							<el-select v-model="row.Aggregate38" size="mini" popper-class="type-select">
-								<el-option v-for="value in [0, 5, 10]" :key="value" :label="value" :value="value"/>
-							</el-select>
-						</el-col>
-					</el-row>
-					<hr>
-					<el-checkbox v-model="row.SamplingL1" :true-label="1" :false-label="0">一級抽料</el-checkbox>
-					<el-row :gutter="5">
-						<el-col :span="8">
-							<el-select v-model="row.SamplingL1Type" size="mini" popper-class="type-select" :disabled="row.SamplingL1 == 0">
-								<el-option v-for="value in ['3/8', '3/4']" :key="value" :label="value" :value="value"/>
-							</el-select>
-						</el-col>
-						<el-col :span="8">
-							<el-input v-model="row.SamplingL1Value" size="mini" :disabled="row.SamplingL1 == 0" />
-						</el-col>
-						<el-col :span="8">
-							<el-select v-model="row.SamplingL1Unit" size="mini" popper-class="type-select" :disabled="row.SamplingL1 == 0">
-								<el-option v-for="value in ['噸', 'm3']" :key="value" :label="value" :value="value"/>
-							</el-select>
-						</el-col>
-					</el-row>
-					<el-checkbox v-model="row.SamplingL2" :true-label="'1'" :false-label="'0'">二級抽料</el-checkbox>
-					<el-row :gutter="5">
-						<el-col :span="8">
-							<el-select v-model="row.SamplingL2Type" size="mini" popper-class="type-select" :disabled="row.SamplingL2 == 0">
-								<el-option v-for="value in ['3/8', '3/4']" :key="value" :label="value" :value="value"/>
-							</el-select>
-						</el-col>
-						<el-col :span="8">
-							<el-input v-model="row.SamplingL2Value" size="mini" :disabled="row.SamplingL2 == 0" />
-						</el-col>
-						<el-col :span="8">
-							<el-select v-model="row.SamplingL2Unit" size="mini" popper-class="type-select" :disabled="row.SamplingL2 == 0">
-								<el-option v-for="value in ['噸', 'm3']" :key="value" :label="value" :value="value"/>
-							</el-select>
-						</el-col>
-					</el-row>
+					<span v-if="row.edit">
+						<el-row :gutter="5">
+							<el-col :span="6" style="line-height: 28px">粒料3/4</el-col>
+							<el-col :span="6">
+								<el-select v-model="row.Aggregate34" size="mini" popper-class="type-select">
+									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
+								</el-select>
+							</el-col>
+							<el-col :span="6" style="line-height: 28px">粒料3/8</el-col>
+							<el-col :span="6">
+								<el-select v-model="row.Aggregate38" size="mini" popper-class="type-select">
+									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
+								</el-select>
+							</el-col>
+						</el-row>
+						<hr>
+						<el-checkbox v-model="row.SamplingL1" :true-label="1" :false-label="0">一級抽料</el-checkbox>
+						<el-row :gutter="5">
+							<el-col :span="8">
+								<el-select v-model="row.SamplingL1Detail.Aggregate" size="mini" popper-class="type-select" :disabled="row.SamplingL1 == 0">
+									<el-option v-for="(value, type) in options.sampling.typeMap" :key="type" :label="value" :value="type"/>
+								</el-select>
+							</el-col>
+							<el-col :span="8">
+								<el-input v-model="row.SamplingL1Detail.Amount" size="mini" :disabled="row.SamplingL1 == 0" />
+							</el-col>
+							<el-col :span="8">
+								<el-select v-model="row.SamplingL1Detail.Unit" size="mini" popper-class="type-select" :disabled="row.SamplingL1 == 0">
+									<el-option v-for="value in options.sampling.unitArr" :key="value" :label="value" :value="value"/>
+								</el-select>
+							</el-col>
+						</el-row>
+						<el-checkbox v-model="row.SamplingL2" :true-label="1" :false-label="0">二級抽料</el-checkbox>
+						<el-row :gutter="5">
+							<el-col :span="8">
+								<el-select v-model="row.SamplingL2Detail.Aggregate" size="mini" popper-class="type-select" :disabled="row.SamplingL2 == 0">
+									<el-option v-for="(value, type) in options.sampling.typeMap" :key="type" :label="value" :value="type"/>
+								</el-select>
+							</el-col>
+							<el-col :span="8">
+								<el-input v-model="row.SamplingL2Detail.Amount" size="mini" :disabled="row.SamplingL2 == 0" />
+							</el-col>
+							<el-col :span="8">
+								<el-select v-model="row.SamplingL2Detail.Unit" size="mini" popper-class="type-select" :disabled="row.SamplingL2 == 0">
+									<el-option v-for="value in options.sampling.unitArr" :key="value" :label="value" :value="value"/>
+								</el-select>
+							</el-col>
+						</el-row>
+					</span>
+					<span v-else>
+						<el-row :gutter="5">
+							<el-col :span="8">粒料3/4: </el-col>
+							<el-col :span="3" class="item-content">{{ row.Aggregate34 }}</el-col>
+							<el-col :span="2" class="item-content"> | </el-col>
+							<el-col :span="8">粒料3/8: </el-col>
+							<el-col :span="3" class="item-content">{{ row.Aggregate38 }}</el-col>
+						</el-row>
+
+						<hr v-if="row.SamplingL1 || row.SamplingL2">
+
+						<el-row :gutter="5" v-if="row.SamplingL1">
+							<el-col :span="8" :offset="2">一級抽料: </el-col>
+							<span class="item-content">
+								<el-col :span="6">{{ options.sampling.typeMap[row.SamplingL1Detail.Aggregate] }}</el-col>
+								<el-col :span="4">{{ row.SamplingL1Detail.Amount }}</el-col>
+								<el-col :span="2">{{ row.SamplingL1Detail.Unit }}</el-col>
+							</span>
+						</el-row>
+
+						<el-row :gutter="5" v-if="row.SamplingL2">
+							<el-col :span="8" :offset="2" class="item-content">二級抽料: </el-col>
+							<span class="item-content">
+								<el-col :span="6">{{ options.sampling.typeMap[row.SamplingL2Detail.Aggregate] }}</el-col>
+								<el-col :span="4">{{ row.SamplingL2Detail.Amount }}</el-col>
+								<el-col :span="2">{{ row.SamplingL2Detail.Unit }}</el-col>
+							</span>
+						</el-row>
+					</span>
 				</template>
 			</el-table-column>
 
@@ -277,10 +278,15 @@
 			
 			<el-table-column label="動作" align="center">
 				<template slot-scope="{ row }">
-					<el-button-group>
+					<el-button-group v-if="!row.edit">
+						<el-button v-if="!isAllCompleted" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
 						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
 						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
+					</el-button-group>
+					<el-button-group v-else>
+						<el-button type="primary" size="mini" @click="finishRegisterSpec(row)">確定</el-button>
+						<el-button size="mini" @click="row.edit = false; getList();">取消</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
@@ -290,6 +296,11 @@
 				</template>
 			</el-table-column>
 		</el-table>
+		<br>
+		
+		<el-button class="btn-previewPdf" :type="isAllCompleted ? 'danger' : 'success'" icon="el-icon-s-claim" :disabled="list.length == 0 || isAllCompleted" @click="finishRegister()">
+			{{ isAllCompleted ? "已登錄" : "完工登錄" }}
+		</el-button>
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
@@ -307,29 +318,25 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getFinRegister } from "@/api/dispatch";
-import TimePicker from "@/components/TimePicker";
+import { getFinRegister, finRegisterSpec, finRegister } from "@/api/dispatch";
+// import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
 
 export default {
 	name: "finRegister",
-	components: { TimePicker, CaseDetail },
+	components: { CaseDetail },
 	data() {
 		return {
 			loading: false,
 			showDispatch: false,
 			showDetailDialog: true,
 			showConfirm: false,
-			timeTabId: 1,
-			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [
-				moment().subtract(1, 'd').startOf("day").toDate(),
-				moment().subtract(1, 'd').endOf("day").toDate(),
-			],
 			searchRange: "",
+			isAllCompleted: false,
 			deviceTypeNow: 1,
+			orderSNNow: 0,
 			listQuery: {
 				filterType: 2,
 				filterStr: null,
@@ -371,20 +378,17 @@ export default {
 			rowActive: {},
 			checkIndeterminate: false,
 			checkList: [],
-			tableSelect: [],
+			list: [],
+			tableSelectSum: { areaSUM: 0, tonneSUM: 0 },
+			apiHeader: [ "SerialNo", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail" ],
 			options: {
-				DteamMap: {},
+				tenderMap: {},
 				guildMap: {},
 				deviceType: {
 					1: "道路",
 					2: "熱再生",
 					3: "設施",
 					4: "標線"
-				},
-				filterType: {
-					// 1: "合約",
-					2: "派工單號",
-					3: "地點(關鍵字)"
 				},
 				workmemo: {
 					"uStacker": "堆高機",
@@ -395,42 +399,35 @@ export default {
 					"uNotes": "備註"
 				},
 				workmemoOrder: [ ["uStacker", "uDigger"], ["uPaver", "uRoller"], ["uSprinkler"], ["uNotes"] ],
-
+				depthArr: [0, 5, 10],
+				sampling: {
+					typeMap: {
+						34: "3/4",
+						38: "3/8"
+					},
+					unitArr: ["噸", "m3"]
+				}
 			}
 		};
 	},
-	computed: {	},
+	computed: { 
+		caseSum() {
+			return this.list.reduce((acc, cur) => {
+				acc.areaSUM += cur.MillingArea;
+				acc.tonneSUM += Math.round(cur.MillingArea*cur.MillingDepth*0.01*2.25*10) / 10;
+				return acc;
+			}, { areaSUM: 0, tonneSUM: 0 });
+		}
+	},
 	watch: { },
 	created() { 
-		getTenderMap().then(response => { this.options.DteamMap = response.data.DteamMap });
+		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
 		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
 	},
 	mounted() {
 		this.showDetailDialog = false;
 	},
 	methods: {
-		async handleCheckedChange(val) {
-			// const delay = (n) => new Promise( r => setTimeout(r, n*1000));
-
-			// for(const val of value) {
-			// 	let msgArr = [];
-			// 	for(const column in this.headers) {
-			// 		if(!['CaseNo', 'organAssign'].includes(column) && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
-			// 	}
-			// 	if(msgArr.length > 0) {
-			// 		this.$message({
-			// 			type: "warning",
-			// 			message: `請填入${val.UploadCaseNo}的${msgArr.join("、")}`
-			// 		});
-
-			// 		await delay(0.5);
-			// 	}
-			// }
-
-			this.tableSelect = val;
-			if(this.tableSelect.length == this.list.length) this.tableSelect.forEach((_, index) => this.$set(this.checkList, index, true));
-			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
-		},
 		cellCheckBox(row, index) {
 			if(this.checkList[index]) this.$refs.planTable.toggleRowSelection(row, true);
 			else this.$refs.planTable.toggleRowSelection(row, false);
@@ -439,52 +436,62 @@ export default {
 			this.$refs.planTable.toggleRowExpansion(row)
 		},
 		getList() {
-			this.loading = true;
-			this.list = [];
-			this.listQuery.contractor = null;
+			if (!Number(this.listQuery.contractor)) {
+				this.$message({
+					message: "請選擇廠商",
+					type: "error",
+				});
+			} else if (!Number(this.listQuery.filterStr)) {
+				this.$message({
+					message: "請輸入正確派工單號",
+					type: "error",
+				});
+			} else {
+				this.loading = true;
+				this.isAllCompleted = false;
+				this.list = [];
 
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
+				// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+				// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+				// this.searchRange = startDate + " - " + endDate;
 
-			getFinRegister({
-				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
-				dispatchSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				deviceType: this.listQuery.deviceType,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-			}).then(response => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-					this.total = 0;
-				} else {
-					this.list = response.data.list;
-					this.checkList = Array.from({ length: this.list.length }, () => false);
-					this.deviceTypeNow = this.listQuery.deviceType;
+				getFinRegister({
+					contractor: this.listQuery.contractor,
+					dispatchSN: this.listQuery.filterStr,
+					deviceType: this.listQuery.deviceType,
+					// timeStart: startDate,
+					// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+				}).then(response => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+						this.total = 0;
+					} else {
+						this.list = response.data.list;
+						this.isAllCompleted = this.list[0].IsAllCompleted;
+						this.checkList = Array.from({ length: this.list.length }, () => false);
+						this.deviceTypeNow = this.listQuery.deviceType;
+						this.orderSNNow = this.listQuery.filterStr;
 
-					this.list.forEach(l => {
-						this.$set(l, "editFormula", l.MillingFormula != '0');
+						this.list.forEach(l => {
+							this.$set(l, "editFormula", l.MillingFormula != '0');
 
-						let memoObj = { "uStacker": '0', "uDigger": '0', "uPaver": '0', "uRoller": '0', "uSprinkler": '0', "uNotes": "" }; 
-						this.options.workmemoOrder.forEach(key => { memoObj[key] = l[key]; })
+							l.SamplingL1Detail = l.SamplingL1Detail.length == 0 
+								? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
+								: JSON.parse(l.SamplingL1Detail);
 
-						this.$set(l, "memoObj", memoObj);
-						this.$set(l, "SamplingL1Type", "");
-						this.$set(l, "SamplingL1Value", 0);
-						this.$set(l, "SamplingL1Unit", "");
+							l.SamplingL2Detail = l.SamplingL2Detail.length == 0 
+								? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
+								: JSON.parse(l.SamplingL2Detail);
 
-						this.$set(l, "SamplingL2Type", "");
-						this.$set(l, "SamplingL2Value", 0);
-						this.$set(l, "SamplingL2Unit", "");
-						this.$set(l, "edit", false);
-					})
-				}
-				this.loading = false;
-			}).catch(err => this.loading = false);
+							this.$set(l, "edit", false);
+						})
+					}
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			}
 		},
 		showDetail(row) {
 			this.loading = true;
@@ -510,35 +517,87 @@ export default {
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:MM:ss");
 		},
-		async handleDownload() {
-			// await this.dateWatcher();
+		caseFilterList(list) {
+			// console.log(list);
+			let caseFilterList = [];
+			for(const row of list) {
+				let caseItem = {};
+				for(const key of this.apiHeader) caseItem[key] = row[key];
+				caseFilterList.push(caseItem);
+			}
 
-			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-
-			getRoadUnit({
-				pageCurrent: 1,
-				pageSize: this.total
-			}).then((response) => {
-				let list = response.data.list;
-				list.forEach(l => l.dist = this.districtList[l.zip].name);
-
-				const tHeader = Object.values(this.headers).map((h) => h.name);
-				const filterVal = Object.keys(this.headers);
-				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-				const data = this.formatJson(filterVal, list);
-
-				import("@/vendor/Export2Excel").then((excel) => {
-					excel.export_json_to_excel({
-						header: tHeader,
-						data,
-					});
-				});
-			});
+			return caseFilterList;
 		},
-		formatJson(filterVal, jsonData) {
-			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		finishRegisterSpec(row) {
+			this.$confirm(`確認 案件編號${row.CaseNo} 資料登錄?`, "確認", { showClose: false })
+				.then(() => {
+					row.edit = false;
+					row => this.calArea(row);
+
+					let rowActive = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
+					if(rowActive.SamplingL1 == 1) rowActive.SamplingL1Detail = JSON.stringify(rowActive.SamplingL1Detail);
+					else delete rowActive.SamplingL1Detail;
+
+					if(rowActive.SamplingL2 == 1) rowActive.SamplingL2Detail = JSON.stringify(rowActive.SamplingL2Detail);
+					else delete rowActive.SamplingL2Detail;
+
+					finRegisterSpec({
+						deviceType: this.deviceTypeNow,
+						case: rowActive
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "登錄成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "登錄失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					});
+				}).catch(err => {});
+		},
+		finishRegister() {
+			this.$confirm(`確認 派工單號${this.orderSNNow}?`, "確認", { showClose: false })
+				.then(() => {
+					this.list.forEach(row => this.calArea(row));
+					let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.list)));
+					caseList.forEach(row => {
+						if(row.SamplingL1 == 1) row.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
+						else delete row.SamplingL1Detail;
+
+						if(row.SamplingL2 == 1) row.SamplingL2Detail = JSON.stringify(row.SamplingL2Detail);
+						else delete row.SamplingL2Detail;
+					});
+
+					finRegister({
+						deviceType: this.deviceTypeNow,
+						orderSN: Number(this.orderSNNow),
+						caseList: caseList
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "登錄成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "登錄失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					});
+				}).catch(err => {});
 		},
 	},
 };
@@ -550,7 +609,7 @@ export default {
 // 	box-sizing: border-box
 .type-select .el-select-dropdown__item
 	padding: 0 5px
-	text-align: center
+	text-align: left
 .finish-register
 	.filter-container
 		.filter-item
@@ -581,6 +640,10 @@ export default {
 					border-bottom-left-radius: 0
 					padding-left: 10px
 					text-align: left
+	.btn-previewPdf
+		position: relative
+		left: 50%
+		transform: translateX(-50%)
 	.el-table
 		.input-length, .input-width
 			max-width: 60px
@@ -588,6 +651,8 @@ export default {
 			cursor: pointer
 		.el-table__expand-icon
 			display: none
+		.item-content
+			color: #C0C4CC
 		.el-select
 			// width: 85px
 			.el-input__inner

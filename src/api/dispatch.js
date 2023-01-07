@@ -62,3 +62,19 @@ export function getFinRegister(query) {
 		params: query
 	})
 }
+
+export function finRegisterSpec(data) {
+	return request({
+		url: `/dispatch/finRegisterSpec`,
+		method: 'post',
+		data
+	})
+}
+
+export function finRegister(data) {
+	return request({
+		url: '/dispatch/finRegister',
+		method: 'post',
+		data
+	})
+}
