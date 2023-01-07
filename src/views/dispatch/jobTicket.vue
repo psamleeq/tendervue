@@ -27,7 +27,7 @@
 					</el-select>
 				</div>
 			</div>
-			<br />
+			<br>
 
 			<div class="filter-item">
 				<div v-if="listQuery.filterType == 1" class="select-contract">
@@ -45,17 +45,6 @@
 					</el-select>
 				</el-input>
 			</div>
-			
-			<!-- <div class="filter-item">
-				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
-						<span>合約</span>
-					</div>
-					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select">
-						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
-					</el-select>
-				</div>
-			</div> -->
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
@@ -264,13 +253,7 @@ export default {
 			loading: false,
 			showJobTicket: true,
 			showDetailDialog: true,
-			showConfirm: false,
-			// timeTabId: 1,
 			screenWidth: window.innerWidth,
-			// daterange: [
-			// 	moment().subtract(1, 'd').startOf("day").toDate(),
-			// 	moment().subtract(1, 'd').endOf("day").toDate(),
-			// ],
 			searchRange: "",
 			deviceTypeNow: 1,
 			contractorNow: 0,
@@ -464,26 +447,6 @@ export default {
 	mounted() {
 		this.showJobTicket = false;
 		this.showDetailDialog = false;
-
-		// this.$nextTick(async () => {
-		// 	// init Viewer
-		// 	this.viewer = new Viewer({ 
-		// 		domContainer: this.$refs.pdfViewer, 
-		// 		template: { 
-		// 			basePdf: BLANK_PDF,
-		// 			schemas: [{ }]
-		// 		},
-		// 		inputs: [{ }],
-		// 		options: {
-		// 			font:{
-		// 				edukai: {
-		// 					data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-		// 					fallback: true
-		// 				}
-		// 			}
-		// 		}
-		// 	});
-		// });
 	},
 	methods: {
 		async handleCheckedChange(val) {
@@ -531,20 +494,13 @@ export default {
 				this.loading = true;
 				this.list = [];
 				this.tableSelect = [];
-				this.contractorNow = this.listQuery.contractor;
-
-				// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-				// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-				// this.searchRange = startDate + " - " + endDate;
 				
 				getJobTicket({
 					contractor: this.listQuery.contractor,
 					tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
 					reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 					keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					deviceType: this.listQuery.deviceType,
-					// timeStart: startDate,
-					// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+					deviceType: this.listQuery.deviceType
 				}).then(response => {
 					if (response.data.list.length == 0) {
 						this.$message({
@@ -556,6 +512,7 @@ export default {
 						this.list = response.data.list;
 						this.checkList = Array.from({ length: this.list.length }, () => false);
 						this.deviceTypeNow = this.listQuery.deviceType;
+						this.contractorNow = this.listQuery.contractor;
 
 						this.list.forEach((l, i) => {
 							l.Contractor = this.options.guildMap[l.Contractor];
@@ -771,11 +728,11 @@ export default {
 			return caseFilterList;
 		},
 		downloadPdf() {
-			this.$confirm(`確認列印派工單？`, "確認", { showClose: false })
+			this.$confirm(`確認確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 製作派工單？`, "確認", { showClose: false })
 				.then(() => {
 					confirmJobTicket({
-						OrderType: this.deviceTypeNow,
-						Contractor: this.contractorNow,
+						contractor: this.contractorNow,
+						deviceType: this.deviceTypeNow,
 						caseList: this.caseFilterList(this.tableSelect)
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
@@ -784,7 +741,7 @@ export default {
 								type: "success",
 							});
 
-							const orderSN = response.data.OrderSN;
+							const orderSN = response.data.orderSN;
 							this.viewer.setInputs([{ "OrderSN": String(orderSN) }]);
 							this.showJobTicket = false;
 							this.handleDownload(`維修派工單_${orderSN}.pdf`);
@@ -798,6 +755,7 @@ export default {
 						this.getList();
 					}).catch(err => {
 						console.log(err);
+						this.showJobTicket = false;
 						this.getList();
 					});
 				}).catch(err => {});
@@ -819,9 +777,6 @@ export default {
 				URL.revokeObjectURL(url);
 			});
 		},
-		formatJson(filterVal, jsonData) {
-			return jsonData.map((v) => filterVal.map((j) => v[j]));
-		},
 	},
 };
 </script>
@@ -830,6 +785,9 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
+.type-select .el-select-dropdown__item
+	padding: 0 5px
+	text-align: left
 .job-ticket
 	.el-select
 		.el-input__inner

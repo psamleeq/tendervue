@@ -35,17 +35,6 @@
 					</el-select>
 				</el-input>
 			</div>
-			
-			<!-- <div class="filter-item">
-				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
-						<span>合約</span>
-					</div>
-					<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select">
-						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
-					</el-select>
-				</div>
-			</div> -->
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
@@ -66,7 +55,7 @@
 			</div>
 			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.contractor) > 0">
 				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.contractor) == 0" @click="showConfirm = true">分派</el-button>
+					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.contractor) == 0" @click="dispatch()">分派</el-button>
 				</span>
 			</el-tooltip>
 		</div>
@@ -184,15 +173,6 @@
 		</el-table>
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
-
-		<!-- Dialog: 確認-->
-		<el-dialog width="300px" title="確認" :visible.sync="showConfirm">
-			<span>確認將 {{ tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") }} 分派給 {{ options.guildMap[listQuery.contractor] }}?</span>
-			<div slot="footer" class="dialog-footer">
-				<el-button @click="showConfirm = false">取消</el-button>
-				<el-button type="primary" @click="dispatch()">確定</el-button>
-			</div>
-		</el-dialog>
 	</div>
 </template>
 
@@ -211,7 +191,6 @@ export default {
 			loading: false,
 			showDispatch: false,
 			showEdit: false,
-			showConfirm: false,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
@@ -339,7 +318,7 @@ export default {
 		getList() {
 			this.loading = true;
 			this.list = [];
-			this.listQuery.contractor = null;
+			this.tableSelect = [];
 
 			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
@@ -363,6 +342,7 @@ export default {
 					this.list = response.data.list;
 					this.checkList = Array.from({ length: this.list.length }, () => false);
 					this.deviceTypeNow = this.listQuery.deviceType;
+					this.listQuery.contractor = null;
 
 					this.list.forEach(l => {
 						l.DateDeadline = this.formatTime(l.DateDeadline);
@@ -396,62 +376,34 @@ export default {
 			return caseFilterList;
 		},
 		dispatch() {
-			this.showConfirm = false;
-			this.loading = true;
+			this.$confirm(`確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 分派給 ${ this.options.guildMap[this.listQuery.contractor] }?`, "確認", { showClose: false })
+				.then(() => {
+					this.loading = true;
+					this.tableSelect.forEach(row => this.calArea(row));
 
-			// console.log(this.options.guildMap[this.listQuery.contractor]);
+					setDispatchList({
+						contractor: this.listQuery.contractor,
+						deviceType: this.listQuery.deviceType,
+						caseList: this.caseFilterList(this.tableSelect)
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "建立成功",
+								type: "success",
+							});
 
-			setDispatchList({
-				Contractor: this.listQuery.contractor,
-				caseList: this.caseFilterList(this.tableSelect)
-			}).then(response => {
-				if ( response.statusCode == 20000 ) {
-					this.$message({
-						message: "建立成功",
-						type: "success",
-					});
-
-					this.getList();
-				} 
-			}).catch(err => {
-				console.log(err);
-				this.getList();
-			})
+							this.getList();
+						} 
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					})
+				}).catch(err => {});
 		},
 		formatTime(time) {
 			const m = moment(time);
 			return m.isValid() ? m.format("YYYY/MM/DD") : "" ;
-		},
-		async handleDownload() {
-			// await this.dateWatcher();
-
-			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-
-			getRoadUnit({
-				pageCurrent: 1,
-				pageSize: this.total
-			}).then((response) => {
-				let list = response.data.list;
-				list.forEach(l => l.dist = this.districtList[l.zip].name);
-
-				const tHeader = Object.values(this.headers).map((h) => h.name);
-				const filterVal = Object.keys(this.headers);
-				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-				const data = this.formatJson(filterVal, list);
-
-				import("@/vendor/Export2Excel").then((excel) => {
-					excel.export_json_to_excel({
-						header: tHeader,
-						data,
-					});
-				});
-			});
-		},
-		formatJson(filterVal, jsonData) {
-			return jsonData.map((v) => filterVal.map((j) => v[j]));
-		},
+		}
 	},
 };
 </script>
