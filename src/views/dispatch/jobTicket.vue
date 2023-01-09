@@ -288,10 +288,10 @@ export default {
 				// 	name: "案件類型",
 				// 	sortable: false,
 				// },
-				Contractor: {
-					name: "廠商",
-					sortable: false
-				},
+				// Contractor: {
+				// 	name: "廠商",
+				// 	sortable: false
+				// },
 				Place: {
 					name: "案件地點",
 					sortable: false

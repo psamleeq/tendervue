@@ -251,20 +251,14 @@
 
 						<el-row :gutter="5" v-if="row.SamplingL1">
 							<el-col :span="8" :offset="2">一級抽料: </el-col>
-							<span class="item-content">
-								<el-col :span="6">{{ options.sampling.typeMap[row.SamplingL1Detail.Aggregate] }}</el-col>
-								<el-col :span="4">{{ row.SamplingL1Detail.Amount }}</el-col>
-								<el-col :span="2">{{ row.SamplingL1Detail.Unit }}</el-col>
-							</span>
+							<el-col :span="6">{{ options.sampling.typeMap[row.SamplingL1Detail.Aggregate] }}</el-col>
+							<el-col :span="6"><span class="item-content">{{ row.SamplingL1Detail.Amount }}</span> {{ row.SamplingL1Detail.Unit }}</el-col>
 						</el-row>
 
 						<el-row :gutter="5" v-if="row.SamplingL2">
-							<el-col :span="8" :offset="2" class="item-content">二級抽料: </el-col>
-							<span class="item-content">
-								<el-col :span="6">{{ options.sampling.typeMap[row.SamplingL2Detail.Aggregate] }}</el-col>
-								<el-col :span="4">{{ row.SamplingL2Detail.Amount }}</el-col>
-								<el-col :span="2">{{ row.SamplingL2Detail.Unit }}</el-col>
-							</span>
+							<el-col :span="8" :offset="2">二級抽料: </el-col>
+							<el-col :span="6">{{ options.sampling.typeMap[row.SamplingL2Detail.Aggregate] }}</el-col>
+							<el-col :span="6"><span class="item-content">{{ row.SamplingL2Detail.Amount }}</span> {{ row.SamplingL2Detail.Unit }}</el-col>
 						</el-row>
 					</span>
 				</template>
@@ -476,7 +470,7 @@ export default {
 						this.total = 0;
 					} else {
 						this.list = response.data.list;
-						this.isAllCompleted = this.list[0].IsAllCompleted;
+						this.isAllCompleted = this.list[0].IsAllCompleted == 1;
 						this.checkList = Array.from({ length: this.list.length }, () => false);
 						this.deviceTypeNow = this.listQuery.deviceType;
 						this.orderSNNow = this.listQuery.filterStr;
@@ -538,18 +532,25 @@ export default {
 			this.$confirm(`確認 案件編號${row.CaseNo} 資料登錄?`, "確認", { showClose: false })
 				.then(() => {
 					row.edit = false;
-					row => this.calArea(row);
+					this.calArea(row);
 
 					let rowActive = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
+					if(row.editFormula) {
+						delete rowActive.MillingLength;
+						delete rowActive.MillingWidth;
+					} else delete rowActive.MillingFormula;
+
 					if(rowActive.SamplingL1 == 1) rowActive.SamplingL1Detail = JSON.stringify(rowActive.SamplingL1Detail);
 					else delete rowActive.SamplingL1Detail;
 
 					if(rowActive.SamplingL2 == 1) rowActive.SamplingL2Detail = JSON.stringify(rowActive.SamplingL2Detail);
 					else delete rowActive.SamplingL2Detail;
 
+					console.log(rowActive);
+
 					finRegisterSpec({
 						deviceType: this.deviceTypeNow,
-						case: rowActive
+						caseSpec: rowActive
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
 							this.$message({
@@ -570,11 +571,16 @@ export default {
 				}).catch(err => {});
 		},
 		finishRegister() {
-			this.$confirm(`確認 派工單號${this.orderSNNow}?`, "確認", { showClose: false })
+			this.$confirm(`確認將 派工單號${this.orderSNNow} 完工登錄?`, "確認", { showClose: false })
 				.then(() => {
 					this.list.forEach(row => this.calArea(row));
 					let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.list)));
 					caseList.forEach(row => {
+						if(row.editFormula) {
+							delete row.MillingLength;
+							delete row.MillingWidth;
+						} else delete row.MillingFormula;
+
 						if(row.SamplingL1 == 1) row.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
 						else delete row.SamplingL1Detail;
 
