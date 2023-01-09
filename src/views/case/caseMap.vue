@@ -487,6 +487,8 @@ export default {
 			this.clearAll();
 			this.markers = [];
 			this.polyLines = {};
+			this.caseInfo = [];
+			this.selectCase = {};
 
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
@@ -635,12 +637,15 @@ export default {
 				this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
 
 				const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
+				let isCompleted = false;
 				this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_${zipCode}.geojson?t=${Date.now()}`, null, () => {
-					this.search();
+					if(isCompleted) this.search();
+					else isCompleted = true;
 				});
 				// this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_${zipCode}.geojson?t=${Date.now()}`);
 				this.dataLayer.PCIBlock.nco.loadGeoJson(`/assets/json/PCIBlock_nco_${zipCode}.geojson?t=${Date.now()}`, null, () => {
-					this.search();
+					if(isCompleted) this.search();
+					else isCompleted = true;
 				});
 			}
 
@@ -700,8 +705,8 @@ export default {
 					for(const[ key, block ] of Object.entries(this.dataLayer.PCIBlock)) {
 						// console.log(key, block);
 						block.forEach(features =>{ 
-							let blockId = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
-							if(features.j[blockId] == this.listQuery.filterId) blockSpec = features;
+							let blockType = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
+							if(features.j[blockType] == this.listQuery.filterId) blockSpec = features;
 						});
 						
 						if(blockSpec != undefined ) {
