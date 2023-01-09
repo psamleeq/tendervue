@@ -53,7 +53,17 @@ const dispatchRouter = {
 				roles: ['beta'],
 				vTag: 'Alpha'
 			}
-		}
+		},
+		{
+			path: 'jobTicketManage',
+			component: () => import('@/views/dispatch/jobTicketManage'),
+			name: 'jobTicketManage',
+			meta: {
+				title: '派工單管理',
+				roles: ['beta'],
+				vTag: 'Alpha'
+			}
+		},
 	]
 }
 export default dispatchRouter
