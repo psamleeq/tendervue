@@ -14,7 +14,7 @@
 			</div>
 
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">成案日期</div>
+				<div style="font-size: 12px; color: #909399">{{ listQuery.filter ? '派工日期' : '成案日期' }}</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<br />
@@ -38,11 +38,12 @@
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
+			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已派工</el-checkbox>
 		</div>
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
-		<div class="filter-container">
+		<div v-if="!filterNow" class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
@@ -73,7 +74,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column type="selection" width="60" align="center" fixed>
+			<el-table-column v-if="!filterNow" :key="filterNow" type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
 					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
@@ -88,6 +89,8 @@
 					<span style="color: #909399; font-size: 12px">{{ row.DName }} ({{ row.casetype }})</span>
 				</template>
 			</el-table-column>
+
+			<el-table-column v-if="filterNow" :key="filterNow" prop="Contractor" label="廠商" width="90" align="center" fixed />
 
 			<el-table-column
 				v-for="(value, key) in headers"
@@ -114,18 +117,24 @@
 			</el-table-column>
 
 			<!-- 道路、熱再生 -->
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" :width="filterNow ? 240 : 500" align="center">
 				<template slot-scope="{ row }">
-					<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
-						<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
-						<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
-					</el-row>
-					<el-row v-else :gutter="5" type="flex" align="middle">
-						<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
-						<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
-						<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
-						<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
-					</el-row>
+					<span v-if="!filterNow">
+						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
+							<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
+							<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
+						</el-row>
+						<el-row v-else :gutter="5" type="flex" align="middle">
+							<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
+							<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
+							<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
+							<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
+						</el-row>
+					</span>
+					<span v-else>
+						<span v-if="row.MillingFormula != '0'">{{ row.MillingFormula }}</span>
+						<span v-else>{{ row.MillingLength }} * {{ row.MillingWidth }}</span>
+					</span>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="85" align="center">
@@ -146,23 +155,21 @@
 					<el-input v-model="row.Notes" />
 				</template>
 			</el-table-column>
+
+			<el-table-column :label="filterNow ? '主任派工日期' : '是否退件'" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.IsReturn"> 前ㄧ分派時間: </span>
+					<span>{{ row.DatePlan || "-" }}</span>
+				</template>
+			</el-table-column>
 			
 			<el-table-column label="動作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
-						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
-						<el-button type="info" size="mini" @click="beforeEdit(row)">檢視</el-button>
+						<!-- <el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button> -->
+						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
-				</template>
-			</el-table-column>
-
-			<el-table-column label="是否退件" align="center">
-				<template slot-scope="{ row }">
-					<span v-if="row.IsReturn">
-						前ㄧ分派時間: <span>{{ row.PrevPlanDate }}</span>
-					</span>
-					<span v-else> - </span>
 				</template>
 			</el-table-column>
 
@@ -173,6 +180,15 @@
 		</el-table>
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
+
+		<!-- Dialog: 案件檢視 -->
+		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
+			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" />
+			<div slot="footer" class="dialog-footer">
+				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
+				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
+			</div>
+		</el-dialog>
 	</div>
 </template>
 
@@ -181,15 +197,17 @@ import moment from "moment";
 import { getTenderMap, getGuildMap } from "@/api/type";
 import { getDispatchList, setDispatchList } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
+import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
 
 export default {
 	name: "caseAssign",
-	components: { TimePicker },
+	components: { TimePicker, CaseDetail },
 	data() {
 		return {
 			loading: false,
 			showDispatch: false,
+			showDetailDialog: true,
 			showEdit: false,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
@@ -200,7 +218,9 @@ export default {
 			],
 			searchRange: "",
 			deviceTypeNow: 1,
+			filterNow: false,
 			listQuery: {
+				filter: false,
 				filterType: 1,
 				filterStr: null,
 				tenderId: null,
@@ -285,6 +305,9 @@ export default {
 		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
 		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
 	},
+	mounted() {
+		this.showDetailDialog = false;
+	},
 	methods: {
 		async handleCheckedChange(val) {
 			// const delay = (n) => new Promise( r => setTimeout(r, n*1000));
@@ -325,6 +348,7 @@ export default {
 			this.searchRange = startDate + " - " + endDate;
 
 			getDispatchList({
+				filter: this.listQuery.filter,
 				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
 				reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
@@ -342,11 +366,13 @@ export default {
 					this.list = response.data.list;
 					this.checkList = Array.from({ length: this.list.length }, () => false);
 					this.deviceTypeNow = this.listQuery.deviceType;
+					this.filterNow = this.listQuery.filter;
 					this.listQuery.contractor = null;
 
 					this.list.forEach(l => {
+						l.Contractor = this.options.guildMap[l.Contractor];
+						l.DatePlan = this.formatTime(l.DatePlan);
 						l.DateDeadline = this.formatTime(l.DateDeadline);
-						l.PrevPlanDate = this.formatTime(l.PrevPlanDate);
 						this.$set(l, "detailTime", false);
 						this.$set(l, "editFormula", l.MillingFormula != '0');
 					// 	this.$set(l, "editNote", false);
@@ -399,6 +425,10 @@ export default {
 						this.getList();
 					})
 				}).catch(err => {});
+		},
+		showDetail(row) {
+			this.loading = true;
+			this.$refs.caseDetail.getDetail(row);
 		},
 		formatTime(time) {
 			const m = moment(time);
