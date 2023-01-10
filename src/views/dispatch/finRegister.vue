@@ -148,13 +148,13 @@
 			<el-table-column v-if="deviceTypeNow == '1'" label="完工備註" width="230" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
-						<el-row :gutter="5" v-for="(keyArr, index) in options.workmemoOrder" :key="`memo_${index}`">
-							<span v-for="key in keyArr.filter(key => key != 'uNotes')" :key="key">
-								<el-col :span="6" style="line-height: 32px">{{ options.workmemo[key] }}</el-col>
-								<el-col :span="6">
-									<el-input v-model.number="row[key]" size="mini" />
-								</el-col>
-							</span>
+						<el-row v-for="key in options.workmemoOrder.filter(key => key != 'uNotes')" :gutter="5" :key="key">
+							<el-col :span="6" style="line-height: 32px">{{ options.workmemo[key] }}</el-col>
+							<el-col :span="16">
+								<el-input v-model.number="row[key]" size="mini">
+									<el-button slot="append" style="padding: 5px 10px" @click="imgDialogTitle = options.workmemo[key]; rowActive = row; showImgUploadDialog = true">上傳圖片</el-button>
+								</el-input>
+							</el-col>
 						</el-row>
 						<el-row :gutter="5">
 							<el-col :span="6" style="line-height: 32px">{{ options.workmemo.uNotes }}</el-col>
@@ -164,9 +164,9 @@
 						</el-row>
 					</span>
 					<el-row :gutter="5" v-else>
-						<span v-if="options.workmemoOrder.flat().filter(key => key != 'uNotes' && row[key] != 0).length != 0">
+						<span v-if="options.workmemoOrder.filter(key => key != 'uNotes' && row[key] != 0).length != 0">
 							<el-row :gutter="5">
-								<span v-for="key in options.workmemoOrder.flat().filter(key => key != 'uNotes' && row[key] != 0)" :key="key">
+								<span v-for="key in options.workmemoOrder.filter(key => key != 'uNotes' && row[key] != 0)" :key="key">
 									<el-col :span="6">{{ options.workmemo[key] }}</el-col>
 									<el-col :span="6" class="item-content">{{ row[key] }}</el-col>
 								</span>
@@ -307,6 +307,27 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
+		<!-- Dialog: 圖片上傳 -->
+		<el-dialog width="520px" :title="`圖片上傳(${imgDialogTitle})`" :visible.sync="showImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
+			<el-upload ref="uploadFile" action="http://127.0.0.1:3001/google/upload" :auto-upload="false" list-type="picture-card" :on-change="handleChange" :on-preview="handlePreview">
+				<i class="el-icon-plus" />
+				<!-- <el-button slot="trigger" type="info">選取</el-button> -->
+				<div slot="tip" class="el-upload__tip">只能上傳jpg/png文件，且不超過500kb</div>
+			</el-upload>
+
+			<el-image-viewer
+				v-if="showImgViewer"
+				class="upload-preview"
+				:on-close="() => { showImgViewer = false; }"
+				:url-list="imgPreviewUrls"
+				:initial-index="imgPreviewIndex"
+			/>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="showImgUploadDialog = false">取消</el-button>
+				<el-button type="primary" @click="submitUpload()">上傳</el-button>
+			</div>
+		</el-dialog>
+
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
 			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" :deviceTypeNow="deviceTypeNow" />
@@ -325,21 +346,23 @@ import { getFinRegister, finRegisterSpec, finRegister, revokeDispatch } from "@/
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 
 export default {
 	name: "finRegister",
-	components: { CaseDetail },
+	components: { ElImageViewer, CaseDetail },
 	data() {
 		return {
 			loading: false,
-			showDispatch: false,
+			showImgViewer: false,
+			showImgUploadDialog: false,
 			showDetailDialog: true,
-			showConfirm: false,
 			screenWidth: window.innerWidth,
 			searchRange: "",
 			isAllCompleted: false,
 			deviceTypeNow: 1,
 			orderSNNow: 0,
+			imgDialogTitle: "",
 			listQuery: {
 				filterType: 2,
 				filterStr: null,
@@ -375,6 +398,8 @@ export default {
 					sortable: false
 				}
 			},
+			imgPreviewUrls: [],
+			imgPreviewIndex: 0,
 			// total: 0,
 			list: [],
 			// detail: [],
@@ -401,7 +426,7 @@ export default {
 					"uSprinkler": "灑水車",
 					"uNotes": "備註"
 				},
-				workmemoOrder: [ ["uStacker", "uDigger"], ["uPaver", "uRoller"], ["uSprinkler"], ["uNotes"] ],
+				workmemoOrder: [ "uStacker", "uDigger", "uPaver", "uRoller", "uSprinkler", "uNotes" ],
 				depthArr: [0, 5, 10],
 				sampling: {
 					typeMap: {
@@ -515,14 +540,6 @@ export default {
 				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100;
 			} else row.MillingArea = row.MillingLength * row.MillingWidth;
 		},
-		beforeEdit(row) {
-			this.rowActive = row; 
-			// this.loading = true;
-
-			// this.detail = [];
-			// Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isEdit: true });
-
-		},
 		formatTime(time) {
 			return time ? moment(time).format("YYYY-MM-DD") : "";
 		},
@@ -536,6 +553,17 @@ export default {
 			}
 
 			return caseFilterList;
+		},
+		submitUpload() {
+			this.$refs.uploadFile.submit();
+		},
+		handleChange(file, fileList) {
+			this.imgPreviewUrls = fileList.map(file => file.url);
+		},
+		handlePreview(file) {
+			// console.log(file);
+			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
+			this.showImgViewer = true;
 		},
 		finishRegisterSpec(row) {
 			this.$confirm(`確認 案件編號${row.CaseNo} 資料登錄?`, "確認", { showClose: false })
@@ -720,4 +748,6 @@ export default {
 			color: #F56C6C
 	.btn-dialog
 		padding: 5px 5px
+	.upload-preview
+		width: 100%
 </style>
