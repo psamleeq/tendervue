@@ -173,7 +173,7 @@ import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getTenderMap, getGuildMap } from "@/api/type";
 import { getJobTicketV0 } from "@/api/dispatchV0";
 import TimePicker from "@/components/TimePicker";
-import CaseDetail from "@/components/CaseDetail";
+import CaseDetail from "@/components/CaseDetail_rm100";
 // import Pagination from "@/components/Pagination";
 
 export default {

@@ -197,7 +197,7 @@ import moment from "moment";
 import { getTenderMap, getGuildMap } from "@/api/type";
 import { getDispatchListV0 } from "@/api/dispatchV0";
 import TimePicker from "@/components/TimePicker";
-import CaseDetail from "@/components/CaseDetail";
+import CaseDetail from "@/components/CaseDetail_rm100";
 // import Pagination from "@/components/Pagination";
 
 export default {

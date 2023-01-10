@@ -1,22 +1,22 @@
 import request from '@/utils/request'
 
 // 案件詳細
-export function getCaseDetailV0(query) {
+export function getCaseDetail(query) {
 	return request({
-		url: '/dispatchV0/detail',
+		url: '/dispatch/detail',
 		method: 'get',
 		params: query
 	})
 }
 
 // 套組列表
-export function getCostKitV0(query) {
-	return request({
-		url: '/dispatchV0/kit',
-		method: 'get',
-		params: query
-	})
-}
+// export function getCostKitV0(query) {
+// 	return request({
+// 		url: '/dispatchV0/kit',
+// 		method: 'get',
+// 		params: query
+// 	})
+// }
 
 // 套組細項
 
@@ -33,14 +33,6 @@ export function setDispatchList(data) {
 	return request({
 		url: '/dispatch/list',
 		method: 'post',
-		data
-	})
-}
-
-export function revokeDispatch(data) {
-	return request({
-		url: '/dispatch/revoke',
-		method: 'delete',
 		data
 	})
 }
@@ -62,6 +54,14 @@ export function confirmJobTicket(data) {
 	})
 }
 
+export function revokeDispatch(data) {
+	return request({
+		url: '/dispatch/revoke',
+		method: 'delete',
+		data
+	})
+}
+
 // 完工登錄
 export function getFinRegister(query) {
 	return request({
@@ -71,17 +71,17 @@ export function getFinRegister(query) {
 	})
 }
 
-export function finRegisterSpec(data) {
+export function finRegister(data) {
 	return request({
-		url: `/dispatch/finRegisterSpec`,
+		url: '/dispatch/finRegister',
 		method: 'post',
 		data
 	})
 }
 
-export function finRegister(data) {
+export function finRegisterSpec(data) {
 	return request({
-		url: '/dispatch/finRegister',
+		url: `/dispatch/finRegisterSpec`,
 		method: 'post',
 		data
 	})
