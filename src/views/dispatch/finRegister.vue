@@ -52,7 +52,10 @@
 		</div>
 
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
-		<h4 v-if="list.length != 0">總面積 {{ Math.round(caseSum.areaSUM*10)/10 }}，總噸數: {{ Math.round(caseSum.tonneSUM*10)/10 }}</h4>
+		<div v-if="list.length != 0" style="margin: 5px 5px 15px 10px">
+			<div v-if="list[0].DateClose.length != 0">完工登錄日期: {{ list[0].DateClose }}</div>
+			<div>總面積: {{ Math.round(caseSum.areaSUM*10)/10 }}，總噸數: {{ Math.round(caseSum.tonneSUM*10)/10 }}</div>
+		</div>
 
 		<el-table
 			ref="planTable"
@@ -476,6 +479,7 @@ export default {
 						this.orderSNNow = this.listQuery.filterStr;
 
 						this.list.forEach(l => {
+							l.DateClose = this.formatTime(l.DateClose);
 							this.$set(l, "editFormula", l.MillingFormula != '0');
 
 							l.SamplingL1Detail = l.SamplingL1Detail.length == 0 
@@ -515,7 +519,7 @@ export default {
 
 		},
 		formatTime(time) {
-			return moment(time).format("YYYY-MM-DD HH:MM:ss");
+			return time ? moment(time).format("YYYY-MM-DD") : "";
 		},
 		caseFilterList(list) {
 			// console.log(list);
