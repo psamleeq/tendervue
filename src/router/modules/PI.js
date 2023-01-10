@@ -10,8 +10,7 @@ const PIRouter = {
 	meta: {
 		title: '成效指標',
 		icon: 'el-icon-s-check',
-		roles: ['PIcase'],
-		isNew: true
+		roles: ['PIcase']
 	},
 	children: [
 		{
@@ -23,8 +22,7 @@ const PIRouter = {
 			redirect: 'noRedirect',
 			meta: {
 				title: '案件稽核',
-				roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
-				isNew: true
+				roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor']
 			},
 			children: [
 				{
@@ -33,8 +31,7 @@ const PIRouter = {
 					name: 'PICaseList',
 					meta: {
 						title: '案件列表',
-						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
-						isNew: true
+						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor']
 					}
 				},
 				{
@@ -43,8 +40,7 @@ const PIRouter = {
 					name: 'PICheckResult',
 					meta: {
 						title: '稽核結果',
-						roles: ['PIcase.viewer'],
-						isNew: true
+						roles: ['PIcase.viewer']
 					}
 				},
 				{
@@ -53,8 +49,7 @@ const PIRouter = {
 					name: 'PICaseUpload',
 					meta: {
 						title: '案件上傳',
-						roles: ['PIcase.editor'],
-						isNew: true
+						roles: ['PIcase.editor']
 					}
 				},
 			]

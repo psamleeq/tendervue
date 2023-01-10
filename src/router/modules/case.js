@@ -10,8 +10,7 @@ const caseRouter = {
 	meta: {
 		title: '缺失管理',
 		icon: 'el-icon-s-release', 
-		roles: ['distress'],
-		isNew: true
+		roles: ['distress']
 	},
 	children: [
 		{
@@ -20,8 +19,7 @@ const caseRouter = {
 			name: 'caseList',
 			meta: { 
 				title: '缺失列表', 
-				roles: ['distress.viewer'],
-				isNew: true
+				roles: ['distress.viewer']
 			}
 		},
 		{
@@ -30,8 +28,7 @@ const caseRouter = {
 			name: 'caseMap',
 			meta: { 
 				title: '缺失地圖', 
-				roles: ['distress.viewer'],
-				isNew: true
+				roles: ['distress.viewer']
 			}
 		},
 		{
@@ -40,8 +37,7 @@ const caseRouter = {
 			name: 'roadStatus',
 			meta: { 
 				title: '路況查詢', 
-				roles: ['distress.inspector'],
-				isNew: true
+				roles: ['distress.inspector']
 			}
 		},
 		{
@@ -60,8 +56,7 @@ const caseRouter = {
 			name: 'PCIMap',
 			meta: { 
 				title: '查核地圖', 
-				roles: ['distress.inspectorMAP'],
-				isNew: true 
+				roles: ['distress.inspectorMAP']
 			}
 		}
 	]

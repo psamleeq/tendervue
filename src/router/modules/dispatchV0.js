@@ -8,7 +8,7 @@ const dispatchRouter = {
 	redirect: '/dispatchV0/plan_rm100',
 	name: 'dispatchV0',
 	meta: {
-		title: '派工管理V0',
+		title: '派工管理_V0',
 		icon: 'clipboard-account-outline',
 		roles: ['beta'],
 		vTag: 'Alpha'

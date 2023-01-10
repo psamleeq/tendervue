@@ -10,8 +10,7 @@ const caseListRouter = {
 	meta: {
 		title: '案件紀錄',
 		icon: 'el-icon-suitcase',
-		roles: ['case'],
-		isNew: true
+		roles: ['case']
 	},
 	children: [
 		{
@@ -21,7 +20,6 @@ const caseListRouter = {
 			meta: { 
 				title: '派工紀錄', 
 				roles: ['case.viewer'],
-				isNew: true 
 			}
 		},
 		{
@@ -30,8 +28,7 @@ const caseListRouter = {
 			name: 'finish',
 			meta: { 
 				title: '完工紀錄', 
-				roles: ['case.viewer'],
-				isNew: true 
+				roles: ['case.viewer']
 			}
 		},
 	]
