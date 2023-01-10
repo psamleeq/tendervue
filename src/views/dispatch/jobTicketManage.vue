@@ -127,8 +127,8 @@
 			
 			<el-table-column v-if="!filterNow" :key="filterNow" label="動作" align="center">
 				<template slot-scope="{ row }">
-					<el-button v-if="row.DateClose.length == 0" type="info" size="mini" @click="reissueJobTicket(row)">補印派工單</el-button>
-					<span v-else> - </span>
+					<el-button class="btn-action" type="primary" plain size="mini" @click="showTicketDetail(row)">檢視</el-button>
+					<el-button v-if="row.DateClose.length == 0" class="btn-action" type="info" size="mini" @click="reissueJobTicket(row)">補印派工單</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -163,6 +163,7 @@ export default {
 			screenWidth: window.innerWidth,
 			searchRange: "",
 			deviceTypeNow: 1,
+			contractorNow: "",
 			filterNow: false,
 			listQuery: {
 				filter: false,
@@ -294,6 +295,7 @@ export default {
 						this.list = response.data.list;
 						this.checkList = Array.from({ length: this.list.length }, () => false);
 						this.deviceTypeNow = this.listQuery.deviceType;
+						this.contractorNow = this.listQuery.contractor;
 						this.filterNow = this.listQuery.filter;
 
 						this.list.forEach(l => {
@@ -310,6 +312,12 @@ export default {
 		},
 		formatDate(time) {
 			return time ? moment(time).format("YYYY-MM-DD"): "";
+		},
+		showTicketDetail(row) {
+			this.$router.push({
+				path: "/dispatch/finRegister",
+				query: { orderSN: row.OrderSN, contractor: this.contractorNow },
+			});
 		},
 		async createPdf(OrderSN) {
 			return new Promise((resolve, reject) => {

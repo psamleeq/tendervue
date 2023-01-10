@@ -429,6 +429,11 @@ export default {
 	},
 	mounted() {
 		this.showDetailDialog = false;
+		if (this.$route.query.orderSN && this.$route.query.contractor) {
+			this.listQuery.filterStr = this.$route.query.orderSN;
+			this.listQuery.contractor = this.$route.query.contractor;
+			this.getList();
+		} 
 	},
 	methods: {
 		cellCheckBox(row, index) {
