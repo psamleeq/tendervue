@@ -133,7 +133,7 @@
 
 		<el-tooltip effect="dark" content="請選擇案件" placement="bottom" :disabled="tableSelect.length != 0">
 			<div>
-				<el-button class="btn-previewPdf" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">製作派工單</el-button>
+				<el-button class="btn-previewPdf" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽派工單</el-button>
 			</div>
 		</el-tooltip>
 
@@ -741,19 +741,18 @@ export default {
 						caseList: this.caseFilterList(this.tableSelect)
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
+							const orderSN = response.data.orderSN;
 							this.$message({
-								message: "確認成功",
+								message: `製作成功(派工單號 ${orderSN})`,
 								type: "success",
 							});
-
-							const orderSN = response.data.orderSN;
 							this.viewer.setInputs([{ "OrderSN": String(orderSN) }]);
 							this.showJobTicket = false;
 							this.handleDownload(`維修派工單_${orderSN}.pdf`);
 							// this.pdfDoc.save(`維修派工單_${orderSN}.pdf`);
 						} else {
 							this.$message({
-								message: "確認失敗",
+								message: "製作失敗",
 								type: "error",
 							});
 						}
