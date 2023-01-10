@@ -402,6 +402,7 @@ export default {
 			});
 		},
 		downloadCaseList() {
+			this.showDlConfirm = false;
 			this.loading = true;
 			const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
 			const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
