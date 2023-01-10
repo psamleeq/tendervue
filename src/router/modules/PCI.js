@@ -45,7 +45,7 @@ const PCIRouter = {
 				component: () => import('@/views/PCI/share'),
 				name: 'share',
 				meta: { 
-					title: '佔比統計',
+					title: '佔比統計(圓餅圖)',
 					roles: ['PCIanalyst.viewer']
 				}
 			},
