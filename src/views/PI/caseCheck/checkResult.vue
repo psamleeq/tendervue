@@ -8,14 +8,25 @@
 			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 
-			<el-button
-				slot="reference"
-				class="filter-item"
-				type="info"
-				icon="el-icon-document"
-				:disabled="resultList.length == 0"
-				@click="handleDownload"
-			>輸出報表</el-button>
+			<el-popover
+				placement="bottom"
+				width="260"
+				title="請選擇「輸出類型」?"
+				v-model="showDlConfirm">
+				<div style="text-align: center; margin: 0">
+					<el-button-group>
+						<el-button type="primary" @click="handleDownload()">稽核結果</el-button>
+						<el-button type="primary" @click="downloadCaseList()">案件列表</el-button>
+					</el-button-group>
+				</div>
+				<el-button
+					slot="reference"
+					class="filter-item"
+					type="info"
+					icon="el-icon-document"
+					:disabled="resultList.length == 0"
+				>輸出報表</el-button>
+			</el-popover>
 		</div>
 		
 		<h5 v-if="resultList.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -134,7 +145,7 @@
 <script>
 import moment from "moment";
 import { getTypeMap } from "@/api/type";
-import { getCheckResult } from "@/api/PI";
+import { getCaseList, getCheckResult } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
@@ -146,7 +157,7 @@ export default {
 			loading: false,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
-			showConfirm: false,
+			showDlConfirm: false,
 			caseTotal: 0,
 			daterange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
 			searchRange: "",
@@ -306,13 +317,10 @@ export default {
 	methods: {
 		getList() {
 			this.loading = true;
-
 			dateWatcher(this.daterange);
-
 			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
-
 			this.resultList = [];
 			this.checkNum = {
 				SV: { 
@@ -359,12 +367,15 @@ export default {
 		formatTime(time) {
 			return moment(time).format("YYYY/MM/DD");
 		},
-		handleDownload() {
+		handleDownload(list) {
+			this.showDlConfirm = false;
+			if(list == undefined) list = this.resultList;
+
 			const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
 			const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
 			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
 			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
-			const dataList = JSON.parse(JSON.stringify(this.resultList)).map(l => {
+			const dataList = JSON.parse(JSON.stringify(list)).map(l => {
 				l.CaseDate = this.formatTime(l.CaseDate);
 				l.DeviceType = this.options.DeviceType[l.DeviceType];
 				l.organAssign =  l.organAssign == 1 ? "是" : "";
@@ -389,6 +400,22 @@ export default {
 					data,
 				});
 			});
+		},
+		downloadCaseList() {
+			this.loading = true;
+			const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+
+			getCaseList({
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+			}).then(response => {
+				this.handleDownload(response.data.list);
+				this.loading = false;
+			}).catch(err => {
+				console.log(err);
+				this.loading = false;
+			})
 		},
 		formatJson(filterVal, jsonData) {
 			return jsonData.map((v) => filterVal.map((j) => v[j]));

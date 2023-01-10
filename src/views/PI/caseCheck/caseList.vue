@@ -571,10 +571,8 @@ export default {
 		},
 		getList() {
 			this.loading = true;
-
 			let date = moment(this.searchDate).format("YYYY-MM-DD");
 			this.searchRange = date;
-
 			this.isArchive = false;
 			this.list = [];
 			this.resultList = [];
