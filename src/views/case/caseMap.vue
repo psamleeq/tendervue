@@ -9,7 +9,7 @@
 							<div class="el-input-group__prepend">
 								<span>合約</span>
 							</div>
-						<el-select v-model.number="listQuery.tenderRound" class="dteam-select" popper-class="type-select" @input="changeTender()">
+						<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender" @input="changeTender()">
 							<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
 						</el-select>
 					</div>
@@ -798,9 +798,6 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.type-select .el-select-dropdown__item
-	padding: 0 5px
-	text-align: left
 .road-case
 	position: relative
 	height: 100%
@@ -835,7 +832,7 @@ export default {
 				transform: scale(0.7)
 		.select-contract
 			.el-select
-				&.dteam-select
+				&.tender-select
 					width: 520px
 				.el-input__inner
 					border-top-left-radius: 0

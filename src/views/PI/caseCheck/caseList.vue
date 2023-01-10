@@ -704,9 +704,6 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.type-select .el-select-dropdown__item
-	padding: 0 5px
-	// text-align: center
 .PI-case-list
 	height: calc(100vh - 50px)
 	overflow: scroll

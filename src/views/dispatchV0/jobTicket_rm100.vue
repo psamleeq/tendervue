@@ -24,7 +24,7 @@
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
-					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select" clearable @clear="listQuery.dteamSN = null">
+					<el-select v-model="listQuery.dteamSN" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.dteamSN = null">
 						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
@@ -46,7 +46,7 @@
 					<div class="el-input-group__prepend">
 						<span>合約</span>
 					</div>
-					<el-select v-model="listQuery.dteamSN" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+					<el-select v-model="listQuery.dteamSN" class="tender-select" placeholder="請選擇" popper-class="type-select tender">
 						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 					</el-select>
 				</div>
@@ -645,7 +645,7 @@ export default {
 					right: 0
 					// margin-right: -5px
 					transform: scale(0.7)
-				&.dteam-select
+				&.tender-select
 					width: 520px
 			.select-contract
 				.el-select:first-child .el-input__inner

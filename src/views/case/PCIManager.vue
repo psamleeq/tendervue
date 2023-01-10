@@ -8,7 +8,7 @@
 						<div class="el-input-group__prepend">
 							<span>合約</span>
 						</div>
-						<el-select v-model="listQuery.tenderId" class="dteam-select" placeholder="請選擇" popper-class="type-select">
+						<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender">
 							<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
 						</el-select>
 					</div>
@@ -229,12 +229,9 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.type-select .el-select-dropdown__item
-	padding: 0 5px
-	text-align: center
 .PCI-Manager
 	.filter-container .filter-item .select-contract .el-select
-		&.dteam-select
+		&.tender-select
 			width: 520px
 		.el-input__inner
 			border-top-left-radius: 0
