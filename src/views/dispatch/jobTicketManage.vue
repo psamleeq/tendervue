@@ -469,7 +469,7 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		removeDispatch(row) {
-			this.$confirm(`確認退回 派工單號${row.OrderSN} 的派工?`, "確認", { showClose: false })
+			this.$confirm(`確認退回 派工單號${row.OrderSN} ?`, "確認", { showClose: false })
 				.then(() => {
 					revokeDispatch({
 						deviceType: this.deviceTypeNow,

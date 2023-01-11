@@ -503,7 +503,7 @@ export default {
 
 				getFinRegister({
 					contractor: this.listQuery.contractor,
-					dispatchSN: this.listQuery.filterStr,
+					dispatchSN: this.listQuery.filterStr ? this.listQuery.filterStr : null,
 					deviceType: this.listQuery.deviceType,
 					// timeStart: startDate,
 					// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
