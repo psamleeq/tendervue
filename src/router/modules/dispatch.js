@@ -10,8 +10,8 @@ const dispatchRouter = {
 	meta: {
 		title: '派工管理',
 		icon: 'clipboard-account-outline',
-		roles: ['beta'],
-		vTag: 'Alpha'
+		roles: ['restored'],
+		isNew: true
 	},
 	children: [
 		// {
@@ -30,8 +30,8 @@ const dispatchRouter = {
 			name: 'plan',
 			meta: {
 				title: '主任派工',
-				roles: ['beta'],
-				vTag: 'Alpha'
+				roles: ['restored.assign'],
+				isNew: true
 			}
 		},
 		{
@@ -40,8 +40,8 @@ const dispatchRouter = {
 			name: 'jobTicket',
 			meta: {
 				title: '製作派工單',
-				roles: ['beta'],
-				vTag: 'Alpha'
+				roles: ['restored.order'],
+				isNew: true
 			}
 		},
 		{
@@ -50,8 +50,8 @@ const dispatchRouter = {
 			name: 'finRegister',
 			meta: {
 				title: '完工登錄',
-				roles: ['beta'],
-				vTag: 'Alpha'
+				roles: ['restored.reporter'],
+				isNew: true
 			}
 		},
 		{
@@ -60,8 +60,8 @@ const dispatchRouter = {
 			name: 'jobTicketManage',
 			meta: {
 				title: '派工單管理',
-				roles: ['beta'],
-				vTag: 'Alpha'
+				roles: ['restored.viewer'],
+				isNew: true
 			}
 		},
 	]
