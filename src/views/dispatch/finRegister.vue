@@ -152,7 +152,7 @@
 							<el-col :span="6" style="line-height: 32px">{{ options.workmemo[key] }}</el-col>
 							<el-col :span="16">
 								<el-input v-model.number="row[key]" size="mini">
-									<el-button slot="append" style="padding: 5px 10px" @click="imgDialogTitle = options.workmemo[key]; rowActive = row; showImgUploadDialog = true">上傳圖片</el-button>
+									<el-button slot="append" style="padding: 5px 10px" @click="imgUploadKey = key; rowActive = row; showImgUploadDialog = true">上傳圖片 ({{ row[`${key}ImgNum`] }})</el-button>
 								</el-input>
 							</el-col>
 						</el-row>
@@ -168,7 +168,7 @@
 							<el-row :gutter="5">
 								<span v-for="key in options.workmemoOrder.filter(key => key != 'uNotes' && row[key] != 0)" :key="key">
 									<el-col :span="6">{{ options.workmemo[key] }}</el-col>
-									<el-col :span="6" class="item-content">{{ row[key] }}</el-col>
+									<el-col :span="6" class="item-content">{{ row[key] }} (<i class="el-icon-picture" style="color: #409EFF" />{{ row[`${key}ImgNum`] }})</el-col>
 								</span>
 							</el-row>
 							<el-row v-if="row.uNotes && row.uNotes.length != 0" :gutter="5">
@@ -308,25 +308,25 @@
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
 		<!-- Dialog: 圖片上傳 -->
-		<el-dialog width="520px" :title="`圖片上傳(${imgDialogTitle})`" :visible.sync="showImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
-			<el-upload ref="uploadFile" action="http://127.0.0.1:3001/google/upload" :auto-upload="false" list-type="picture-card" :on-change="handleChange" :on-preview="handlePreview">
+		<el-dialog width="520px" :title="`圖片上傳(${options.workmemo[imgUploadKey]})`" :visible.sync="showImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
+			<el-upload ref="uploadFile" :key="`${imgUploadKey}Img`" action="http://127.0.0.1:3001/google/upload" :auto-upload="false" list-type="picture-card" :file-list="rowActive[`${imgUploadKey}Img`]" :on-change="handleChange" :on-preview="handlePreview">
 				<i class="el-icon-plus" />
 				<!-- <el-button slot="trigger" type="info">選取</el-button> -->
 				<div slot="tip" class="el-upload__tip">只能上傳jpg/png文件，且不超過500kb</div>
 			</el-upload>
-
-			<el-image-viewer
-				v-if="showImgViewer"
-				class="upload-preview"
-				:on-close="() => { showImgViewer = false; }"
-				:url-list="imgPreviewUrls"
-				:initial-index="imgPreviewIndex"
-			/>
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showImgUploadDialog = false">取消</el-button>
+				<el-button @click="showImgUploadDialog = false; getList();">取消</el-button>
 				<el-button type="primary" @click="submitUpload()">上傳</el-button>
 			</div>
 		</el-dialog>
+
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="upload-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgPreviewUrls"
+			:initial-index="imgPreviewIndex"
+		/>
 
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
@@ -341,12 +341,12 @@
 
 <script>
 import moment from "moment";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 import { getTenderMap, getGuildMap } from "@/api/type";
 import { getFinRegister, finRegisterSpec, finRegister, revokeDispatch } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
-import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 
 export default {
 	name: "finRegister",
@@ -362,7 +362,7 @@ export default {
 			isAllCompleted: false,
 			deviceTypeNow: 1,
 			orderSNNow: 0,
-			imgDialogTitle: "",
+			imgUploadKey: "",
 			listQuery: {
 				filterType: 2,
 				filterStr: null,
@@ -512,6 +512,18 @@ export default {
 							l.DateClose = this.formatTime(l.DateClose);
 							this.$set(l, "editFormula", l.MillingFormula != '0');
 
+							this.$set(l, "uStackerImg", [ { name: '20220926-3.jpg', url: '/assets/testPic/244/1110835872/20220926-3.jpg' }, { name: '20220926-1.jpg', url: '/assets/testPic/244/1110835872/20220926-1.jpg' }]);
+							this.$set(l, "uDiggerImg",  [ { name: '20220926-1.jpg', url: '/assets/testPic/244/1110835872/20220926-1.jpg' }]);
+							this.$set(l, "uPaverImg", []);
+							this.$set(l, "uRollerImg", []);
+							this.$set(l, "uSprinklerImg", []);
+
+							this.$set(l, "uStackerImgNum", l.uStackerImg.length);
+							this.$set(l, "uDiggerImgNum", l.uDiggerImg.length);
+							this.$set(l, "uPaverImgNum", l.uPaverImg.length);
+							this.$set(l, "uRollerImgNum", l.uRollerImg.length);
+							this.$set(l, "uSprinklerImgNum", l.uSprinklerImg.length);
+
 							l.SamplingL1Detail = l.SamplingL1Detail.length == 0 
 								? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
 								: JSON.parse(l.SamplingL1Detail);
@@ -558,6 +570,8 @@ export default {
 			this.$refs.uploadFile.submit();
 		},
 		handleChange(file, fileList) {
+			// console.log(fileList);
+			this.rowActive[`${this.imgUploadKey}Img`] = fileList;
 			this.imgPreviewUrls = fileList.map(file => file.url);
 		},
 		handlePreview(file) {
@@ -750,4 +764,7 @@ export default {
 		padding: 5px 5px
 	.upload-preview
 		width: 100%
+		z-index: 3000 !important
+		.el-icon-circle-close
+			color: white
 </style>
