@@ -52,9 +52,17 @@
 		</div>
 
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
-		<div v-if="list.length != 0" style="margin: 5px 5px 15px 10px">
-			<div v-if="list[0].DateClose.length != 0">完工登錄日期: {{ list[0].DateClose }}</div>
-			<div>總面積: {{ Math.round(caseSum.areaSUM*10)/10 }}，總噸數: {{ Math.round(caseSum.tonneSUM*10)/10 }}</div>
+		<div v-if="list.length != 0" style="width: 240px; margin: 5px 5px 15px 10px;">
+			<el-row v-if="list[0].DateClose.length != 0" :gutter="5">
+				<el-col :span="12">完工登錄日期: </el-col>
+				<el-col :span="12">{{ list[0].DateClose }}</el-col>
+			</el-row>
+			<el-row :gutter="5">
+				<el-col :span="8">總面積: </el-col>
+				<el-col :span="4">{{ Math.round(caseSum.areaSUM*10)/10 }}</el-col>
+				<el-col :span="8">總噸數: </el-col>
+				<el-col :span="4">{{ Math.round(caseSum.tonneSUM*10)/10 }}</el-col>
+			</el-row>
 		</div>
 
 		<el-table
@@ -69,21 +77,14 @@
 			stripe
 			style="width: 100%"
 		>
-			<!-- <el-table-column type="selection" width="60" align="center" fixed>
-				<template slot-scope="{ row, $index }">
-					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
-					<span>{{ $index + 1 }}</span>
-				</template>
-			</el-table-column> -->
-
+			<el-table-column label="順序" prop="OrderIndex" width="50" align="center" fixed />
 			<el-table-column v-if="!isAllCompleted" label="退回" width="60" align="center" fixed>
 				<template slot-scope="{ row }">
 					<el-button v-if="!row.edit" type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
 				</template>
 			</el-table-column>
 
-			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
-			<el-table-column prop="OrderSN" label="派工單號" width="125" align="center" fixed sortable />
+			<!-- <el-table-column prop="OrderSN" label="派工單號" width="125" align="center" fixed sortable /> -->
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseSN }}</span>
@@ -152,7 +153,7 @@
 							<el-col :span="6" style="line-height: 32px">{{ options.workmemo[key] }}</el-col>
 							<el-col :span="16">
 								<el-input v-model.number="row[key]" size="mini">
-									<el-button slot="append" style="padding: 5px 10px" @click="imgUploadKey = key; rowActive = row; showImgUploadDialog = true">上傳圖片 ({{ row[`${key}ImgNum`] }})</el-button>
+									<el-button slot="append" style="padding: 5px 10px" @click="imgUploadKey = key; rowActive = row; showImgUploadDialog = true">上傳圖片 ({{ row[`${key}Img`].length }})</el-button>
 								</el-input>
 							</el-col>
 						</el-row>
@@ -168,7 +169,19 @@
 							<el-row :gutter="5">
 								<span v-for="key in options.workmemoOrder.filter(key => key != 'uNotes' && row[key] != 0)" :key="key">
 									<el-col :span="6">{{ options.workmemo[key] }}</el-col>
-									<el-col :span="6" class="item-content">{{ row[key] }} (<i class="el-icon-picture" style="color: #409EFF" />{{ row[`${key}ImgNum`] }})</el-col>
+									<el-col :span="6" class="item-content">{{ row[key] }} (
+										<span v-if="row[`${key}Img`].length > 0">
+											<el-popover v-if="row[`${key}Img`].length > 0" popper-class="imgHover" placement="top" trigger="hover">
+												<div v-for="(imgSpec, index) of row[`${key}Img`]" :key="`img_${index}`">
+													<el-image style="max-width: 200px" :src="imgSpec.url" fit="scale-down" />
+												</div>
+												<span slot="reference">
+													<i  class="el-icon-picture" style="color: #409EFF" />{{ row[`${key}Img`].length }}
+												</span>
+											</el-popover>
+										</span>
+										<span v-else><i class="el-icon-picture" style="color: #F56C6C" />{{ row[`${key}Img`].length }}</span>)
+									</el-col>
 								</span>
 							</el-row>
 							<el-row v-if="row.uNotes && row.uNotes.length != 0" :gutter="5">
@@ -517,12 +530,6 @@ export default {
 							this.$set(l, "uPaverImg", []);
 							this.$set(l, "uRollerImg", []);
 							this.$set(l, "uSprinklerImg", []);
-
-							this.$set(l, "uStackerImgNum", l.uStackerImg.length);
-							this.$set(l, "uDiggerImgNum", l.uDiggerImg.length);
-							this.$set(l, "uPaverImgNum", l.uPaverImg.length);
-							this.$set(l, "uRollerImgNum", l.uRollerImg.length);
-							this.$set(l, "uSprinklerImgNum", l.uSprinklerImg.length);
 
 							l.SamplingL1Detail = l.SamplingL1Detail.length == 0 
 								? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
