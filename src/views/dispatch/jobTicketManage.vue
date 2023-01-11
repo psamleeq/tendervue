@@ -31,19 +31,8 @@
 			<br>
 
 			<div class="filter-item">
-				<div v-if="listQuery.filterType == 1" class="select-contract">
-					<el-select v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
-					<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.tenderId = null">
-						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
-					</el-select>
-				</div>
-				
-				<el-input v-else v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px" >
-					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
+				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px" >
+					<span slot="prepend">派工單號</span>
 				</el-input>
 			</div>
 			
@@ -76,6 +65,13 @@
 			stripe
 			style="width: 100%"
 		>
+
+			<el-table-column label="退回" width="60" align="center" fixed>
+				<template slot-scope="{ row }">
+					<el-button v-if="row.DateClose.length == 0" type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
 
 			<el-table-column
 				v-for="(value, key) in headers"
@@ -151,7 +147,7 @@ import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getJobTicketList, getJobTicketSpec } from "@/api/dispatch";
+import { getJobTicketList, getJobTicketSpec, revokeDispatch } from "@/api/dispatch";
 
 export default {
 	name: "jobTicketManage",
@@ -167,7 +163,6 @@ export default {
 			filterNow: false,
 			listQuery: {
 				filter: false,
-				filterType: 1,
 				filterStr: null,
 				tenderId: null,
 				deviceType: 1,
@@ -216,10 +211,6 @@ export default {
 					2: "熱再生",
 					3: "設施",
 					4: "標線"
-				},
-				filterType: {
-					1: "合約",
-					2: "派工單號"
 				}
 			}
 		};
@@ -279,8 +270,7 @@ export default {
 				getJobTicketList({
 					filter: this.listQuery.filter,
 					contractor: this.listQuery.contractor,
-					tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
-					dispatchSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					dispatchSN: this.listQuery.filterStr,
 					deviceType: this.listQuery.deviceType,
 					// timeStart: startDate,
 					// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
@@ -316,7 +306,7 @@ export default {
 		showTicketDetail(row) {
 			this.$router.push({
 				path: "/dispatch/finRegister",
-				query: { orderSN: row.OrderSN, contractor: this.contractorNow },
+				query: { contractor: this.contractorNow, orderSN: row.OrderSN },
 			});
 		},
 		async createPdf(OrderSN) {
@@ -465,7 +455,7 @@ export default {
 			});
 		},
 		reissueJobTicket(row) {
-			console.log(row);
+			// console.log(row);
 			getJobTicketSpec({
 				dispatchSN: row.OrderSN,
 				deviceType: this.listQuery.deviceType
@@ -477,6 +467,31 @@ export default {
 				})
 				this.createPdf(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });
 			}).catch(err => this.loading = false);
+		},
+		removeDispatch(row) {
+			this.$confirm(`確認退回 派工單號${row.OrderSN} 的派工?`, "確認", { showClose: false })
+				.then(() => {
+					revokeDispatch({
+						deviceType: this.deviceTypeNow,
+						dispatchSN: row.OrderSN
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "退回成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "退回失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					});
+				}).catch(err => {});
 		}
 	},
 };
