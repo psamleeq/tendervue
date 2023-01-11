@@ -62,6 +62,15 @@ export function revokeDispatch(data) {
 	})
 }
 
+// 修改派工單
+export function editJobTicket(data) {
+	return request({
+		url: '/dispatch/jobTicketEdit',
+		method: 'post',
+		data
+	})
+}
+
 // 完工登錄
 export function getFinRegister(query) {
 	return request({

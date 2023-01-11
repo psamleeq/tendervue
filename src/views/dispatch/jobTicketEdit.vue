@@ -1,56 +1,6 @@
 <template>
-	<div class="app-container job-ticket" v-loading="loading">
-		<h2>製作派工單</h2>
-		<div class="filter-container">
-			<div class="filter-item">
-				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
-						<span>類型</span>
-					</div>
-					<el-select v-model.number="listQuery.deviceType" placeholder="請選擇" popper-class="type-select" style="width: 100px">
-						<el-option v-for="(name, id) in options.deviceType" :key="id" :value="Number(id)" :label="name" />
-					</el-select>
-				</div>
-			</div>
-
-			<!-- <span class="filter-item">
-				<div style="font-size: 12px; color: #909399">派工日期</div>
-				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-			</span> -->
-			<div class="filter-item">
-				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
-						<span>廠商</span>
-					</div>
-					<el-select v-model.number="listQuery.contractor" placeholder="請選擇" popper-class="type-select" style="width: 100px">
-						<el-option v-for="(name, id) in options.guildMap" :key="id" :value="Number(id)" :label="name" />
-					</el-select>
-				</div>
-			</div>
-			<br>
-
-			<div class="filter-item">
-				<div v-if="listQuery.filterType == 1" class="select-contract">
-					<el-select v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
-					<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.tenderId = null">
-						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
-					</el-select>
-				</div>
-				
-				<el-input v-else v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
-					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
-				</el-input>
-			</div>
-
-			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
-			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
-		</div>
-
-		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+	<div class="app-container job-ticket-edit" v-loading="loading">
+		<h2>修改派工單 {{ $route.params.orderSN }}</h2>
 
 		<h3>已選取案件</h3>
 		<el-table
@@ -60,9 +10,8 @@
 			:key="`selectCase_${deviceTypeNow}`"
 			border
 			fit
-			highlight-current-row
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
-			stripe
+			:row-class-name="({row, rowIndex}) => (row.isAssign ? 'case-assign' : '')"
 			style="width: 100%"
 		>
 			<el-table-column label="順序" width="60" align="center" fixed>
@@ -75,11 +24,11 @@
 
 			<el-table-column prop="index" width="60" align="center" fixed>
 				<template slot="header">
-					<span v-if="tableSelect.length == 0"> - </span>
+					<span v-if="tableSelect.filter(l => !l.isAssign).length == 0"> - </span>
 					<el-checkbox v-else v-model="checkAll" :indeterminate="indeterminate" :disabled="list.length == 0 || tableSelect.length == 0" :key="`checkAll_${checkAll}`"/>
 				</template>
 				<template slot-scope="{ row }">
-					<el-checkbox v-model="checkList[row.index-1]" :key="`list_${row.index}`" style="margin-right: 5px" @change="cellCheckBox(row)" />
+					<el-checkbox v-if="!row.isAssign" v-model="checkList[row.index-1]" :key="`list_${row.index}`" style="margin-right: 5px" @change="cellCheckBox(row)" />
 					<span>{{ row.index }}</span>
 				</template>
 			</el-table-column>
@@ -164,11 +113,6 @@
 				</template>
 			</el-table-column>
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
-			<el-table-column label="退回" width="60" align="center" fixed>
-				<template slot-scope="{ row }">
-					<el-button type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
-				</template>
-			</el-table-column>
 			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
@@ -245,13 +189,13 @@ applyPlugin(jsPDF);
 import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getJobTicket, confirmJobTicket, revokeDispatch } from "@/api/dispatch";
+import { getJobTicket, getFinRegister, editJobTicket } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
 
 export default {
-	name: "jobTicket",
+	name: "jobTicketEdit",
 	components: { CaseDetail },
 	data() {
 		return {
@@ -263,13 +207,9 @@ export default {
 			deviceTypeNow: 1,
 			contractorNow: 0,
 			listQuery: {
-				filterType: 1,
-				filterStr: null,
-				tenderId: null,
 				deviceType: 1,
 				contractor: null,
-				// pageCurrent: 1,
-				// pageSize: 50,
+				orderSN: null
 			},
 			headers: {
 				// CaseSN: {
@@ -391,15 +331,14 @@ export default {
 			},
 			set(newVal) {
 				if(newVal) this.tableSelect = this.list;
-				else this.tableSelect = [];
+				else this.tableSelect = this.list.filter(l => l.isAssign);;
 
-				this.checkList = this.checkList.map(() => newVal);
+				this.checkList = this.checkList.map((_, index) => (this.tableSelect[index] != undefined));
 				this.resetOrder();
 			}
-			
 		},
 		indeterminate() {
-			return this.tableSelect.length > 0 && this.tableSelect.length < this.list.length;
+			return this.tableSelect.filter(l => !l.isAssign).length > 0 && this.tableSelect.filter(l => !l.isAssign).length < this.list.filter(l => !l.isAssign).length;
 		}
 	},
 	watch: { },
@@ -452,18 +391,25 @@ export default {
 	mounted() {
 		this.showJobTicket = false;
 		this.showDetailDialog = false;
+
+		if (this.$route.params.contractor && this.$route.params.orderSN ) {
+			this.listQuery.contractor = this.$route.params.contractor;
+			this.listQuery.orderSN = this.$route.params.orderSN;
+			this.getList();
+		} else this.$router.push({ path: "/dispatch/jobTicketManage" });
 	},
 	methods: {
 		async handleCheckedChange(val) {
 			this.tableSelect = val;
-			if(this.tableSelect.length == this.list.length) this.tableSelect.forEach((_, index) => this.$set(this.checkList, index, true));
-			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
+			if(val.length == this.list.length) this.tableSelect.forEach((_, index) => this.$set(this.checkList, index, true));
+			if(val.length == 0) {
+				this.tableSelect = this.list.filter(l => l.isAssign);
+				this.checkList = this.checkList.map((_, index) => (this.tableSelect[index] != undefined));
+			}
 
 			this.resetOrder();
 		},
 		cellCheckBox(row) {
-			// if(this.checkList[row.index-1]) this.$refs.confirmTable.toggleRowSelection(row, true);
-			// else this.$refs.confirmTable.toggleRowSelection(row, false);
 			if(this.checkList[row.index-1]) this.tableSelect.push(row);
 			else this.tableSelect = this.tableSelect.filter(selectRow => selectRow.index != row.index);
 
@@ -490,51 +436,48 @@ export default {
 			});
 		},
 		getList() {
-			if (!Number(this.listQuery.contractor)) {
-				this.$message({
-					message: "請選擇廠商",
-					type: "error",
-				});
-			} else {
-				this.loading = true;
-				this.list = [];
-				this.tableSelect = [];
-				
-				getJobTicket({
-					contractor: this.listQuery.contractor,
-					tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
-					reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					deviceType: this.listQuery.deviceType
-				}).then(response => {
-					if (response.data.list.length == 0) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-						this.total = 0;
-					} else {
+			this.loading = true;
+			this.list = [];
+			this.tableSelect = [];
+
+			getFinRegister({
+				contractor: this.listQuery.contractor,
+				dispatchSN: this.listQuery.orderSN,
+				deviceType: this.listQuery.deviceType
+			}).then(response => {
+				this.tableSelect = response.data.list;
+				if(this.tableSelect[0].IsAllCompleted == 1) {
+					this.$message({
+						message: 	`派工單號${this.listQuery.orderSN} 已完工登錄`,
+						type: "error",
+					});
+				} else {					
+					getJobTicket({
+						contractor: this.listQuery.contractor,
+						deviceType: this.listQuery.deviceType
+					}).then(response => {
 						this.list = response.data.list;
-						this.checkList = Array.from({ length: this.list.length }, () => false);
 						this.deviceTypeNow = this.listQuery.deviceType;
 						this.contractorNow = this.listQuery.contractor;
-
+						
+						this.list.unshift(...this.tableSelect);
 						this.list.forEach((l, i) => {
-							l.Contractor = this.options.guildMap[l.Contractor];
 							l.DatePlan = this.formatDate(l.DatePlan);
-							// this.$set(l, "detailTime", false);
-							l.DateDeadline = (l.DateDeadline == null) ? moment(Number(String(l.CaseNo).substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY/MM/DD") : this.formatDate(l.DateDeadline);
+							this.$set(l, "isAssign", l.OrderIndex != undefined);
 							this.$set(l, "index", i+1);
-							this.$set(l, "OrderIndex", i+1);
-							this.$set(l, "OrderIndexNew", i+1);
+							if(l.OrderIndex == undefined) {
+								this.$set(l, "OrderIndex", i+1);
+								this.$set(l, "OrderIndexNew", i+1);
+							} else this.$set(l, "OrderIndexNew", l.OrderIndex);
 							this.$set(l, "tonne", Math.round(l.MillingArea*l.MillingDepth*0.01*2.25*10) / 10);
 						})
-
+						this.checkList = Array.from({ length: this.list.length }, (_, index) => (this.tableSelect[index] != undefined));
+						
 						this.imgPreload();
-					}
-					this.loading = false;
-				}).catch(err => this.loading = false);
-			}
+						this.loading = false;
+					}).catch(err => this.loading = false);
+				}
+			}).catch(err => this.loading = false);
 		},
 		showDetail(row) {
 			this.loading = true;
@@ -733,36 +676,36 @@ export default {
 			return caseFilterList;
 		},
 		downloadPdf() {
-			this.$confirm(`確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 製作派工單？`, "確認", { showClose: false })
+			this.$confirm(
+				`確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 製作派工單？\n(刪除派工單號 ${this.listQuery.orderSN})`, "確認", { showClose: false })
 				.then(() => {
-					confirmJobTicket({
+					editJobTicket({
 						contractor: this.contractorNow,
 						deviceType: this.deviceTypeNow,
+						dispatchSN: this.listQuery.orderSN,
 						caseList: this.caseFilterList(this.tableSelect)
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
-							const orderSN = response.data.orderSN;
-							this.$message({
-								message: `製作成功(派工單號 ${orderSN})`,
-								type: "success",
-							});
-							this.viewer.setInputs([{ "OrderSN": String(orderSN) }]);
-							this.showJobTicket = false;
-							this.handleDownload(`維修派工單_${orderSN}.pdf`);
-							// this.pdfDoc.save(`維修派工單_${orderSN}.pdf`);
-						} else {
-							this.$message({
-								message: "製作失敗",
-								type: "error",
-							});
+							if ( response.statusCode == 20000 ) {
+								const orderSN = response.data.orderSN;
+								this.$message({
+									message: `製作成功(新派工單號 ${orderSN})`,
+									type: "success",
+								});
+								this.viewer.setInputs([{ "OrderSN": String(orderSN) }]);
+								this.showJobTicket = false;
+								this.handleDownload(`維修派工單_${orderSN}.pdf`);
+								// this.pdfDoc.save(`維修派工單_${orderSN}.pdf`);
+							} else {
+								this.$message({
+									message: "製作失敗",
+									type: "error",
+								});
+							}
+							this.getList();
 						}
-						this.getList();
-					}).catch(err => {
-						console.log(err);
-						this.showJobTicket = false;
-						this.getList();
-					});
-				}).catch(err => {});
+					}).catch(err => { console.log(err) });
+				}).catch(err => { console.log(err) });
 		},
 		handleDownload(filename) {
 			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
@@ -780,31 +723,6 @@ export default {
 				document.body.removeChild(link);
 				URL.revokeObjectURL(url);
 			});
-		},
-		removeDispatch(row) {
-			this.$confirm(`確認退回 案件編號${row.CaseNo}?`, "確認", { showClose: false })
-				.then(() => {
-					revokeDispatch({
-						deviceType: this.deviceTypeNow,
-						serialNo: row.SerialNo
-					}).then(response => {
-						if ( response.statusCode == 20000 ) {
-							this.$message({
-								message: "退回成功",
-								type: "success",
-							});
-						} else {
-							this.$message({
-								message: "退回失敗",
-								type: "error",
-							});
-						}
-						this.getList();
-					}).catch(err => {
-						console.log(err);
-						this.getList();
-					});
-				}).catch(err => {});
 		}
 	},
 };
@@ -814,7 +732,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.job-ticket
+.job-ticket-edit
 	.el-select
 		.el-input__inner
 			padding-left: 3px
@@ -849,6 +767,8 @@ export default {
 		left: 50%
 		transform: translateX(-50%)
 	.el-table
+		.case-assign
+			background-color: #EBEEF5
 		.input-length, .input-width
 			max-width: 60px
 		.btn-tag

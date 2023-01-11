@@ -45,6 +45,16 @@ const dispatchRouter = {
 			}
 		},
 		{
+			path: 'jobTicketEdit',
+			component: () => import('@/views/dispatch/jobTicketEdit'),
+			name: 'jobTicketEdit',
+			meta: {
+				title: '修改派工單',
+				roles: ['restored.viewer']
+			},
+			hidden: true
+		},
+		{
 			path: 'finRegister',
 			component: () => import('@/views/dispatch/finRegister'),
 			name: 'finRegister',

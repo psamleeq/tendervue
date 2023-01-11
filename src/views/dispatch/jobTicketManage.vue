@@ -66,7 +66,7 @@
 			style="width: 100%"
 		>
 
-			<el-table-column label="退回" width="60" align="center" fixed>
+			<el-table-column v-if="!filterNow" label="退回" width="60" align="center" fixed>
 				<template slot-scope="{ row }">
 					<el-button v-if="row.DateClose.length == 0" type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
 					<span v-else> - </span>
@@ -79,7 +79,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:min-width="['Place'].includes(key) ? 80 : null"
+				:min-width="30"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
@@ -106,7 +106,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column label="狀態" align="center">
+			<el-table-column label="狀態" min-width="30" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.IsActive == 0" style="color: #F56C6C">刪除
 						<!-- <i class="el-icon-close" style="color: #F56C6C" /> -->
@@ -124,20 +124,13 @@
 			<el-table-column v-if="!filterNow" :key="filterNow" label="動作" align="center">
 				<template slot-scope="{ row }">
 					<el-button class="btn-action" type="primary" plain size="mini" @click="showTicketDetail(row)">檢視</el-button>
+					<el-button v-if="row.DateClose.length == 0" class="btn-action" type="success" plain size="mini" @click="editJobTicket(row)">編輯</el-button>
 					<el-button v-if="row.DateClose.length == 0" class="btn-action" type="info" size="mini" @click="reissueJobTicket(row)">補印派工單</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
-
-		<!-- Dialog: 案件檢視 -->
-		<el-dialog width="500px" title="案件檢視" :visible.sync="showConfirm">
-			<div slot="footer" class="dialog-footer">
-				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
-				<el-button type="primary" @click="showConfirm = false">確定</el-button>
-			</div>
-		</el-dialog>
 	</div>
 </template>
 
@@ -155,7 +148,6 @@ export default {
 	data() {
 		return {
 			loading: false,
-			showConfirm: false,
 			screenWidth: window.innerWidth,
 			searchRange: "",
 			deviceTypeNow: 1,
@@ -452,6 +444,12 @@ export default {
 				}
 
 				resolve();
+			});
+		},
+		editJobTicket(row) {
+			this.$router.push({
+				name: "jobTicketEdit",
+				params: { contractor: this.contractorNow, orderSN: row.OrderSN },
 			});
 		},
 		reissueJobTicket(row) {
