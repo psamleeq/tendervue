@@ -52,9 +52,9 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">監造抽查 (15%)</div>
 						<div class="card-panel-num"> 
-							路面: {{ checkNum.SV.AC.check }} <span class="fail-num">({{ checkNum.SV.AC.fail }})</span> / {{ checkNum.SV.AC.total }} 
+							路面: {{ checkNum.SV.AC.check || 0 }} <span class="fail-num">({{ checkNum.SV.AC.fail || 0 }})</span> / {{ checkNum.SV.AC.total || 0 }} 
 							<br>
-							設施: {{ checkNum.SV.facility.check }} <span class="fail-num">({{ checkNum.SV.facility.fail }})</span> / {{ checkNum.SV.facility.total }}
+							設施: {{ checkNum.SV.facility.check || 0 }} <span class="fail-num">({{ checkNum.SV.facility.fail || 0 }})</span> / {{ checkNum.SV.facility.total || 0 }}
 						</div>
 					</div>
 				</div>
@@ -67,9 +67,9 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">機關抽查 (5%)</div>
 						<div class="card-panel-num">
-							路面: {{ checkNum.Organ.AC.check }} <span class="fail-num">({{ checkNum.Organ.AC.fail }})</span> / {{ checkNum.Organ.AC.total }} 
+							路面: {{ checkNum.Organ.AC.check || 0 }} <span class="fail-num">({{ checkNum.Organ.AC.fail || 0 }})</span> / {{ checkNum.Organ.AC.total || 0 }} 
 							<br>
-							設施: {{ checkNum.Organ.facility.check }} <span class="fail-num">({{ checkNum.Organ.facility.fail }})</span> / {{ checkNum.Organ.facility.total }}
+							設施: {{ checkNum.Organ.facility.check || 0 }} <span class="fail-num">({{ checkNum.Organ.facility.fail || 0 }})</span> / {{ checkNum.Organ.facility.total || 0 }}
 						</div>
 					</div>
 				</div>
