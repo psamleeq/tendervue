@@ -50,7 +50,7 @@ const dispatchRouter = {
 			name: 'jobTicketEdit',
 			meta: {
 				title: '修改派工單',
-				roles: ['restored.viewer']
+				roles: ['restored.order']
 			},
 			hidden: true
 		},
