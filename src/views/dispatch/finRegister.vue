@@ -85,7 +85,7 @@
 			</el-table-column>
 
 			<!-- <el-table-column prop="OrderSN" label="派工單號" width="125" align="center" fixed sortable /> -->
-			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
+			<el-table-column prop="CaseNo" label="案件編號" width="125" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseSN }}</span>
 					<br>
@@ -118,7 +118,7 @@
 			</el-table-column>
 
 			<!-- 道路、熱再生 -->
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="400" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="255" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
@@ -138,7 +138,7 @@
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="面積" width="80" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="面積" width="60" align="center">
 				<template slot-scope="{ row }">
 					<!-- <el-input v-model="row.MillingArea" /> -->
 					<span>{{ row.MillingArea || "-" }}</span>
@@ -193,7 +193,7 @@
 					</el-row>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="80" align="center">
+			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="50" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
@@ -203,18 +203,18 @@
 					<span v-else>{{ row.MillingDepth }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="deviceTypeNow == '1'" label="使用粒料" width="240" align="center">
+			<el-table-column v-if="deviceTypeNow == '1'" label="使用粒料" width="220" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row :gutter="5">
-							<el-col :span="6" style="line-height: 28px">粒料3/4</el-col>
-							<el-col :span="6">
+							<el-col :span="7" style="line-height: 28px">粒料3/4</el-col>
+							<el-col :span="5">
 								<el-select v-model="row.Aggregate34" size="mini" popper-class="type-select">
 									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
 								</el-select>
 							</el-col>
-							<el-col :span="6" style="line-height: 28px">粒料3/8</el-col>
-							<el-col :span="6">
+							<el-col :span="7" style="line-height: 28px">粒料3/8</el-col>
+							<el-col :span="5">
 								<el-select v-model="row.Aggregate38" size="mini" popper-class="type-select">
 									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
 								</el-select>
@@ -333,14 +333,6 @@
 			</div>
 		</el-dialog>
 
-		<el-image-viewer
-			v-if="showImgViewer"
-			class="upload-preview"
-			:on-close="() => { showImgViewer = false; }"
-			:url-list="imgPreviewUrls"
-			:initial-index="imgPreviewIndex"
-		/>
-
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
 			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" :deviceTypeNow="deviceTypeNow" />
@@ -349,6 +341,15 @@
 				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
 			</div>
 		</el-dialog>
+
+		<!-- Dialog: 圖片預覽 -->
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="upload-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgPreviewUrls"
+			:initial-index="imgPreviewIndex"
+		/>
 	</div>
 </template>
 
