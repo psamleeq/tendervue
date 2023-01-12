@@ -85,11 +85,12 @@
 				<template slot-scope="{ row, column }">
 					<span v-if="[ 'CaseNoArr' ].includes(column.property)">
 						<!-- <span v-if="row.CaseNoArr.length != 0">{{ row.CaseNoArr.join("、") }}</span> -->
-						<span v-if="row.CaseNoArr.length != 0">
-							<span>{{ row.CaseNoArr.length }}</span>
+						<span v-if="row.CaseNoActiveArr.length != 0">
+							<span>{{ row.CaseNoActiveArr.length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
 								<span slot="content">
-									<div v-for="caseNo in row.CaseNoArr" :key="caseNo">{{ caseNo }}</div>
+									<div v-for="caseNo in row.CaseNoActiveArr" :key="caseNo">{{ caseNo }}</div>
+									<div v-for="caseNo in row.CaseNoInActiveArr" :key="caseNo">{{ caseNo }}<span style="color: #F56C6C">(退回)</span></div>
 								</span>
 								<i class="icon-tooltip el-icon-warning" />
 							</el-tooltip>
@@ -283,7 +284,8 @@ export default {
 						this.list.forEach(l => {
 							l.Contractor = this.options.guildMap[l.Contractor];
 							l.OrderType = this.options.deviceType[l.OrderType];
-							l.CaseNoArr = l.CaseNoArr.filter(caseNo => Number(caseNo) != 0);
+							l.CaseNoActiveArr = l.CaseNoActiveArr.filter(caseNo => Number(caseNo) != 0);
+							l.CaseNoInActiveArr = l.CaseNoInActiveArr.filter(caseNo => Number(caseNo) != 0);
 							l.DateAssign = this.formatDate(l.DateAssign);
 							l.DateClose = this.formatDate(l.DateClose);
 						})
