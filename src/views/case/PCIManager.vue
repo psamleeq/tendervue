@@ -177,7 +177,7 @@ export default {
 			})
 		},
 		calPCI(timeStart, timeEnd) {
-			resetPCI({ timeStart, timeEnd }).then(response => {
+			resetPCI({ tenderId: this.listQuery.tenderId, timeStart, timeEnd }).then(response => {
 				if (response.statusCode == 20000 ) {
 					this.$message({
 						message: "重置成功",
@@ -187,7 +187,7 @@ export default {
 			}).catch(err => console.log(err));
 		},
 		removeBlock() {
-			verifyPCI().then(response => {
+			verifyPCI({ tenderId: this.listQuery.tenderId }).then(response => {
 				if (response.statusCode == 20000 ) {
 					this.$message({
 						message: "排除成功",
@@ -204,7 +204,7 @@ export default {
 				});
 				blockId = "";
 			} else {
-				updatePCI({ blockId, timeStart, timeEnd }).then(response => {
+				updatePCI({ tenderId: this.listQuery.tenderId, blockId, timeStart, timeEnd }).then(response => {
 					if (response.statusCode == 20000 ) {
 						this.$message({
 							message: "重算成功",

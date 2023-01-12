@@ -146,7 +146,7 @@
 			</el-table-column>
 
 			<!-- 道路 -->
-			<el-table-column v-if="deviceTypeNow == '1'" label="完工備註" width="230" align="center">
+			<el-table-column v-if="deviceTypeNow == '1'" label="完工備註" width="227" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row v-for="key in options.workmemoOrder.filter(key => key != 'uNotes')" :gutter="5" :key="key">
@@ -193,7 +193,7 @@
 					</el-row>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="50" align="center">
+			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="53" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
