@@ -503,6 +503,9 @@ export default {
 					return acc;
 				}, [[]]);
 
+				const tonneSUMHeader = tonneSUM;
+				const areaSUMHeader = areaSUM;
+
 				for(const [ pageIndex, table ] of splitTable.entries()) {
 					this.pdfDoc.addPage();
 					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
@@ -516,26 +519,24 @@ export default {
 					this.pdfDoc.text(`${today} 派工單號：           `, width - 15, lineSize + 25, { align: 'right' });
 					// this.pdfDoc.text(`(預覽列印)`, width - 15, lineSize + 25, { align: 'right' });
 
-					if(pageIndex == 0) {
-						this.pdfDoc.autoTable({ 
-							columns: [
-								{ header: '總面積', dataKey: 'areaSUMTitle' },
-								{ header: String(Math.floor(areaSUM*10)/10), dataKey: 'areaSUM' },
-								{ header: '總噸數', dataKey: 'tonneSUMTitle' },
-								{ header: String(Math.floor(tonneSUM*10)/10), dataKey: 'tonneSUM' },
-							],
-							theme: 'plain',
-							styles: { font: "edukai", valign: 'middle', cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.5 },
-							headStyles: { halign: 'center' },
-							columnStyles: {
-								areaSUMTitle: { halign: 'center', cellWidth: 32 },
-								areaSUM: { halign: 'center', cellWidth: 16 },
-								tonneSUMTitle: { halign: 'center', cellWidth: 32 },
-								tonneSUM: { halign: 'center', cellWidth: 16 }
-							},
-							startY:  lineSize * 2 + 25
-						});
-					}
+					this.pdfDoc.autoTable({ 
+						columns: [
+							{ header: '總面積', dataKey: 'areaSUMTitle' },
+							{ header: String(Math.floor(areaSUMHeader*10)/10), dataKey: 'areaSUMHeader' },
+							{ header: '總噸數', dataKey: 'tonneSUMTitle' },
+							{ header: String(Math.floor(tonneSUMHeader*10)/10), dataKey: 'tonneSUMHeader' },
+						],
+						theme: 'plain',
+						styles: { font: "edukai", valign: 'middle', cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.5 },
+						headStyles: { halign: 'center' },
+						columnStyles: {
+							areaSUMTitle: { halign: 'center', cellWidth: 32 },
+							areaSUM: { halign: 'center', cellWidth: 16 },
+							tonneSUMTitle: { halign: 'center', cellWidth: 32 },
+							tonneSUM: { halign: 'center', cellWidth: 16 }
+						},
+						startY:  lineSize * 2 + 25
+					});
 
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
@@ -640,10 +641,8 @@ export default {
 			this.loading = true;
 
 			this.createPdf().then(() => {
-				this.viewer.updateTemplate({ 
-					basePdf: this.pdfDoc.output('bloburl'), 
-					schemas: [
-						{
+				const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => (
+					{
 							"OrderSN": {
 								"type": "text",
 								"position": {
@@ -656,8 +655,9 @@ export default {
 								"alignment": "center"
 							}
 						}
-					]
-				});
+				));
+
+				this.viewer.updateTemplate({ basePdf: this.pdfDoc.output('bloburl'), schemas });
 				this.viewer.setInputs([{ "OrderSN": "(預覽列印)" }]);
 
 				this.loading = false;
@@ -677,7 +677,8 @@ export default {
 		},
 		downloadPdf() {
 			this.$confirm(
-				`確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 製作派工單？\n(刪除派工單號 ${this.listQuery.orderSN})`, "確認", { showClose: false })
+				`<p>確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 製作派工單？</p>
+				<p style="color: #F56C6C">(將刪除派工單號 ${this.listQuery.orderSN}，重新產生單號)</p>`, "確認", { showClose: false, dangerouslyUseHTMLString: true })
 				.then(() => {
 					editJobTicket({
 						contractor: this.contractorNow,
