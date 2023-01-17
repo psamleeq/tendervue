@@ -550,13 +550,17 @@ export default {
 							this.$set(l, "uRollerImg", []);
 							this.$set(l, "uSprinklerImg", []);
 
-							l.SamplingL1Detail = l.SamplingL1Detail.length == 0 
-								? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
-								: JSON.parse(l.SamplingL1Detail);
+							if(l.SamplingL1Detail) {
+								l.SamplingL1Detail = l.SamplingL1Detail.length == 0 
+									? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
+									: JSON.parse(l.SamplingL1Detail);
+							}
 
-							l.SamplingL2Detail = l.SamplingL2Detail.length == 0 
-								? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
-								: JSON.parse(l.SamplingL2Detail);
+							if(l.SamplingL2Detail) {
+								l.SamplingL2Detail = l.SamplingL2Detail.length == 0 
+									? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
+									: JSON.parse(l.SamplingL2Detail);
+							}
 
 							this.$set(l, "IsMarkingNow", l.IsMarking);
 							this.$set(l, "edit", false);

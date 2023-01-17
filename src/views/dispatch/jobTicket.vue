@@ -301,11 +301,11 @@ export default {
 					name: "主任派工日",
 					sortable: false
 				},
-				DateClose_AC: {
-					name: "銑鋪完工日",
-					sortable: false,
-					deviceTypeFilter: [4]
-				},
+				// DateClose_AC: {
+				// 	name: "銑鋪完工日",
+				// 	sortable: false,
+				// 	deviceTypeFilter: [4]
+				// },
 				// DateDeadline: {
 				// 	name: "預計完工日期",
 				// 	sortable: false
@@ -335,12 +335,12 @@ export default {
 				MillingDepth: {
 					name: "刨鋪深度",
 					sortable: false,
-					deviceTypeFilter: [1, 2]
+					deviceTypeFilter: [ 1 ]
 				},
 				tonne: {
 					name: "噸數",
 					sortable: false,
-					deviceTypeFilter: [1, 2]
+					deviceTypeFilter: [ 1 ]
 				},
 				IsPressing: {
 					name: "急件",
@@ -564,8 +564,11 @@ export default {
 					case 1:
 						this.createPdf_AC().then(() => resolve());
 						break;
+					case 2:
+						this.createPdf_HR().then(() => resolve());
+						break;
 					case 4:
-						this.createPdf_MK().then(() => resolve());	
+						this.createPdf_MK().then(() => resolve());
 						break;
 				}
 			});
@@ -720,6 +723,94 @@ export default {
 							headStyles: { halign: 'center' },
 							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
 							didDrawCell: async (data) => {
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								}
+							},
+							startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
+							pageBreak: 'avoid'
+						});
+					}
+				}
+
+				await this.createPdf_footer();
+				resolve();
+			});
+		},
+		async createPdf_HR() {
+			return new Promise(async (resolve, reject) => {
+				const pageSize = 8;
+
+				// PDF排版
+				const splitTable = this.tableSelect.reduce((acc, cur) => {
+					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					else acc.push([cur]);
+					return acc;
+				}, [[]]);
+
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+					await this.createPdf_header();
+
+					this.pdfDoc.autoTable({ 
+						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						body: table.map((l, i) => ({ 
+							order: (i+1) + pageSize*pageIndex, 
+							// DatePlan: l.DatePlan, 
+							CaseNo: `${l.CaseNo}\n${l.CaseSN}`, 
+							DistressName: l.DistressName,
+							Place: `${l.Postal_vil}\n${l.Place}`,
+							MillingFormula: (l.MillingFormula != '0') ? l.MillingFormula : `${l.MillingLength}*${l.MillingWidth}`, 
+							MillingArea: l.MillingArea
+						})),
+						columns: [
+							{ header: '順序', dataKey: 'order' },
+							// { header: '主任派工日', dataKey: 'DatePlan' },
+							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '損壞類別', dataKey: 'DistressName' },
+							{ header: '維修地點', dataKey: 'Place' },
+							{ header: '預估算式', dataKey: 'MillingFormula' },
+							{ header: '預估面積', dataKey: 'MillingArea' },
+							{ header: '實際算式', dataKey: 'acuMillingFormula' },
+							{ header: '實際面積', dataKey: 'acuMillingArea' },
+							{ header: '補繪標線', dataKey: 'marker' }
+						],
+						styles: { font: "edukai", valign: 'middle', fontSize: 9, cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.2 },
+						headStyles: { halign: 'center' },
+						columnStyles: {
+							order: { halign: 'center', cellWidth: 6 },
+							CaseNo: { halign: 'center', cellWidth: 26 },
+							Place: { cellWidth: 26 },
+							DistressName: { halign: 'center', cellWidth: 10 },
+							MillingFormula: { cellWidth: 26 },
+							MillingArea: { halign: 'center', cellWidth: 10 },
+							// acuMillingFormula: { cellWidth: 16 },
+							acuMillingArea: { halign: 'center', cellWidth: 10 },
+							marker: { halign: 'center', cellWidth: 10 }
+						},
+						startY: this.pdfSetting.lineHeight * 2 + 25,
+						rowPageBreak: 'avoid'
+					});
+
+					const splitImgTable = table.reduce((acc, cur) => {
+						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
+
+					for(const [imgIndex, imgTable] of splitImgTable.entries()) {
+						this.pdfDoc.autoTable({ 
+							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
+							// body: [ imgTable.map(l => l.ImgZoomOut) ],
+							body: [ imgTable.map(l => l.CaseNo) ],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.2 },
+							headStyles: { halign: 'center' },
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
+							didDrawCell: (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
 									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);

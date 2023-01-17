@@ -477,6 +477,94 @@ export default {
 				resolve();
 			});
 		},
+		async createPdf_HR(OrderSN) {
+			return new Promise(async (resolve, reject) => {
+				const pageSize = 8;
+
+				// PDF排版
+				const splitTable = this.caseSpec.reduce((acc, cur) => {
+					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					else acc.push([cur]);
+					return acc;
+				}, [[]]);
+
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+					await this.createPdf_header(OrderSN);
+
+					this.pdfDoc.autoTable({ 
+						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						body: table.map((l, i) => ({ 
+							order: (i+1) + pageSize*pageIndex, 
+							// DatePlan: l.DatePlan, 
+							CaseNo: `${l.CaseNo}\n${l.CaseSN}`, 
+							DistressName: l.DistressName,
+							Place: `${l.Postal_vil}\n${l.Place}`,
+							MillingFormula: (l.MillingFormula != '0') ? l.MillingFormula : `${l.MillingLength}*${l.MillingWidth}`, 
+							MillingArea: l.MillingArea
+						})),
+						columns: [
+							{ header: '順序', dataKey: 'order' },
+							// { header: '主任派工日', dataKey: 'DatePlan' },
+							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '損壞類別', dataKey: 'DistressName' },
+							{ header: '維修地點', dataKey: 'Place' },
+							{ header: '預估算式', dataKey: 'MillingFormula' },
+							{ header: '預估面積', dataKey: 'MillingArea' },
+							{ header: '實際算式', dataKey: 'acuMillingFormula' },
+							{ header: '實際面積', dataKey: 'acuMillingArea' },
+							{ header: '補繪標線', dataKey: 'marker' }
+						],
+						styles: { font: "edukai", valign: 'middle', fontSize: 9, cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.2 },
+						headStyles: { halign: 'center' },
+						columnStyles: {
+							order: { halign: 'center', cellWidth: 6 },
+							CaseNo: { halign: 'center', cellWidth: 26 },
+							Place: { cellWidth: 26 },
+							DistressName: { halign: 'center', cellWidth: 10 },
+							MillingFormula: { cellWidth: 26 },
+							MillingArea: { halign: 'center', cellWidth: 10 },
+							// acuMillingFormula: { cellWidth: 16 },
+							acuMillingArea: { halign: 'center', cellWidth: 10 },
+							marker: { halign: 'center', cellWidth: 10 }
+						},
+						startY: this.pdfSetting.lineHeight * 2 + 25,
+						rowPageBreak: 'avoid'
+					});
+
+					const splitImgTable = table.reduce((acc, cur) => {
+						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
+
+					for(const [imgIndex, imgTable] of splitImgTable.entries()) {
+						this.pdfDoc.autoTable({ 
+							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
+							// body: [ imgTable.map(l => l.ImgZoomOut) ],
+							body: [ imgTable.map(l => l.CaseNo) ],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.2 },
+							headStyles: { halign: 'center' },
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
+							didDrawCell: (data) => {
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								}
+							},
+							startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
+							pageBreak: 'avoid'
+						});
+					}
+				}
+
+				await this.createPdf_footer();
+				resolve();
+			});
+		},
 		async createPdf_MK(OrderSN) {
 			return new Promise(async (resolve, reject) => {
 				const pageSize = 6;
@@ -585,6 +673,9 @@ export default {
 							l.tonne = Math.round(l.MillingArea*l.MillingDepth*0.01*2.25*10) / 10;
 						});
 						this.createPdf_AC(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });
+						break;
+					case 2:
+						this.createPdf_HR(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	
 						break;
 					case 4:
 						this.createPdf_MK(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	
