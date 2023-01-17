@@ -205,11 +205,19 @@ export default {
 					3: "設施",
 					4: "標線"
 				}
+			},
+			pdfSetting: {
+				fontSize: 14,
+				lineHeight: (14 + 2) * 0.35
 			}
 		};
 	},
 	computed: { },
-	watch: { },
+	watch: {
+		"pdfSetting.fontSize"() {
+			this.pdfSetting.lineHeight = (this.pdfSetting.fontSize + 2) * 0.35;
+		}
+	},
 	created() { 
 		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
 		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
@@ -300,22 +308,51 @@ export default {
 		showTicketDetail(row) {
 			this.$router.push({
 				path: "/dispatch/finRegister",
-				query: { contractor: this.contractorNow, orderSN: row.OrderSN },
+				query: { deviceType: this.deviceTypeNow, contractor: this.contractorNow, orderSN: row.OrderSN },
 			});
 		},
-		async createPdf(OrderSN) {
+		async createPdf_header(OrderSN) {
 			return new Promise((resolve, reject) => {
-				// PDF排版
-				const fontSize = 14;
-				const lineSize = (fontSize + 2) * 0.35;
+				const { width, height } = this.pdfDoc.internal.pageSize;
+				const subTitle = (this.deviceTypeNow == 1) ? "AC" : this.options.deviceType[this.deviceTypeNow];
+
+				this.pdfDoc.setFontSize(this.pdfSetting.fontSize+4);
+				this.pdfDoc.setCharSpace(2);
+				this.pdfDoc.text(`道路(${subTitle}) 維修派工單`, width / 2, 20, { align: 'center' });
+				this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
+				this.pdfDoc.setCharSpace(0);
+				const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
+				this.pdfDoc.text(`${today} 派工單號：  ${OrderSN}`, width - 15, this.pdfSetting.lineHeight + 25, { align: 'right' });
+				// this.pdfDoc.text(`(預覽列印)`, width - 15, this.pdfSetting.lineHeight + 25, { align: 'right' });
+
+				resolve();
+			})
+		},
+		async createPdf_footer() {
+			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
 
+				// 頁數
+				this.pdfDoc.setFontSize(this.pdfSetting.fontSize-2);
+				for(let pageNo=1; pageNo <= this.pdfDoc.internal.getNumberOfPages(); pageNo++) {
+					this.pdfDoc.setPage(pageNo); 
+					this.pdfDoc.text(`${pageNo} of ${this.pdfDoc.internal.getNumberOfPages()}`, width/2, height-10, { align: 'center' } );
+				}
+
+				resolve();
+			})
+		},
+		async createPdf_AC(OrderSN) {
+			return new Promise(async (resolve, reject) => {
+				const pageSize = 8;
+
+				// PDF排版
 				let tonneSUM = 0;
 				let areaSUM = 0;
 				const splitTable = this.caseSpec.reduce((acc, cur) => {
 					tonneSUM += cur.tonne;
 					areaSUM += cur.MillingArea;
-					if(acc[acc.length-1].length < 8) acc[acc.length-1].push(cur);
+					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
 				}, [[]]);
@@ -326,14 +363,7 @@ export default {
 				for(const [ pageIndex, table ] of splitTable.entries()) {
 					this.pdfDoc.addPage();
 					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
-
-					this.pdfDoc.setFontSize(fontSize+4);
-					this.pdfDoc.setCharSpace(2);
-					this.pdfDoc.text(`${this.options.deviceType[this.deviceTypeNow]} 維修派工單`, width / 2, 20, { align: 'center' });
-					this.pdfDoc.setFontSize(fontSize);
-					this.pdfDoc.setCharSpace(0);
-					const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
-					this.pdfDoc.text(`${today} 派工單號：  ${OrderSN}`, width - 15, lineSize + 25, { align: 'right' });
+					await this.createPdf_header(OrderSN);
 
 					this.pdfDoc.autoTable({ 
 						columns: [
@@ -351,13 +381,13 @@ export default {
 							tonneSUMTitle: { halign: 'center', cellWidth: 32 },
 							tonneSUM: { halign: 'center', cellWidth: 16 }
 						},
-						startY:  lineSize * 2 + 25
+						startY:  this.pdfSetting.lineHeight * 2 + 25
 					});
 
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
-							order: (i+1) + 8*pageIndex, 
+							order: (i+1) + pageSize*pageIndex, 
 							// DatePlan: l.DatePlan, 
 							CaseNo: l.CaseNo, 
 							Postal_vil: l.Postal_vil,
@@ -418,6 +448,10 @@ export default {
 					}, [[]]);
 
 					for(const [imgIndex, imgTable] of splitImgTable.entries()) {
+						// let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
+						// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
+						// console.log(startY);
+
 						this.pdfDoc.autoTable({ 
 							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
 							// body: [ imgTable.map(l => l.ImgZoomOut) ],
@@ -439,20 +473,101 @@ export default {
 					}
 				}
 
-				// 頁數
-				this.pdfDoc.setFontSize(fontSize-2);
-				for(let pageNo=1; pageNo <= this.pdfDoc.internal.getNumberOfPages(); pageNo++) {
-					this.pdfDoc.setPage(pageNo); 
-					this.pdfDoc.text(`${pageNo} of ${this.pdfDoc.internal.getNumberOfPages()}`, width/2, height-10, { align: 'center' } );
+				await this.createPdf_footer();
+				resolve();
+			});
+		},
+		async createPdf_MK(OrderSN) {
+			return new Promise(async (resolve, reject) => {
+				const pageSize = 6;
+
+				// PDF排版
+				const splitTable = this.caseSpec.reduce((acc, cur) => {
+					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					else acc.push([cur]);
+					return acc;
+				}, [[]]);
+
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+					await this.createPdf_header(OrderSN);
+
+					this.pdfDoc.autoTable({ 
+						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						body: table.map((l, i) => ({ 
+							order: (i+1) + pageSize*pageIndex, 
+							// DatePlan: l.DatePlan, 
+							CaseNo: `${l.CaseNo}\n${l.CaseSN}`, 
+							Place: `${l.Postal_vil}\n${l.Place}`,
+							Note: "",
+							areaSUM: ""
+						})),
+						columns: [
+							{ header: '順序', dataKey: 'order' },
+							// { header: '主任派工日', dataKey: 'DatePlan' },
+							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '維修地點', dataKey: 'Place' },
+							{ header: '標線完成數量', dataKey: 'Note' },
+							{ header: '總面積', dataKey: 'areaSUM' }
+						],
+						styles: { font: "edukai", valign: 'middle', fontSize: 9, cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.2 },
+						headStyles: { halign: 'center' },
+						columnStyles: {
+							order: { halign: 'center', cellWidth: 6 },
+							CaseNo: { halign: 'center', cellWidth: 26 },
+							Place: { cellWidth: 26, minCellHeight: 18 },
+							areaSUM: { halign: 'center', cellWidth: 12 }
+						},
+						startY: this.pdfSetting.lineHeight * 2 + 25,
+						rowPageBreak: 'avoid'
+					});
+
+					// this.pdfDoc.setLineDashPattern([2, 1], 0);
+					// this.pdfDoc.setDrawColor('#999999');
+					// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
+					// this.pdfDoc.setLineDashPattern([0], 0);
+
+					const splitImgTable = table.reduce((acc, cur) => {
+						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
+
+					for(const [imgIndex, imgTable] of splitImgTable.entries()) {
+						// let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
+						// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
+						// console.log(startY);
+
+						this.pdfDoc.autoTable({ 
+							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
+							// body: [ imgTable.map(l => l.ImgZoomOut) ],
+							body: [ imgTable.map(l => l.CaseNo) ],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.2 },
+							headStyles: { halign: 'center' },
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
+							didDrawCell: (data) => {
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								}
+							},
+							startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
+							pageBreak: 'avoid'
+						});
+					}
 				}
 
+				await this.createPdf_footer();
 				resolve();
 			});
 		},
 		editJobTicket(row) {
 			this.$router.push({
 				name: "jobTicketEdit",
-				params: { contractor: this.contractorNow, orderSN: row.OrderSN },
+				params: { deviceType: this.deviceTypeNow, contractor: this.contractorNow, orderSN: row.OrderSN },
 			});
 		},
 		reissueJobTicket(row) {
@@ -463,16 +578,25 @@ export default {
 			}).then(async(response) => {
 				this.caseSpec = response.data.list;
 				this.imgPreload();
-				this.caseSpec.forEach((l, i) => {
-					l.tonne = Math.round(l.MillingArea*l.MillingDepth*0.01*2.25*10) / 10;
-				})
-				this.createPdf(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });
+
+				switch(this.deviceTypeNow) {
+					case 1:
+						this.caseSpec.forEach((l, i) => {
+							l.tonne = Math.round(l.MillingArea*l.MillingDepth*0.01*2.25*10) / 10;
+						});
+						this.createPdf_AC(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });
+						break;
+					case 4:
+						this.createPdf_MK(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	
+						break;
+				}
 			}).catch(err => this.loading = false);
 		},
 		removeDispatch(row) {
 			this.$confirm(`確認退回 派工單號${row.OrderSN} ?`, "確認", { showClose: false })
 				.then(() => {
 					revokeDispatch({
+						revokeType: this.deviceTypeNow == 4 ? 2 : 1,
 						deviceType: this.deviceTypeNow,
 						dispatchSN: row.OrderSN
 					}).then(response => {

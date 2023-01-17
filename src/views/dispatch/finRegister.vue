@@ -57,7 +57,7 @@
 				<el-col :span="12">完工登錄日期: </el-col>
 				<el-col :span="12">{{ list[0].DateClose }}</el-col>
 			</el-row>
-			<el-row :gutter="5">
+			<el-row v-if="deviceTypeNow == 1" :gutter="5">
 				<el-col :span="8">總面積: </el-col>
 				<el-col :span="4">{{ Math.round(caseSum.areaSUM*10)/10 }}</el-col>
 				<el-col :span="8">總噸數: </el-col>
@@ -96,7 +96,7 @@
 			</el-table-column>
 
 			<el-table-column
-				v-for="(value, key) in headers"
+				v-for="(value, key) in headersFilter"
 				:key="key"
 				:prop="key"
 				:label="value.name"
@@ -106,10 +106,12 @@
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
-					<span v-if="[ 'SCType1Flag' ].includes(column.property)">
-						<span v-if="row[column.property] == '3'">已完工</span>
-						<span v-else-if="row[column.property] == '2'">已派工</span>
-						<el-checkbox v-else v-model="row[column.property]" :true-label="1" :false-label="0" />
+					<span v-if="[ 'IsMarking' ].includes(column.property)">
+						<span v-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ row.DateClose_MK }}完工</span>
+						<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
+						<span v-else-if="row.IsMarkingNow == 1">已分派</span>
+						<el-checkbox v-else-if="!isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
+						<span v-else> - </span>
 					</span>
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
@@ -407,9 +409,15 @@ export default {
 					name: "案件地點",
 					sortable: false
 				},
-				SCType1Flag: {
+				IsMarking: {
 					name: "補繪標線",
-					sortable: false
+					sortable: false,
+					deviceTypeFilter: [ 1, 2, 3 ]
+				},
+				area: {
+					name: "已登錄面積",
+					sortable: false,
+					deviceTypeFilter: [ 4 ]
 				}
 			},
 			imgPreviewUrls: [],
@@ -422,7 +430,7 @@ export default {
 			checkList: [],
 			list: [],
 			tableSelectSum: { areaSUM: 0, tonneSUM: 0 },
-			apiHeader: [ "SerialNo", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail" ],
+			apiHeader: [ "SerialNo", "IsMarking", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail" ],
 			options: {
 				tenderMap: {},
 				guildMap: {},
@@ -453,6 +461,15 @@ export default {
 		};
 	},
 	computed: { 
+		headersFilter() {
+			let headersFilter = {};
+			Object.keys(this.headers).forEach(key => {
+				const props = this.headers[key];
+				if(!props.hasOwnProperty('deviceTypeFilter')) headersFilter[key] = props;
+				else if(props.deviceTypeFilter.includes(this.deviceTypeNow)) headersFilter[key] = props;
+			})
+			return headersFilter
+		},
 		caseSum() {
 			return this.list.reduce((acc, cur) => {
 				acc.areaSUM += cur.MillingArea;
@@ -468,9 +485,10 @@ export default {
 	},
 	mounted() {
 		this.showDetailDialog = false;
-		if (this.$route.query.orderSN && this.$route.query.contractor) {
+		if (this.$route.query.deviceType && this.$route.query.contractor && this.$route.query.orderSN) {
+			this.listQuery.deviceType = Number(this.$route.query.deviceType);
+			this.listQuery.contractor = Number(this.$route.query.contractor);
 			this.listQuery.filterStr = this.$route.query.orderSN;
-			this.listQuery.contractor = this.$route.query.contractor;
 			this.getList();
 		} 
 	},
@@ -540,6 +558,7 @@ export default {
 								? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
 								: JSON.parse(l.SamplingL2Detail);
 
+							this.$set(l, "IsMarkingNow", l.IsMarking);
 							this.$set(l, "edit", false);
 						})
 					}
@@ -605,7 +624,7 @@ export default {
 					if(rowActive.SamplingL2 == 1) rowActive.SamplingL2Detail = JSON.stringify(rowActive.SamplingL2Detail);
 					else delete rowActive.SamplingL2Detail;
 
-					console.log(rowActive);
+					if(!rowActive.uNotes) delete rowActive.uNotes;
 
 					finRegisterSpec({
 						deviceType: this.deviceTypeNow,
@@ -674,6 +693,7 @@ export default {
 			this.$confirm(`確認退回 案件編號${row.CaseNo} 的派工?`, "確認", { showClose: false })
 				.then(() => {
 					revokeDispatch({
+						revokeType: this.deviceTypeNow == 4 ? 2 : 1,
 						deviceType: this.deviceTypeNow,
 						serialNo: row.SerialNo
 					}).then(response => {
