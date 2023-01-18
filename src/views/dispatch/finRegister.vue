@@ -146,9 +146,7 @@
 					<span>{{ row.MillingArea || "-" }}</span>
 				</template>
 			</el-table-column>
-
-			<!-- 道路 -->
-			<el-table-column v-if="deviceTypeNow == '1'" label="完工備註" width="227" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="完工備註" width="227" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row v-for="key in options.workmemoOrder.filter(key => key != 'uNotes')" :gutter="5" :key="key">
@@ -167,7 +165,7 @@
 						</el-row>
 					</span>
 					<el-row :gutter="5" v-else>
-						<span v-if="options.workmemoOrder.filter(key => key != 'uNotes' && row[key] != 0).length != 0">
+						<span v-if="options.workmemoOrder.filter(key => row.uNotes.length > 0 || (key != 'uNotes' && row[key] != 0)).length != 0">
 							<el-row :gutter="5">
 								<span v-for="key in options.workmemoOrder.filter(key => key != 'uNotes' && row[key] != 0)" :key="key">
 									<el-col :span="6">{{ options.workmemo[key] }}</el-col>
@@ -195,6 +193,8 @@
 					</el-row>
 				</template>
 			</el-table-column>
+
+			<!-- 道路 -->
 			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="53" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
@@ -293,13 +293,22 @@
 					<el-input v-model="row.Notes" />
 				</template>
 			</el-table-column>
+
+			<!-- 標線 -->
+			<el-table-column v-if="deviceTypeNow == 4" label="面積" width="80" align="center">
+				<template slot-scope="{ row }">
+					<!-- <el-input v-model="row.MillingArea" size="mini" /> -->
+					<span>{{ row.MillingArea || "-" }}</span>
+				</template>
+			</el-table-column>
 			
 			<el-table-column label="動作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="!isAllCompleted" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
-						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
-						<el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<el-button v-if="!isAllCompleted && [3,4].includes(deviceTypeNow)" type="primary" size="mini" @click="beforeEdit(row)">數量</el-button>
+						<el-button v-else-if="!isAllCompleted" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
+
+						<el-button v-if="[3,4].includes(deviceTypeNow)" size="mini" @click="toggleExpand(row)">詳情</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 					<el-button-group v-else>
@@ -310,7 +319,35 @@
 			</el-table-column>
 
 			<el-table-column type="expand" width="1" align="center">
-				<template slot-scope="props">
+				<template slot-scope="{ row }">
+					<span v-if="row.Content.length == 0">無標線施工資料</span>
+					<el-table
+						v-else
+						empty-text="目前沒有資料"
+						:data="row.Content"
+						border
+						fit
+						highlight-current-row
+						:header-cell-style="{ 'background-color': '#F2F6FC' }"
+						stripe
+						style="width: 100%"
+					>
+						<el-table-column type="index" label="序號" width="50" align="center" /> 
+						<el-table-column
+							v-for="(value, key) in detailHeaders"
+							:key="key"
+							:prop="key"
+							:min-width="['MillingFormula'].includes(key) ? 90 : ['uPrice', 'Number', 'MillingArea'].includes(key) ? 20 : 50"
+							:label="value.name"
+							align="center"
+							:sortable="value.sortable"
+						>
+							<template slot-scope="{ row: rowSpec, column: colSpec }">
+								<span v-if="['ItemPaint', 'ItemType'].includes(colSpec.property)">{{ options[`${colSpec.property}Map`][rowSpec[colSpec.property]].name }}</span>
+								<span v-else>{{ rowSpec[colSpec.property] }}</span>
+							</template>
+						</el-table-column>
+					</el-table>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -332,6 +369,93 @@
 			<div slot="footer" class="dialog-footer">
 				<el-button @click="showImgUploadDialog = false; getList();">取消</el-button>
 				<el-button type="primary" @click="submitUpload()">上傳</el-button>
+			</div>
+		</el-dialog>
+
+		<!-- Dialog: 數量-->
+		<el-dialog width="900px" title="數量" :visible.sync="showEdit">
+			<el-table
+				v-loading="loading"
+				empty-text="目前沒有資料"
+				:data="detailPlus"
+				border
+				fit
+				highlight-current-row
+				:header-cell-style="{ 'background-color': '#F2F6FC' }"
+				stripe
+				style="width: 100%"
+			>
+				<el-table-column type="index" label="序號" width="50" align="center" /> 
+				<el-table-column
+					v-for="(value, key) in detailHeaders"
+					:key="key"
+					:prop="key"
+					:min-width="['MillingFormula'].includes(key) ? 90 : ['uPrice', 'Number', 'MillingArea'].includes(key) ? 20 : 50"
+					:label="value.name"
+					align="center"
+					:sortable="value.sortable"
+				>
+					<template slot-scope="{ row, column }">
+						<span v-if="['MillingFormula','Number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+							<span v-if="row.isAdd || row.isEdit">
+								<el-input v-model="row[column.property]" size="mini" @change="calArea(row)">
+									<el-button slot="append" v-if="row.isEdit" class="btn-dialog" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
+								</el-input>
+							</span>
+							<span v-else>
+								<span>{{ row[column.property] }}</span>
+								<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+									<i class="el-icon-edit" />
+								</el-button>
+							</span>
+						</span>
+						<span v-else-if="['ItemPaint', 'ItemType'].includes(column.property)">
+							<span v-if="row.isAdd">
+								<el-select v-model.number="row[column.property]" placeholder="請選擇" size="mini" popper-class="type-select">
+									<el-option v-for="(val, id) in options[`${column.property}Map`]" :key="id" :value="Number(id)" :label="val.name" />
+								</el-select>
+							</span>
+							<span v-else>{{ options[`${column.property}Map`][row[column.property]].name }}</span>
+						</span>
+						<span v-else>{{ row[column.property] }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column label="動作" align="center" :min-width="30">
+					<template slot-scope="{ row, $index }">
+						<span v-if="row.isAdd">
+							<el-button type="success" size="mini" @click="addItem">新增</el-button>
+						</span>
+						<span v-else-if="row.isEdit">
+							<el-button type="primary" size="mini" @click="row.isEdit = false;">確定</el-button>
+						</span>
+						<span v-else>
+							<el-button type="danger" size="mini" @click="delItem($index)">刪除</el-button>
+						</span>
+					</template>
+				</el-table-column>
+			</el-table>
+			<span v-if="deviceTypeNow == 3">
+				<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount.toLocaleString() }}</div>
+			
+				<div class="detail-note">
+					<el-input placeholder="請輸入" v-model="rowActive.kitNumber">
+						<template slot="prepend">設計施作數量</template>
+					</el-input>
+					<el-input placeholder="請輸入" v-model="rowActive.kitMethod">
+						<template slot="prepend">設計施工方式</template>
+					</el-input>
+					<el-input placeholder="請輸入" v-model="rowActive.kitLabor">
+						<template slot="prepend">設計施作人力</template>
+					</el-input>
+					<el-input placeholder="請輸入" v-model="rowActive.kitNote">
+						<template slot="prepend">備註</template>
+					</el-input>
+				</div>
+			</span>
+
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="showEdit = false">取消</el-button>
+				<el-button type="primary" @click="finishRegisterSpec()">確定</el-button>
 			</div>
 		</el-dialog>
 
@@ -358,7 +482,7 @@
 <script>
 import moment from "moment";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
-import { getTenderMap, getGuildMap } from "@/api/type";
+import { getTenderMap, getGuildMap, getSCTypeItemMap } from "@/api/type";
 import { getFinRegister, finRegisterSpec, finRegister, revokeDispatch } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
@@ -372,6 +496,7 @@ export default {
 			loading: false,
 			showImgViewer: false,
 			showImgUploadDialog: false,
+			showEdit: false,
 			showDetailDialog: true,
 			screenWidth: window.innerWidth,
 			searchRange: "",
@@ -413,22 +538,57 @@ export default {
 					name: "補繪標線",
 					sortable: false,
 					deviceTypeFilter: [ 1, 2, 3 ]
+				}
+			},
+			detailHeaders: {
+				// itemId: {
+				// 	name: "項次",
+				// 	sortable: false
+				// },
+				ItemPaint: {
+					name: "顏料",
+					sortable: false
 				},
-				area: {
-					name: "已登錄面積",
-					sortable: false,
-					deviceTypeFilter: [ 4 ]
+				ItemType: {
+					name: "維修項目",
+					sortable: false
+				},
+				MillingFormula: {
+					name: "公式",
+					sortable: false
+				},
+				// uPrice: {
+				// 	name: "單價",
+				// 	sortable: false,
+				// },
+				Number: {
+					name: "數量",
+					sortable: false
+				},
+				MillingArea: {
+					name: "面積",
+					sortable: false
 				}
 			},
 			imgPreviewUrls: [],
 			imgPreviewIndex: 0,
 			// total: 0,
 			list: [],
-			// detail: [],
+			detail: [],
 			rowActive: {},
+			newItem: {
+				// itemId: "",
+				ItemPaint: 1,
+				ItemType: 1,
+				MillingFormula: "",
+				// uPrice: "",
+				Number: "1",
+				MillingArea: 0,
+				editFormula: true,
+				isAdd: true
+			},
 			checkIndeterminate: false,
 			checkList: [],
-			list: [],
 			tableSelectSum: { areaSUM: 0, tonneSUM: 0 },
 			apiHeader: [ "SerialNo", "IsMarking", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail" ],
 			options: {
@@ -456,7 +616,12 @@ export default {
 						38: "3/8"
 					},
 					unitArr: ["噸", "m3"]
-				}
+				},
+				ItemPaintMap: {
+					1: { name: "熱塑性塑膠" },
+					2: { name: "油漆" }
+				},
+				ItemTypeMap: { }
 			}
 		};
 	},
@@ -476,12 +641,19 @@ export default {
 				acc.tonneSUM += Math.round(cur.MillingArea*cur.MillingDepth*0.01*2.25*10) / 10;
 				return acc;
 			}, { areaSUM: 0, tonneSUM: 0 });
+		},
+		detailPlus() {
+			return [ ...this.detail, this.newItem ]
+		},
+		detailAmount() {
+			return this.detailPlus.reduce((acc, cur) => (acc+=cur.Number*cur.uPrice), 0)
 		}
 	},
 	watch: { },
 	created() { 
 		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
 		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
+		getSCTypeItemMap().then(response => { this.options.ItemTypeMap = response.data.SCType2Map });
 	},
 	mounted() {
 		this.showDetailDialog = false;
@@ -562,6 +734,10 @@ export default {
 									: JSON.parse(l.SamplingL2Detail);
 							}
 
+							if(l.MillingAreaArr) {
+								l.MillingArea = l.MillingAreaArr.reduce((acc, cur) => (acc+cur), 0);
+							}
+
 							this.$set(l, "IsMarkingNow", l.IsMarking);
 							this.$set(l, "edit", false);
 						})
@@ -575,13 +751,15 @@ export default {
 			this.$refs.caseDetail.getDetail(row);
 		},
 		calArea(row) {
-			const replaceObj = { " ": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
+			const replaceObj = { " ": "", "m2": "", "M2": "", "m": "", "M": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
 			"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
+
+			const Number = row.Number || 1;
 			
 			if(row.editFormula) {
 				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
-				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100;
-			} else row.MillingArea = row.MillingLength * row.MillingWidth;
+				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula} * ${Number}`)() * 100) / 100;
+			} else row.MillingArea = row.MillingLength * row.MillingWidth * Number;
 		},
 		formatTime(time) {
 			return time ? moment(time).format("YYYY-MM-DD") : "";
@@ -610,14 +788,55 @@ export default {
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
-		finishRegisterSpec(row) {
+		beforeEdit(row) {
+			this.rowActive = row; 
+			this.loading = true;
+
+			this.detail = this.rowActive.Content;
+			this.detail.forEach(row => {
+				row.editFormula = true;
+				this.$set(row, "isAdd", false);
+				this.$set(row, "isEdit", false);
+			});
+			Object.assign(this.newItem, { ItemPaint: 1, ItemType: 1, MillingFormula: "", Number: "1", MillingArea: 0, editFormula: true, isAdd: true });
+
+			this.loading = false;
+			this.showEdit = true;
+		},
+		async addItem() {
+			if(!this.newItem.ItemPaint || !this.newItem.ItemType || this.newItem.MillingFormula.length == 0 || this.newItem.Number == '0') {
+				const itemText = this.newItem.MillingFormula.length == 0 ? "公式" : "數量";
+				this.$message({
+					message: `請填入正確${itemText}`,
+					type: "error",
+				});
+			} else {
+				this.newItem.isAdd = false;
+				this.detail.push({...this.newItem, isEdit: false});
+
+				Object.assign(this.newItem, { ItemPaint: 1, ItemType: 1, MillingFormula: "", Number: "1", MillingArea: 0, editFormula: true, isAdd: true });
+			}
+		},
+		delItem(index) {
+			this.detail.splice(index, 1);
+		},
+		finishRegisterSpec(row = this.rowActive) {
 			this.$confirm(`確認 案件編號${row.CaseNo} 資料登錄?`, "確認", { showClose: false })
 				.then(() => {
 					row.edit = false;
-					this.calArea(row);
+					this.showEdit = false;
 
 					let rowActive = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
-					if(row.editFormula) {
+					if([1,2].includes(this.deviceTypeNow)) this.calArea(rowActive);
+					else if([3,4].includes(this.deviceTypeNow)) {
+						this.detail.forEach(row => {
+							row.Number == Number(row.Number);
+							for(const key of [ "editFormula", "isAdd", "isEdit" ]) delete row[key];
+						});
+						rowActive.Content = JSON.stringify(this.detail);
+					}
+
+					if(rowActive.editFormula) {
 						delete rowActive.MillingLength;
 						delete rowActive.MillingWidth;
 					} else delete rowActive.MillingFormula;
@@ -655,20 +874,20 @@ export default {
 		finishRegister() {
 			this.$confirm(`確認將 派工單號${this.orderSNNow} 完工登錄?`, "確認", { showClose: false })
 				.then(() => {
-					this.list.forEach(row => this.calArea(row));
-					let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.list)));
-					caseList.forEach(row => {
-						if(row.editFormula) {
-							delete row.MillingLength;
-							delete row.MillingWidth;
-						} else delete row.MillingFormula;
+						let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.list)));
+						caseList.forEach(row => {
+							if([1,2].includes(this.deviceTypeNow)) this.calArea(row);
+							if(row.editFormula) {
+								delete row.MillingLength;
+								delete row.MillingWidth;
+							} else delete row.MillingFormula;
 
-						if(row.SamplingL1 == 1) row.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
-						else delete row.SamplingL1Detail;
+							if(row.SamplingL1 && row.SamplingL1 == 1) row.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
+							else delete row.SamplingL1Detail;
 
-						if(row.SamplingL2 == 1) row.SamplingL2Detail = JSON.stringify(row.SamplingL2Detail);
-						else delete row.SamplingL2Detail;
-					});
+							if(row.SamplingL2 && row.SamplingL2 == 1) row.SamplingL2Detail = JSON.stringify(row.SamplingL2Detail);
+							else delete row.SamplingL2Detail;
+						});
 
 					finRegister({
 						deviceType: this.deviceTypeNow,
@@ -728,19 +947,20 @@ export default {
 // 	border: 1px solid #000
 // 	box-sizing: border-box
 .finish-register
+	.el-select
+		.el-input__inner
+			padding-left: 3px
+			padding-right: 10px
+			text-align: center
+		.el-input__suffix
+			right: 0
+			// margin-right: -5px
+			transform: scale(0.7)
 	.filter-container
 		.filter-item
 			margin-right: 5px
 			.el-select
 				width: 110px
-				.el-input__inner
-					padding-left: 3px
-					padding-right: 10px
-					text-align: center
-				.el-input__suffix
-					right: 0
-					// margin-right: -5px
-					transform: scale(0.7)
 				&.tender-select
 					width: 520px
 			.select-contract
@@ -770,15 +990,6 @@ export default {
 			display: none
 		.item-content
 			color: #C0C4CC
-		.el-select
-			// width: 85px
-			.el-input__inner
-				padding-left: 8px
-				padding-right: 10px
-			.el-input__suffix
-				right: 0
-				margin-right: -3px
-				transform: scale(0.7)
 		.el-checkbox
 			margin-right: 0
 		.el-icon-edit
@@ -792,6 +1003,22 @@ export default {
 			margin-right: -10px
 		.el-icon-error
 			color: #F56C6C
+	.detail-caption
+		width: 100%
+		height: 30px
+		font-size: 16px
+		font-weight: bold
+		text-align: center
+		line-height: 30px
+		&.title
+			padding-bottom: 40px
+			border-bottom: 1px solid #DFE6EC
+		&.amount
+			// border: 1px solid #DFE6EC
+			background-color: #DFE6EC
+			margin: 10px 0 30px 0
+	.detail-note
+		margin-top: 10px
 	.btn-dialog
 		padding: 5px 5px
 	.upload-preview
