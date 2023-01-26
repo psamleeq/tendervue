@@ -149,7 +149,7 @@ export default {
 		async dateWatcher() {
 			const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
 			let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
-			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().endOf("d").toDate();
+			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().subtract(1, "d").endOf("d").toDate();
 			this.daterange = [ dateStart, dateEnd ];
 
 			return new Promise(resolve => resolve());
@@ -168,7 +168,6 @@ export default {
 					const record = json.records.location.filter(loc => loc.station.StationID == "466920")[0];
 					const precipitation = record.stationObsTimes.stationObsTime;
 					const lastIndex = precipitation.length - 1;
-					this.searchRange = `${precipitation[0].Date} - ${precipitation[lastIndex].Date}`;
 					const nowMonth = moment(precipitation[lastIndex].Date).get("month") + 1;
 
 					this.list = [ precipitation.reduce((init, curr) => {
@@ -202,6 +201,8 @@ export default {
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 			}).then(response => {
+				this.searchRange = `${startDate} - ${endDate}`;
+
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
