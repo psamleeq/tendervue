@@ -565,6 +565,120 @@ export default {
 				resolve();
 			});
 		},
+		async createPdf_FA(OrderSN) {
+			return new Promise(async (resolve, reject) => {
+				const pageSize = 4;
+
+				// PDF排版
+				const splitTable = this.caseSpec.reduce((acc, cur) => {
+					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					else acc.push([cur]);
+					return acc;
+				}, [[]]);
+
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+					await this.createPdf_header(OrderSN);
+
+					this.pdfDoc.autoTable({ 
+						head: [[ 
+							'順序', '道管編號', '維修地點',
+							{ content: '日期項目', colSpan: 2 },
+							{ content: '安全設施', colSpan: 2 }, 
+							'工程概述', '補繪標線'
+						]],
+						body: table.map((l, i) => {
+							const dateTitles = [ '案件逾期日', '主任派工日', '預計進場日', '實際完工日' ];
+							const dateContents = [ 'DateDeadline', 'DatePlan' ]
+							const safeTitles = [ '安全錐', '鐵板', '警示燈', '連桿' ]; 
+
+							let rowArr = [];
+							for(let j = 0; j < 4; j++) {
+								let rowSpan = j == 0 ? 4 : 1;
+								rowArr.push({ 
+									order: { rowSpan, content: (i+1) + pageSize*pageIndex }, 
+									// DatePlan: l.DatePlan, 
+									CaseNo: { rowSpan, content: `${l.CaseNo}\n${l.CaseSN}` }, 
+									Place: { rowSpan, content: `${l.Postal_vil}\n${l.Place}` },
+									dateTitle: { content: dateTitles[j] },
+									dateContent: { content: dateContents[j] != undefined ? l[dateContents[j]] : "" },
+									safeTitle: { content: safeTitles[j] },
+									Notes: { rowSpan, content: l.Notes },
+									Marker:  { rowSpan, content: "" }
+								})
+							}
+							return rowArr;
+						}).flat(),
+						columns: [
+							{ header: '順序', dataKey: 'order' },
+							// { header: '主任派工日', dataKey: 'DatePlan' },
+							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '維修地點', dataKey: 'Place' },
+							{ header: '日期項目1', dataKey: 'dateTitle' },
+							{ header: '日期項目2', dataKey: 'dateContent' },
+							{ header: '安全設施1', dataKey: 'safeTitle' },
+							{ header: '安全設施2', dataKey: 'safeContent' },
+							{ header: '工程概述', dataKey: 'Notes' },
+							{ header: '補繪標線', dataKey: 'Marker' }
+						],
+						styles: { font: "edukai", valign: 'middle', fontSize: 9, cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.2 },
+						headStyles: { halign: 'center' },
+						columnStyles: {
+							order: { halign: 'center', cellWidth: 6 },
+							CaseNo: { halign: 'center', cellWidth: 26 },
+							Place: { cellWidth: 26, minCellHeight: 18 },
+							dateTitle: { halign: 'center', cellWidth: 18 },
+							dateContent: { halign: 'center', cellWidth: 20 },
+							safeTitle: { halign: 'center', cellWidth: 12 },
+							safeContent: { halign: 'center', cellWidth: 10 },
+							Marker: { halign: 'center', cellWidth: 10 }
+						},
+						startY: this.pdfSetting.lineHeight * 2 + 25,
+						rowPageBreak: 'avoid'
+					});
+
+					// this.pdfDoc.setLineDashPattern([2, 1], 0);
+					// this.pdfDoc.setDrawColor('#999999');
+					// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
+					// this.pdfDoc.setLineDashPattern([0], 0);
+
+					const splitImgTable = table.reduce((acc, cur) => {
+						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
+
+					for(const [ imgIndex, imgTable ] of splitImgTable.entries()) {
+						// let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
+						// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
+						// console.log(startY);
+
+						this.pdfDoc.autoTable({ 
+							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
+							// body: [ imgTable.map(l => l.ImgZoomOut) ],
+							body: [ imgTable.map(l => l.CaseNo) ],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.2 },
+							headStyles: { halign: 'center' },
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
+							didDrawCell: (data) => {
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								}
+							},
+							startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
+							pageBreak: 'avoid'
+						});
+					}
+				}
+
+				await this.createPdf_footer();
+				resolve();
+			});
+		},
 		async createPdf_MK(OrderSN) {
 			return new Promise(async (resolve, reject) => {
 				const pageSize = 6;
@@ -676,6 +790,13 @@ export default {
 						break;
 					case 2:
 						this.createPdf_HR(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	
+						break;
+					case 3:
+						this.caseSpec.forEach((l, i) => {
+							l.DatePlan = this.formatDate(l.DatePlan);
+							l.DateDeadline = (l.DateDeadline == null) ? "" : this.formatDate(l.DateDeadline);
+						});
+						this.createPdf_FA(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	
 						break;
 					case 4:
 						this.createPdf_MK(row.OrderSN).then(() => { this.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	

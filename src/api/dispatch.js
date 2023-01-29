@@ -9,34 +9,52 @@ export function getCaseDetail(query) {
 	})
 }
 
+//---------------------------------------
 // 套組列表
-// export function getCostKitV0(query) {
-// 	return request({
-// 		url: '/dispatchV0/kit',
-// 		method: 'get',
-// 		params: query
-// 	})
-// }
-
-// 套組細項
-
-// 主任派工
-export function getDispatchList(query) {
+export function getCostKit(query) {
 	return request({
-		url: '/dispatch/list',
+		url: '/dispatch/kit',
 		method: 'get',
 		params: query
 	})
 }
 
-export function setDispatchList(data) {
+// 套組細項
+export function getCostKitDetail(query) {
 	return request({
-		url: '/dispatch/list',
+		url: '/dispatch/kitDetail',
+		method: 'get',
+		params: query
+	})
+}
+
+//---------------------------------------
+// 主任派工
+export function getDispatch(query) {
+	return request({
+		url: '/dispatch/plan',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setDispatch(data) {
+	return request({
+		url: '/dispatch/plan',
 		method: 'post',
 		data
 	})
 }
 
+export function setDispatchSpec(data) {
+	return request({
+		url: `/dispatch/planSpec`,
+		method: 'post',
+		data
+	})
+}
+
+//---------------------------------------
 // 製作派工單
 export function getJobTicket(query) {
 	return request({
@@ -62,6 +80,7 @@ export function revokeDispatch(data) {
 	})
 }
 
+//---------------------------------------
 // 修改派工單
 export function editJobTicket(data) {
 	return request({
@@ -71,6 +90,7 @@ export function editJobTicket(data) {
 	})
 }
 
+//---------------------------------------
 // 完工登錄
 export function getFinRegister(query) {
 	return request({
@@ -96,6 +116,7 @@ export function finRegisterSpec(data) {
 	})
 }
 
+//---------------------------------------
 // 派工單管理
 export function getJobTicketList(query) {
 	return request({

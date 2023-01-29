@@ -274,7 +274,7 @@ export default {
 			return [ ...this.detail, this.newItem ]
 		},
 		detailAmount() {
-			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*cur.uPrice), 0)
+			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.uPrice)), 0)
 		}
 	},
 	watch: { },
@@ -350,7 +350,7 @@ export default {
 				Object.assign(rowActive, { itemName: "", unit: "", uPrice: "" });
 
 				getKitItemMap({
-					dteamSN: this.listQuery.dteamSN,
+					tenderId: this.listQuery.dteamSN,
 					itemId: rowActive.itemId,
 				}).then((response) => {
 					if (response.data.item == undefined) {

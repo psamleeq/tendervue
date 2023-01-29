@@ -56,6 +56,10 @@
 						<span v-if="row.MillingFormula != '0'">{{ row.MillingFormula }}</span>
 						<span v-else>{{ row.MillingLength }} * {{ row.MillingWidth }}</span>
 					</span>
+					<span v-else-if="[ 'IsPressing' ].includes(column.property)">
+						<i v-if="row.IsPressing == 1" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+						<span v-else> - </span>
+					</span>
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
 					</span>
@@ -65,7 +69,7 @@
 			<el-table-column label="動作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group>
-						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
+						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row, 'selectTable')">詳情</el-button>
 						<!-- <el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button> -->
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
@@ -73,7 +77,30 @@
 			</el-table-column>
 
 			<el-table-column type="expand" width="1" align="center">
-				<template slot-scope="props">
+				<template slot-scope="{ row }">
+					<span v-if="row.Content.length == 0">目前沒有資料</span>
+					<el-table
+						v-else
+						empty-text="目前沒有資料"
+						:data="row.Content"
+						border
+						fit
+						highlight-current-row
+						:header-cell-style="{ 'background-color': '#F2F6FC' }"
+						stripe
+						style="width: 100%"
+					>
+						<el-table-column type="index" label="序號" width="50" align="center" /> 
+						<el-table-column
+							v-for="(value, key) in detailHeaders"
+							:key="key"
+							:prop="key"
+							:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
+							:label="value.name"
+							align="center"
+							:sortable="value.sortable"
+						/>
+					</el-table>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -136,6 +163,10 @@
 						<span v-if="row.MillingFormula != '0'">{{ row.MillingFormula }}</span>
 						<span v-else>{{ row.MillingLength }} * {{ row.MillingWidth }}</span>
 					</span>
+					<span v-else-if="[ 'IsPressing' ].includes(column.property)">
+						<i v-if="row.IsPressing == 1" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+						<span v-else> - </span>
+					</span>
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
 					</span>
@@ -145,7 +176,7 @@
 			<el-table-column label="動作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group>
-						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
+						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row, 'confirmTable')">詳情</el-button>
 						<!-- <el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button> -->
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
@@ -153,7 +184,30 @@
 			</el-table-column>
 
 			<el-table-column type="expand" width="1" align="center">
-				<template slot-scope="props">
+				<template slot-scope="{ row }">
+					<span v-if="row.Content.length == 0">目前沒有資料</span>
+					<el-table
+						v-else
+						empty-text="目前沒有資料"
+						:data="row.Content"
+						border
+						fit
+						highlight-current-row
+						:header-cell-style="{ 'background-color': '#F2F6FC' }"
+						stripe
+						style="width: 100%"
+					>
+						<el-table-column type="index" label="序號" width="50" align="center" /> 
+						<el-table-column
+							v-for="(value, key) in detailHeaders"
+							:key="key"
+							:prop="key"
+							:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
+							:label="value.name"
+							align="center"
+							:sortable="value.sortable"
+						/>
+					</el-table>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -285,6 +339,28 @@ export default {
 					name: "工程概述",
 					sortable: false,
 					deviceTypeFilter: [ 3 ]
+				}
+			},
+			detailHeaders: {
+				itemId: {
+					name: "項次",
+					sortable: false,
+				},
+				itemName: {
+					name: "工程項目名稱",
+					sortable: false,
+				},
+				unit: {
+					name: "單位",
+					sortable: false,
+				},
+				uPrice: {
+					name: "單價",
+					sortable: false,
+				},
+				number: {
+					name: "數量",
+					sortable: false,
 				}
 			},
 			// total: 0,
@@ -424,8 +500,8 @@ export default {
 
 			this.resetOrder();
 		},
-		toggleExpand(row) {
-			this.$refs.confirmTable.toggleRowExpansion(row)
+		toggleExpand(row, tableName) {
+			this.$refs[tableName].toggleRowExpansion(row);
 		},
 		changeOrder(row) {
 			this.tableSelect.splice(row.OrderIndex - 1, 1);
@@ -472,6 +548,7 @@ export default {
 						this.list.unshift(...this.tableSelect);
 						this.list.forEach((l, i) => {
 							l.DatePlan = this.formatDate(l.DatePlan);
+							l.DateDeadline = (l.DateDeadline == null) ? "" : this.formatDate(l.DateDeadline);
 							this.$set(l, "isAssign", l.OrderIndex != undefined);
 							this.$set(l, "index", i+1);
 							if(l.OrderIndex == undefined) {
@@ -503,6 +580,9 @@ export default {
 						break;
 					case 2:
 						this.createPdf_HR().then(() => resolve());
+						break;
+					case 3:
+						this.createPdf_FA().then(() => resolve());
 						break;
 					case 4:
 						this.createPdf_MK().then(() => resolve());	
@@ -739,6 +819,120 @@ export default {
 					}, [[]]);
 
 					for(const [imgIndex, imgTable] of splitImgTable.entries()) {
+						this.pdfDoc.autoTable({ 
+							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
+							// body: [ imgTable.map(l => l.ImgZoomOut) ],
+							body: [ imgTable.map(l => l.CaseNo) ],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.2 },
+							headStyles: { halign: 'center' },
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 45, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 }, 
+							didDrawCell: (data) => {
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
+								}
+							},
+							startY: this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0),
+							pageBreak: 'avoid'
+						});
+					}
+				}
+
+				await this.createPdf_footer();
+				resolve();
+			});
+		},
+		async createPdf_FA() {
+			return new Promise(async (resolve, reject) => {
+				const pageSize = 4;
+
+				// PDF排版
+				const splitTable = this.tableSelect.reduce((acc, cur) => {
+					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					else acc.push([cur]);
+					return acc;
+				}, [[]]);
+
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+					await this.createPdf_header();
+
+					this.pdfDoc.autoTable({ 
+						head: [[ 
+							'順序', '道管編號', '維修地點',
+							{ content: '日期項目', colSpan: 2 },
+							{ content: '安全設施', colSpan: 2 }, 
+							'工程概述', '補繪標線'
+						]],
+						body: table.map((l, i) => {
+							const dateTitles = [ '案件逾期日', '主任派工日', '預計進場日', '實際完工日' ];
+							const dateContents = [ 'DateDeadline', 'DatePlan' ]
+							const safeTitles = [ '安全錐', '鐵板', '警示燈', '連桿' ]; 
+
+							let rowArr = [];
+							for(let j = 0; j < 4; j++) {
+								let rowSpan = j == 0 ? 4 : 1;
+								rowArr.push({ 
+									order: { rowSpan, content: (i+1) + pageSize*pageIndex }, 
+									// DatePlan: l.DatePlan, 
+									CaseNo: { rowSpan, content: `${l.CaseNo}\n${l.CaseSN}` }, 
+									Place: { rowSpan, content: `${l.Postal_vil}\n${l.Place}` },
+									dateTitle: { content: dateTitles[j] },
+									dateContent: { content: dateContents[j] != undefined ? l[dateContents[j]] : "" },
+									safeTitle: { content: safeTitles[j] },
+									Notes: { rowSpan, content: l.Notes },
+									Marker:  { rowSpan, content: "" }
+								})
+							}
+							return rowArr;
+						}).flat(),
+						columns: [
+							{ header: '順序', dataKey: 'order' },
+							// { header: '主任派工日', dataKey: 'DatePlan' },
+							{ header: '道管編號', dataKey: 'CaseNo' },
+							{ header: '維修地點', dataKey: 'Place' },
+							{ header: '日期項目1', dataKey: 'dateTitle' },
+							{ header: '日期項目2', dataKey: 'dateContent' },
+							{ header: '安全設施1', dataKey: 'safeTitle' },
+							{ header: '安全設施2', dataKey: 'safeContent' },
+							{ header: '工程概述', dataKey: 'Notes' },
+							{ header: '補繪標線', dataKey: 'Marker' }
+						],
+						styles: { font: "edukai", valign: 'middle', fontSize: 9, cellPadding: { top: 1, right: 0.8, bottom: 1, left: 0.8 }, lineWidth: 0.2 },
+						headStyles: { halign: 'center' },
+						columnStyles: {
+							order: { halign: 'center', cellWidth: 6 },
+							CaseNo: { halign: 'center', cellWidth: 26 },
+							Place: { cellWidth: 26, minCellHeight: 18 },
+							dateTitle: { halign: 'center', cellWidth: 18 },
+							dateContent: { halign: 'center', cellWidth: 20 },
+							safeTitle: { halign: 'center', cellWidth: 12 },
+							safeContent: { halign: 'center', cellWidth: 10 },
+							Marker: { halign: 'center', cellWidth: 10 }
+						},
+						startY: this.pdfSetting.lineHeight * 2 + 25,
+						rowPageBreak: 'avoid'
+					});
+
+					// this.pdfDoc.setLineDashPattern([2, 1], 0);
+					// this.pdfDoc.setDrawColor('#999999');
+					// this.pdfDoc.line( 10, this.pdfDoc.lastAutoTable.finalY + 10, width - 10, this.pdfDoc.lastAutoTable.finalY + 10);
+					// this.pdfDoc.setLineDashPattern([0], 0);
+
+					const splitImgTable = table.reduce((acc, cur) => {
+						if(acc[acc.length-1].length < 4) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
+
+					for(const [ imgIndex, imgTable ] of splitImgTable.entries()) {
+						// let startY = this.pdfDoc.lastAutoTable.finalY + 8 * Number(imgIndex == 0);
+						// if(height - this.pdfDoc.lastAutoTable.finalY <= 70) startY = this.pdfDoc.lastAutoTable.finalY + 60;
+						// console.log(startY);
+
 						this.pdfDoc.autoTable({ 
 							head: [ imgTable.map((l, i) => (`${(i+1) + 4*imgIndex + 8*pageIndex} - ${l.CaseNo}`)) ],
 							// body: [ imgTable.map(l => l.ImgZoomOut) ],

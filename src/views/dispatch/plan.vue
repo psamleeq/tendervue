@@ -147,19 +147,24 @@
 			<!-- 設施 -->
 			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
 				<template slot-scope="{ row }">
-					<el-checkbox v-model="row.isPressing" />
+					<el-checkbox v-if="!filterNow" v-model="row.IsPressing" :true-label="1" :false-label="0" />
+					<span v-else>
+						<i v-if="row.IsPressing == 1" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+						<span v-else> - </span>
+					</span>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
 				<template slot-scope="{ row }">
-					<el-input v-model="row.Notes" />
+					<el-input v-if="!filterNow" v-model="row.Notes" />
+					<span v-else>{{ row.Notes || " - " }}</span>
 				</template>
 			</el-table-column>
 
-			<el-table-column :label="filterNow ? '主任派工日期' : '是否退件'" align="center">
+			<el-table-column :label="filterNow ? '主任派工日期' : '是否退件'" width="110" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.IsReturn"> 前ㄧ分派時間: </span>
-					<span>{{ row.DatePlan || "-" }}</span>
+					<span>{{ row.DatePlanBefore || "-" }}</span>
 				</template>
 			</el-table-column>
 			
@@ -167,19 +172,131 @@
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
-						<!-- <el-button v-if="deviceTypeNow == 3" type="success" size="mini" @click="beforeEdit(row)">設計</el-button> -->
+						<el-button v-if="deviceTypeNow == 3 && !filterNow" :type=" row.Content.length == 0 ? 'success' : 'info'" :plain="row.Content.length > 0" size="mini" @click="beforeEdit(row)">設計</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 
 			<el-table-column type="expand" width="1" align="center">
-				<template slot-scope="props">
+				<template slot-scope="{ row }">
+					<span v-if="row.Content.length == 0">目前沒有資料</span>
+					<el-table
+						v-else
+						empty-text="目前沒有資料"
+						:data="row.Content"
+						border
+						fit
+						highlight-current-row
+						:header-cell-style="{ 'background-color': '#F2F6FC' }"
+						stripe
+						style="width: 100%"
+					>
+						<el-table-column type="index" label="序號" width="50" align="center" /> 
+						<el-table-column
+							v-for="(value, key) in detailHeaders"
+							:key="key"
+							:prop="key"
+							:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
+							:label="value.name"
+							align="center"
+							:sortable="value.sortable"
+						/>
+					</el-table>
 				</template>
 			</el-table-column>
 		</el-table>
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
+
+		<!-- Dialog: 計價套組-->
+		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false">
+			<div class="filter-container">
+				<el-select class="filter-item" v-model.number="listQuery.kitSN" filterable placeholder="請選擇" popper-class="type-select" style="width: 500px">
+					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)" :label="kit.kitName" />
+				</el-select>
+				<el-button class="filter-item" type="success" size="mini" @click="importKit()">匯入套組</el-button>
+			</div>
+			<el-table
+				v-loading="loading"
+				empty-text="目前沒有資料"
+				:data="detailPlus"
+				border
+				fit
+				highlight-current-row
+				:header-cell-style="{ 'background-color': '#F2F6FC' }"
+				stripe
+				style="width: 100%"
+			>
+				<el-table-column
+					v-for="(value, key) in detailHeaders"
+					:key="key"
+					:prop="key"
+					:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 20 : 30"
+					:label="value.name"
+					align="center"
+					:sortable="value.sortable"
+				>
+					<template slot-scope="{ row, column }">
+						<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+							<span v-if="row.isAdd || row.isEdit">
+								<el-input v-model="row[column.property]" size="mini" style="width: 55px"/>
+								<el-button v-if="row.isEdit" class="btn-dialog" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
+							</span>
+							<span v-else>
+								<span>{{ row[column.property] }}</span>
+								<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+									<i class="el-icon-edit" />
+								</el-button>
+							</span>
+						</span>
+						<span v-else-if="['itemId'].includes(column.property) && row.isAdd">
+							<span v-if="row.isAdd || row.isEdit">
+								<el-input v-model="row[column.property]" size="mini" />
+								<el-tooltip v-if="column.property == 'itemId' && row[column.property].length != 0" effect="dark" placement="bottom" content="點選代入">
+									<el-button type="text" @click="getKitItem(row)">
+										<i class="el-icon-check" style="color: #67C23A" />
+									</el-button>
+								</el-tooltip>
+							</span>
+						</span>
+						<span v-else>{{ row[column.property] }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column label="動作" align="center" :min-width="30">
+					<template slot-scope="{ row, $index }">
+						<span v-if="row.isAdd">
+							<el-button type="success" size="mini" @click="addKitItem">新增</el-button>
+						</span>
+						<span v-else-if="row.isEdit">
+							<el-button type="primary" size="mini" @click="row.isEdit = false;">確定</el-button>
+						</span>
+						<span v-else>
+							<el-button type="danger" size="mini" @click="delKitItem($index)">刪除</el-button>
+						</span>
+					</template>
+				</el-table-column>
+			</el-table>
+			<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount.toLocaleString() }}</div>
+			<div class="detail-note">
+				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitNumber">
+					<template slot="prepend">設計施作數量</template>
+				</el-input>
+				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitMethod">
+					<template slot="prepend">設計施工方式</template>
+				</el-input>
+				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitLabor">
+					<template slot="prepend">設計施作人力</template>
+				</el-input>
+				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitNote">
+					<template slot="prepend">備註</template>
+				</el-input>
+			</div>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="cleanDetail()">取消</el-button>
+				<el-button type="primary" @click="dispatchSpec()">確定</el-button>
+			</div>
+		</el-dialog>
 
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
@@ -194,8 +311,8 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getGuildMap } from "@/api/type";
-import { getDispatchList, setDispatchList } from "@/api/dispatch";
+import { getTenderMap, getKitItemMap, getGuildMap } from "@/api/type";
+import { getDispatch, setDispatch, setDispatchSpec, getCostKit, getCostKitDetail } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -226,6 +343,7 @@ export default {
 				tenderId: null,
 				deviceType: 1,
 				contractor: null,
+				kitSN: null
 				// pageCurrent: 1,
 				// pageSize: 50,
 			},
@@ -275,13 +393,54 @@ export default {
 				// 	sortable: false
 				// },
 			},
-			// total: 0,
+			detailHeaders: {
+				itemId: {
+					name: "項次",
+					sortable: false,
+				},
+				itemName: {
+					name: "工程項目名稱",
+					sortable: false,
+				},
+				unit: {
+					name: "單位",
+					sortable: false,
+				},
+				uPrice: {
+					name: "單價",
+					sortable: false,
+				},
+				number: {
+					name: "數量",
+					sortable: false,
+				}
+			},
+			total: 0,
 			list: [],
 			detail: [],
+			newKit: {
+				kitName: ""
+			},
+			newItem: {
+				itemId: "",
+				itemName: "",
+				unit: "",
+				uPrice: "",
+				number: 0,
+				isAdd: true
+			},
+			rowActive: {
+				KitNotes: {
+					kitNumber: "",
+					kitMethod: "",
+					kitLabor: "",
+					kitNote: ""
+				}
+			},
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect: [],
-			apiHeader: [ "SerialNo", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea" ],
+			apiHeader: [ "SerialNo", "RestoredId", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes" ],
 			options: {
 				tenderMap: {},
 				guildMap: {},
@@ -295,11 +454,19 @@ export default {
 					1: "合約",
 					2: "通報單號",
 					3: "地點(關鍵字)"
-				}
+				},
+				kitArr: []
 			}
 		};
 	},
-	computed: {	},
+	computed: {
+		detailPlus() {
+			return [ ...this.detail, this.newItem ]
+		},
+		detailAmount() {
+			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.uPrice)), 0)
+		}
+	},
 	watch: { },
 	created() { 
 		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
@@ -347,7 +514,7 @@ export default {
 			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
-			getDispatchList({
+			getDispatch({
 				filter: this.listQuery.filter,
 				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
 				reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
@@ -372,6 +539,7 @@ export default {
 					this.list.forEach(l => {
 						l.Contractor = this.options.guildMap[l.Contractor];
 						l.DatePlan = this.formatTime(l.DatePlan);
+						l.DatePlanBefore = this.formatTime(l.DatePlanBefore);
 						l.DateDeadline = this.formatTime(l.DateDeadline);
 						this.$set(l, "detailTime", false);
 						this.$set(l, "editFormula", l.MillingFormula != '0');
@@ -395,22 +563,160 @@ export default {
 			let caseFilterList = [];
 			for(const row of list) {
 				let caseItem = {};
-				for(const key of this.apiHeader) caseItem[key] = row[key];
+				for(const key of this.apiHeader) if(row[key]) caseItem[key] = row[key];
 				caseFilterList.push(caseItem);
 			}
 
 			return caseFilterList;
 		},
+		beforeEdit(row) {
+			this.rowActive = JSON.parse(JSON.stringify(row)); 
+			this.loading = true;
+
+			this.detail = this.rowActive.Content;
+			this.detail.forEach(row => {
+				this.$set(row, "isAdd", false);
+				this.$set(row, "isEdit", false);
+			});
+			Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isAdd: true });
+			
+			getCostKit({
+				tenderId: this.rowActive.DTeam,
+				pageCurrent: 1,
+				pageSize: 999999
+			}).then(response => {
+				this.options.kitArr = response.data.list;
+				this.loading = false;
+				this.showEdit = true;
+			}).catch(err => this.loading = false);
+		},
+		cleanDetail() {
+			this.detail = [];
+			this.rowActive = {
+				KitNotes: {
+					kitNumber: "",
+					kitMethod: "",
+					kitLabor: "",
+					kitNote: ""
+				}
+			};
+			this.showEdit = false
+		},
+		importKit() {
+			this.loading = true;
+			getCostKitDetail({
+				kitSN: this.listQuery.kitSN,
+			}).then(response => {
+				this.detail.push(...response.data.list);
+				this.detail.forEach(l => {
+					this.$set(l, "isEdit", false);
+				});
+
+				this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.SerialNo == this.listQuery.kitSN)).map(kit => ({ kitNumber: kit.kitNumber, kitMethod: kit.kitMethod, kitLabor: kit.kitLabor, kitNote: kit.kitNote }))[0];
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
+		async getKitItem(row) {
+			return new Promise(resolve => {
+				this.loading = true;
+				const rowActive = row.SerialNo != undefined ? row : this.newItem;
+				Object.assign(rowActive, { itemName: "", unit: "", uPrice: "" });
+
+				getKitItemMap({
+					tenderId: String(this.rowActive.DTeam),
+					itemId: rowActive.itemId,
+				}).then((response) => {
+					if (response.data.item == undefined) {
+						this.$message({
+							message: "查無項次資料",
+							type: "error",
+						});
+					} else {
+						Object.assign(rowActive, response.data.item);
+					}
+					this.loading = false;
+					resolve();
+				}).catch(err => { this.loading = false; resolve(); });
+			})
+		},
+		async addKitItem() {
+			if(!this.newItem.itemId) {
+				this.$message({
+					message: "請填入正確項次",
+					type: "error",
+				});
+
+				return;
+			}
+
+			await this.getKitItem(this.newItem);
+
+			if(!this.newItem.itemName || !this.newItem.unit || !this.newItem.uPrice || this.newItem.number == 0) {
+				const itemText = this.newItem.number == 0 ? "數量" : "項次";
+				this.$message({
+					message: `請填入正確${itemText}`,
+					type: "error",
+				});
+			} else {
+				this.newItem.isAdd = false;
+				this.detail.push({...this.newItem, isEdit: false});
+
+				Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isAdd: true });
+			}
+		},
+		delKitItem(index) {
+			this.detail.splice(index, 1);
+		},
+		dispatchSpec(row = this.rowActive) {
+			this.$confirm(`確認登錄 案件編號${row.CaseNo} 設計數量?`, "確認", { showClose: false })
+				.then(() => {
+					this.loading = true;
+					this.showEdit = false;
+					
+					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
+					if([1,2].includes(this.deviceTypeNow)) this.calArea(caseSpec);
+					else if([3,4].includes(this.deviceTypeNow)) {
+						this.detail.forEach(row => {
+							row.Number == Number(row.Number);
+							for(const key of [ "isAdd", "isEdit" ]) delete row[key];
+						});
+						caseSpec.Content = JSON.stringify(this.detail);
+						if(this.deviceTypeNow == 4) caseSpec.KitNotes = JSON.stringify(row.KitNotes);
+						if(!row.Notes || row.Notes.length == 0) caseSpec.Notes = row.KitNotes.kitMethod;
+					}
+
+					setDispatchSpec({
+						deviceType: this.listQuery.deviceType,
+						caseSpec
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "登錄成功",
+								type: "success",
+							});
+
+							this.getList();
+						} 
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					})
+				}).catch(err => {});
+		},
 		dispatch() {
 			this.$confirm(`確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 分派給 ${ this.options.guildMap[this.listQuery.contractor] }?`, "確認", { showClose: false })
 				.then(() => {
 					this.loading = true;
-					this.tableSelect.forEach(row => this.calArea(row));
+					let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.tableSelect)));
 
-					setDispatchList({
+					caseList.forEach(row => {
+						if([1,2].includes(this.deviceTypeNow)) this.calArea(caseSpec);
+					});
+
+					setDispatch({
 						contractor: this.listQuery.contractor,
 						deviceType: this.listQuery.deviceType,
-						caseList: this.caseFilterList(this.tableSelect)
+						caseList
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
 							this.$message({
@@ -473,12 +779,26 @@ export default {
 					padding-left: 10px
 					text-align: left
 	.el-table
-		.input-length, .input-width
-			max-width: 60px
+		.el-input__inner
+			padding: 0 5px
 		.btn-tag
 			cursor: pointer
 		.el-table__expand-icon
 			display: none
+	.detail-caption
+		width: 100%
+		height: 30px
+		font-size: 16px
+		font-weight: bold
+		text-align: center
+		line-height: 30px
+		&.title
+			padding-bottom: 40px
+			border-bottom: 1px solid #DFE6EC
+		&.amount
+			// border: 1px solid #DFE6EC
+			background-color: #DFE6EC
+			margin: 10px 0 30px 0
 	.btn-dialog
 		padding: 5px 5px
 </style>

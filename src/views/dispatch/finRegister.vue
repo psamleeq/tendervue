@@ -101,7 +101,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['SCType1Flag'].includes(key) ? 50 : null"
+				:width="['SCType1Flag', 'IsMarking'].includes(key) ? 50 : null"
 				:min-width="['Place'].includes(key) ? 80 : null"
 				:sortable="value.sortable"
 			>
@@ -285,7 +285,8 @@
 			<!-- 設施 -->
 			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
 				<template slot-scope="{ row }">
-					<el-checkbox v-model="row.IsPressing" />
+					<i v-if="row.IsPressing == 1" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+					<span v-else> - </span>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
@@ -320,7 +321,7 @@
 
 			<el-table-column type="expand" width="1" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.Content.length == 0">無標線施工資料</span>
+					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<el-table
 						v-else
 						empty-text="目前沒有資料"
@@ -334,16 +335,16 @@
 					>
 						<el-table-column type="index" label="序號" width="50" align="center" /> 
 						<el-table-column
-							v-for="(value, key) in detailHeaders"
+							v-for="(value, key) in detailHeaders[deviceTypeNow]"
 							:key="key"
 							:prop="key"
-							:min-width="['MillingFormula'].includes(key) ? 90 : ['uPrice', 'Number', 'MillingArea'].includes(key) ? 20 : 50"
+							:min-width="tableMinWidth(key)"
 							:label="value.name"
 							align="center"
 							:sortable="value.sortable"
 						>
 							<template slot-scope="{ row: rowSpec, column: colSpec }">
-								<span v-if="['ItemPaint', 'ItemType'].includes(colSpec.property)">{{ options[`${colSpec.property}Map`][rowSpec[colSpec.property]].name }}</span>
+								<span v-if="['itemPaint', 'itemType'].includes(colSpec.property)">{{ options[`${colSpec.property}Map`][rowSpec[colSpec.property]].name }}</span>
 								<span v-else>{{ rowSpec[colSpec.property] }}</span>
 							</template>
 						</el-table-column>
@@ -374,6 +375,12 @@
 
 		<!-- Dialog: 數量-->
 		<el-dialog width="900px" title="數量" :visible.sync="showEdit">
+			<div v-if="deviceTypeNow == 3" class="filter-container">
+				<el-select class="filter-item" v-model.number="listQuery.kitSN" filterable placeholder="請選擇" popper-class="type-select" style="width: 500px">
+					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)" :label="kit.kitName" />
+				</el-select>
+				<el-button class="filter-item" type="success" size="mini" @click="importKit()">匯入套組</el-button>
+			</div>
 			<el-table
 				v-loading="loading"
 				empty-text="目前沒有資料"
@@ -387,16 +394,41 @@
 			>
 				<el-table-column type="index" label="序號" width="50" align="center" /> 
 				<el-table-column
-					v-for="(value, key) in detailHeaders"
+					v-for="(value, key) in detailHeaders[deviceTypeNow]"
 					:key="key"
 					:prop="key"
-					:min-width="['MillingFormula'].includes(key) ? 90 : ['uPrice', 'Number', 'MillingArea'].includes(key) ? 20 : 50"
+					:min-width="tableMinWidth(key)"
 					:label="value.name"
 					align="center"
 					:sortable="value.sortable"
 				>
 					<template slot-scope="{ row, column }">
-						<span v-if="['MillingFormula','Number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+						<!-- 設施 -->
+						<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+							<span v-if="row.isAdd || row.isEdit">
+								<el-input v-model="row[column.property]" size="mini" style="width: 55px"/>
+								<el-button v-if="row.isEdit" class="btn-dialog" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
+							</span>
+							<span v-else>
+								<span>{{ row[column.property] }}</span>
+								<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+									<i class="el-icon-edit" />
+								</el-button>
+							</span>
+						</span>
+						<span v-else-if="['itemId'].includes(column.property) && row.isAdd">
+							<span v-if="row.isAdd || row.isEdit">
+								<el-input v-model="row[column.property]" size="mini" />
+								<el-tooltip v-if="column.property == 'itemId' && row[column.property].length != 0" effect="dark" placement="bottom" content="點選代入">
+									<el-button type="text" @click="getKitItem(row)">
+										<i class="el-icon-check" style="color: #67C23A" />
+									</el-button>
+								</el-tooltip>
+							</span>
+						</span>
+
+						<!-- 標線 -->
+						<span v-else-if="['MillingFormula','number'].includes(column.property)" style="display: inline-flex; align-items: center;">
 							<span v-if="row.isAdd || row.isEdit">
 								<el-input v-model="row[column.property]" size="mini" @change="calArea(row)">
 									<el-button slot="append" v-if="row.isEdit" class="btn-dialog" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
@@ -409,7 +441,7 @@
 								</el-button>
 							</span>
 						</span>
-						<span v-else-if="['ItemPaint', 'ItemType'].includes(column.property)">
+						<span v-else-if="['itemPaint', 'itemType'].includes(column.property)">
 							<span v-if="row.isAdd">
 								<el-select v-model.number="row[column.property]" placeholder="請選擇" size="mini" popper-class="type-select">
 									<el-option v-for="(val, id) in options[`${column.property}Map`]" :key="id" :value="Number(id)" :label="val.name" />
@@ -438,23 +470,23 @@
 				<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount.toLocaleString() }}</div>
 			
 				<div class="detail-note">
-					<el-input placeholder="請輸入" v-model="rowActive.kitNumber">
+					<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitNumber">
 						<template slot="prepend">設計施作數量</template>
 					</el-input>
-					<el-input placeholder="請輸入" v-model="rowActive.kitMethod">
+					<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitMethod">
 						<template slot="prepend">設計施工方式</template>
 					</el-input>
-					<el-input placeholder="請輸入" v-model="rowActive.kitLabor">
+					<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitLabor">
 						<template slot="prepend">設計施作人力</template>
 					</el-input>
-					<el-input placeholder="請輸入" v-model="rowActive.kitNote">
+					<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitNote">
 						<template slot="prepend">備註</template>
 					</el-input>
 				</div>
 			</span>
 
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showEdit = false">取消</el-button>
+				<el-button @click="cleanDetail()">取消</el-button>
 				<el-button type="primary" @click="finishRegisterSpec()">確定</el-button>
 			</div>
 		</el-dialog>
@@ -482,8 +514,8 @@
 <script>
 import moment from "moment";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
-import { getTenderMap, getGuildMap, getSCTypeItemMap } from "@/api/type";
-import { getFinRegister, finRegisterSpec, finRegister, revokeDispatch } from "@/api/dispatch";
+import { getTenderMap, getKitItemMap, getGuildMap, getSCTypeItemMap } from "@/api/type";
+import { getFinRegister, finRegisterSpec, finRegister, revokeDispatch, getCostKit, getCostKitDetail } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -541,33 +573,49 @@ export default {
 				}
 			},
 			detailHeaders: {
-				// itemId: {
-				// 	name: "項次",
-				// 	sortable: false
-				// },
-				ItemPaint: {
-					name: "顏料",
-					sortable: false
+				3: {
+					itemId: {
+						name: "項次",
+						sortable: false,
+					},
+					itemName: {
+						name: "工程項目名稱",
+						sortable: false,
+					},
+					unit: {
+						name: "單位",
+						sortable: false,
+					},
+					uPrice: {
+						name: "單價",
+						sortable: false,
+					},
+					number: {
+						name: "數量",
+						sortable: false,
+					}
 				},
-				ItemType: {
-					name: "維修項目",
-					sortable: false
-				},
-				MillingFormula: {
-					name: "公式",
-					sortable: false
-				},
-				// uPrice: {
-				// 	name: "單價",
-				// 	sortable: false,
-				// },
-				Number: {
-					name: "數量",
-					sortable: false
-				},
-				MillingArea: {
-					name: "面積",
-					sortable: false
+				4: {
+					itemPaint: {
+						name: "顏料",
+						sortable: false
+					},
+					itemType: {
+						name: "維修項目",
+						sortable: false
+					},
+					MillingFormula: {
+						name: "公式",
+						sortable: false
+					},
+					number: {
+						name: "數量",
+						sortable: false
+					},
+					MillingArea: {
+						name: "面積",
+						sortable: false
+					}
 				}
 			},
 			imgPreviewUrls: [],
@@ -575,14 +623,24 @@ export default {
 			// total: 0,
 			list: [],
 			detail: [],
-			rowActive: {},
+			rowActive: {
+				KitNotes: {
+					kitNumber: "",
+					kitMethod: "",
+					kitLabor: "",
+					kitNote: ""
+				}
+			},
 			newItem: {
-				// itemId: "",
-				ItemPaint: 1,
-				ItemType: 1,
+				itemId: "",
+				itemName: "",
+				unit: "",
+				uPrice: "",
+				itemPaint: 1,
+				itemType: 1,
 				MillingFormula: "",
 				// uPrice: "",
-				Number: "1",
+				number: 1,
 				MillingArea: 0,
 				editFormula: true,
 				isAdd: true
@@ -590,7 +648,7 @@ export default {
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelectSum: { areaSUM: 0, tonneSUM: 0 },
-			apiHeader: [ "SerialNo", "IsMarking", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail" ],
+			apiHeader: [ "SerialNo", "IsMarking", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail", "Notes" ],
 			options: {
 				tenderMap: {},
 				guildMap: {},
@@ -646,7 +704,7 @@ export default {
 			return [ ...this.detail, this.newItem ]
 		},
 		detailAmount() {
-			return this.detailPlus.reduce((acc, cur) => (acc+=cur.Number*cur.uPrice), 0)
+			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.uPrice)), 0)
 		}
 	},
 	watch: { },
@@ -671,6 +729,11 @@ export default {
 		},
 		toggleExpand(row) {
 			this.$refs.planTable.toggleRowExpansion(row)
+		},
+		tableMinWidth(key) {
+			if(this.deviceTypeNow == 3) return ['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 20 : 30;
+			else if(this.deviceTypeNow == 4) return ['MillingFormula'].includes(key) ? 90 : ['uPrice', 'number', 'MillingArea'].includes(key) ? 20 : 50;
+			else return null;
 		},
 		getList() {
 			if (!Number(this.listQuery.contractor)) {
@@ -754,12 +817,12 @@ export default {
 			const replaceObj = { " ": "", "m2": "", "M2": "", "m": "", "M": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
 			"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
 
-			const Number = row.Number || 1;
+			const number = row.number || 1;
 			
 			if(row.editFormula) {
 				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
-				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula} * ${Number}`)() * 100) / 100;
-			} else row.MillingArea = row.MillingLength * row.MillingWidth * Number;
+				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula} * ${number}`)() * 100) / 100;
+			} else row.MillingArea = row.MillingLength * row.MillingWidth * number;
 		},
 		formatTime(time) {
 			return time ? moment(time).format("YYYY-MM-DD") : "";
@@ -769,7 +832,7 @@ export default {
 			let caseFilterList = [];
 			for(const row of list) {
 				let caseItem = {};
-				for(const key of this.apiHeader) caseItem[key] = row[key];
+				for(const key of this.apiHeader) if(row[key]) caseItem[key] = row[key];
 				caseFilterList.push(caseItem);
 			}
 
@@ -789,7 +852,7 @@ export default {
 			this.showImgViewer = true;
 		},
 		beforeEdit(row) {
-			this.rowActive = row; 
+			this.rowActive = JSON.parse(JSON.stringify(row)); 
 			this.loading = true;
 
 			this.detail = this.rowActive.Content;
@@ -798,13 +861,107 @@ export default {
 				this.$set(row, "isAdd", false);
 				this.$set(row, "isEdit", false);
 			});
-			Object.assign(this.newItem, { ItemPaint: 1, ItemType: 1, MillingFormula: "", Number: "1", MillingArea: 0, editFormula: true, isAdd: true });
+			const newItemSample = (this.deviceTypeNow == 3)
+				? { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isAdd: true }
+				: { itemPaint: 1, itemType: 1, MillingFormula: "", number: "1", MillingArea: 0, editFormula: true, isAdd: true }
+			Object.assign(this.newItem, newItemSample);
 
-			this.loading = false;
-			this.showEdit = true;
+			if(this.deviceTypeNow == 3) {
+				
+				getCostKit({
+					tenderId: this.rowActive.DTeam,
+					pageCurrent: 1,
+					pageSize: 999999
+				}).then(response => {
+					this.options.kitArr = response.data.list;
+					this.loading = false;
+					this.showEdit = true;
+				}).catch(err => this.loading = false);
+			} else {
+				this.loading = false;
+				this.showEdit = true;
+			}
+		},
+		cleanDetail() {
+			this.detail = [];
+			this.rowActive = {
+				KitNotes: {
+					kitNumber: "",
+					kitMethod: "",
+					kitLabor: "",
+					kitNote: ""
+				}
+			};
+			this.showEdit = false
+		},
+		importKit() {
+			this.loading = true;
+			getCostKitDetail({
+				kitSN: this.listQuery.kitSN,
+			}).then(response => {
+				this.detail.push(...response.data.list);
+				this.detail.forEach(l => {
+					this.$set(l, "isEdit", false);
+				});
+
+				this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.SerialNo == this.listQuery.kitSN)).map(kit => ({ kitNumber: kit.kitNumber, kitMethod: kit.kitMethod, kitLabor: kit.kitLabor, kitNote: kit.kitNote }))[0];
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
+		async getKitItem(row) {
+			return new Promise(resolve => {
+				this.loading = true;
+				const rowActive = row.SerialNo != undefined ? row : this.newItem;
+				Object.assign(rowActive, { itemName: "", unit: "", uPrice: "" });
+
+				getKitItemMap({
+					tenderId: String(this.rowActive.DTeam),
+					itemId: rowActive.itemId,
+				}).then((response) => {
+					if (response.data.item == undefined) {
+						this.$message({
+							message: "查無項次資料",
+							type: "error",
+						});
+					} else {
+						Object.assign(rowActive, response.data.item);
+					}
+					this.loading = false;
+					resolve();
+				}).catch(err => { this.loading = false; resolve(); });
+			})
 		},
 		async addItem() {
-			if(!this.newItem.ItemPaint || !this.newItem.ItemType || this.newItem.MillingFormula.length == 0 || this.newItem.Number == '0') {
+			if(this.deviceTypeNow == 3) await this.addKitItem();
+			else if(this.deviceTypeNow == 4) this.addMarkerItem();
+		},
+		async addKitItem() {
+			if(!this.newItem.itemId) {
+				this.$message({
+					message: "請填入正確項次",
+					type: "error",
+				});
+
+				return;
+			}
+
+			await this.getKitItem(this.newItem);
+
+			if(!this.newItem.itemName || !this.newItem.unit || !this.newItem.uPrice || this.newItem.number == 0) {
+				const itemText = this.newItem.number == 0 ? "數量" : "項次";
+				this.$message({
+					message: `請填入正確${itemText}`,
+					type: "error",
+				});
+			} else {
+				this.newItem.isAdd = false;
+				this.detail.push({...this.newItem, isEdit: false});
+
+				Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isAdd: true });
+			}
+		},
+		async addMarkerItem() {
+			if(!this.newItem.itemPaint || !this.newItem.itemType || this.newItem.MillingFormula.length == 0 || this.newItem.number == '0') {
 				const itemText = this.newItem.MillingFormula.length == 0 ? "公式" : "數量";
 				this.$message({
 					message: `請填入正確${itemText}`,
@@ -814,7 +971,7 @@ export default {
 				this.newItem.isAdd = false;
 				this.detail.push({...this.newItem, isEdit: false});
 
-				Object.assign(this.newItem, { ItemPaint: 1, ItemType: 1, MillingFormula: "", Number: "1", MillingArea: 0, editFormula: true, isAdd: true });
+				Object.assign(this.newItem, { itemPaint: 1, itemType: 1, MillingFormula: "", number: 1, MillingArea: 0, editFormula: true, isAdd: true });
 			}
 		},
 		delItem(index) {
@@ -826,32 +983,34 @@ export default {
 					row.edit = false;
 					this.showEdit = false;
 
-					let rowActive = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
-					if([1,2].includes(this.deviceTypeNow)) this.calArea(rowActive);
+					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
+					if([1,2].includes(this.deviceTypeNow)) this.calArea(caseSpec);
 					else if([3,4].includes(this.deviceTypeNow)) {
 						this.detail.forEach(row => {
-							row.Number == Number(row.Number);
+							row.number == Number(row.number);
 							for(const key of [ "editFormula", "isAdd", "isEdit" ]) delete row[key];
 						});
-						rowActive.Content = JSON.stringify(this.detail);
+						caseSpec.Content = JSON.stringify(this.detail);
+						if(this.deviceTypeNow == 4) caseSpec.KitNotes = JSON.stringify(row.KitNotes);
+						if(!row.Notes || row.Notes.length == 0) caseSpec.Notes = row.KitNotes.kitMethod;
 					}
 
-					if(rowActive.editFormula) {
-						delete rowActive.MillingLength;
-						delete rowActive.MillingWidth;
-					} else delete rowActive.MillingFormula;
+					if(caseSpec.editFormula) {
+						delete caseSpec.MillingLength;
+						delete caseSpec.MillingWidth;
+					} else delete caseSpec.MillingFormula;
 
-					if(rowActive.SamplingL1 == 1) rowActive.SamplingL1Detail = JSON.stringify(rowActive.SamplingL1Detail);
-					else delete rowActive.SamplingL1Detail;
+					if(caseSpec.SamplingL1 == 1) caseSpec.SamplingL1Detail = JSON.stringify(caseSpec.SamplingL1Detail);
+					else delete caseSpec.SamplingL1Detail;
 
-					if(rowActive.SamplingL2 == 1) rowActive.SamplingL2Detail = JSON.stringify(rowActive.SamplingL2Detail);
-					else delete rowActive.SamplingL2Detail;
+					if(caseSpec.SamplingL2 == 1) caseSpec.SamplingL2Detail = JSON.stringify(caseSpec.SamplingL2Detail);
+					else delete caseSpec.SamplingL2Detail;
 
-					if(!rowActive.uNotes) delete rowActive.uNotes;
+					if(!caseSpec.uNotes) delete caseSpec.uNotes;
 
 					finRegisterSpec({
 						deviceType: this.deviceTypeNow,
-						caseSpec: rowActive
+						caseSpec
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
 							this.$message({
@@ -877,6 +1036,7 @@ export default {
 						let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.list)));
 						caseList.forEach(row => {
 							if([1,2].includes(this.deviceTypeNow)) this.calArea(row);
+
 							if(row.editFormula) {
 								delete row.MillingLength;
 								delete row.MillingWidth;
@@ -892,7 +1052,7 @@ export default {
 					finRegister({
 						deviceType: this.deviceTypeNow,
 						orderSN: Number(this.orderSNNow),
-						caseList: caseList
+						caseList
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
 							this.$message({
@@ -982,8 +1142,8 @@ export default {
 		left: 50%
 		transform: translateX(-50%)
 	.el-table
-		.input-length, .input-width
-			max-width: 60px
+		.el-input__inner
+			padding: 0 5px
 		.btn-tag
 			cursor: pointer
 		.el-table__expand-icon
