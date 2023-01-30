@@ -991,7 +991,7 @@ export default {
 							for(const key of [ "editFormula", "isAdd", "isEdit" ]) delete row[key];
 						});
 						caseSpec.Content = JSON.stringify(this.detail);
-						if(this.deviceTypeNow == 4) caseSpec.KitNotes = JSON.stringify(row.KitNotes);
+						if(this.deviceTypeNow == 3) caseSpec.KitNotes = JSON.stringify(row.KitNotes);
 						if(!row.Notes || row.Notes.length == 0) caseSpec.Notes = row.KitNotes.kitMethod;
 					}
 
