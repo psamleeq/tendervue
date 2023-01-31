@@ -160,6 +160,14 @@
 					<span v-else>{{ row.Notes || " - " }}</span>
 				</template>
 			</el-table-column>
+			<el-table-column v-if="deviceTypeNow == 3" label="設計數量" width="140" align="center">
+				<template slot-scope="{ row }">
+					<el-button-group v-if="!row.edit">
+						<el-button v-if="!filterNow" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">數量</el-button>
+						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
+					</el-button-group>
+				</template>
+			</el-table-column>
 
 			<el-table-column :label="filterNow ? '主任派工日期' : '是否退件'" width="110" align="center">
 				<template slot-scope="{ row }">
@@ -168,23 +176,28 @@
 				</template>
 			</el-table-column>
 			
-			<el-table-column label="動作" align="center">
+			<el-table-column label="動作" width="140" align="center">
 				<template slot-scope="{ row }">
-					<el-button-group>
-						<el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button>
-						<el-button v-if="deviceTypeNow == 3 && !filterNow" :type=" row.Content.length == 0 ? 'success' : 'info'" :plain="row.Content.length > 0" size="mini" @click="beforeEdit(row)">設計</el-button>
+					<el-button-group v-if="!row.edit">
+						<!-- <el-button v-if="deviceTypeNow == 3 && !filterNow" :type=" row.Content.length == 0 ? 'success' : 'info'" :plain="row.Content.length > 0" size="mini" @click="beforeEdit(row)">設計</el-button> -->
+						<el-button v-if="!filterNow" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
+						<!-- <el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button> -->
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
+					</el-button-group>
+					<el-button-group v-else>
+						<el-button type="primary" size="mini" @click="dispatchSpec(row, false)">確定</el-button>
+						<el-button size="mini" @click="row.edit = false; getList();">取消</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 
 			<el-table-column type="expand" width="1" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.Content.length == 0">目前沒有資料</span>
+					<span v-if="detail.length == 0">目前沒有資料</span>
 					<el-table
 						v-else
 						empty-text="目前沒有資料"
-						:data="row.Content"
+						:data="detail"
 						border
 						fit
 						highlight-current-row
@@ -210,10 +223,10 @@
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
 		<!-- Dialog: 計價套組-->
-		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false">
+		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
 			<div class="filter-container">
-				<el-select class="filter-item" v-model.number="listQuery.kitSN" filterable placeholder="請選擇" popper-class="type-select" style="width: 500px">
-					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)" :label="kit.kitName" />
+				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇" popper-class="type-select" style="width: 500px">
+					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)" :label="kit.GroupName" />
 				</el-select>
 				<el-button class="filter-item" type="success" size="mini" @click="importKit()">匯入套組</el-button>
 			</div>
@@ -310,7 +323,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getKitItemMap, getGuildMap } from "@/api/type";
-import { getDispatch, setDispatch, setDispatchSpec, getCostKit, getCostKitDetail } from "@/api/dispatch";
+import { getDispatch, setDispatch, setDispatchSpec, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -543,11 +556,25 @@ export default {
 						l.DateDeadline = this.formatTime(l.DateDeadline);
 						this.$set(l, "detailTime", false);
 						this.$set(l, "editFormula", l.MillingFormula != '0');
-					// 	this.$set(l, "editNote", false);
+						this.$set(l, "notesSync", true);
+						this.$set(l, "edit", false);
 					})
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		getTaskDetail(row) {
+			return new Promise(resolve => {
+				this.detail = [];
+				getTaskReal({ taskRealGroup: row.TaskRealGroup }).then(response => {
+					this.detail = response.data.list;
+					this.detail.forEach(row => {
+						this.$set(row, "isAdd", false);
+						this.$set(row, "isEdit", false);
+					});
+					resolve();
+				}).catch(err => this.loading = false);
+			})
 		},
 		calArea(row) {
 			const replaceObj = { " ": "", "m": "", "M": "", "=": "", "＝": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
@@ -663,24 +690,28 @@ export default {
 		delKitItem(index) {
 			this.detail.splice(index, 1);
 		},
-		dispatchSpec(row = this.rowActive) {
-			this.$confirm(`確認登錄 案件編號${row.CaseNo} 設計數量?`, "確認", { showClose: false })
+		dispatchSpec(row = this.rowActive, editContent = true) {
+			this.$confirm(`確認 案件編號${row.CaseNo} 資料登錄?`, "確認", { showClose: false } )
 				.then(() => {
 					this.loading = true;
+					row.edit = false;
 					this.showEdit = false;
 					
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
 					if([1,2].includes(this.deviceTypeNow)) this.calArea(caseSpec);
 					else if([3,4].includes(this.deviceTypeNow)) {
 						this.detail.forEach(row => {
-							row.Number == Number(row.Number);
-							for(const key of [ "isAdd", "isEdit" ]) delete row[key];
+							row.number == Number(row.number);
+							for(const key of [ "SerialNo", "isAdd", "isEdit" ]) delete row[key];
 						});
-						caseSpec.Content = JSON.stringify(this.detail);
-						if(this.deviceTypeNow == 3) caseSpec.KitNotes = JSON.stringify(row.KitNotes);
-						if(!row.Notes || row.Notes.length == 0) caseSpec.Notes = row.KitNotes.kitMethod;
-					}
 
+						if(this.deviceTypeNow == 3) {
+							if(this.detail.length > 0) caseSpec.KitContent = this.detail;
+							caseSpec.KitNotes = JSON.stringify(row.KitNotes);
+							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
+						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
+					}
+					
 					setDispatchSpec({
 						deviceType: this.listQuery.deviceType,
 						caseSpec

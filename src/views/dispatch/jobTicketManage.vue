@@ -314,14 +314,20 @@ export default {
 		async createPdf_header(OrderSN) {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
-				const subTitle = (this.deviceTypeNow == 1) ? "AC" : this.options.deviceType[this.deviceTypeNow];
+				const contractor = this.options.guildMap[this.listQuery.contractor];
+				this.pdfDoc.setFontSize(this.pdfSetting.fontSize-4);
+				this.pdfDoc.setTextColor('#999999');
+				this.pdfDoc.text(`(廠商) ${contractor}`, 15, 10 );
 
+				const subTitle = (this.deviceTypeNow == 1) ? "AC" : this.options.deviceType[this.deviceTypeNow];
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize+4);
+				this.pdfDoc.setTextColor('#000000');
 				this.pdfDoc.setCharSpace(2);
 				this.pdfDoc.text(`道路(${subTitle}) 維修派工單`, width / 2, 20, { align: 'center' });
+
+				const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`;
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
 				this.pdfDoc.setCharSpace(0);
-				const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
 				this.pdfDoc.text(`${today} 派工單號：  ${OrderSN}`, width - 15, this.pdfSetting.lineHeight + 25, { align: 'right' });
 				// this.pdfDoc.text(`(預覽列印)`, width - 15, this.pdfSetting.lineHeight + 25, { align: 'right' });
 

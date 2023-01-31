@@ -158,11 +158,24 @@
 
 		<br>
 
-		<el-tooltip effect="dark" content="請選擇案件" placement="bottom" :disabled="tableSelect.length != 0">
-			<div>
-				<el-button class="btn-previewPdf" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽派工單</el-button>
+		<div class="previewPdf filter-container">
+			<div v-if="deviceTypeNow == 3" class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>分派廠商</span>
+					</div>
+					<el-select v-model.number="contractorNow" placeholder="請選擇" popper-class="type-select" style="width: 100px" :disabled="tableSelect.length == 0">
+						<el-option v-for="(name, id) in options.guildMap" :key="id" :value="Number(id)" :label="name" />
+					</el-select>
+				</div>
 			</div>
-		</el-tooltip>
+
+			<el-tooltip class="filter-item" effect="dark" content="請選擇案件" placement="bottom" :disabled="tableSelect.length != 0">
+				<div>
+					<el-button type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽派工單</el-button>
+				</div>
+			</el-tooltip>
+		</div>
 
 		<el-divider />
 
@@ -300,7 +313,7 @@ applyPlugin(jsPDF);
 import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getJobTicket, confirmJobTicket, revokeDispatch } from "@/api/dispatch";
+import { getJobTicket, confirmJobTicket, revokeDispatch, getTaskReal } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -560,7 +573,9 @@ export default {
 			this.resetOrder();
 		},
 		toggleExpand(row, tableName) {
-			this.$refs[tableName].toggleRowExpansion(row);
+			this.getTaskDetail(row).then(() => { 
+				this.$refs[tableName].toggleRowExpansion(row);
+			}).catch(err => this.loading = false);
 		},
 		changeOrder(row) {
 			this.tableSelect.splice(row.OrderIndex - 1, 1);
@@ -628,6 +643,15 @@ export default {
 				}).catch(err => this.loading = false);
 			}
 		},
+		getTaskDetail(row) {
+			return new Promise(resolve => {
+			row.Content = [];
+				getTaskReal({ taskRealGroup: row.TaskRealGroup }).then(response => {
+					row.Content = response.data.list;
+					resolve();
+				}).catch(err => this.loading = false);
+			})
+		},
 		showDetail(row) {
 			this.loading = true;
 			this.$refs.caseDetail.getDetail(row);
@@ -656,14 +680,20 @@ export default {
 		async createPdf_header() {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
-				const subTitle = (this.deviceTypeNow == 1) ? "AC" : this.options.deviceType[this.deviceTypeNow];
+				const contractor = this.options.guildMap[this.listQuery.contractor];
+				this.pdfDoc.setFontSize(this.pdfSetting.fontSize-4);
+				this.pdfDoc.setTextColor('#999999');
+				this.pdfDoc.text(`(廠商) ${contractor}`, 15, 10 );
 
+				const subTitle = (this.deviceTypeNow == 1) ? "AC" : this.options.deviceType[this.deviceTypeNow];
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize+4);
+				this.pdfDoc.setTextColor('#000000');
 				this.pdfDoc.setCharSpace(2);
 				this.pdfDoc.text(`道路(${subTitle}) 維修派工單`, width / 2, 20, { align: 'center' });
+
+				const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`;
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
 				this.pdfDoc.setCharSpace(0);
-				const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
 				this.pdfDoc.text(`${today} 派工單號：           `, width - 15, this.pdfSetting.lineHeight + 25, { align: 'right' });
 				// this.pdfDoc.text(`(預覽列印)`, width - 15, this.pdfSetting.lineHeight + 25, { align: 'right' });
 
@@ -1258,10 +1288,9 @@ export default {
 					border-bottom-left-radius: 0
 					padding-left: 10px
 					text-align: left
-	.btn-previewPdf
-		position: relative
-		left: 50%
-		transform: translateX(-50%)
+	.previewPdf
+		display: flex
+		justify-content: center
 	.el-table
 		.input-length, .input-width
 			max-width: 60px

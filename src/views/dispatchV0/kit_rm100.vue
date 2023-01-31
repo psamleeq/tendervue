@@ -181,7 +181,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getKitItemMap } from "@/api/type";
+import { getTenderMap, getKitItemMapV0 } from "@/api/type";
 import { getCostKitV0, getCostKitDetailV0 } from "@/api/dispatchV0";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
@@ -349,7 +349,7 @@ export default {
 				const rowActive = row.serialno != undefined ? row : this.newItem;
 				Object.assign(rowActive, { itemName: "", unit: "", uPrice: "" });
 
-				getKitItemMap({
+				getKitItemMapV0({
 					tenderId: this.listQuery.dteamSN,
 					itemId: rowActive.itemId,
 				}).then((response) => {

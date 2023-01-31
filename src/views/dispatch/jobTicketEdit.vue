@@ -243,7 +243,7 @@ applyPlugin(jsPDF);
 import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getJobTicket, getFinRegister, editJobTicket } from "@/api/dispatch";
+import { getJobTicket, getFinRegister, editJobTicket, getTaskReal } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -501,7 +501,9 @@ export default {
 			this.resetOrder();
 		},
 		toggleExpand(row, tableName) {
-			this.$refs[tableName].toggleRowExpansion(row);
+			this.getTaskDetail(row).then(() => { 
+				this.$refs[tableName].toggleRowExpansion(row);
+			}).catch(err => this.loading = false);
 		},
 		changeOrder(row) {
 			this.tableSelect.splice(row.OrderIndex - 1, 1);
@@ -565,6 +567,15 @@ export default {
 				}
 			}).catch(err => this.loading = false);
 		},
+		getTaskDetail(row) {
+			return new Promise(resolve => {
+			row.Content = [];
+				getTaskReal({ taskRealGroup: row.TaskRealGroup }).then(response => {
+					row.Content = response.data.list;
+					resolve();
+				}).catch(err => this.loading = false);
+			})
+		},
 		showDetail(row) {
 			this.loading = true;
 			this.$refs.caseDetail.getDetail(row);
@@ -593,14 +604,20 @@ export default {
 		async createPdf_header() {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
-				const subTitle = (this.deviceTypeNow == 1) ? "AC" : this.options.deviceType[this.deviceTypeNow];
+				const contractor = this.options.guildMap[this.listQuery.contractor];
+				this.pdfDoc.setFontSize(this.pdfSetting.fontSize-4);
+				this.pdfDoc.setTextColor('#999999');
+				this.pdfDoc.text(`(廠商) ${contractor}`, 15, 10 );
 
+				const subTitle = (this.deviceTypeNow == 1) ? "AC" : this.options.deviceType[this.deviceTypeNow];
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize+4);
+				this.pdfDoc.setTextColor('#000000');
 				this.pdfDoc.setCharSpace(2);
 				this.pdfDoc.text(`道路(${subTitle}) 維修派工單`, width / 2, 20, { align: 'center' });
+
+				const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`;
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
 				this.pdfDoc.setCharSpace(0);
-				const today = `中華民國${moment().year()-1911}年${moment().format("MM年DD日")}`
 				this.pdfDoc.text(`${today} 派工單號：           `, width - 15, this.pdfSetting.lineHeight + 25, { align: 'right' });
 				// this.pdfDoc.text(`(預覽列印)`, width - 15, this.pdfSetting.lineHeight + 25, { align: 'right' });
 
