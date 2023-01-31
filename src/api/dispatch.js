@@ -19,12 +19,36 @@ export function getTaskGroup(query) {
 	})
 }
 
+export function addTaskGroup(data) {
+	return request({
+		url: '/dispatch/taskGroup',
+		method: 'post',
+		data
+	})
+}
+
+export function delTaskGroup(data) {
+	return request({
+		url: '/dispatch/taskGroup',
+		method: 'delete',
+		data
+	})
+}
+
 // 套組細項
 export function getTaskGroupDetail(query) {
 	return request({
 		url: '/dispatch/taskGroupDetail',
 		method: 'get',
 		params: query
+	})
+}
+
+export function setTaskGroupDetail(data) {
+	return request({
+		url: '/dispatch/taskGroupDetail',
+		method: 'post',
+		data
 	})
 }
 

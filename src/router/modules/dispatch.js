@@ -14,16 +14,16 @@ const dispatchRouter = {
 		isNew: true
 	},
 	children: [
-		// {
-		// 	path: 'kit',
-		// 	component: () => import('@/views/dispatch/kit'),
-		// 	name: 'kit',
-		// 	meta: {
-		// 		title: '計價套組',
-		// 		roles: ['beta'],
-		// 		vTag: 'Alpha'
-		// 	}
-		// },
+		{
+			path: 'kit',
+			component: () => import('@/views/dispatch/kit'),
+			name: 'kit',
+			meta: {
+				title: '計價套組',
+				roles: ['beta'],
+				vTag: 'Alpha'
+			}
+		},
 		{
 			path: 'plan',
 			component: () => import('@/views/dispatch/plan'),
