@@ -11,18 +11,27 @@ export function getCaseDetail(query) {
 
 //---------------------------------------
 // 套組列表
-export function getCostKit(query) {
+export function getTaskGroup(query) {
 	return request({
-		url: '/dispatch/kit',
+		url: '/dispatch/taskGroup',
 		method: 'get',
 		params: query
 	})
 }
 
 // 套組細項
-export function getCostKitDetail(query) {
+export function getTaskGroupDetail(query) {
 	return request({
-		url: '/dispatch/kitDetail',
+		url: '/dispatch/taskGroupDetail',
+		method: 'get',
+		params: query
+	})
+}
+
+// 套組內容(設計、實際)
+export function getTaskReal(query) {
+	return request({
+		url: '/dispatch/taskReal',
 		method: 'get',
 		params: query
 	})

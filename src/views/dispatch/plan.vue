@@ -62,7 +62,7 @@
 		</div>
 
 		<el-table
-			ref="assignTable"
+			ref="caseTable"
 			empty-text="目前沒有資料"
 			:data="list"
 			:key="deviceTypeNow"
@@ -119,7 +119,7 @@
 			<!-- 道路、熱再生 -->
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" :width="filterNow ? 240 : 500" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="!filterNow">
+					<span v-if="!filterNow && row.edit">
 						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
 							<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
 							<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
@@ -147,7 +147,7 @@
 			<!-- 設施 -->
 			<el-table-column v-if="deviceTypeNow == 3" label="急件" width="55" align="center">
 				<template slot-scope="{ row }">
-					<el-checkbox v-if="!filterNow" v-model="row.IsPressing" :true-label="1" :false-label="0" />
+					<el-checkbox v-if="!filterNow && row.edit" v-model="row.IsPressing" :true-label="1" :false-label="0" />
 					<span v-else>
 						<i v-if="row.IsPressing == 1" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
 						<span v-else> - </span>
@@ -156,7 +156,7 @@
 			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
 				<template slot-scope="{ row }">
-					<el-input v-if="!filterNow" v-model="row.Notes" />
+					<el-input v-if="!filterNow && row.edit" v-model="row.Notes" />
 					<span v-else>{{ row.Notes || " - " }}</span>
 				</template>
 			</el-table-column>
@@ -197,7 +197,7 @@
 							v-for="(value, key) in detailHeaders"
 							:key="key"
 							:prop="key"
-							:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
+							:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
 							:label="value.name"
 							align="center"
 							:sortable="value.sortable"
@@ -232,7 +232,7 @@
 					v-for="(value, key) in detailHeaders"
 					:key="key"
 					:prop="key"
-					:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 20 : 30"
+					:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30"
 					:label="value.name"
 					align="center"
 					:sortable="value.sortable"
@@ -250,10 +250,10 @@
 								</el-button>
 							</span>
 						</span>
-						<span v-else-if="['itemId'].includes(column.property) && row.isAdd">
+						<span v-else-if="['UnitSN'].includes(column.property) && row.isAdd">
 							<span v-if="row.isAdd || row.isEdit">
 								<el-input v-model="row[column.property]" size="mini" />
-								<el-tooltip v-if="column.property == 'itemId' && row[column.property].length != 0" effect="dark" placement="bottom" content="點選代入">
+								<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" effect="dark" placement="bottom" content="點選代入">
 									<el-button type="text" @click="getKitItem(row)">
 										<i class="el-icon-check" style="color: #67C23A" />
 									</el-button>
@@ -279,17 +279,15 @@
 			</el-table>
 			<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount.toLocaleString() }}</div>
 			<div class="detail-note">
-				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitNumber">
+				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDetail">
 					<template slot="prepend">設計施作數量</template>
 				</el-input>
-				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitMethod">
+				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDesc">
 					<template slot="prepend">設計施工方式</template>
+					<el-checkbox slot="append" v-model="rowActive.notesSync">更新「工程概述」</el-checkbox>
 				</el-input>
-				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitLabor">
+				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignWorker">
 					<template slot="prepend">設計施作人力</template>
-				</el-input>
-				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.kitNote">
-					<template slot="prepend">備註</template>
 				</el-input>
 			</div>
 			<div slot="footer" class="dialog-footer">
@@ -343,7 +341,7 @@ export default {
 				tenderId: null,
 				deviceType: 1,
 				contractor: null,
-				kitSN: null
+				groupSN: null
 				// pageCurrent: 1,
 				// pageSize: 50,
 			},
@@ -394,19 +392,19 @@ export default {
 				// },
 			},
 			detailHeaders: {
-				itemId: {
+				UnitSN: {
 					name: "項次",
 					sortable: false,
 				},
-				itemName: {
+				TaskName: {
 					name: "工程項目名稱",
 					sortable: false,
 				},
-				unit: {
+				TaskUnit: {
 					name: "單位",
 					sortable: false,
 				},
-				uPrice: {
+				TaskPrice: {
 					name: "單價",
 					sortable: false,
 				},
@@ -419,22 +417,22 @@ export default {
 			list: [],
 			detail: [],
 			newKit: {
-				kitName: ""
+				GroupName: ""
 			},
 			newItem: {
-				itemId: "",
-				itemName: "",
-				unit: "",
-				uPrice: "",
+				UnitSN: "",
+				TaskName: "",
+				TaskUnit: "",
+				TaskPrice: "",
 				number: 0,
+				DTeam: 0,
 				isAdd: true
 			},
 			rowActive: {
 				KitNotes: {
-					kitNumber: "",
-					kitMethod: "",
-					kitLabor: "",
-					kitNote: ""
+					DesignDetail: "",
+					DesignDesc: "",
+					DesignWorker: ""
 				}
 			},
 			checkIndeterminate: false,
@@ -464,7 +462,7 @@ export default {
 			return [ ...this.detail, this.newItem ]
 		},
 		detailAmount() {
-			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.uPrice)), 0)
+			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		}
 	},
 	watch: { },
@@ -499,11 +497,13 @@ export default {
 			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
 		},
 		cellCheckBox(row, index) {
-			if(this.checkList[index]) this.$refs.assignTable.toggleRowSelection(row, true);
-			else this.$refs.assignTable.toggleRowSelection(row, false);
+			if(this.checkList[index]) this.$refs.caseTable.toggleRowSelection(row, true);
+			else this.$refs.caseTable.toggleRowSelection(row, false);
 		},
 		toggleExpand(row) {
-			this.$refs.assignTable.toggleRowExpansion(row)
+			this.getTaskDetail(row).then(() => { 
+				this.$refs.caseTable.toggleRowExpansion(row);
+			}).catch(err => this.loading = false);
 		},
 		getList() {
 			this.loading = true;
@@ -573,14 +573,11 @@ export default {
 			this.rowActive = JSON.parse(JSON.stringify(row)); 
 			this.loading = true;
 
-			this.detail = this.rowActive.Content;
-			this.detail.forEach(row => {
-				this.$set(row, "isAdd", false);
-				this.$set(row, "isEdit", false);
-			});
-			Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isAdd: true });
-			
-			getCostKit({
+			this.getTaskDetail(row).then(() => { 
+				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });
+			}).catch(err => this.loading = false);
+				
+			getTaskGroup({
 				tenderId: this.rowActive.DTeam,
 				pageCurrent: 1,
 				pageSize: 999999
@@ -594,25 +591,24 @@ export default {
 			this.detail = [];
 			this.rowActive = {
 				KitNotes: {
-					kitNumber: "",
-					kitMethod: "",
-					kitLabor: "",
-					kitNote: ""
+					DesignDetail: "",
+					DesignDesc: "",
+					DesignWorker: ""
 				}
 			};
 			this.showEdit = false
 		},
 		importKit() {
 			this.loading = true;
-			getCostKitDetail({
-				kitSN: this.listQuery.kitSN,
+			getTaskGroupDetail({
+				groupSN: this.listQuery.groupSN,
 			}).then(response => {
 				this.detail.push(...response.data.list);
 				this.detail.forEach(l => {
 					this.$set(l, "isEdit", false);
 				});
 
-				this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.SerialNo == this.listQuery.kitSN)).map(kit => ({ kitNumber: kit.kitNumber, kitMethod: kit.kitMethod, kitLabor: kit.kitLabor, kitNote: kit.kitNote }))[0];
+				this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.SerialNo == this.listQuery.groupSN)).map(kit => ({ DesignDetail: kit.DesignDetail, DesignDesc: kit.DesignDesc, DesignWorker: kit.DesignWorker }))[0];
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
@@ -620,11 +616,11 @@ export default {
 			return new Promise(resolve => {
 				this.loading = true;
 				const rowActive = row.SerialNo != undefined ? row : this.newItem;
-				Object.assign(rowActive, { itemName: "", unit: "", uPrice: "" });
+				Object.assign(rowActive, { TaskName: "", TaskUnit: "", TaskPrice: "" });
 
 				getKitItemMap({
 					tenderId: String(this.rowActive.DTeam),
-					itemId: rowActive.itemId,
+					UnitSN: rowActive.UnitSN
 				}).then((response) => {
 					if (response.data.item == undefined) {
 						this.$message({
@@ -640,7 +636,7 @@ export default {
 			})
 		},
 		async addKitItem() {
-			if(!this.newItem.itemId) {
+			if(!this.newItem.UnitSN) {
 				this.$message({
 					message: "請填入正確項次",
 					type: "error",
@@ -651,7 +647,7 @@ export default {
 
 			await this.getKitItem(this.newItem);
 
-			if(!this.newItem.itemName || !this.newItem.unit || !this.newItem.uPrice || this.newItem.number == 0) {
+			if(!this.newItem.TaskName || !this.newItem.TaskUnit || !this.newItem.TaskPrice || this.newItem.number == 0) {
 				const itemText = this.newItem.number == 0 ? "數量" : "項次";
 				this.$message({
 					message: `請填入正確${itemText}`,
@@ -661,7 +657,7 @@ export default {
 				this.newItem.isAdd = false;
 				this.detail.push({...this.newItem, isEdit: false});
 
-				Object.assign(this.newItem, { itemId: "", itemName: "", unit: "", uPrice: "", number: 0, isAdd: true });
+				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });
 			}
 		},
 		delKitItem(index) {

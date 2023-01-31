@@ -53,10 +53,27 @@ export function getTypeMap(query) {
 	})
 }
 
-// 類型Map
+// 套組Map
+export function getKitItemMapV0(query) {
+	return request({
+		url: '/typeV0/kitItemMap',
+		method: 'get',
+		params: query
+	})
+}
+
 export function getKitItemMap(query) {
 	return request({
 		url: '/type/kitItemMap',
+		method: 'get',
+		params: query
+	})
+}
+
+// 標線Map
+export function getSCTypeItemMap(query) {
+	return request({
+		url: '/type/scType2ItemMap',
 		method: 'get',
 		params: query
 	})

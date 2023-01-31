@@ -408,19 +408,19 @@ export default {
 				}
 			},
 			detailHeaders: {
-				itemId: {
+				UnitSN: {
 					name: "項次",
 					sortable: false,
 				},
-				itemName: {
+				TaskName: {
 					name: "工程項目名稱",
 					sortable: false,
 				},
-				unit: {
+				TaskUnit: {
 					name: "單位",
 					sortable: false,
 				},
-				uPrice: {
+				TaskPrice: {
 					name: "單價",
 					sortable: false,
 				},
