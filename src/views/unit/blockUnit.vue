@@ -469,7 +469,12 @@ export default {
 						type: "success",
 					});
 					this.getList();
-				} 
+				} else {
+					this.$message({
+						message: "修改失敗",
+						type: "error",
+					});
+				}
 			}).catch(err => {
 				console.log(err);
 				this.getList();

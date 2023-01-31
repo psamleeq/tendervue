@@ -230,7 +230,12 @@ export default {
 						amount: 1
 					};
 					this.getList();
-				} 
+				} else {
+					this.$message({
+						message: "新增失敗",
+						type: "error",
+					});
+				}
 			}).catch(err => {
 				console.log(err);
 				this.getList();
@@ -249,7 +254,12 @@ export default {
 						type: "success",
 					});
 					this.getList();
-				} 
+				} else {
+					this.$message({
+						message: "修改失敗",
+						type: "error",
+					});
+				}
 			}).catch(err => {
 				console.log(err);
 				this.getList();
@@ -263,7 +273,12 @@ export default {
 						type: "success",
 					});
 					this.getList();
-				} 
+				} else {
+					this.$message({
+						message: "刪除失敗",
+						type: "error",
+					});
+				}
 			}).catch(err => {
 				console.log(err);
 				this.getList();

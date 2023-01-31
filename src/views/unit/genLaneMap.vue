@@ -572,7 +572,12 @@ export default {
 
 						this.stepOrder = 3;
 						this.getList();
-					} 
+					} else {
+						this.$message({
+							message: "新增失敗",
+							type: "error",
+						});
+					}
 				}).catch(err => console.log(err))
 				}
 		},

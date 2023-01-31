@@ -265,12 +265,13 @@
 						</span>
 						<span v-else-if="['UnitSN'].includes(column.property) && row.isAdd">
 							<span v-if="row.isAdd || row.isEdit">
-								<el-input v-model="row[column.property]" size="mini" />
-								<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" effect="dark" placement="bottom" content="點選代入">
-									<el-button type="text" @click="getKitItem(row)">
-										<i class="el-icon-check" style="color: #67C23A" />
-									</el-button>
-								</el-tooltip>
+								<el-input v-model="row[column.property]" size="mini">
+									<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" slot="suffix" effect="dark" placement="bottom" content="點選代入">
+										<el-button type="text" style="padding: 5px 0" @click="getKitItem(row)">
+											<i class="el-icon-check" style="color: #67C23A" />
+										</el-button>
+									</el-tooltip>
+								</el-input>
 							</span>
 						</span>
 						<span v-else>{{ row[column.property] }}</span>
@@ -597,6 +598,7 @@ export default {
 			return caseFilterList;
 		},
 		beforeEdit(row) {
+			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
 			this.rowActive = JSON.parse(JSON.stringify(row)); 
 			this.loading = true;
 
@@ -623,7 +625,7 @@ export default {
 					DesignWorker: ""
 				}
 			};
-			this.showEdit = false
+			this.showEdit = false;
 		},
 		importKit() {
 			this.loading = true;
