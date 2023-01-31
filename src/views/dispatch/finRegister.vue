@@ -724,7 +724,7 @@ export default {
 			return [ ...this.detail, this.newItem[this.deviceTypeNow] ]
 		},
 		detailAmount() {
-			return this.detailPlus.reduce((acc, cur) => (acc+=cur.Number(number)*Number(cur.TaskPrice)), 0)
+			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		}
 	},
 	watch: { },
@@ -825,7 +825,10 @@ export default {
 								l.MillingArea = l.MillingAreaArr.reduce((acc, cur) => (acc+cur), 0);
 							}
 
-							if(l.Content == undefined) this.$set(l, "Content", []);
+							if(l.Content == undefined) {
+								const Content = l.TaskRealGroup > 0 ? [{}] : [];
+								this.$set(l, "Content", Content);
+							}
 							this.$set(l, "IsMarkingNow", l.IsMarking);
 							this.$set(l, "notesSync", true);
 							this.$set(l, "edit", false);
@@ -1042,7 +1045,10 @@ export default {
 						});
 
 						if(this.deviceTypeNow == 3) {
-							if(this.detail.length > 0) caseSpec.KitContent = this.detail;
+							if(this.detail.length > 0) {
+								caseSpec.TaskRealGroup = row.TaskRealGroup;
+								caseSpec.KitContent = this.detail;
+							}
 							caseSpec.KitNotes = JSON.stringify(row.KitNotes);
 							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
 						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);

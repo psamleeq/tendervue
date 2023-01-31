@@ -706,7 +706,10 @@ export default {
 						});
 
 						if(this.deviceTypeNow == 3) {
-							if(this.detail.length > 0) caseSpec.KitContent = this.detail;
+							if(this.detail.length > 0) {
+								caseSpec.TaskRealGroup = row.TaskRealGroup;
+								caseSpec.KitContent = this.detail;
+							}
 							caseSpec.KitNotes = JSON.stringify(row.KitNotes);
 							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
 						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
