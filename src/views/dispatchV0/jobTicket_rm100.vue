@@ -135,7 +135,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column type="expand" width="1" align="center">
+			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="props">
 				</template>
 			</el-table-column>

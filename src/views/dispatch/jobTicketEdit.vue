@@ -76,7 +76,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column type="expand" width="1" align="center">
+			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<el-table
@@ -183,7 +183,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column type="expand" width="1" align="center">
+			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<el-table
