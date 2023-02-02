@@ -101,13 +101,12 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['SCType1Flag', 'IsMarking'].includes(key) ? 50 : null"
 				:min-width="['Place'].includes(key) ? 80 : null"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="[ 'IsMarking' ].includes(column.property)">
-						<span v-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ row.DateClose_MK }}完工</span>
+						<span v-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
 						<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
 						<span v-else-if="row.IsMarkingNow == 1">已分派</span>
 						<el-checkbox v-else-if="!isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
@@ -669,7 +668,7 @@ export default {
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelectSum: { areaSUM: 0, tonneSUM: 0 },
-			apiHeader: [ "SerialNo", "IsMarking", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail", "Notes" ],
+			apiHeader: [ "SerialNo", "IsMarking", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "Notes" ],
 			options: {
 				tenderMap: {},
 				guildMap: {},
@@ -1040,8 +1039,23 @@ export default {
 					this.showEdit = false;
 
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
-					if([1,2].includes(this.deviceTypeNow)) this.calArea(caseSpec);
-					else if([3,4].includes(this.deviceTypeNow)) {
+					if([1,2].includes(this.deviceTypeNow)) {
+						this.calArea(caseSpec);
+						if(this.deviceTypeNow == 1) {
+							for(const key of [ "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail" ]) caseSpec[key] = row[key];
+
+							if(caseSpec.editFormula) {
+								delete caseSpec.MillingLength;
+								delete caseSpec.MillingWidth;
+							} else delete caseSpec.MillingFormula;
+
+							if(caseSpec.SamplingL1 && caseSpec.SamplingL1 == 1) caseSpec.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
+							else delete caseSpec.SamplingL1Detail;
+
+							if(caseSpec.SamplingL2 && caseSpec.SamplingL2 == 1) caseSpec.SamplingL2Detail = JSON.stringify(row.SamplingL2Detail);
+							else delete caseSpec.SamplingL2Detail;
+						}
+					} else if([3,4].includes(this.deviceTypeNow)) {
 						this.detail.forEach(row => {
 							row.number == Number(row.number);
 							for(const key of [ "SerialNo", "editFormula", "isAdd", "isEdit" ]) delete row[key];
