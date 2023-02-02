@@ -810,16 +810,17 @@ export default {
 							this.$set(l, "uRollerImg", []);
 							this.$set(l, "uSprinklerImg", []);
 
-							if(l.SamplingL1Detail) {
-								l.SamplingL1Detail = l.SamplingL1Detail.length == 0 
+							if(l.hasOwnProperty('SamplingL1Detail')) {
+								console.log(l.SamplingL1Detail);
+								l.SamplingL1Detail = Object.keys(l.SamplingL1Detail).length == 0 
 									? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
-									: JSON.parse(l.SamplingL1Detail);
+									: l.SamplingL1Detail;
 							}
 
-							if(l.SamplingL2Detail) {
-								l.SamplingL2Detail = l.SamplingL2Detail.length == 0 
+							if(l.hasOwnProperty('SamplingL2Detail')) {
+								l.SamplingL2Detail = Object.keys(l.SamplingL2Detail).length == 0 
 									? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
-									: JSON.parse(l.SamplingL2Detail);
+									: l.SamplingL2Detail;
 							}
 
 							if(l.MillingAreaArr) {
