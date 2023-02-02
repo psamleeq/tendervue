@@ -183,9 +183,9 @@ export default {
 						else if(key == 'CaseProcess') {
 							let content = "";
 
-							// 主任派工
-							if(!caseObj.DatePlan) content += "主任未派工、";
-							else content += `主任 ${this.formatDate(caseObj.DatePlan)} 已派工、`;
+							// 主任分派
+							if(!caseObj.DatePlan) content += "主任未分派、";
+							else content += `主任 ${this.formatDate(caseObj.DatePlan)} 已分派、`;
 
 							// 工班施工
 							if(!caseObj.DateAssign) content += "工班未派施工、";
@@ -200,7 +200,7 @@ export default {
 							// else if(caseObj.SCType2Flag == "2") content += "坑洞臨補已完工、";
 
 							// TODO: 熱再生
-							// if(caseObj.CType4 == "1") content += `熱再生主任已派工、`;
+							// if(caseObj.CType4 == "1") content += `熱再生主任已分派、`;
 							// else if(caseObj.CType4 == "2") content += `熱再生 ${caseObj.CType4date} 已派施工、`;
 							// else if(caseObj.CType4 == "3") content += `熱再生 ${caseObj.CType4date} 已派施工，熱再生 ${caseObj.page4t} 已完工、`;
 

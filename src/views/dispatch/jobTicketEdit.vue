@@ -115,7 +115,7 @@
 
 		<el-divider />
 
-		<h3>主任派工案件</h3>
+		<h3>主任分派案件</h3>
 		<el-table
 			ref="confirmTable"
 			empty-text="目前沒有資料"
@@ -291,7 +291,7 @@ export default {
 					sortable: false
 				},
 				DatePlan: {
-					name: "主任派工日期",
+					name: "主任分派日期",
 					sortable: false
 				},
 				// DateDeadline: {
@@ -681,7 +681,7 @@ export default {
 					});
 
 					this.pdfDoc.autoTable({ 
-						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						// head: [[ '順序', '主任分派日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
 							order: (i+1) + pageSize*pageIndex, 
 							// DatePlan: l.DatePlan, 
@@ -697,7 +697,7 @@ export default {
 						})),
 						columns: [
 							{ header: '順序', dataKey: 'order' },
-							// { header: '主任派工日', dataKey: 'DatePlan' },
+							// { header: '主任分派日', dataKey: 'DatePlan' },
 							{ header: '道管編號', dataKey: 'CaseNo' },
 							{ header: '里別', dataKey: 'Postal_vil' },
 							{ header: '損壞類別', dataKey: 'DistressName' },
@@ -790,7 +790,7 @@ export default {
 					await this.createPdf_header();
 
 					this.pdfDoc.autoTable({ 
-						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						// head: [[ '順序', '主任分派日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
 							order: (i+1) + pageSize*pageIndex, 
 							// DatePlan: l.DatePlan, 
@@ -802,7 +802,7 @@ export default {
 						})),
 						columns: [
 							{ header: '順序', dataKey: 'order' },
-							// { header: '主任派工日', dataKey: 'DatePlan' },
+							// { header: '主任分派日', dataKey: 'DatePlan' },
 							{ header: '道管編號', dataKey: 'CaseNo' },
 							{ header: '損壞類別', dataKey: 'DistressName' },
 							{ header: '維修地點', dataKey: 'Place' },
@@ -885,7 +885,7 @@ export default {
 							'工程概述', '補繪標線'
 						]],
 						body: table.map((l, i) => {
-							const dateTitles = [ '案件逾期日', '主任派工日', '預計進場日', '實際完工日' ];
+							const dateTitles = [ '案件逾期日', '主任分派日', '預計進場日', '實際完工日' ];
 							const dateContents = [ 'DateDeadline', 'DatePlan' ]
 							const safeTitles = [ '安全錐', '鐵板', '警示燈', '連桿' ]; 
 
@@ -908,7 +908,7 @@ export default {
 						}).flat(),
 						columns: [
 							{ header: '順序', dataKey: 'order' },
-							// { header: '主任派工日', dataKey: 'DatePlan' },
+							// { header: '主任分派日', dataKey: 'DatePlan' },
 							{ header: '道管編號', dataKey: 'CaseNo' },
 							{ header: '維修地點', dataKey: 'Place' },
 							{ header: '日期項目1', dataKey: 'dateTitle' },
@@ -992,7 +992,7 @@ export default {
 					await this.createPdf_header();
 
 					this.pdfDoc.autoTable({ 
-						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						// head: [[ '順序', '主任分派日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
 							order: (i+1) + pageSize*pageIndex, 
 							// DatePlan: l.DatePlan, 
@@ -1003,7 +1003,7 @@ export default {
 						})),
 						columns: [
 							{ header: '順序', dataKey: 'order' },
-							// { header: '主任派工日', dataKey: 'DatePlan' },
+							// { header: '主任分派日', dataKey: 'DatePlan' },
 							{ header: '道管編號', dataKey: 'CaseNo' },
 							{ header: '維修地點', dataKey: 'Place' },
 							{ header: '標線完成數量', dataKey: 'Note' },

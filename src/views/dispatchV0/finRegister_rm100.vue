@@ -15,7 +15,7 @@
 			</div>
 
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">派工日期</div>
+				<div style="font-size: 12px; color: #909399">分派日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<br />
@@ -128,7 +128,7 @@
 				<template slot-scope="{ row, column }">
 					<span v-if="[ 'SCType1Flag' ].includes(column.property)">
 						<span v-if="row[column.property] == '3'">已完工</span>
-						<span v-else-if="row[column.property] == '2'">已派工</span>
+						<span v-else-if="row[column.property] == '2'">已分派</span>
 						<el-checkbox v-else v-model="row[column.property]" :true-label="1" :false-label="0" />
 					</span>
 					<span v-else>

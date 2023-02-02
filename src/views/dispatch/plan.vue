@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-plan" v-loading="loading">
-		<h2>主任派工</h2>
+		<h2>主任分派</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -14,7 +14,7 @@
 			</div>
 
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">{{ listQuery.filter ? '派工日期' : '成案日期' }}</div>
+				<div style="font-size: 12px; color: #909399">{{ listQuery.filter ? '分派日期' : '成案日期' }}</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<br />
@@ -38,7 +38,7 @@
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
-			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已派工</el-checkbox>
+			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已分派</el-checkbox>
 		</div>
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -163,13 +163,13 @@
 			<el-table-column v-if="deviceTypeNow == 3" label="設計數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="!filterNow" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">數量</el-button>
+						<el-button v-if="!filterNow" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 
-			<el-table-column :label="filterNow ? '主任派工日期' : '是否退件'" width="110" align="center">
+			<el-table-column :label="filterNow ? '主任分派日期' : '是否退件'" width="110" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.IsReturn"> 前ㄧ分派時間: </span>
 					<span>{{ row.DatePlanBefore || "-" }}</span>

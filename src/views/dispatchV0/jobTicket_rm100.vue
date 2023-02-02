@@ -14,7 +14,7 @@
 			</div>
 
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">派工日期</div>
+				<div style="font-size: 12px; color: #909399">分派日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<br />
@@ -229,7 +229,7 @@ export default {
 					sortable: false
 				},
 				assignDate: {
-					name: "主任派工日期",
+					name: "主任分派日期",
 					sortable: false
 				},
 				estFinishDate: {
@@ -479,7 +479,7 @@ export default {
 						});
 					}
 					this.pdfDoc.autoTable({ 
-						// head: [[ '順序', '主任派工日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
+						// head: [[ '順序', '主任分派日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
 							order: (i+1) + 8*pageIndex, 
 							// assignDate: l.assignDate, 
@@ -495,7 +495,7 @@ export default {
 						})),
 						columns: [
 							{ header: '順序', dataKey: 'order' },
-							// { header: '主任派工日', dataKey: 'assignDate' },
+							// { header: '主任分派日', dataKey: 'assignDate' },
 							{ header: '道管編號', dataKey: 'CaseNo' },
 							{ header: '里別', dataKey: 'lining' },
 							{ header: '損壞類別', dataKey: 'BTName' },

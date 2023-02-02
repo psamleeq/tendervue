@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-plan-V0" v-loading="loading">
-		<h2>主任派工_V0</h2>
+		<h2>主任分派_V0</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">

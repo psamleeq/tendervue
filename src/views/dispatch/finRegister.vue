@@ -3,7 +3,6 @@
 		<h2>完工登錄</h2>
 		<div class="filter-container">
 			<div class="filter-item">
-				<!-- TODO: 設施未完成 -->
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<span>類型</span>
@@ -15,7 +14,7 @@
 			</div>
 
 			<!-- <span class="filter-item">
-				<div style="font-size: 12px; color: #909399">派工日期</div>
+				<div style="font-size: 12px; color: #909399">分派日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span> -->
 			<div class="filter-item">
@@ -307,7 +306,7 @@
 			<el-table-column v-if="[3,4].includes(deviceTypeNow)" label="實際數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="!isAllCompleted" :type="row.Content.length == 0 ? 'success' : 'info'" :plain="!row.Content.length != 0" size="mini" @click="beforeEdit(row)">數量</el-button>
+						<el-button v-if="!isAllCompleted" :type="row.Content.length == 0 ? 'success' : 'info'" :plain="!row.Content.length != 0" size="mini" @click="beforeEdit(row)">登錄</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
 				</template>
@@ -810,15 +809,14 @@ export default {
 							this.$set(l, "uSprinklerImg", []);
 
 							if(l.hasOwnProperty('SamplingL1Detail')) {
-								console.log(l.SamplingL1Detail);
 								l.SamplingL1Detail = Object.keys(l.SamplingL1Detail).length == 0 
-									? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
+									? Object.assign({}, { Aggregate: "", Amount: 0, Unit: "" })
 									: l.SamplingL1Detail;
 							}
 
 							if(l.hasOwnProperty('SamplingL2Detail')) {
 								l.SamplingL2Detail = Object.keys(l.SamplingL2Detail).length == 0 
-									? Object.assign({}, { "Aggregate": "", "Amount": 0, "Unit": "" })
+									? Object.assign({}, { Aggregate: "", Amount: 0, Unit: "" })
 									: l.SamplingL2Detail;
 							}
 
@@ -1042,7 +1040,7 @@ export default {
 					if([1,2].includes(this.deviceTypeNow)) {
 						this.calArea(caseSpec);
 						if(this.deviceTypeNow == 1) {
-							for(const key of [ "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL1Detail", "SamplingL2", "SamplingL2Detail" ]) caseSpec[key] = row[key];
+							for(const key of [ "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL2" ]) caseSpec[key] = row[key];
 
 							if(caseSpec.editFormula) {
 								delete caseSpec.MillingLength;
@@ -1050,10 +1048,7 @@ export default {
 							} else delete caseSpec.MillingFormula;
 
 							if(caseSpec.SamplingL1 && caseSpec.SamplingL1 == 1) caseSpec.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
-							else delete caseSpec.SamplingL1Detail;
-
 							if(caseSpec.SamplingL2 && caseSpec.SamplingL2 == 1) caseSpec.SamplingL2Detail = JSON.stringify(row.SamplingL2Detail);
-							else delete caseSpec.SamplingL2Detail;
 						}
 					} else if([3,4].includes(this.deviceTypeNow)) {
 						this.detail.forEach(row => {

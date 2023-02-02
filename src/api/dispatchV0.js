@@ -27,7 +27,7 @@ export function getCostKitDetailV0(query) {
 	})
 }
 
-// 主任派工列表
+// 主任分派列表
 export function getDispatchListV0(query) {
 	return request({
 		url: '/dispatchV0/list',

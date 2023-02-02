@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container iCase-list" v-loading="loading">
-		<h2>派工紀錄</h2>
+		<h2>分派紀錄</h2>
 		<aside>資料初始為2022年6月</aside>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
@@ -10,7 +10,7 @@
 				<el-option v-for="type in options.caseTypeOrder" :key="type" :label="options.caseType[type].name" :value="Number(type)" />
 			</el-select>
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">派工日期</div>
+				<div style="font-size: 12px; color: #909399">分派日期</div>
 				<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -131,11 +131,11 @@ export default {
 				// 	sortable: false,
 				// },
 				directDispatchDate: {
-					name: "主任派工日期",
+					name: "主任分派日期",
 					sortable: false,
 				},
 				// dispatchDate: {
-				// 	name: "派工日期",
+				// 	name: "分派日期",
 				// 	sortable: false,
 				// },
 				dispatchArea: {

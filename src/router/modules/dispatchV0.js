@@ -29,7 +29,7 @@ const dispatchRouter = {
 			component: () => import('@/views/dispatchV0/plan_rm100'),
 			name: 'planV0',
 			meta: {
-				title: '主任派工_V0',
+				title: '主任分派_V0',
 				roles: ['beta'],
 				vTag: 'Alpha'
 			}

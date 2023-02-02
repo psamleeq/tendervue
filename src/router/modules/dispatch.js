@@ -29,7 +29,7 @@ const dispatchRouter = {
 			component: () => import('@/views/dispatch/plan'),
 			name: 'plan',
 			meta: {
-				title: '主任派工',
+				title: '主任分派',
 				roles: ['restored.assign'],
 				isNew: true
 			}

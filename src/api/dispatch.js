@@ -62,7 +62,7 @@ export function getTaskReal(query) {
 }
 
 //---------------------------------------
-// 主任派工
+// 主任分派
 export function getDispatch(query) {
 	return request({
 		url: '/dispatch/plan',

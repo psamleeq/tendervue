@@ -139,7 +139,7 @@ export default {
 					sortable: false,
 				},
 				dispatchDate: {
-					name: "派工日期",
+					name: "分派日期",
 					sortable: false,
 				},
 				estFinishDate: {
