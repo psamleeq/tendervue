@@ -253,7 +253,7 @@ export default {
 					return acc;
 				}, {});
 
-				if(this.$route.query.tenderRound) this.listQuery.tenderRound = this.$route.query.tenderRound;
+				if(this.$route.query.tenderRound) this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
 				else this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
 				this.changeTender();
 			});
@@ -433,6 +433,7 @@ export default {
 				}
 			});
 
+			this.$router.push({ query: { ...this.$route.query , tenderRound: this.listQuery.tenderRound } });
 			this.getList();
 		},
 		async getList() {
@@ -609,7 +610,8 @@ export default {
 					const key = this.listQuery.filterType == 1 ? 'blockId' : 'roadName';
 					let query = {};
 					query[key] = this.listQuery.filterId;
-					this.$router.push({ query });
+
+					this.$router.push({ query: { ...this.$route.query , ...query } });
 
 					// let blockSpec;
 					// this.dataLayer.PCIBlock.forEach(features =>{ 
