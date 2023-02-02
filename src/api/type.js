@@ -9,6 +9,15 @@ export function getDistGeo(query) {
 	})
 }
 
+// PCI區塊Geo
+export function getBlockGeo(query) {
+	return request({
+		url: '/type/block',
+		method: 'get',
+		params: query
+	})
+}
+
 // 施工廠商Map
 export function getGuildMap(query) {
 	return request({

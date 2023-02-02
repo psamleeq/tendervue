@@ -84,7 +84,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-import { getTenderRound } from "@/api/type";
+import { getTenderRound, getBlockGeo } from "@/api/type";
 import { getRoadCaseGeo, setRoadCase } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
@@ -445,8 +445,6 @@ export default {
 			})
 		},
 		changeTender() {
-			this.switchBlockType(true);
-
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
 				const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
@@ -484,6 +482,7 @@ export default {
 		},
 		async getList() {
 			this.loading = true;
+			let isCompleted = false;
 			this.clearAll();
 			this.markers = [];
 			this.polyLines = {};
@@ -495,6 +494,7 @@ export default {
 			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
+			// 載入缺失
 			getRoadCaseGeo({
 				tenderId: tenderRound.tenderId,
 				timeStart: startDate,
@@ -606,9 +606,39 @@ export default {
 					// });
 				}
 				// this.switchBlockType();
-				await this.focusMap();
-				this.loading = false;
+				if(this.$route.query.caseId) await this.search();
+
+				if(isCompleted) this.loading = false;
+				else isCompleted = true;
 			}).catch(err => this.loading = false);
+
+			// 載入區塊
+			this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
+			this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
+
+			await getBlockGeo({ 
+				tenderId: tenderRound.tenderId,
+				blockType: [1, 2]
+			}).then(async (response) => {
+				if(response.data.geoJSON.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					
+					this.geoJSON.block = JSON.parse(response.data.geoJSON);
+					this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block.block_bell);
+					this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block.block_nco);
+					this.switchBlockType();
+
+					if(this.$route.query.blockId) this.search();
+
+					if(isCompleted) this.loading = false;
+					else isCompleted = true;
+				}
+			})
+
 		},
 		removeCaseStatus() {
 			// console.log(this.currCaseId);
@@ -631,27 +661,10 @@ export default {
 				this.getList();
 			})
 		},
-		switchBlockType(init = false) {
+		async switchBlockType() {
 			for(const block of Object.values(this.dataLayer.PCIBlock)) {
 				block.revertStyle();
 				block.setMap(null);
-			}
-
-			if(init) {
-				this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
-				this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
-
-				const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
-				let isCompleted = false;
-				this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_${zipCode}.geojson?t=${Date.now()}`, null, () => {
-					if(isCompleted) this.search();
-					else isCompleted = true;
-				});
-				// this.dataLayer.PCIBlock.bell.loadGeoJson(`/assets/json/PCIBlock_${zipCode}.geojson?t=${Date.now()}`);
-				this.dataLayer.PCIBlock.nco.loadGeoJson(`/assets/json/PCIBlock_nco_${zipCode}.geojson?t=${Date.now()}`, null, () => {
-					if(isCompleted) this.search();
-					else isCompleted = true;
-				});
 			}
 
 			if(this.listQuery.blockType.includes(1)) this.dataLayer.PCIBlock.bell.setMap(this.map);
@@ -669,6 +682,7 @@ export default {
 		},
 		async focusMap() {
 			return new Promise(resolve => {
+				// console.log("focusMap");
 				for(const block of Object.values(this.dataLayer.PCIBlock)) block.revertStyle();
 
 				if(!this.listQuery.filterId || this.listQuery.filterId.length == 0) resolve();
@@ -704,14 +718,14 @@ export default {
 
 					resolve();
 				} else if(this.listQuery.filterType == 2) {
-					this.$router.push({ query: { blockId: this.listQuery.filterId }});
+					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, blockId: this.listQuery.filterId }});
 
 					let blockSpec;
 					for(const[ key, block ] of Object.entries(this.dataLayer.PCIBlock)) {
 						// console.log(key, block);
 						block.forEach(features =>{ 
 							let blockType = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
-							if(features.j[blockType] == this.listQuery.filterId) blockSpec = features;
+							if(features.j.blockId == this.listQuery.filterId) blockSpec = features;
 						});
 						
 						if(blockSpec != undefined ) {
