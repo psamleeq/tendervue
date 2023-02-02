@@ -380,6 +380,7 @@ export default {
 						message: "新增成功",
 						type: "success",
 					});
+					this.listQuery.filterStr = this.newKit.GroupName;
 					this.newKit.GroupName = "";
 					this.getList();
 				} else {
