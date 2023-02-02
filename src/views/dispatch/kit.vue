@@ -399,7 +399,7 @@ export default {
 					this.rowActive.editKit = false;
 					this.detail.forEach(row => {
 						row.number == Number(row.number);
-						for(const key of [ "SerialNo", "isAdd", "isEdit", "TaskPrice", "DTeam" ]) delete row[key];
+						for(const key of [ "SerialNo", "GroupSN", "isAdd", "isEdit", "TaskPrice", "DTeam" ]) delete row[key];
 					});
 					setTaskGroupDetail({
 						SerialNo: this.rowActive.SerialNo,

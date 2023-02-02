@@ -742,7 +742,7 @@ export default {
 					let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.tableSelect)));
 
 					caseList.forEach(row => {
-						if([1,2].includes(this.deviceTypeNow)) this.calArea(caseSpec);
+						if([1,2].includes(this.deviceTypeNow)) this.calArea(row);
 					});
 
 					setDispatch({
