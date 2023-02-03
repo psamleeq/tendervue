@@ -46,8 +46,7 @@ const caseRouter = {
 			name: 'PCIManager',
 			meta: {
 				title: 'PCI管理',
-				roles: ['distress.inspector'],
-				vTag: 'Alpha' 
+				roles: ['distress.inspectorMaster']
 			}
 		},
 		{

@@ -20,8 +20,8 @@ const dispatchRouter = {
 			name: 'kit',
 			meta: {
 				title: '計價套組',
-				roles: ['beta'],
-				vTag: 'Alpha'
+				roles: ['restored.assign'],
+				isNew: true
 			}
 		},
 		{

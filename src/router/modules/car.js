@@ -10,17 +10,17 @@ const carRouter = {
 	meta: {
 		title: '車管系統',
 		icon: 'el-icon-truck',
-		roles: ['beta'],
+		roles: ['car'],
 		isNew: true 
 	},
 	children: [
 		{
 			path: 'route',
 			component: () => import('@/views/car/route'),
-			name: 'car_1',
+			name: 'carRoute',
 			meta: { 
 				title: '車巡管理',
-				roles: ['beta']
+				roles: ['car.route']
 			}
 		}
 	]
