@@ -130,28 +130,35 @@
 			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
-					<el-table
-						v-else
-						empty-text="目前沒有資料"
-						:data="row.Content"
-						border
-						fit
-						highlight-current-row
-						:header-cell-style="{ 'background-color': '#F2F6FC' }"
-						stripe
-						style="width: 100%"
-					>
-						<el-table-column type="index" label="序號" width="50" align="center" /> 
-						<el-table-column
-							v-for="(value, key) in detailHeaders"
-							:key="key"
-							:prop="key"
-							:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
-							:label="value.name"
-							align="center"
-							:sortable="value.sortable"
-						/>
-					</el-table>
+					<span v-else>
+						<el-table
+							empty-text="目前沒有資料"
+							:data="row.Content"
+							border
+							fit
+							highlight-current-row
+							:header-cell-style="{ 'background-color': '#F2F6FC' }"
+							stripe
+							style="width: 100%"
+						>
+							<el-table-column type="index" label="序號" width="50" align="center" /> 
+							<el-table-column
+								v-for="(value, key) in detailHeaders"
+								:key="key"
+								:prop="key"
+								:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
+								:label="value.name"
+								align="center"
+								:sortable="value.sortable"
+							/>
+						</el-table>
+						<div class="expand-note">
+							<div>設計金額合計: ${{ detailAmount(row.Content).toLocaleString() }}</div>
+							<div>設計施作數量: {{ row.KitNotes.DesignDetail }}</div>
+							<div>設計施工方式: {{ row.KitNotes.DesignDesc }}</div>
+							<div>設計施作人力: {{ row.KitNotes.DesignWorker }}</div>
+						</div>
+					</span>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -256,28 +263,35 @@
 			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
-					<el-table
-						v-else
-						empty-text="目前沒有資料"
-						:data="row.Content"
-						border
-						fit
-						highlight-current-row
-						:header-cell-style="{ 'background-color': '#F2F6FC' }"
-						stripe
-						style="width: 100%"
-					>
-						<el-table-column type="index" label="序號" width="50" align="center" /> 
-						<el-table-column
-							v-for="(value, key) in detailHeaders"
-							:key="key"
-							:prop="key"
-							:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
-							:label="value.name"
-							align="center"
-							:sortable="value.sortable"
-						/>
-					</el-table>
+					<span v-else>
+						<el-table
+							empty-text="目前沒有資料"
+							:data="row.Content"
+							border
+							fit
+							highlight-current-row
+							:header-cell-style="{ 'background-color': '#F2F6FC' }"
+							stripe
+							style="width: 100%"
+						>
+							<el-table-column type="index" label="序號" width="50" align="center" /> 
+							<el-table-column
+								v-for="(value, key) in detailHeaders"
+								:key="key"
+								:prop="key"
+								:min-width="['itemName'].includes(key) ? 100 : ['itemId', 'unit', 'uPrice'].includes(key) ? 18 : 30"
+								:label="value.name"
+								align="center"
+								:sortable="value.sortable"
+							/>
+						</el-table>
+						<div class="expand-note">
+							<div>設計金額合計: ${{ detailAmount(row.Content).toLocaleString() }}</div>
+							<div>設計施作數量: {{ row.KitNotes.DesignDetail }}</div>
+							<div>設計施工方式: {{ row.KitNotes.DesignDesc }}</div>
+							<div>設計施作人力: {{ row.KitNotes.DesignWorker }}</div>
+						</div>
+					</span>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -495,11 +509,10 @@ export default {
 				this.checkList = this.checkList.map(() => newVal);
 				this.resetOrder();
 			}
-			
 		},
 		indeterminate() {
 			return this.tableSelect.length > 0 && this.tableSelect.length < this.list.length;
-		}
+		},
 	},
 	watch: { 
 		"pdfSetting.fontSize"() {
@@ -593,6 +606,9 @@ export default {
 				image.src = `/assets/testPic/${l.ImgZoomOut}`;
 				this.imgDOMObj [l.CaseNo] = image;
 			});
+		},
+		detailAmount(content) {
+			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		},
 		getList() {
 			if (!Number(this.listQuery.contractor)) {
@@ -1298,6 +1314,9 @@ export default {
 			cursor: pointer
 		.el-table__expand-icon
 			display: none
+	.expand-note > *
+		font-size: 14px
+		margin: 5px 0
 	.btn-dialog
 		padding: 5px 5px
 </style>

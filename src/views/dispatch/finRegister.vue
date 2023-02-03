@@ -338,34 +338,43 @@
 			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
-					<el-table
-						v-else
-						empty-text="目前沒有資料"
-						:data="row.Content"
-						border
-						fit
-						highlight-current-row
-						:header-cell-style="{ 'background-color': '#F2F6FC' }"
-						stripe
-						style="width: 100%"
-					>
-						<el-table-column type="index" label="序號" width="50" align="center" /> 
-						<el-table-column
-							v-for="(value, key) in detailHeaders[deviceTypeNow]"
-							:key="key"
-							:prop="key"
-							:min-width="tableMinWidth(key)"
-							:label="value.name"
-							align="center"
-							:sortable="value.sortable"
+					<span v-else>
+						<el-table
+							empty-text="目前沒有資料"
+							:data="row.Content"
+							border
+							fit
+							highlight-current-row
+							:header-cell-style="{ 'background-color': '#F2F6FC' }"
+							stripe
+							style="width: 100%"
 						>
-							<template slot-scope="{ row: rowSpec, column: colSpec }">
-								<span v-if="['ItemPaint', 'ItemType'].includes(colSpec.property)">{{ options[`${colSpec.property}Map`][rowSpec[colSpec.property]].name }}</span>
-								<span v-else>{{ rowSpec[colSpec.property] }}</span>
-							</template>
-						</el-table-column>
-					</el-table>
+							<el-table-column type="index" label="序號" width="50" align="center" /> 
+							<el-table-column
+								v-for="(value, key) in detailHeaders[deviceTypeNow]"
+								:key="key"
+								:prop="key"
+								:min-width="tableMinWidth(key)"
+								:label="value.name"
+								align="center"
+								:sortable="value.sortable"
+							>
+								<template slot-scope="{ row: rowSpec, column: colSpec }">
+									<span v-if="['ItemPaint', 'ItemType'].includes(colSpec.property)">{{ options[`${colSpec.property}Map`][rowSpec[colSpec.property]].name }}</span>
+									<span v-else>{{ rowSpec[colSpec.property] }}</span>
+								</template>
+							</el-table-column>
+						</el-table>
+						<div v-if="deviceTypeNow == 3" class="expand-note">
+							<div>實際金額合計: ${{ detailAmount(row.Content).toLocaleString() }}</div>
+							<div>實際施作數量: {{ row.KitNotes.DesignDetail }}</div>
+							<div>實際施工方式: {{ row.KitNotes.DesignDesc }}</div>
+							<div>實際施作人力: {{ row.KitNotes.DesignWorker }}</div>
+						</div>
+					</span>
 				</template>
+
+				<span></span>
 			</el-table-column>
 		</el-table>
 		<br>
@@ -390,7 +399,7 @@
 		</el-dialog>
 
 		<!-- Dialog: 數量-->
-		<el-dialog width="900px" title="數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
+		<el-dialog width="900px" title="實際數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
 			<div v-if="deviceTypeNow == 3" class="filter-container">
 				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇" popper-class="type-select" style="width: 500px">
 					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)" :label="kit.GroupName" />
@@ -491,18 +500,18 @@
 				</el-table-column>
 			</el-table>
 			<span v-if="deviceTypeNow == 3">
-				<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount.toLocaleString() }}</div>
+				<div class="detail-caption amount">實際金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
 			
 				<div class="detail-note">
 					<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDetail">
-						<template slot="prepend">設計施作數量</template>
+						<template slot="prepend">實際施作數量</template>
 					</el-input>
 					<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDesc">
-						<template slot="prepend">設計施工方式</template>
+						<template slot="prepend">實際施工方式</template>
 						<el-checkbox slot="append" v-model="rowActive.notesSync">更新「工程概述」</el-checkbox>
 					</el-input>
 					<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignWorker">
-						<template slot="prepend">設計施作人力</template>
+						<template slot="prepend">實際施作人力</template>
 					</el-input>
 				</div>
 			</span>
@@ -728,9 +737,6 @@ export default {
 		},
 		detailPlus() {
 			return [ ...this.detail, this.newItem[this.deviceTypeNow] ]
-		},
-		detailAmount() {
-			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		}
 	},
 	watch: { },
@@ -764,6 +770,9 @@ export default {
 			if(this.deviceTypeNow == 3) return ['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30;
 			else if(this.deviceTypeNow == 4) return ['MillingFormula'].includes(key) ? 90 : ['MillingArea'].includes(key) ? 20 : 50;
 			else return null;
+		},
+		detailAmount(content) {
+			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		},
 		getList() {
 			if (!Number(this.listQuery.contractor)) {
@@ -1299,6 +1308,9 @@ export default {
 			margin: 10px 0 30px 0
 	.detail-note
 		margin-top: 10px
+	.expand-note > *
+		font-size: 14px
+		margin: 5px 0
 	.btn-dialog
 		padding: 5px 5px
 	.upload-preview

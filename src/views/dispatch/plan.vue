@@ -194,28 +194,35 @@
 			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
 					<span v-if="detail.length == 0">目前沒有資料</span>
-					<el-table
-						v-else
-						empty-text="目前沒有資料"
-						:data="detail"
-						border
-						fit
-						highlight-current-row
-						:header-cell-style="{ 'background-color': '#F2F6FC' }"
-						stripe
-						style="width: 100%"
-					>
-						<el-table-column type="index" label="序號" width="50" align="center" /> 
-						<el-table-column
-							v-for="(value, key) in detailHeaders"
-							:key="key"
-							:prop="key"
-							:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
-							:label="value.name"
-							align="center"
-							:sortable="value.sortable"
-						/>
-					</el-table>
+					<span v-else>
+						<el-table
+							empty-text="目前沒有資料"
+							:data="detail"
+							border
+							fit
+							highlight-current-row
+							:header-cell-style="{ 'background-color': '#F2F6FC' }"
+							stripe
+							style="width: 100%"
+						>
+							<el-table-column type="index" label="序號" width="50" align="center" /> 
+							<el-table-column
+								v-for="(value, key) in detailHeaders"
+								:key="key"
+								:prop="key"
+								:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
+								:label="value.name"
+								align="center"
+								:sortable="value.sortable"
+							/>
+						</el-table>
+						<div class="expand-note">
+							<div>設計金額合計: ${{ detailAmount.toLocaleString() }}</div>
+							<div>設計施作數量: {{ row.KitNotes.DesignDetail }}</div>
+							<div>設計施工方式: {{ row.KitNotes.DesignDesc }}</div>
+							<div>設計施作人力: {{ row.KitNotes.DesignWorker }}</div>
+						</div>
+					</span>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -291,8 +298,8 @@
 					</template>
 				</el-table-column>
 			</el-table>
-			<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount.toLocaleString() }}</div>
-			<div class="detail-note">
+			<div class="detail-caption amount">設計金額合計: ${{ detailAmount.toLocaleString() }}</div>
+			<div>
 				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDetail">
 					<template slot="prepend">設計施作數量</template>
 				</el-input>
@@ -842,6 +849,9 @@ export default {
 			// border: 1px solid #DFE6EC
 			background-color: #DFE6EC
 			margin: 10px 0 30px 0
+	.expand-note > *
+		font-size: 14px
+		margin: 5px 0
 	.btn-dialog
 		padding: 5px 5px
 </style>
