@@ -1074,7 +1074,7 @@ export default {
 							// DatePlan: l.DatePlan, 
 							CaseNo: `${l.CaseNo}\n${l.CaseSN}`, 
 							Place: `${l.Postal_vil}\n${l.Place}`,
-							Note: "",
+							Note: l.IsCancel && l.IsCancel == 1 ? "不需施作" : "",
 							areaSUM: ""
 						})),
 						columns: [

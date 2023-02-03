@@ -79,7 +79,8 @@
 			<el-table-column label="順序" prop="OrderIndex" width="50" align="center" fixed />
 			<el-table-column v-if="!isAllCompleted" label="退回" width="60" align="center" fixed>
 				<template slot-scope="{ row }">
-					<el-button v-if="!row.edit" type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
+					<span v-if="(deviceTypeNow == 4 && row.IsCancel) || row.edit"> - </span>
+					<el-button v-else type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
 				</template>
 			</el-table-column>
 
@@ -105,7 +106,8 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="[ 'IsMarking' ].includes(column.property)">
-						<span v-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
+						<span v-if="row.IsCancel_MK == 1" style="color: #F56C6C">不需施作</span>
+						<span v-else-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
 						<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
 						<span v-else-if="row.IsMarkingNow == 1">已分派</span>
 						<el-checkbox v-else-if="!isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
@@ -305,10 +307,12 @@
 			<!-- 設施、標線 -->
 			<el-table-column v-if="[3,4].includes(deviceTypeNow)" label="實際數量" width="140" align="center">
 				<template slot-scope="{ row }">
-					<el-button-group v-if="!row.edit">
+					<span v-if="deviceTypeNow == 4 && row.IsCancel" style="color: #F56C6C">不需施作</span>
+					<el-button-group v-else-if="!row.edit">
 						<el-button v-if="!isAllCompleted" :type="row.Content.length == 0 ? 'success' : 'info'" :plain="!row.Content.length != 0" size="mini" @click="beforeEdit(row)">登錄</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
+					<span v-else> - </span>
 				</template>
 			</el-table-column>
 			
@@ -317,6 +321,9 @@
 					<el-button-group v-if="!row.edit">
 						<!-- <el-button v-if="!isAllCompleted && [3,4].includes(deviceTypeNow)" type="primary" size="mini" @click="beforeEdit(row)">數量</el-button> -->
 						<el-button v-if="!isAllCompleted && deviceTypeNow != 4" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
+						<el-button v-if="!isAllCompleted && deviceTypeNow == 4" :type="row.IsCancel ? 'success' : 'danger'" size="mini" plain @click="finishCancel(row, Number(!row.IsCancel))">
+							{{ row.IsCancel ? '恢復施作' : '不需施作' }}
+						</el-button>
 
 						<!-- <el-button v-if="[3,4].includes(deviceTypeNow)" size="mini" @click="toggleExpand(row)">詳情</el-button> -->
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
@@ -530,7 +537,7 @@
 import moment from "moment";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 import { getTenderMap, getKitItemMap, getGuildMap, getSCTypeItemMap } from "@/api/type";
-import { getFinRegister, finRegisterSpec, finRegister, revokeDispatch, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
+import { getFinRegister, finRegisterSpec, finRegister, caseCancel ,revokeDispatch, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -1159,6 +1166,33 @@ export default {
 						} else {
 							this.$message({
 								message: "退回失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					});
+				}).catch(err => {});
+		},
+		finishCancel(row, isCancel) {
+			const confirmText = isCancel == 1 ? `確認將 案件編號${row.CaseNo} 標記為「不需施作」?` :`確認將 案件編號${row.CaseNo} 恢復成「施作狀態」?`;
+			this.$confirm(confirmText, "確認", { showClose: false })
+				.then(() => {
+					caseCancel({
+						deviceType: this.deviceTypeNow,
+						serialNo: row.SerialNo,
+						isCancel
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "標記成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "標記失敗",
 								type: "error",
 							});
 						}

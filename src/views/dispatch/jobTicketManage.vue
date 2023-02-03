@@ -3,7 +3,6 @@
 		<h2>派工單列表</h2>
 		<div class="filter-container">
 			<div class="filter-item">
-				<!-- TODO: 設施未完成 -->
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<span>類型</span>
@@ -49,7 +48,7 @@
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
-			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
+			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已退回</el-checkbox>
 		</div>
 
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
@@ -89,7 +88,9 @@
 							<span>{{ row.CaseNoActiveArr.length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
 								<span slot="content">
-									<div v-for="caseNo in row.CaseNoActiveArr" :key="caseNo">{{ caseNo }}</div>
+									<div v-for="(caseNo, index) in row.CaseNoActiveArr" :key="caseNo">{{ caseNo }}
+										<span v-if="row.CaseIsCancelArr && row.CaseIsCancelArr[index] == 1" style="color: #909399">(不需施作)</span>
+									</div>
 									<div v-for="caseNo in row.CaseNoInActiveArr" :key="caseNo">{{ caseNo }}<span style="color: #F56C6C">(退回)</span></div>
 								</span>
 								<i class="icon-tooltip el-icon-warning" />
@@ -109,7 +110,7 @@
 
 			<el-table-column label="狀態" min-width="30" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.IsActive == 0" style="color: #F56C6C">刪除
+					<span v-if="row.IsActive == 0" style="color: #F56C6C">退回
 						<!-- <i class="el-icon-close" style="color: #F56C6C" /> -->
 					</span>
 					<span v-else-if="row.DateClose.length != 0" style="color: #67C23A">完成
@@ -117,7 +118,7 @@
 					</span>
 					<span v-else>
 						<span> - </span>
-						<!-- <el-button class="btn-action" type="danger" plain size="mini" round @click="setCaseStatus(row, 8)">刪除</el-button> -->
+						<!-- <el-button class="btn-action" type="danger" plain size="mini" round @click="setCaseStatus(row, 8)">退回</el-button> -->
 					</span>
 				</template>
 			</el-table-column>
@@ -708,7 +709,7 @@ export default {
 							// DatePlan: l.DatePlan, 
 							CaseNo: `${l.CaseNo}\n${l.CaseSN}`, 
 							Place: `${l.Postal_vil}\n${l.Place}`,
-							Note: "",
+							Note: l.IsCancel && l.IsCancel == 1 ? "不需施作" : "",
 							areaSUM: ""
 						})),
 						columns: [

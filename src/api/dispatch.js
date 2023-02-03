@@ -149,6 +149,15 @@ export function finRegisterSpec(data) {
 	})
 }
 
+// 標記為「不需施作」
+export function caseCancel(data) {
+	return request({
+		url: `/dispatch/cancel`,
+		method: 'put',
+		data
+	})
+}
+
 //---------------------------------------
 // 派工單管理
 export function getJobTicketList(query) {

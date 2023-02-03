@@ -2,7 +2,7 @@
 	<div class="app-container job-ticket-edit" v-loading="loading">
 		<h2>修改派工單 {{ listQuery.orderSN }}</h2>
 
-		<h3>已選取案件</h3>
+		<h3>已派工案件</h3>
 		<el-table
 			ref="selectTable"
 			empty-text="目前沒有資料"
@@ -33,7 +33,13 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable>
+				<template slot-scope="{ row }">
+					<span>{{ row.CaseSN }}</span>
+					<br>
+					<span v-if="row.IsCancel && row.IsCancel == 1" style="color: #F56C6C">(不需施作)</span>
+				</template>
+			</el-table-column>
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -998,7 +1004,7 @@ export default {
 							// DatePlan: l.DatePlan, 
 							CaseNo: `${l.CaseNo}\n${l.CaseSN}`, 
 							Place: `${l.Postal_vil}\n${l.Place}`,
-							Note: "",
+							Note: l.IsCancel && l.IsCancel == 1 ? "不需施作" : "",
 							areaSUM: ""
 						})),
 						columns: [
