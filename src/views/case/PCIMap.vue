@@ -43,10 +43,16 @@
 						</el-row>
 					</el-collapse-item>
 					<el-collapse-item class="collapse-label" title="缺失類型">
-							<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
-								<el-col :span="10" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
-								<el-col :span="14">{{ info.total }}</el-col>
-							</el-row>
+						<el-row slot="title">
+							<el-col :span="18">缺失類型</el-col>
+							<el-col :span="6">
+								<el-switch v-model="caseSwitch" @change="switchCase()" onclick="(function(e) { e.stopPropagation() }(event))" />
+							</el-col>
+						</el-row>
+						<el-row :class="[ 'color-box', { 'active' : selectCase[info.caseName].switch } ]" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
+							<el-col :span="10" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
+							<el-col :span="14">{{ info.total }}</el-col>
+						</el-row>
 					</el-collapse-item>
 				</el-collapse>
 			</el-card>
@@ -88,6 +94,7 @@ export default {
 		return {
 			loading: false,
 			showImgViewer: false,
+			caseSwitch: true,
 			screenWidth: window.innerWidth,
 			// map: null,
 			imgUrls: [],
@@ -651,6 +658,10 @@ export default {
 					resolve();	
 				}
 			})
+		},
+		switchCase() {
+			if(this.caseSwitch) this.dataLayer.case.setMap(this.map);
+			else this.dataLayer.case.setMap(null);
 		},
 		showContent(props, position) {
 			// console.log(props);
