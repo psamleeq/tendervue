@@ -393,7 +393,7 @@
 		<el-dialog width="900px" title="數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
 			<div v-if="deviceTypeNow == 3" class="filter-container">
 				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇" popper-class="type-select" style="width: 500px">
-					<el-option v-for="kit in options.kitArr" :key="kit.UnitSN" :value="Number(kit.UnitSN)" :label="kit.GroupName" />
+					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)" :label="kit.GroupName" />
 				</el-select>
 				<el-button class="filter-item" type="success" size="mini" @click="importKit()">匯入套組</el-button>
 			</div>
@@ -956,12 +956,17 @@ export default {
 			getTaskGroupDetail({
 				groupSN: this.listQuery.groupSN,
 			}).then(response => {
-				this.detail.push(...response.data.list);
-				this.detail.forEach(l => {
-					this.$set(l, "isEdit", false);
+				const itemArr = response.data.list;
+				itemArr.forEach(itemAdd => {
+					const detailFilter = this.detail.filter(itemNow => itemNow.UnitSN == itemAdd.UnitSN);
+					if( detailFilter.length == 0) this.detail.push(itemAdd);
+					else detailFilter[0].number += itemAdd.number;
 				});
+				this.detail.forEach(l => { this.$set(l, "isEdit", false); });
 
-				this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.UnitSN == this.listQuery.groupSN)).map(kit => ({ DesignDetail: kit.DesignDetail, DesignDesc: kit.DesignDesc, DesignWorker: kit.DesignWorker }))[0];
+				const isReplaceNote = (Object.values(this.rowActive.KitNotes).filter(val => val && val.length != 0)).length == 0;
+				if(isReplaceNote) this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.SerialNo == this.listQuery.groupSN)).map(kit => ({ DesignDetail: kit.DesignDetail, DesignDesc: kit.DesignDesc, DesignWorker: kit.DesignWorker }))[0];
+
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
@@ -1111,6 +1116,15 @@ export default {
 		finishRegister() {
 			this.$confirm(`確認將 派工單號${this.orderSNNow} 完工登錄?`, "確認", { showClose: false })
 				.then(() => {
+					const tableSelectFilter = this.list.filter(caseSpec =>  !Boolean(caseSpec.IsCancel) && (caseSpec.Content && caseSpec.Content.length == 0));
+					const condition = [3, 4].includes(this.deviceTypeNow) && tableSelectFilter.length != 0;
+					if(condition) {
+						this.$message({
+							type: "error",
+							message: `案件編號${ tableSelectFilter.map(caseSpec => caseSpec.CaseNo).join("、") } 未填入「登錄數量」`
+						});
+					} else {
+						this.loading = true;
 						let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.list)));
 						caseList.forEach(row => {
 							if([1,2].includes(this.deviceTypeNow)) this.calArea(row);
@@ -1127,27 +1141,28 @@ export default {
 							else delete row.SamplingL2Detail;
 						});
 
-					finRegister({
-						deviceType: this.deviceTypeNow,
-						orderSN: Number(this.orderSNNow),
-						caseList
-					}).then(response => {
-						if ( response.statusCode == 20000 ) {
-							this.$message({
-								message: "登錄成功",
-								type: "success",
-							});
-						} else {
-							this.$message({
-								message: "登錄失敗",
-								type: "error",
-							});
-						}
-						this.getList();
-					}).catch(err => {
-						console.log(err);
-						this.getList();
-					});
+						finRegister({
+							deviceType: this.deviceTypeNow,
+							orderSN: Number(this.orderSNNow),
+							caseList
+						}).then(response => {
+							if ( response.statusCode == 20000 ) {
+								this.$message({
+									message: "登錄成功",
+									type: "success",
+								});
+							} else {
+								this.$message({
+									message: "登錄失敗",
+									type: "error",
+								});
+							}
+							this.getList();
+						}).catch(err => {
+							console.log(err);
+							this.getList();
+						});
+					}
 				}).catch(err => {});
 		},
 		removeDispatch(row) {

@@ -632,12 +632,17 @@ export default {
 			getTaskGroupDetail({
 				groupSN: this.listQuery.groupSN,
 			}).then(response => {
-				this.detail.push(...response.data.list);
-				this.detail.forEach(l => {
-					this.$set(l, "isEdit", false);
+				const itemArr = response.data.list;
+				itemArr.forEach(itemAdd => {
+					const detailFilter = this.detail.filter(itemNow => itemNow.UnitSN == itemAdd.UnitSN);
+					if( detailFilter.length == 0) this.detail.push(itemAdd);
+					else detailFilter[0].number += itemAdd.number;
 				});
+				this.detail.forEach(l => { this.$set(l, "isEdit", false); });
 
-				this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.SerialNo == this.listQuery.groupSN)).map(kit => ({ DesignDetail: kit.DesignDetail, DesignDesc: kit.DesignDesc, DesignWorker: kit.DesignWorker }))[0];
+				const isReplaceNote = (Object.values(this.rowActive.KitNotes).filter(val => val && val.length != 0)).length == 0;
+				if(isReplaceNote) this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.SerialNo == this.listQuery.groupSN)).map(kit => ({ DesignDetail: kit.DesignDetail, DesignDesc: kit.DesignDesc, DesignWorker: kit.DesignWorker }))[0];
+
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
@@ -653,8 +658,8 @@ export default {
 				}).then((response) => {
 					if (response.data.item == undefined) {
 						this.$message({
-							message: "查無項次資料",
 							type: "error",
+							message: "查無項次資料"
 						});
 					} else {
 						Object.assign(rowActive, response.data.item);
@@ -738,30 +743,36 @@ export default {
 		dispatch() {
 			this.$confirm(`確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 分派給 ${ this.options.guildMap[this.listQuery.contractor] }?`, "確認", { showClose: false })
 				.then(() => {
-					this.loading = true;
-					let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.tableSelect)));
+					const tableSelectFilter = this.tableSelect.filter(caseSpec => caseSpec.TaskRealGroup == 0);
+					const condition = this.deviceTypeNow == 3 && tableSelectFilter.length != 0;
+					if(condition) {
+						this.$message({
+							type: "error",
+							message: `案件編號${ tableSelectFilter.map(caseSpec => caseSpec.CaseNo).join("、") } 未填入「設計數量」`
+						});
+					} else {
+						this.loading = true;
+						let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.tableSelect)));
+						caseList.forEach(row => { if([1,2].includes(this.deviceTypeNow)) this.calArea(row); });
 
-					caseList.forEach(row => {
-						if([1,2].includes(this.deviceTypeNow)) this.calArea(row);
-					});
+						setDispatch({
+							contractor: this.listQuery.contractor,
+							deviceType: this.listQuery.deviceType,
+							caseList
+						}).then(response => {
+							if ( response.statusCode == 20000 ) {
+								this.$message({
+									message: "建立成功",
+									type: "success",
+								});
 
-					setDispatch({
-						contractor: this.listQuery.contractor,
-						deviceType: this.listQuery.deviceType,
-						caseList
-					}).then(response => {
-						if ( response.statusCode == 20000 ) {
-							this.$message({
-								message: "建立成功",
-								type: "success",
-							});
-
+								this.getList();
+							} 
+						}).catch(err => {
+							console.log(err);
 							this.getList();
-						} 
-					}).catch(err => {
-						console.log(err);
-						this.getList();
-					})
+						})
+					}
 				}).catch(err => {});
 		},
 		showDetail(row) {

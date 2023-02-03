@@ -18,7 +18,7 @@ const caseListRouter = {
 			component: () => import('@/views/caseList/inspection'),
 			name: 'inspection',
 			meta: { 
-				title: '派工紀錄', 
+				title: '分派紀錄', 
 				roles: ['case.viewer'],
 			}
 		},
