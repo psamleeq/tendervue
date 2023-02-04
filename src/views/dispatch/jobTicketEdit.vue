@@ -262,7 +262,7 @@ import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
-import { getTenderMap, getGuildMap } from "@/api/type";
+import { getGuildMap } from "@/api/type";
 import { getJobTicket, getFinRegister, editJobTicket, getTaskReal } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
@@ -391,7 +391,6 @@ export default {
 			tableSelect: [],
 			apiHeader: [ "SerialNo", "OrderIndex" ],
 			options: {
-				tenderMap: {},
 				guildMap: {},
 				deviceType: {
 					1: "道路",
@@ -447,7 +446,6 @@ export default {
 		}
 	},
 	async created() {
-		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
 		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
 		
 		// 讀入字型
@@ -1197,8 +1195,6 @@ export default {
 			margin-right: 5px
 			.el-select
 				width: 110px
-				&.tender-select
-					width: 520px
 			.select-contract
 				.el-select:first-child .el-input__inner
 					background-color: #F5F7FA

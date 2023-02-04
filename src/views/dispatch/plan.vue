@@ -193,11 +193,11 @@
 
 			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
-					<span v-if="detail.length == 0">目前沒有資料</span>
+					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<span v-else>
 						<el-table
 							empty-text="目前沒有資料"
-							:data="detail"
+							:data="row.Content"
 							border
 							fit
 							highlight-current-row
@@ -217,7 +217,7 @@
 							/>
 						</el-table>
 						<div class="expand-note">
-							<div>設計金額合計: ${{ detailAmount.toLocaleString() }}</div>
+							<div>設計金額合計: ${{ detailAmount(row.Content).toLocaleString() }}</div>
 							<div>設計施作數量: {{ row.KitNotes.DesignDetail }}</div>
 							<div>設計施工方式: {{ row.KitNotes.DesignDesc }}</div>
 							<div>設計施作人力: {{ row.KitNotes.DesignWorker }}</div>
@@ -298,7 +298,7 @@
 					</template>
 				</el-table-column>
 			</el-table>
-			<div class="detail-caption amount">設計金額合計: ${{ detailAmount.toLocaleString() }}</div>
+			<div class="detail-caption amount">設計金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
 			<div>
 				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDetail">
 					<template slot="prepend">設計施作數量</template>
@@ -482,9 +482,6 @@ export default {
 		detailPlus() {
 			return [ ...this.detail, this.newItem ]
 		},
-		detailAmount() {
-			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
-		}
 	},
 	watch: { },
 	created() { 
@@ -525,6 +522,9 @@ export default {
 			this.getTaskDetail(row).then(() => { 
 				this.$refs.caseTable.toggleRowExpansion(row);
 			}).catch(err => this.loading = false);
+		},
+		detailAmount(content) {
+			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		},
 		getList() {
 			this.loading = true;
@@ -573,13 +573,9 @@ export default {
 		},
 		getTaskDetail(row) {
 			return new Promise(resolve => {
-				this.detail = [];
+				row.Content = [];
 				getTaskReal({ taskRealGroup: row.TaskRealGroup }).then(response => {
-					this.detail = response.data.list;
-					this.detail.forEach(row => {
-						this.$set(row, "isAdd", false);
-						this.$set(row, "isEdit", false);
-					});
+					row.Content = response.data.list;
 					resolve();
 				}).catch(err => this.loading = false);
 			})
@@ -598,7 +594,7 @@ export default {
 			let caseFilterList = [];
 			for(const row of list) {
 				let caseItem = {};
-				for(const key of this.apiHeader) if(row[key]) caseItem[key] = row[key];
+				for(const key of this.apiHeader) caseItem[key] = row[key];
 				caseFilterList.push(caseItem);
 			}
 
@@ -606,21 +602,27 @@ export default {
 		},
 		beforeEdit(row) {
 			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
-			this.rowActive = JSON.parse(JSON.stringify(row)); 
 			this.loading = true;
 
 			this.getTaskDetail(row).then(() => { 
-				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });
-			}).catch(err => this.loading = false);
-				
-			getTaskGroup({
-				tenderId: this.rowActive.DTeam,
-				pageCurrent: 1,
-				pageSize: 999999
-			}).then(response => {
-				this.options.kitArr = response.data.list;
-				this.loading = false;
-				this.showEdit = true;
+				this.rowActive = JSON.parse(JSON.stringify(row)); 
+				this.detail = this.rowActive.Content;
+				this.detail.forEach(row => {
+					row.editFormula = true;
+					this.$set(row, "isAdd", false);
+					this.$set(row, "isEdit", false);
+				});
+				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });	
+
+				getTaskGroup({
+					tenderId: this.rowActive.DTeam,
+					pageCurrent: 1,
+					pageSize: 999999
+				}).then(response => {
+					this.options.kitArr = response.data.list;
+					this.loading = false;
+					this.showEdit = true;
+				}).catch(err => this.loading = false);
 			}).catch(err => this.loading = false);
 		},
 		cleanDetail() {
@@ -710,10 +712,15 @@ export default {
 					this.loading = true;
 					row.edit = false;
 					this.showEdit = false;
+					if([1,2].includes(this.deviceTypeNow)) this.calArea(row);
 					
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
-					if([1,2].includes(this.deviceTypeNow)) this.calArea(caseSpec);
-					else if([3,4].includes(this.deviceTypeNow)) {
+					if([1,2].includes(this.deviceTypeNow)) {
+						if(row.editFormula) {
+							delete caseSpec.MillingLength;
+							delete caseSpec.MillingWidth;
+						} else delete caseSpec.MillingFormula;
+					} else if([3,4].includes(this.deviceTypeNow)) {
 						this.detail.forEach(row => {
 							row.number == Number(row.number);
 							for(const key of [ "SerialNo", "isAdd", "isEdit" ]) delete row[key];
@@ -760,7 +767,16 @@ export default {
 					} else {
 						this.loading = true;
 						let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.tableSelect)));
-						caseList.forEach(row => { if([1,2].includes(this.deviceTypeNow)) this.calArea(row); });
+						caseList.forEach(row => { 
+							if([1,2].includes(this.deviceTypeNow)) {
+								this.calArea(row); 
+
+								if(row.editFormula) {
+									delete row.MillingLength;
+									delete row.MillingWidth;
+								} else delete row.MillingFormula;
+							}
+						});
 
 						setDispatch({
 							contractor: this.listQuery.contractor,

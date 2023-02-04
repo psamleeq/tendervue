@@ -63,6 +63,7 @@ export function getTypeMap(query) {
 }
 
 // 套組Map
+// TODO: rm100
 export function getKitItemMapV0(query) {
 	return request({
 		url: '/typeV0/kitItemMap',

@@ -106,11 +106,13 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="[ 'IsMarking' ].includes(column.property)">
-						<span v-if="row.IsCancel_MK == 1" style="color: #F56C6C">不需施作</span>
-						<span v-else-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
-						<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
-						<span v-else-if="row.IsMarkingNow == 1">已分派</span>
-						<el-checkbox v-else-if="!isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
+						<span v-if="!row.edit">
+							<span v-if="row.IsCancel_MK == 1" style="color: #F56C6C">不需施作</span>
+							<span v-else-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
+							<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
+							<span v-else-if="row.IsMarkingNow == 1">已分派</span>
+							<el-checkbox v-else-if="!isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
+						</span>
 						<span v-else> - </span>
 					</span>
 					<span v-else>
@@ -885,7 +887,7 @@ export default {
 			let caseFilterList = [];
 			for(const row of list) {
 				let caseItem = {};
-				for(const key of this.apiHeader) if(row[key]) caseItem[key] = row[key];
+				for(const key of this.apiHeader) caseItem[key] = row[key];
 				caseFilterList.push(caseItem);
 			}
 
@@ -1058,15 +1060,18 @@ export default {
 					this.showEdit = false;
 
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
+					delete caseSpec.IsMarking;
+
 					if([1,2].includes(this.deviceTypeNow)) {
 						this.calArea(caseSpec);
+
+						if(row.editFormula) {
+							delete caseSpec.MillingLength;
+							delete caseSpec.MillingWidth;
+						} else delete caseSpec.MillingFormula;
+
 						if(this.deviceTypeNow == 1) {
 							for(const key of [ "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL2" ]) caseSpec[key] = row[key];
-
-							if(caseSpec.editFormula) {
-								delete caseSpec.MillingLength;
-								delete caseSpec.MillingWidth;
-							} else delete caseSpec.MillingFormula;
 
 							if(caseSpec.SamplingL1 && caseSpec.SamplingL1 == 1) caseSpec.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
 							if(caseSpec.SamplingL2 && caseSpec.SamplingL2 == 1) caseSpec.SamplingL2Detail = JSON.stringify(row.SamplingL2Detail);
@@ -1083,22 +1088,9 @@ export default {
 								caseSpec.KitContent = this.detail;
 							}
 							caseSpec.KitNotes = JSON.stringify(row.KitNotes);
-							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
+							caseSpec.Notes = (editContent && row.notesSync) ? row.KitNotes.DesignDesc : row.Notes;
 						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
 					}
-
-					if(caseSpec.editFormula) {
-						delete caseSpec.MillingLength;
-						delete caseSpec.MillingWidth;
-					} else delete caseSpec.MillingFormula;
-
-					if(caseSpec.SamplingL1 == 1) caseSpec.SamplingL1Detail = JSON.stringify(caseSpec.SamplingL1Detail);
-					else delete caseSpec.SamplingL1Detail;
-
-					if(caseSpec.SamplingL2 == 1) caseSpec.SamplingL2Detail = JSON.stringify(caseSpec.SamplingL2Detail);
-					else delete caseSpec.SamplingL2Detail;
-
-					if(!caseSpec.uNotes) delete caseSpec.uNotes;
 
 					finRegisterSpec({
 						deviceType: this.deviceTypeNow,
@@ -1135,19 +1127,17 @@ export default {
 					} else {
 						this.loading = true;
 						let caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.list)));
+
 						caseList.forEach(row => {
-							if([1,2].includes(this.deviceTypeNow)) this.calArea(row);
+							if([1,2].includes(this.deviceTypeNow)) {
+								this.calArea(row);
 
-							if(row.editFormula) {
-								delete row.MillingLength;
-								delete row.MillingWidth;
-							} else delete row.MillingFormula;
-
-							if(row.SamplingL1 && row.SamplingL1 == 1) row.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
-							else delete row.SamplingL1Detail;
-
-							if(row.SamplingL2 && row.SamplingL2 == 1) row.SamplingL2Detail = JSON.stringify(row.SamplingL2Detail);
-							else delete row.SamplingL2Detail;
+								if(row.editFormula) {
+									delete row.MillingLength;
+									delete row.MillingWidth;
+								} else delete row.MillingFormula;
+							}
+							if(this.deviceTypeNow == 4) delete row.IsMarking;
 						});
 
 						finRegister({
