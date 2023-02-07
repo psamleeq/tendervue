@@ -185,7 +185,7 @@ export default {
 			listQuery: {
 				filter: false,
 				filterType: 1,
-				tenderRound: 91001,
+				tenderRound: 100001,
 				filterStr: null,
 				caseType: [],
 				pageCurrent: 1,
@@ -358,7 +358,7 @@ export default {
 				return acc;
 			}, {});
 
-			this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+			if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
 		});
 		
 	},

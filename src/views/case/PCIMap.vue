@@ -106,7 +106,7 @@ export default {
 			caseInfo: [],
 			selectCase: {},
 			listQuery: {
-				tenderRound: 91001,
+				tenderRound: 100001,
 				filterType: 1,
 				filterId: null
 			},
@@ -261,7 +261,7 @@ export default {
 				}, {});
 
 				if(this.$route.query.tenderRound) this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
-				else this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				else if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
 				this.changeTender();
 			});
 		}).catch(err => console.log("err: ", err));

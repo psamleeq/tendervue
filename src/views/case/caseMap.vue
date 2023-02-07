@@ -122,7 +122,7 @@ export default {
 			geoJSONFilter: {},
 			searchRange: "",
 			listQuery: {
-				tenderRound: 91001,
+				tenderRound: 100001,
 				filterType: 1,
 				filterId: null,
 				blockType: [1]
@@ -256,7 +256,7 @@ export default {
 				}, {});
 
 				if(this.$route.query.tenderRound) this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
-				else this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				else if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
 				this.changeTender(true);
 			});
 		}).catch(err => console.log("err: ", err));
@@ -459,6 +459,8 @@ export default {
 					zIndex: 0
 				}
 			});
+
+			this.$router.push({ query: { ...this.$route.query , tenderRound: this.listQuery.tenderRound } });
 			this.getList();
 		},
 		getGeoJSONFilter() {
@@ -724,7 +726,7 @@ export default {
 					for(const[ key, block ] of Object.entries(this.dataLayer.PCIBlock)) {
 						// console.log(key, block);
 						block.forEach(features =>{ 
-							let blockType = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
+							// let blockType = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
 							if(features.j.blockId == this.listQuery.filterId) blockSpec = features;
 						});
 						

@@ -8,8 +8,8 @@
 						<div class="el-input-group__prepend">
 							<span>合約</span>
 						</div>
-						<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender">
-							<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
+						<el-select v-model.number="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender">
+							<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="Number(id)" :label="name" />
 						</el-select>
 					</div>
 				</div>
@@ -97,7 +97,7 @@ export default {
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
 			listQuery: {
-				tenderId: null,
+				tenderId: 100,
 				blockId: null
 			},
 			headers: {
@@ -126,7 +126,7 @@ export default {
 		getTenderMap().then(response => {
 			this.options.tenderMap = response.data.tenderMap;
 			if(Object.keys(this.options.tenderMap).length > 0) {
-				this.listQuery.tenderId = Object.keys(this.options.tenderMap)[0];
+				if(!Object.keys(this.options.tenderMap).includes(String(this.listQuery.tenderId))) this.listQuery.tenderId = Object.keys(this.options.tenderMap)[0];
 				this.getList();
 			}
 		});
