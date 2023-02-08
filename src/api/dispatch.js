@@ -133,6 +133,14 @@ export function getFinRegister(query) {
 	})
 }
 
+export function finImgUpload(data) {
+	return request({
+		url: `/dispatch/finImgUpload`,
+		method: 'post',
+		data
+	})
+}
+
 export function finRegister(data) {
 	return request({
 		url: '/dispatch/finRegister',

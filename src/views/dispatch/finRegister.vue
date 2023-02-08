@@ -155,7 +155,7 @@
 							<el-col :span="6" style="line-height: 32px">{{ options.workmemo[key] }}</el-col>
 							<el-col :span="16">
 								<el-input v-model.number="row[key]" size="mini">
-									<el-button slot="append" style="padding: 5px 10px" @click="imgUploadKey = key; rowActive = row; showImgUploadDialog = true">上傳圖片 ({{ row[`${key}Img`].length }})</el-button>
+									<el-button slot="append" style="padding: 5px 10px" @click="beforeMImgEdit(row, key)">上傳圖片 ({{ row[`${key}Img`].length }})</el-button>
 								</el-input>
 							</el-col>
 						</el-row>
@@ -389,7 +389,7 @@
 
 		<!-- Dialog: 圖片上傳 -->
 		<el-dialog width="520px" :title="`圖片上傳(${options.workmemo[imgUploadKey]})`" :visible.sync="showImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
-			<el-upload ref="uploadFile" :key="`${imgUploadKey}Img`" action="http://127.0.0.1:3001/google/upload" :auto-upload="false" list-type="picture-card" :file-list="rowActive[`${imgUploadKey}Img`]" :on-change="handleChange" :on-preview="handlePreview">
+			<el-upload ref="uploadFile" :key="`${imgUploadKey}Img`" action="#" :auto-upload="false" list-type="picture-card" :file-list="rowActive[`${imgUploadKey}Img`]" :on-change="handleChange" :on-preview="handlePreview" :on-remove="handleRemove">
 				<i class="el-icon-plus" />
 				<!-- <el-button slot="trigger" type="info">選取</el-button> -->
 				<div slot="tip" class="el-upload__tip">只能上傳jpg/png文件，且不超過500kb</div>
@@ -548,7 +548,7 @@
 import moment from "moment";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 import { getTenderMap, getKitItemMap, getGuildMap, getSCTypeItemMap } from "@/api/type";
-import { getFinRegister, finRegisterSpec, finRegister, caseCancel ,revokeDispatch, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
+import { getFinRegister, finImgUpload, finImgRemove, finRegisterSpec, finRegister, caseCancel ,revokeDispatch, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -653,6 +653,10 @@ export default {
 			},
 			imgPreviewUrls: [],
 			imgPreviewIndex: 0,
+			imgObj: {
+				add: [],
+				remove: []
+			},
 			// total: 0,
 			list: [],
 			detail: [],
@@ -820,11 +824,14 @@ export default {
 							l.DateClose = this.formatTime(l.DateClose);
 							this.$set(l, "editFormula", l.MillingFormula != '0');
 
-							this.$set(l, "uStackerImg", [ { name: '20220926-3.jpg', url: '/assets/testPic/244/1110835872/20220926-3.jpg' }, { name: '20220926-1.jpg', url: '/assets/testPic/244/1110835872/20220926-1.jpg' }]);
-							this.$set(l, "uDiggerImg",  [ { name: '20220926-1.jpg', url: '/assets/testPic/244/1110835872/20220926-1.jpg' }]);
-							this.$set(l, "uPaverImg", []);
-							this.$set(l, "uRollerImg", []);
-							this.$set(l, "uSprinklerImg", []);
+							for(const mKey of Object.keys(this.options.workmemo).filter(key => key != 'uNotes'))
+								this.$set(l, `${mKey}Img`, l[`${mKey}Img`].map(url => ({ name: url.split("/").slice(-1), status: "success", url })));
+
+							// this.$set(l, "uStackerImg", l.);
+							// this.$set(l, "uDiggerImg",  [ { name: '20220926-1.jpg', url: '/assets/testPic/244/1110835872/20220926-1.jpg' }]);
+							// this.$set(l, "uPaverImg", []);
+							// this.$set(l, "uRollerImg", []);
+							// this.$set(l, "uSprinklerImg", []);
 
 							if(l.hasOwnProperty('SamplingL1Detail')) {
 								l.SamplingL1Detail = Object.keys(l.SamplingL1Detail).length == 0 
@@ -893,18 +900,46 @@ export default {
 
 			return caseFilterList;
 		},
-		submitUpload() {
-			this.$refs.uploadFile.submit();
-		},
 		handleChange(file, fileList) {
-			// console.log(fileList);
-			this.rowActive[`${this.imgUploadKey}Img`] = fileList;
+			// console.log(file, fileList);
+			if(file.status == 'ready') this.imgObj.add.push(file);
 			this.imgPreviewUrls = fileList.map(file => file.url);
 		},
 		handlePreview(file) {
 			// console.log(file);
+			this.imgPreviewUrls = this.rowActive[`${this.imgUploadKey}Img`].map(file => file.url);
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
+		},
+		handleRemove(file, fileList) {
+			// console.log(file, fileList);
+			if(file.status == 'success') this.imgObj.remove.push(file);
+			else if(file.status == 'ready') this.imgObj.add = this.imgObj.add.filter(img => img.uid != file.uid);
+			this.imgPreviewUrls = fileList.map(file => file.url);
+		},
+		submitUpload() {
+			let uploadForm = new FormData();
+			uploadForm.append('deviceType', this.deviceTypeNow);
+			uploadForm.append('serialNo', this.rowActive.SerialNo);
+			uploadForm.append('machineKey', this.imgUploadKey);
+			for(const file of this.imgObj.add.filter(f => (f.raw))) uploadForm.append('fileAddList', file.raw);
+			for(const file of this.imgObj.remove.filter(f => (f.url))) uploadForm.append('fileRemoveList', file.url);
+
+			finImgUpload(uploadForm).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "上傳成功",
+						type: "success",
+					});
+					this.showImgUploadDialog = false;
+					this.rowActive[`${this.imgUploadKey}Img`] = response.imgList.map(url => ({ name: url.split("/").slice(-1), status: "success", url }));
+				} else {
+					this.$message({
+						message: "上傳失敗",
+						type: "error",
+					});
+				}
+			}).catch(err => this.loading = false);
 		},
 		async beforeEdit(row) {
 			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
@@ -950,6 +985,15 @@ export default {
 				this.loading = false;
 				this.showEdit = true;
 			}
+		},
+		beforeMImgEdit(row, imgUploadKey) {
+			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
+			this.rowActive = {};
+			this.imgObj = {  add: [], remove: [] },
+			
+			this.imgUploadKey = imgUploadKey; 
+			this.showImgUploadDialog = true;
+			this.rowActive = row;
 		},
 		cleanDetail() {
 			this.detail = [];
