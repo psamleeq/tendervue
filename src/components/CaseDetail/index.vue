@@ -15,13 +15,9 @@
 			<el-table-column label="內容" prop="content" min-width="100" align="center">
 				<template slot-scope="{ row, column }">
 					<span v-if="String(row[column.property]).match(/.JPG|.jpg|.Jpg/g)">
-						<el-link v-if="row[column.property].includes('road')" :href="`https:/rm.bim-group.com/${row[column.property]}`" target="_blank" :underline="false">
-							<el-image style="width: 100%; height: 100%" :src="`/assets/testPic/${row[column.property].replace('\.\.\/', '')}`" fit="contain" />
+						<el-link :href="row[column.property]" target="_blank" :underline="false">
+							<el-image style="width: 100%; height: 100%" :src="row[column.property]" fit="contain" />
 						</el-link>
-						<el-link v-else :href="`https:/rm.bim-group.com/pic/${row[column.property]}`" target="_blank" :underline="false">
-							<el-image style="width: 100%; height: 100%" :src="`/assets/testPic/${row[column.property].replace('\.\.\/', '')}`" fit="contain" />
-						</el-link>
-						<!-- <el-link :href="`/assets/testPic/${row[column.property].replace('\.\.\/', '')}`" target="_blank">{{ row[column.property].replace('\.\.\/', '') }}</el-link> -->
 					</span>
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
@@ -64,12 +60,12 @@ export default {
 				CaseSN: {
 					name: "申請單號",
 				},
-				paperkind: {
-					name: "申請單類別",
-				},
-				run1tflag: {
-					name: "申請單流程",
-				},
+				// paperkind: {
+				// 	name: "申請單類別",
+				// },
+				// run1tflag: {
+				// 	name: "申請單流程",
+				// },
 				TBName: {
 					name: "區別",
 				},
@@ -85,9 +81,9 @@ export default {
 				DateCreate: {
 					name: "成案日期",
 				},
-				reporter: {
-					name: "查報人員",
-				},
+				// reporter: {
+				// 	name: "查報人員",
+				// },
 				Place: {
 					name: "案件地點",
 				},
@@ -207,8 +203,11 @@ export default {
 							content = content.replace(/、$/, "");
 							this.detail.push({ column: this.headersDetailFilter[key].name, content });
 						} else if(['DateCreate'].includes(key)) this.detail.push({ column: this.headersDetailFilter[key].name, content: this.formatDate(caseObj[key]) }); 
-						else if(key == 'Formula') this.detail.push({ column: this.headersDetailFilter[key].name, content: caseObj.MillingFormula != '0' ? `${caseObj.MillingFormula} = ${caseObj.MillingArea}` : `${caseObj.MillingLength}*${caseObj.MillingWidth} = ${caseObj.MillingArea}` });
-						else if(key == 'position') this.detail.push({ column: this.headersDetailFilter[key].name, content: `(${caseObj.CoordinateX}, ${caseObj.CoordinateY})` });
+						else if(key == 'Formula') {
+							for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
+								if(Number(caseObj[col])) caseObj[col] = Math.round(caseObj[col] * 1000) / 1000;
+							this.detail.push({ column: this.headersDetailFilter[key].name, content: caseObj.MillingFormula != '0' ? `${caseObj.MillingFormula} = ${caseObj.MillingArea}` : `${caseObj.MillingLength}*${caseObj.MillingWidth} = ${caseObj.MillingArea}` });
+						} else if(key == 'position') this.detail.push({ column: this.headersDetailFilter[key].name, content: `(${caseObj.CoordinateX}, ${caseObj.CoordinateY})` });
 						else if(['paperkind', 'run1tflag'].includes(key)) this.detail.push({ column: this.headersDetailFilter[key].name, content: this.options[key][caseObj[key]] });
 						else this.detail.push({ column: this.headersDetailFilter[key].name, content: caseObj[key] || "-" });
 					}
