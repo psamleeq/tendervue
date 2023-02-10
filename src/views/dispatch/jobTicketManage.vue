@@ -88,7 +88,7 @@
 							<span>{{ row.CaseNoActiveArr.length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
 								<span slot="content">
-									<div v-for="(caseNo, index) in row.CaseNoActiveArr" :key="caseNo">{{ caseNo }}
+									<div v-for="(caseNo, index) in row.CaseNoActiveArr" :key="`${caseNo}_${index}`">{{ caseNo }}
 										<span v-if="row.CaseIsCancelArr && row.CaseIsCancelArr[index] == 1" style="color: #909399">(不需施作)</span>
 									</div>
 									<div v-for="caseNo in row.CaseNoInActiveArr" :key="caseNo">{{ caseNo }}<span style="color: #F56C6C">(退回)</span></div>
@@ -250,7 +250,7 @@ export default {
 			this.imgDOMObj = {};
 			this.caseSpec.forEach(l => { 
 				let image = new Image();
-				image.src = `/assets/testPic/${l.ImgZoomOut}`;
+				image.src = l.ImgZoomOut;
 				this.imgDOMObj [l.CaseNo] = image;
 			});
 		},
@@ -315,7 +315,7 @@ export default {
 		async createPdf_header(OrderSN) {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
-				const contractor = this.options.guildMap[this.listQuery.contractor];
+				const contractor = this.options.guildMap[this.contractorNow];
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize-4);
 				this.pdfDoc.setTextColor('#999999');
 				this.pdfDoc.text(`(廠商) ${contractor}`, 15, 10 );
@@ -470,7 +470,6 @@ export default {
 							didDrawCell: async (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
-									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 								}
 							},
@@ -558,7 +557,6 @@ export default {
 							didDrawCell: (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
-									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 								}
 							},
@@ -672,7 +670,6 @@ export default {
 							didDrawCell: (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
-									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 								}
 							},
@@ -759,7 +756,6 @@ export default {
 							didDrawCell: (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
-									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 								}
 							},

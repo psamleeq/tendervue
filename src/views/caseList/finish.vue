@@ -59,7 +59,7 @@
 				:sortable="value.sortable"
 			>
 				<template slot="header" slot-scope="{ column }">
-					<span v-if="column.property == 'actualFinishDate' && [11, 12].includes(caseTypeNow)">熱更生完工日期</span>
+					<span v-if="column.property == 'actualFinishDate' && [11, 12].includes(caseTypeNow)">熱再生完工日期</span>
 					<span v-else-if="column.property == 'actualFinishDate' && [2, 3].includes(caseTypeNow)">實際完工日期</span>
 					<span v-else>{{ column.label }}</span>
 				</template>

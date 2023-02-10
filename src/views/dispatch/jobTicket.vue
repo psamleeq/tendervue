@@ -603,7 +603,7 @@ export default {
 			this.imgDOMObj = {};
 			this.list.forEach(l => { 
 				let image = new Image();
-				image.src = `/assets/testPic/${l.ImgZoomOut}`;
+				image.src = l.ImgZoomOut;
 				this.imgDOMObj [l.CaseNo] = image;
 			});
 		},
@@ -647,6 +647,8 @@ export default {
 							// this.$set(l, "detailTime", false);
 							// l.DateDeadline = (l.DateDeadline == null) ? moment(Number(String(l.CaseNo).substr(0, 7))+19110000, "YYYYMMDD", true).add(15, 'd').format("YYYY-MM-DD") : this.formatDate(l.DateDeadline);
 							l.DateDeadline = (l.DateDeadline == null) ? "" : this.formatDate(l.DateDeadline);
+							for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
+								if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
 							this.$set(l, "index", i+1);
 							this.$set(l, "OrderIndex", i+1);
 							this.$set(l, "OrderIndexNew", i+1);
@@ -696,7 +698,7 @@ export default {
 		async createPdf_header() {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
-				const contractor = this.options.guildMap[this.listQuery.contractor];
+				const contractor = this.options.guildMap[this.contractorNow];
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize-4);
 				this.pdfDoc.setTextColor('#999999');
 				this.pdfDoc.text(`(廠商) ${contractor}`, 15, 10 );
@@ -851,7 +853,6 @@ export default {
 							didDrawCell: async (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
-									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 								}
 							},
@@ -939,7 +940,6 @@ export default {
 							didDrawCell: (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
-									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 								}
 							},
@@ -1053,7 +1053,6 @@ export default {
 							didDrawCell: (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
-									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 								}
 							},
@@ -1140,7 +1139,6 @@ export default {
 							didDrawCell: (data) => {
 								if(data.cell.section === 'body') {
 									// console.log(data);
-									// this.pdfDoc.addImage(`/assets/testPic/${data.cell.raw}`, 'JPEG', data.cell.x, data.cell.y, 45, 45);
 									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
 								}
 							},

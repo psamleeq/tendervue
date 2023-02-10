@@ -180,7 +180,7 @@
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
 						<!-- <el-button v-if="deviceTypeNow == 3 && !filterNow" :type=" row.Content.length == 0 ? 'success' : 'info'" :plain="row.Content.length > 0" size="mini" @click="beforeEdit(row)">設計</el-button> -->
-						<el-button v-if="!filterNow" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
+						<el-button v-if="deviceTypeNow != 4 && !filterNow" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
 						<!-- <el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button> -->
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
@@ -562,6 +562,8 @@ export default {
 						l.DatePlan = this.formatTime(l.DatePlan);
 						l.DatePlanBefore = this.formatTime(l.DatePlanBefore);
 						l.DateDeadline = this.formatTime(l.DateDeadline);
+						for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
+							if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
 						this.$set(l, "detailTime", false);
 						this.$set(l, "editFormula", l.MillingFormula != '0');
 						this.$set(l, "notesSync", true);
