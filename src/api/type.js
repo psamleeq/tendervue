@@ -88,3 +88,12 @@ export function getSCTypeItemMap(query) {
 		params: query
 	})
 }
+
+// 完工登錄照片Map
+export function getRestoredImgMap(query) {
+	return request({
+		url: '/type/restoredImgMap',
+		method: 'get',
+		params: query
+	})
+}

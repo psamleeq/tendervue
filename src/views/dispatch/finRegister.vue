@@ -110,7 +110,8 @@
 							<span v-if="row.IsCancel_MK == 1" style="color: #F56C6C">不需施作</span>
 							<span v-else-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
 							<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
-							<span v-else-if="row.IsMarkingNow == 1">已分派</span>
+							<span v-else-if="row.IsMarkingNow == 1 && row.Contractor_MK">已分派</span>
+							<span v-else-if="row.IsMarkingNow == 1">已提交</span>
 							<el-checkbox v-else-if="!isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
 						</span>
 						<span v-else> - </span>
@@ -155,7 +156,7 @@
 							<el-col :span="6" style="line-height: 32px">{{ options.workmemo[key] }}</el-col>
 							<el-col :span="16">
 								<el-input v-model.number="row[key]" size="mini">
-									<el-button slot="append" style="padding: 5px 10px" @click="beforeMImgEdit(row, key)">上傳圖片 ({{ row[`${key}Img`].length }})</el-button>
+									<el-button slot="append" style="padding: 5px 10px" @click="beforeMImgEdit(row, key)">上傳照片 ({{ row[`${key}Img`].length }})</el-button>
 								</el-input>
 							</el-col>
 						</el-row>
@@ -321,6 +322,7 @@
 			<el-table-column label="動作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
+						<el-button v-if="!isAllCompleted" type="success" plain size="mini" @click="beforeImgEdit(row)">照片</el-button>
 						<!-- <el-button v-if="!isAllCompleted && [3,4].includes(deviceTypeNow)" type="primary" size="mini" @click="beforeEdit(row)">數量</el-button> -->
 						<el-button v-if="!isAllCompleted && deviceTypeNow != 4" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
 						<el-button v-if="!isAllCompleted && deviceTypeNow == 4" :type="row.IsCancel ? 'success' : 'danger'" size="mini" plain @click="finishCancel(row, Number(!row.IsCancel))">
@@ -387,16 +389,44 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
-		<!-- Dialog: 圖片上傳 -->
-		<el-dialog width="520px" :title="`圖片上傳(${options.workmemo[imgUploadKey]})`" :visible.sync="showImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
-			<el-upload ref="uploadFile" :key="`${imgUploadKey}Img`" action="#" :auto-upload="false" list-type="picture-card" :file-list="rowActive[`${imgUploadKey}Img`]" :on-change="handleChange" :on-preview="handlePreview" :on-remove="handleRemove">
+		<!-- Dialog: 照片上傳(機具單欄) -->
+		<el-dialog v-loading="loading" width="520px" :title="`照片上傳(${options.workmemo[imgUploadKey]})`" :visible.sync="showMImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
+			<el-upload :key="`${imgUploadKey}Img`" action="#" :auto-upload="false" list-type="picture-card" :file-list="rowActive[`${imgUploadKey}Img`]" :on-change="handleChange" :on-preview="handlePreview" :on-remove="handleRemove">
 				<i class="el-icon-plus" />
 				<!-- <el-button slot="trigger" type="info">選取</el-button> -->
 				<div slot="tip" class="el-upload__tip">只能上傳jpg/png文件，且不超過500kb</div>
 			</el-upload>
 			<div slot="footer" class="dialog-footer">
+				<el-button @click="showMImgUploadDialog = false; getList();">取消</el-button>
+				<el-button type="primary" @click="submitMImgUpload()">確定</el-button>
+			</div>
+		</el-dialog>
+
+		<!-- Dialog: 照片上傳(多欄) -->
+		<el-dialog v-loading="loading" width="520px" title="照片上傳" :visible.sync="showImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
+			<div v-if="deviceTypeNow == 3" class="filter-container">
+				<el-select class="filter-item" v-model.number="rowActive.imgId" filterable placeholder="請選擇" popper-class="type-select" style="width: 120px">
+					<el-option v-for="image in restoredImgMapFilter()" :key="image.Id" :value="Number(image.Id)" :label="image.ImgName" />
+				</el-select>
+				<el-button class="filter-item" type="success" size="mini" @click="addPicType()">加入類型</el-button>
+			</div>
+
+			<el-row v-for="(val, col) in restoredImgRegularFilter()" :key="`${col}_${Object.keys(imgTypePlus).length}`" type="flex" align="middle">
+				<el-col :span="7">
+					<span>{{ val.name }}</span>
+					<el-button v-if="val.isAdd" type="danger" size="mini" style="padding: 5px; margin-left: 5px" @click="removePicType(col)">刪除</el-button>
+				</el-col>
+				<el-col :span="17" style="border-bottom: 1px solid #EBEEF5; padding: 0 5px 10px 5px">
+					<el-upload action="#" :auto-upload="false" list-type="picture-card" :file-list="Number(col) ? rowActive.Image[col] : rowActive[`${col}Img`]" :on-change="(file, fileList) => handleChange(file, fileList, col)" :on-preview="(file) => handlePreview(file, col)" :on-remove="(file, fileList) => handleRemove(file, fileList, col)" @click.native="imgUploadKey = col">
+						<i class="el-icon-plus" />
+						<!-- <el-button slot="trigger" type="info">選取</el-button> -->
+						<div slot="tip" class="el-upload__tip">只能上傳jpg/png文件，且不超過500kb</div>
+					</el-upload>
+				</el-col>
+			</el-row>
+			<div slot="footer" class="dialog-footer">
 				<el-button @click="showImgUploadDialog = false; getList();">取消</el-button>
-				<el-button type="primary" @click="submitUpload()">上傳</el-button>
+				<el-button type="primary" @click="submitImgUpload()">確定</el-button>
 			</div>
 		</el-dialog>
 
@@ -533,7 +563,7 @@
 			</div>
 		</el-dialog>
 
-		<!-- Dialog: 圖片預覽 -->
+		<!-- Dialog: 照片預覽 -->
 		<el-image-viewer
 			v-if="showImgViewer"
 			class="upload-preview"
@@ -547,8 +577,8 @@
 <script>
 import moment from "moment";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
-import { getTenderMap, getKitItemMap, getGuildMap, getSCTypeItemMap } from "@/api/type";
-import { getFinRegister, finImgUpload, finImgRemove, finRegisterSpec, finRegister, caseCancel ,revokeDispatch, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
+import { getTenderMap, getKitItemMap, getGuildMap, getSCTypeItemMap, getRestoredImgMap } from "@/api/type";
+import { getFinRegister, finImgUpload, finRegisterSpec, finRegister, caseCancel ,revokeDispatch, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
@@ -560,6 +590,7 @@ export default {
 		return {
 			loading: false,
 			showImgViewer: false,
+			showMImgUploadDialog: false,
 			showImgUploadDialog: false,
 			showEdit: false,
 			showDetailDialog: true,
@@ -657,6 +688,7 @@ export default {
 				add: [],
 				remove: []
 			},
+			imgTypePlus: {},
 			// total: 0,
 			list: [],
 			detail: [],
@@ -720,7 +752,22 @@ export default {
 					1: { name: "熱塑性塑膠" },
 					2: { name: "油漆" }
 				},
-				ItemTypeMap: { }
+				ItemTypeMap: { },
+				restoredImgRegular: {
+					"UnderConstr": {
+						name: "施工中照片",
+						deviceTypeFilter: [ 1, 2 ]
+					},
+					"PostConstr": {
+						name: "施工後照片",
+						deviceTypeFilter: [ 1, 2, 3 ]
+					},
+					"Marking": {
+						name: "補繪標線照片",
+						deviceTypeFilter: [ 4 ]
+					}
+				},
+				restoredImgMap: []
 			}
 		};
 	},
@@ -750,6 +797,7 @@ export default {
 		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
 		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
 		getSCTypeItemMap().then(response => { this.options.ItemTypeMap = response.data.SCType2Map });
+		getRestoredImgMap().then(response => { this.options.restoredImgMap = response.data.restoredImgMap });
 	},
 	mounted() {
 		this.showDetailDialog = false;
@@ -823,15 +871,18 @@ export default {
 						this.list.forEach(l => {
 							l.DateClose = this.formatTime(l.DateClose);
 							this.$set(l, "editFormula", l.MillingFormula != '0');
+							for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
+								if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
 
 							for(const mKey of Object.keys(this.options.workmemo).filter(key => key != 'uNotes'))
-								this.$set(l, `${mKey}Img`, l[`${mKey}Img`].map(url => ({ name: url.split("/").slice(-1), status: "success", url })));
+								if(l.hasOwnProperty(`${mKey}Img`) && Object.keys(l[`${mKey}Img`]).length > 0) this.$set(l, `${mKey}Img`, l[`${mKey}Img`].map(url => ({ name: url.split("/").slice(-1), status: "success", url })));
+							
+							for(const key of Object.keys(this.restoredImgRegularFilter())) 
+								if(l.hasOwnProperty(`${key}Img`) && Object.keys(l[`${key}Img`]).length > 0) this.$set(l, `${key}Img`, l[`${key}Img`].map(url => ({ name: url.split("/").slice(-1), status: "success", url })));
 
-							// this.$set(l, "uStackerImg", l.);
-							// this.$set(l, "uDiggerImg",  [ { name: '20220926-1.jpg', url: '/assets/testPic/244/1110835872/20220926-1.jpg' }]);
-							// this.$set(l, "uPaverImg", []);
-							// this.$set(l, "uRollerImg", []);
-							// this.$set(l, "uSprinklerImg", []);
+							if(l.hasOwnProperty('Image')) {
+								for(const key in l.Image) this.$set(l.Image, key, l.Image[key].map(url => ({ name: url.split("/").slice(-1), status: "success", url })));
+							}
 
 							if(l.hasOwnProperty('SamplingL1Detail')) {
 								l.SamplingL1Detail = Object.keys(l.SamplingL1Detail).length == 0 
@@ -845,14 +896,13 @@ export default {
 									: l.SamplingL2Detail;
 							}
 
-							if(l.MillingAreaArr) {
-								l.MillingArea = l.MillingAreaArr.reduce((acc, cur) => (acc+cur), 0);
-							}
+							if(l.MillingAreaArr) l.MillingArea = l.MillingAreaArr.reduce((acc, cur) => (acc+cur), 0);
 
 							if(l.Content == undefined) {
 								const Content = l.TaskRealGroup > 0 ? [{}] : [];
 								this.$set(l, "Content", Content);
 							}
+
 							this.$set(l, "IsMarkingNow", l.IsMarking);
 							this.$set(l, "notesSync", true);
 							this.$set(l, "edit", false);
@@ -886,9 +936,6 @@ export default {
 				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula} * ${number}`)() * 100) / 100;
 			} else row.MillingArea = row.MillingLength * row.MillingWidth * number;
 		},
-		formatTime(time) {
-			return time ? moment(time).format("YYYY-MM-DD") : "";
-		},
 		caseFilterList(list) {
 			// console.log(list);
 			let caseFilterList = [];
@@ -900,47 +947,159 @@ export default {
 
 			return caseFilterList;
 		},
-		handleChange(file, fileList) {
-			// console.log(file, fileList);
-			if(file.status == 'ready') this.imgObj.add.push(file);
-			this.imgPreviewUrls = fileList.map(file => file.url);
+		formatTime(time) {
+			return time ? moment(time).format("YYYY-MM-DD") : "";
 		},
-		handlePreview(file) {
+		cleanDetail() {
+			this.detail = [];
+			this.rowActive = {
+				KitNotes: {
+					DesignDetail: "",
+					DesignDesc: "",
+					DesignWorker: ""
+				}
+			};
+			this.showEdit = false;
+		},
+		// 照片
+		restoredImgRegularFilter() {
+			let restoredImgRegularFilter = {};
+			Object.keys(this.options.restoredImgRegular).forEach(key => {
+				const props = this.options.restoredImgRegular[key];
+				if(!props.hasOwnProperty('deviceTypeFilter')) restoredImgRegularFilter[key] = props;
+				else if(props.deviceTypeFilter.includes(this.deviceTypeNow)) restoredImgRegularFilter[key] = props;
+			})
+			return Object.assign(restoredImgRegularFilter, this.imgTypePlus)
+		},
+		restoredImgMapFilter() {
+			return this.options.restoredImgMap.filter(image => !Object.keys(this.imgTypePlus).includes(String(image.Id)) && (image.DeviceType == 0 || image.DeviceType == this.deviceTypeNow));
+		},
+		handleChange(file, fileList, key = this.imgUploadKey) {
+			// console.log(file, fileList);
+			if(file.status == 'ready') this.imgObj[key].add.push(file);
+			if(Number(key)) this.rowActive.Image[key] = fileList;
+			else this.rowActive[`${key}Img`] = fileList;
+			// this.imgPreviewUrls = fileList.map(file => file.url);
+		},
+		handlePreview(file, key = this.imgUploadKey) {
 			// console.log(file);
-			this.imgPreviewUrls = this.rowActive[`${this.imgUploadKey}Img`].map(file => file.url);
+			this.imgPreviewUrls = Number(key) 
+				? this.rowActive.Image[key].map(file => file.url)
+				: this.rowActive[`${key}Img`].map(file => file.url);
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
-		handleRemove(file, fileList) {
+		handleRemove(file, fileList, key = this.imgUploadKey) {
 			// console.log(file, fileList);
-			if(file.status == 'success') this.imgObj.remove.push(file);
-			else if(file.status == 'ready') this.imgObj.add = this.imgObj.add.filter(img => img.uid != file.uid);
-			this.imgPreviewUrls = fileList.map(file => file.url);
+			if(file.status == 'success') this.imgObj[key].remove.push(file);
+			else if(file.status == 'ready') this.imgObj[key].add = this.imgObj[this.imgUploadKey].add.filter(img => img.uid != file.uid);
+			if(Number(key)) this.rowActive.Image[key] = fileList;
+			else this.rowActive[`${key}Img`] = fileList;
+			// this.imgPreviewUrls = fileList.map(file => file.url);
 		},
-		submitUpload() {
+		beforeMImgEdit(row, imgUploadKey) {
+			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
+			this.rowActive = {};
+			this.imgUploadKey = imgUploadKey; 
+			this.imgObj[this.imgUploadKey] = {  add: [], remove: [] };
+			this.showMImgUploadDialog = true;
+			this.rowActive = row;
+		},
+		beforeImgEdit(row) {
+			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
+			this.rowActive = {};
+			this.imgObj = {};
+			this.imgTypePlus = {};
+			for(const imgId in row.Image) this.imgTypePlus[imgId] = { name: this.restoredImgMapFilter().filter(img => img.Id == imgId)[0].ImgName, isAdd: true };
+			for(const key of Object.keys(this.restoredImgRegularFilter())) this.imgObj[key] = {  add: [], remove: [] };
+			
+			this.showImgUploadDialog = true;
+			this.rowActive = row;
+			this.$set(this.rowActive, "imgId", null);
+		},
+		addPicType() {
+			if(!this.rowActive.imgId) return;
+			// console.log(this.imgTypePlus[this.rowActive.imgId]);
+			this.imgTypePlus[this.rowActive.imgId] = { name: this.restoredImgMapFilter().filter(img => img.Id == this.rowActive.imgId)[0].ImgName, isAdd: true };
+			this.imgObj[this.rowActive.imgId] = {  add: [], remove: [] };
+			this.rowActive.imgId = null;
+		},
+		removePicType(key) {
+			this.imgObj[key].remove = this.rowActive.Image[key] ? this.rowActive.Image[key] : [];
+			this.imgObj[key].add = [];
+			this.$delete(this.imgTypePlus, key);
+		},
+		submitMImgUpload() {
+			if(this.imgObj[this.imgUploadKey].add.length == 0 && this.imgObj[this.imgUploadKey].remove.length == 0) {
+				this.showMImgUploadDialog = false;
+				return;
+			}
+
+			this.loading = true;
 			let uploadForm = new FormData();
 			uploadForm.append('deviceType', this.deviceTypeNow);
 			uploadForm.append('serialNo', this.rowActive.SerialNo);
-			uploadForm.append('machineKey', this.imgUploadKey);
-			for(const file of this.imgObj.add.filter(f => (f.raw))) uploadForm.append('fileAddList', file.raw);
-			for(const file of this.imgObj.remove.filter(f => (f.url))) uploadForm.append('fileRemoveList', file.url);
+			uploadForm.append('imgColKey', this.imgUploadKey);
+			for(const file of this.imgObj[this.imgUploadKey].add.filter(f => (f.raw))) uploadForm.append('fileAddList', file.raw);
+			for(const file of this.imgObj[this.imgUploadKey].remove.filter(f => (f.url))) uploadForm.append('fileRemoveList', file.url);
 
 			finImgUpload(uploadForm).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
-						message: "上傳成功",
+						message: "更新成功",
 						type: "success",
 					});
-					this.showImgUploadDialog = false;
+					this.showMImgUploadDialog = false;
 					this.rowActive[`${this.imgUploadKey}Img`] = response.imgList.map(url => ({ name: url.split("/").slice(-1), status: "success", url }));
 				} else {
 					this.$message({
-						message: "上傳失敗",
+						message: "更新失敗",
 						type: "error",
 					});
 				}
+				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
+		async submitImgUpload() {
+			for(const [ index, key ] of Object.keys(this.imgObj).entries()) {
+				if(this.imgObj[key].add.length == 0 && this.imgObj[key].remove.length == 0) {
+					if(index == Object.keys(this.imgObj).length - 1) this.showImgUploadDialog = false;
+					continue;
+				}
+				this.loading = true;
+
+				let uploadForm = new FormData();
+				uploadForm.append('deviceType', this.deviceTypeNow);
+				uploadForm.append('serialNo', this.rowActive.SerialNo);
+				if(Number(key)) uploadForm.append('imgId', key);
+				else uploadForm.append('imgColKey', key);
+				
+				for(const file of this.imgObj[key].add.filter(f => (f.raw))) uploadForm.append('fileAddList', file.raw);
+				for(const file of this.imgObj[key].remove.filter(f => (f.url))) uploadForm.append('fileRemoveList', file.url);
+
+				await finImgUpload(uploadForm).then(response => {
+					const imgName = this.restoredImgRegularFilter()[key] 
+						? this.restoredImgRegularFilter()[key].name 
+						: this.options.restoredImgMap.filter(image => image.Id == key)[0].ImgName;
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: `${imgName}更新成功`,
+							type: "success",
+						});
+						this.showImgUploadDialog = false;
+						// this.rowActive[`${key}Img`] = response.imgList.map(url => ({ name: url.split("/").slice(-1), status: "success", url }));
+						this.getList();
+					} else {
+						this.$message({
+							message: `${imgName}更新失敗`,
+							type: "error",
+						});
+					}
+					this.loading = false;
+				}).catch(err => this.loading = false);	
+			}
+		},
+		// 計價數量
 		async beforeEdit(row) {
 			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
 			this.loading = true;
@@ -985,26 +1144,6 @@ export default {
 				this.loading = false;
 				this.showEdit = true;
 			}
-		},
-		beforeMImgEdit(row, imgUploadKey) {
-			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
-			this.rowActive = {};
-			this.imgObj = {  add: [], remove: [] },
-			
-			this.imgUploadKey = imgUploadKey; 
-			this.showImgUploadDialog = true;
-			this.rowActive = row;
-		},
-		cleanDetail() {
-			this.detail = [];
-			this.rowActive = {
-				KitNotes: {
-					DesignDetail: "",
-					DesignDesc: "",
-					DesignWorker: ""
-				}
-			};
-			this.showEdit = false;
 		},
 		importKit() {
 			this.loading = true;
@@ -1096,6 +1235,7 @@ export default {
 		delItem(index) {
 			this.detail.splice(index, 1);
 		},
+		// 完工登錄
 		finishRegisterSpec(row = this.rowActive, editContent = true) {
 			this.$confirm(`確認 案件編號${row.CaseNo} 資料登錄?`, "確認", { showClose: false })
 				.then(() => {
@@ -1114,8 +1254,10 @@ export default {
 							delete caseSpec.MillingWidth;
 						} else delete caseSpec.MillingFormula;
 
+						for(const key of [ "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes" ]) caseSpec[key] = row[key];
+
 						if(this.deviceTypeNow == 1) {
-							for(const key of [ "uStacker", "uSprinkler", "uDigger", "uRoller", "uPaver", "uNotes", "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL2" ]) caseSpec[key] = row[key];
+							for(const key of [ "Aggregate34", "Aggregate38", "SamplingL1", "SamplingL2" ]) caseSpec[key] = row[key];
 
 							if(caseSpec.SamplingL1 && caseSpec.SamplingL1 == 1) caseSpec.SamplingL1Detail = JSON.stringify(row.SamplingL1Detail);
 							if(caseSpec.SamplingL2 && caseSpec.SamplingL2 == 1) caseSpec.SamplingL2Detail = JSON.stringify(row.SamplingL2Detail);
@@ -1345,6 +1487,12 @@ export default {
 	.expand-note > *
 		font-size: 14px
 		margin: 5px 0
+	/*去除el-upload组件動畫*/
+	.el-upload-list__item 
+		// transition-delay: -0.45s !important
+		transition-duration: 0.02s !important
+	// .el-upload-list__item-thumbnail 
+	// 	object-fit: scale-down !important
 	.btn-dialog
 		padding: 5px 5px
 	.upload-preview
