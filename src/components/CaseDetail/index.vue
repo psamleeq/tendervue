@@ -175,7 +175,7 @@ export default {
 					// console.log(caseObj);
 
 					for(const key in this.headersDetailFilter) {
-						if(key == 'CaseStatus') this.detail.push({ column: this.headersDetail[key].name, content: `${this.options.RoadType[caseObj.RoadType]} ${caseObj.DName} ${caseObj.DistressName} ${this.options.DistressLevel[caseObj.DistressLevel]}` });
+						if(key == 'CaseStatus') this.detail.push({ prop: key, column: this.headersDetail[key].name, content: `${this.options.RoadType[caseObj.RoadType]} ${caseObj.DName} ${caseObj.DistressName} ${this.options.DistressLevel[caseObj.DistressLevel]}` });
 						else if(key == 'CaseProcess') {
 							let content = "";
 
@@ -191,6 +191,17 @@ export default {
 							if(!caseObj.DateClose) content += "未報完工、";
 							else content += `${this.formatDate(caseObj.DateClose)} 已報完工、`
 
+							// 補繪標線
+							if(caseObj.IsMarking == 1 ) {
+								content = content.replace(/、$/, "");
+								content += "\n";
+								if(caseObj.IsCancel_MK == 1) content += "補繪標線不需施作、";
+								else if(caseObj.DateClose_MK) content += `補繪標線 ${this.formatDate(caseObj.DateClose_MK)} 已報完工、`;
+								else if(caseObj.OrderSN_MK) content += `補繪標線 ${this.formatDate(caseObj.DatePlan_MK)} 已派施工、`;
+								else if(caseObj.Contractor_MK) content += `補繪標線 ${this.formatDate(caseObj.DateAssign_MK)} 已分派、`;
+								else content += "補繪標線 已提交、";
+							}
+
 							// TODO: 坑洞臨補
 							// if(caseObj.SCType2Flag == "1") content += "坑洞臨補  ";
 							// else if(caseObj.SCType2Flag == "2") content += "坑洞臨補已完工、";
@@ -201,15 +212,15 @@ export default {
 							// else if(caseObj.CType4 == "3") content += `熱再生 ${caseObj.CType4date} 已派施工，熱再生 ${caseObj.page4t} 已完工、`;
 
 							content = content.replace(/、$/, "");
-							this.detail.push({ column: this.headersDetailFilter[key].name, content });
+							this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content });
 						} else if(['DateCreate'].includes(key)) this.detail.push({ column: this.headersDetailFilter[key].name, content: this.formatDate(caseObj[key]) }); 
 						else if(key == 'Formula') {
 							for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
 								if(Number(caseObj[col])) caseObj[col] = Math.round(caseObj[col] * 1000) / 1000;
-							this.detail.push({ column: this.headersDetailFilter[key].name, content: caseObj.MillingFormula != '0' ? `${caseObj.MillingFormula} = ${caseObj.MillingArea}` : `${caseObj.MillingLength}*${caseObj.MillingWidth} = ${caseObj.MillingArea}` });
-						} else if(key == 'position') this.detail.push({ column: this.headersDetailFilter[key].name, content: `(${caseObj.CoordinateX}, ${caseObj.CoordinateY})` });
-						else if(['paperkind', 'run1tflag'].includes(key)) this.detail.push({ column: this.headersDetailFilter[key].name, content: this.options[key][caseObj[key]] });
-						else this.detail.push({ column: this.headersDetailFilter[key].name, content: caseObj[key] || "-" });
+							this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj.MillingFormula != '0' ? `${caseObj.MillingFormula} = ${caseObj.MillingArea}` : `${caseObj.MillingLength}*${caseObj.MillingWidth} = ${caseObj.MillingArea}` });
+						} else if(key == 'position') this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: `(${caseObj.CoordinateX}, ${caseObj.CoordinateY})`, Coordinate: caseObj.Coordinate });
+						else if(['paperkind', 'run1tflag'].includes(key)) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: this.options[key][caseObj[key]] });
+						else this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] || "-" });
 					}
 				}
 				this.$emit('update:loading', false);

@@ -106,14 +106,12 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="[ 'IsMarking' ].includes(column.property)">
-						<span v-if="!row.edit">
-							<span v-if="row.IsCancel_MK == 1" style="color: #F56C6C">不需施作</span>
-							<span v-else-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
-							<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
-							<span v-else-if="row.IsMarkingNow == 1 && row.Contractor_MK">已分派</span>
-							<span v-else-if="row.IsMarkingNow == 1">已提交</span>
-							<el-checkbox v-else-if="!isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
-						</span>
+						<span v-if="row.IsCancel_MK == 1" style="color: #F56C6C">不需施作</span>
+						<span v-else-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
+						<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
+						<span v-else-if="row.IsMarkingNow == 1 && row.Contractor_MK">已分派</span>
+						<span v-else-if="row.IsMarkingNow == 1">已提交</span>
+						<el-checkbox v-else-if="!row.edit && !isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
 						<span v-else> - </span>
 					</span>
 					<span v-else>
