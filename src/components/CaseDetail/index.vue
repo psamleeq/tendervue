@@ -27,7 +27,7 @@
 							<el-button slot="reference" class="btn-action" type="info" icon="el-icon-search" plain size="mini" round />
 						</el-popover>
 					</span>
-					<span v-else-if="row.prop == 'otherImg'">
+					<span v-else-if="row.prop == 'otherImage'">
 						<el-button type="info" size="mini" @click="toggleExpand(row)">展開</el-button>
 					</span>
 					<span v-else>
@@ -331,12 +331,12 @@ export default {
 							if(caseObj[key] && caseObj[key].length > 0) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] });
 						} else this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] || "-" });
 					}
-					this.detail.push({ prop: "other", column: "其他照片", content: "" });
+					this.detail.push({ prop: "otherImage", column: "其他照片", content: "" });
 
 					if([1, 2].includes(deviceType)) {
 						for(const key in this.options.workmemo) {
-							console.log(`${key}Img`);
-							console.log(caseObj[`${key}Img`]);
+							// console.log(`${key}Img`);
+							// console.log(caseObj[`${key}Img`]);
 							if(caseObj[`${key}Img`] && caseObj[`${key}Img`].length > 0) this.otherImg.push({ prop: key, column: this.options.workmemo[key], content: caseObj[`${key}Img`] });
 						}
 					}
