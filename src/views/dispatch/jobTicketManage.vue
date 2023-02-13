@@ -782,6 +782,11 @@ export default {
 				deviceType: this.listQuery.deviceType
 			}).then(async(response) => {
 				this.caseSpec = response.data.list;
+
+				this.caseSpec.forEach((l, i) => {
+					for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
+						if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
+				});
 				this.imgPreload();
 
 				switch(this.deviceTypeNow) {
