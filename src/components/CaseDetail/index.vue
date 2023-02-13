@@ -1,6 +1,7 @@
 <template>
 	<div class="case-detail">
 		<el-table
+			ref="caseDetail"
 			:loading="loading"
 			empty-text="目前沒有資料"
 			:data="detail"
@@ -26,9 +27,36 @@
 							<el-button slot="reference" class="btn-action" type="info" icon="el-icon-search" plain size="mini" round />
 						</el-popover>
 					</span>
+					<span v-else-if="row.prop == 'otherImg'">
+						<el-button type="info" size="mini" @click="toggleExpand(row)">展開</el-button>
+					</span>
 					<span v-else>
 						<span style="white-space: pre-line">{{ row[column.property] || "-" }}</span>
 					</span>
+				</template>
+			</el-table-column>
+			<el-table-column type="expand" width="1" align="center" style="display: none">
+				<template slot-scope="{ row }">
+					<el-table
+						:loading="loading"
+						empty-text="目前沒有資料"
+						:data="otherImg"
+						border
+						fit
+						highlight-current-row
+						:header-cell-style="{ 'background-color': '#F2F6FC' }"
+						stripe
+						style="width: 100%"
+					>
+						<el-table-column prop="column" min-width="45" align="center" />
+						<el-table-column prop="content" min-width="100" align="center">
+							<template slot-scope="{ row, column }">
+								<span v-if="String(row[column.property]).match(/.JPG|.jpg|.Jpg/g)">
+									<el-image v-for="img in row[column.property]" :key="img" class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="img" :preview-src-list="imgUrls" fit="contain" :z-index="9999" />
+								</span>
+							</template>
+						</el-table-column>
+					</el-table>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -134,6 +162,7 @@ export default {
 				}
 			},
 			detail: [],
+			otherImg: [],
 			options: {
 				RoadType: {
 					1: "道路",
@@ -168,6 +197,14 @@ export default {
 					3: "分隊交辦",
 					4: "已完成申請單"  
 				},
+				workmemo: {
+					"uStacker": "堆高機",
+					"uDigger": "挖土機",
+					"uPaver": "鋪裝機",
+					"uRoller": "壓路機",
+					"uSprinkler": "灑水車",
+					"uNotes": "備註"
+				},
 				restoredImgMap: []
 			}
 		}
@@ -183,7 +220,9 @@ export default {
 			return headersDetailFilter
 		},
 		imgUrls() {
-			return this.detail.filter(row => ['ImgZoomIn', 'ImgZoomOut'].includes(row.prop) || row.prop.endsWith("Img")).map(row => row.content).flat();
+			const detailFilter = this.detail.filter(row => ['ImgZoomIn', 'ImgZoomOut'].includes(row.prop) || row.prop.endsWith("Img")).map(row => row.content).flat();
+			const otherImgFilter = this.otherImg.map(row => row.content).flat();
+			return [...detailFilter, ...otherImgFilter ];
 		},
 	},
 	created() { 
@@ -193,6 +232,9 @@ export default {
 		this.dialogMapVisible = false;
 	},
 	methods: {
+		toggleExpand(row) {
+			this.$refs.caseDetail.toggleRowExpansion(row);
+		},
 		showMapViewer(row) {
 			// console.log("showMap");
 			this.map.data.forEach(feature => this.map.data.remove(feature));
@@ -219,6 +261,7 @@ export default {
 		getDetail(row) {
 			// console.log(row);
 			this.detail = [];
+			this.otherImg = [];
 			let deviceType = this.deviceTypeNow;
 
 			// 補繪標線查詢原始案件
@@ -237,7 +280,6 @@ export default {
 				} else {
 					const caseObj = response.data.list[0];
 					// console.log(caseObj);
-
 					for(const key in this.headersDetailFilter) {
 						if(key == 'CaseStatus') this.detail.push({ prop: key, column: this.headersDetail[key].name, content: `${this.options.RoadType[caseObj.RoadType]} ${caseObj.DName} ${caseObj.DistressName} ${this.options.DistressLevel[caseObj.DistressLevel]}` });
 						else if(key == 'CaseProcess') {
@@ -289,6 +331,22 @@ export default {
 							if(caseObj[key] && caseObj[key].length > 0) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] });
 						} else this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] || "-" });
 					}
+					this.detail.push({ prop: "other", column: "其他照片", content: "" });
+
+					if([1, 2].includes(deviceType)) {
+						for(const key in this.options.workmemo) {
+							console.log(`${key}Img`);
+							console.log(caseObj[`${key}Img`]);
+							if(caseObj[`${key}Img`] && caseObj[`${key}Img`].length > 0) this.otherImg.push({ prop: key, column: this.options.workmemo[key], content: caseObj[`${key}Img`] });
+						}
+					}
+
+					if(caseObj.hasOwnProperty("Image")) {
+						for(const key in caseObj.Image) {
+							const imgObj = this.options.restoredImgMap.filter(img => img.Id == key)[0];
+							if(caseObj.Image[key] && caseObj.Image[key].length > 0) this.otherImg.push({ prop: imgObj.EngName, column: imgObj.ImgName, content: caseObj.Image[key] });
+						}
+					}
 				}
 				this.$emit('update:loading', false);
 				this.$emit('update:showDetailDialog', true);
@@ -303,6 +361,11 @@ export default {
 
 <style lang="sass">
 .case-detail
+	.el-table
+		.el-table__expanded-cell
+			padding: 0
+			.el-table__header-wrapper
+				display: none
 	.btn-action
 		display: inline-block
 		margin-left: 5px
