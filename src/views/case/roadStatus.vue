@@ -132,6 +132,7 @@ export default {
 			listQuery: {
 				filter: true,
 				distList: [],
+				tenderRound: 91001,
 				groupType: 1,
 				computeType: 2,
 				pageCurrent: 1,
@@ -280,7 +281,7 @@ export default {
 		showMap(row) {
 			this.$router.push({
 				path: "/case/caseMap",
-				query: { blockId: row.fcl_id },
+				query: { tenderRound: this.listQuery.tenderRound, blockId: row.fcl_id },
 			});
 		},
 		showMapViewer(row) {
