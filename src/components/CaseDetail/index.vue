@@ -16,7 +16,7 @@
 				<template slot-scope="{ row, column }">
 					<span v-if="String(row[column.property]).match(/.JPG|.jpg|.Jpg/g)">
 						<!-- <el-link :href="row[column.property]" target="_blank" :underline="false"> -->
-							<el-image  style="width: 100%; height: 100%; cursor: pointer" :src="row[column.property]" fit="contain" @click="showImg()"/>
+							<el-image v-for="img in row[column.property]" :key="img" class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="img" :preview-src-list="imgUrls" fit="contain" :z-index="9999" />
 						<!-- </el-link> -->
 					</span>
 					<span v-else-if="row.prop == 'position'">
@@ -32,18 +32,12 @@
 				</template>
 			</el-table-column>
 		</el-table>
-
-		<el-image-viewer
-			v-if="showImgViewer"
-			class="img-preview"
-			:on-close="() => { showImgViewer = false; }"
-			:url-list="imgUrls"
-		/>
 	</div>
 </template>
 
 <script>
 import moment from "moment";
+import { getRestoredImgMap } from "@/api/type";
 import { getCaseDetail } from "@/api/dispatch";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -70,7 +64,6 @@ export default {
 			showImgViewer: false,
 			dialogMapVisible: true,
 			map: {},
-			imgUrls: [],
 			headersDetail: {
 				casetype: {
 					name: "查報來源",
@@ -130,6 +123,15 @@ export default {
 				},
 				ImgZoomOut: {
 					name: "施工前遠照",
+				},
+				UnderConstrImg: {
+					name: "施工中照片"
+				},
+				PostConstrImg: {
+					name: "施工後照片"
+				},
+				MarkingImg: {
+					name: "補繪標線照片"
 				}
 			},
 			detail: [],
@@ -166,7 +168,8 @@ export default {
 					2: "隊部抽件",
 					3: "分隊交辦",
 					4: "已完成申請單"  
-				}
+				},
+				restoredImgMap: []
 			}
 		}
 	},
@@ -180,16 +183,17 @@ export default {
 			})
 			return headersDetailFilter
 		},
+		imgUrls() {
+			return this.detail.filter(row => ['ImgZoomIn', 'ImgZoomOut'].includes(row.prop) || row.prop.endsWith("Img")).map(row => row.content).flat();
+		},
+	},
+	created() { 
+		getRestoredImgMap().then(response => { this.options.restoredImgMap = response.data.restoredImgMap });
 	},
 	mounted() {
 		this.dialogMapVisible = false;
 	},
 	methods: {
-		showImg() {
-			console.log(this.detail);
-			this.imgUrls = this.detail.filter(row => ['ImgZoomIn', 'ImgZoomOut'].includes(row.prop)).map(row => row.content);
-			this.showImgViewer = true;
-		},
 		showMapViewer(row) {
 			// console.log("showMap");
 			this.map.data.forEach(feature => this.map.data.remove(feature));
@@ -258,8 +262,8 @@ export default {
 								content += "\n";
 								if(caseObj.IsCancel_MK == 1) content += "補繪標線不需施作、";
 								else if(caseObj.DateClose_MK) content += `補繪標線 ${this.formatDate(caseObj.DateClose_MK)} 已報完工、`;
-								else if(caseObj.OrderSN_MK) content += `補繪標線 ${this.formatDate(caseObj.DatePlan_MK)} 已派施工、`;
-								else if(caseObj.Contractor_MK) content += `補繪標線 ${this.formatDate(caseObj.DateAssign_MK)} 已分派、`;
+								else if(caseObj.OrderSN_MK) content += `補繪標線 ${this.formatDate(caseObj.DateAssign_MK)} 已派施工、`;
+								else if(caseObj.Contractor_MK) content += `補繪標線 ${this.formatDate(caseObj.DatePlan_MK)} 已分派、`;
 								else content += "補繪標線 已提交、";
 							}
 
@@ -274,14 +278,17 @@ export default {
 
 							content = content.replace(/、$/, "");
 							this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content });
-						} else if(['DateCreate'].includes(key)) this.detail.push({ column: this.headersDetailFilter[key].name, content: this.formatDate(caseObj[key]) }); 
+						} else if(['DateCreate'].includes(key)) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: this.formatDate(caseObj[key]) }); 
 						else if(key == 'Formula') {
 							for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
 								if(Number(caseObj[col])) caseObj[col] = Math.round(caseObj[col] * 1000) / 1000;
 							this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj.MillingFormula != '0' ? `${caseObj.MillingFormula} = ${caseObj.MillingArea}` : `${caseObj.MillingLength}*${caseObj.MillingWidth} = ${caseObj.MillingArea}` });
 						} else if(key == 'position') this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: `(${caseObj.CoordinateX}, ${caseObj.CoordinateY})`, Coordinate: caseObj.Coordinate });
 						else if(['paperkind', 'run1tflag'].includes(key)) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: this.options[key][caseObj[key]] });
-						else this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] || "-" });
+						else if(['ImgZoomIn', 'ImgZoomOut'].includes(key)) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: [ caseObj[key]] });
+						else if(key.endsWith("Img")) {
+							if(caseObj[key].length > 0) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] });
+						} else this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] || "-" });
 					}
 				}
 				this.$emit('update:loading', false);
