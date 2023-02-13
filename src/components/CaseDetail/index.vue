@@ -11,29 +11,46 @@
 			stripe
 			style="width: 100%"
 		>
-			<el-table-column label="欄位" prop="column" min-width="50" align="center" />
+			<el-table-column label="欄位" prop="column" min-width="45" align="center" />
 			<el-table-column label="內容" prop="content" min-width="100" align="center">
 				<template slot-scope="{ row, column }">
 					<span v-if="String(row[column.property]).match(/.JPG|.jpg|.Jpg/g)">
-						<el-link :href="row[column.property]" target="_blank" :underline="false">
-							<el-image style="width: 100%; height: 100%" :src="row[column.property]" fit="contain" />
-						</el-link>
+						<!-- <el-link :href="row[column.property]" target="_blank" :underline="false"> -->
+							<el-image  style="width: 100%; height: 100%; cursor: pointer" :src="row[column.property]" fit="contain" @click="showImg()"/>
+						<!-- </el-link> -->
+					</span>
+					<span v-else-if="row.prop == 'position'">
+						<span>{{ row[column.property] || "-" }}</span>
+						<el-popover class="dialog-map" v-model="dialogMapVisible" placement="top-start" width="500" trigger="hover" @show="showMapViewer(row)">
+							<map-viewer :map.sync="map"/>
+							<el-button slot="reference" class="btn-action" type="info" icon="el-icon-search" plain size="mini" round />
+						</el-popover>
 					</span>
 					<span v-else>
-						<span>{{ row[column.property] || "-" }}</span>
+						<span style="white-space: pre-line">{{ row[column.property] || "-" }}</span>
 					</span>
 				</template>
 			</el-table-column>
 		</el-table>
+
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="img-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgUrls"
+		/>
 	</div>
 </template>
 
 <script>
 import moment from "moment";
 import { getCaseDetail } from "@/api/dispatch";
+import MapViewer from "@/components/MapViewer";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "caseDetail",
+	components: { ElImageViewer, MapViewer },
 	props: {
 		loading: {
 			required: true,
@@ -50,6 +67,10 @@ export default {
 	},
 	data() {
 		return {
+			showImgViewer: false,
+			dialogMapVisible: true,
+			map: {},
+			imgUrls: [],
 			headersDetail: {
 				casetype: {
 					name: "查報來源",
@@ -160,11 +181,51 @@ export default {
 			return headersDetailFilter
 		},
 	},
+	mounted() {
+		this.dialogMapVisible = false;
+	},
 	methods: {
-		getDetail(row) {
-			this.detail = [];
+		showImg() {
+			console.log(this.detail);
+			this.imgUrls = this.detail.filter(row => ['ImgZoomIn', 'ImgZoomOut'].includes(row.prop)).map(row => row.content);
+			this.showImgViewer = true;
+		},
+		showMapViewer(row) {
+			// console.log("showMap");
+			this.map.data.forEach(feature => this.map.data.remove(feature));
+			this.dialogMapVisible = true;
 
-			getCaseDetail({ serialNo: row.SerialNo, deviceType: this.deviceTypeNow }).then(response => {
+			let geoJSON_case = { 
+				"type": "FeatureCollection",
+				"name": "polyJSON",
+				"features": []
+			};
+
+			geoJSON_case.features.push({
+				"type": "Feature",
+				"properties": { },
+				"geometry": row.Coordinate
+			});
+
+			this.map.data.addGeoJson(geoJSON_case);
+
+			this.map.setCenter({ lat: row.Coordinate.coordinates[1], lng: row.Coordinate.coordinates[0] });
+			const zoom = this.map.getZoom();
+			this.map.setZoom(zoom < 20 ? 20 : zoom);
+		},
+		getDetail(row) {
+			// console.log(row);
+			this.detail = [];
+			let deviceType = this.deviceTypeNow;
+
+			// 補繪標線查詢原始案件
+			if(deviceType == 4) {
+				if (row.RoadType == 1 && row.RestoredType == 1) deviceType = 1;
+				else if (row.RoadType == 1 && row.RestoredType == 2) deviceType = 2;
+				else if ([2, 3].includes(row.RoadType)) deviceType = 3;
+			}
+
+			getCaseDetail({ serialNo: row.SerialNo, deviceType }).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -234,6 +295,20 @@ export default {
 }
 </script>
 
-<style>
-
+<style lang="sass">
+.case-detail
+	.btn-action
+		display: inline-block
+		margin-left: 5px
+		padding: 5px
+	.dialog-map
+		min-height: 300px 
+		.el-dialog__body
+			height: 30%
+	.img-preview
+		width: 100%
+		.el-image-viewer__mask
+			opacity: 0.7
+		.el-icon-circle-close
+			color:  #FFF
 </style>
