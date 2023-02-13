@@ -40,11 +40,10 @@ import moment from "moment";
 import { getRestoredImgMap } from "@/api/type";
 import { getCaseDetail } from "@/api/dispatch";
 import MapViewer from "@/components/MapViewer";
-import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "caseDetail",
-	components: { ElImageViewer, MapViewer },
+	components: { MapViewer },
 	props: {
 		loading: {
 			required: true,
@@ -287,7 +286,7 @@ export default {
 						else if(['paperkind', 'run1tflag'].includes(key)) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: this.options[key][caseObj[key]] });
 						else if(['ImgZoomIn', 'ImgZoomOut'].includes(key)) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: [ caseObj[key]] });
 						else if(key.endsWith("Img")) {
-							if(caseObj[key].length > 0) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] });
+							if(caseObj[key] && caseObj[key].length > 0) this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] });
 						} else this.detail.push({ prop: key, column: this.headersDetailFilter[key].name, content: caseObj[key] || "-" });
 					}
 				}
