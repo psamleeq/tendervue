@@ -459,7 +459,7 @@ export default {
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect: [],
-			apiHeader: [ "SerialNo", "RestoredId", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes" ],
+			apiHeader: [ "SerialNo", "RestoredId", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes", "TaskRealGroup" ],
 			options: {
 				tenderMap: {},
 				guildMap: {},
@@ -610,7 +610,6 @@ export default {
 				this.rowActive = JSON.parse(JSON.stringify(row)); 
 				this.detail = this.rowActive.Content;
 				this.detail.forEach(row => {
-					row.editFormula = true;
 					this.$set(row, "isAdd", false);
 					this.$set(row, "isEdit", false);
 				});
@@ -729,10 +728,7 @@ export default {
 						});
 
 						if(this.deviceTypeNow == 3) {
-							if(this.detail.length > 0) {
-								caseSpec.TaskRealGroup = row.TaskRealGroup;
-								caseSpec.KitContent = this.detail;
-							}
+							if(this.detail.length > 0) caseSpec.KitContent = this.detail;
 							caseSpec.KitNotes = JSON.stringify(row.KitNotes);
 							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
 						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
