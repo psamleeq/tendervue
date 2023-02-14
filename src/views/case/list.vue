@@ -578,7 +578,7 @@ export default {
 // 	box-sizing: border-box
 .imgHover
 	max-width: 800px
-	height: 400px
+	// height: 400px
 .road-case
 	.filter-container
 		.filter-item

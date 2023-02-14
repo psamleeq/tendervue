@@ -409,7 +409,7 @@
 				<el-button class="filter-item" type="success" size="mini" @click="addPicType()">加入類型</el-button>
 			</div>
 
-			<el-row v-for="(val, col) in restoredImgRegularFilter()" :key="`${col}_${Object.keys(imgTypePlus).length}`" type="flex" align="middle">
+			<el-row v-for="(val, col) in restoredImgRegularFilter()" :key="col" type="flex" align="middle">
 				<el-col :span="7">
 					<span>{{ val.name }}</span>
 					<el-button v-if="val.isAdd" type="danger" size="mini" style="padding: 5px; margin-left: 5px" @click="removePicType(col)">刪除</el-button>
@@ -1023,9 +1023,10 @@ export default {
 			this.rowActive.imgId = null;
 		},
 		removePicType(key) {
-			this.imgObj[key].remove = this.rowActive.Image[key] ? this.rowActive.Image[key] : [];
+			this.imgObj[key].remove = this.rowActive.Image[key] ? this.rowActive.Image[key].filter(file => file.status == 'success') : [];
 			this.imgObj[key].add = [];
 			this.$delete(this.imgTypePlus, key);
+			this.$delete(this.rowActive.Image, key);
 		},
 		submitMImgUpload() {
 			if(this.imgObj[this.imgUploadKey].add.length == 0 && this.imgObj[this.imgUploadKey].remove.length == 0) {
@@ -1409,6 +1410,8 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
+.imgHover
+	max-width: 800px
 .finish-register
 	.el-select
 		.el-input__inner
