@@ -27,7 +27,7 @@
 							<el-button slot="reference" class="btn-action" type="info" icon="el-icon-search" plain size="mini" round />
 						</el-popover>
 					</span>
-					<span v-else-if="row.prop == 'otherImage'">
+					<span v-else-if="row.prop == 'otherImage' && otherImage.length > 0">
 						<el-button :type="otherImage.length > 0 && !isExpand ? 'success' : 'info'" plain style="width: 100%" @click="toggleExpand(row)">{{ isExpand ? '收起' : '展開' }}</el-button>
 					</span>
 					<span v-else>
