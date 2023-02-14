@@ -28,7 +28,7 @@
 						</el-popover>
 					</span>
 					<span v-else-if="row.prop == 'otherImage'">
-						<el-button type="info" size="mini" @click="toggleExpand(row)">展開</el-button>
+						<el-button :type="otherImage.length > 0 && !isExpand ? 'success' : 'info'" plain style="width: 100%" @click="toggleExpand(row)">{{ isExpand ? '收起' : '展開' }}</el-button>
 					</span>
 					<span v-else>
 						<span style="white-space: pre-line">{{ row[column.property] || "-" }}</span>
@@ -40,7 +40,7 @@
 					<el-table
 						:loading="loading"
 						empty-text="目前沒有資料"
-						:data="otherImg"
+						:data="otherImage"
 						border
 						fit
 						highlight-current-row
@@ -88,6 +88,7 @@ export default {
 	},
 	data() {
 		return {
+			isExpand: false,
 			showImgViewer: false,
 			dialogMapVisible: true,
 			map: {},
@@ -162,7 +163,7 @@ export default {
 				}
 			},
 			detail: [],
-			otherImg: [],
+			otherImage: [],
 			options: {
 				RoadType: {
 					1: "道路",
@@ -221,7 +222,7 @@ export default {
 		},
 		imgUrls() {
 			const detailFilter = this.detail.filter(row => ['ImgZoomIn', 'ImgZoomOut'].includes(row.prop) || row.prop.endsWith("Img")).map(row => row.content).flat();
-			const otherImgFilter = this.otherImg.map(row => row.content).flat();
+			const otherImgFilter = this.otherImage.map(row => row.content).flat();
 			return [...detailFilter, ...otherImgFilter ];
 		},
 	},
@@ -233,7 +234,8 @@ export default {
 	},
 	methods: {
 		toggleExpand(row) {
-			this.$refs.caseDetail.toggleRowExpansion(row);
+			this.isExpand = !this.isExpand;
+			this.$refs.caseDetail.toggleRowExpansion(row, this.isExpand);
 		},
 		showMapViewer(row) {
 			// console.log("showMap");
@@ -261,7 +263,7 @@ export default {
 		getDetail(row) {
 			// console.log(row);
 			this.detail = [];
-			this.otherImg = [];
+			this.otherImage = [];
 			let deviceType = this.deviceTypeNow;
 
 			// 補繪標線查詢原始案件
@@ -337,14 +339,14 @@ export default {
 						for(const key in this.options.workmemo) {
 							// console.log(`${key}Img`);
 							// console.log(caseObj[`${key}Img`]);
-							if(caseObj[`${key}Img`] && caseObj[`${key}Img`].length > 0) this.otherImg.push({ prop: key, column: this.options.workmemo[key], content: caseObj[`${key}Img`] });
+							if(caseObj[`${key}Img`] && caseObj[`${key}Img`].length > 0) this.otherImage.push({ prop: key, column: this.options.workmemo[key], content: caseObj[`${key}Img`] });
 						}
 					}
 
 					if(caseObj.hasOwnProperty("Image")) {
 						for(const key in caseObj.Image) {
 							const imgObj = this.options.restoredImgMap.filter(img => img.Id == key)[0];
-							if(caseObj.Image[key] && caseObj.Image[key].length > 0) this.otherImg.push({ prop: imgObj.EngName, column: imgObj.ImgName, content: caseObj.Image[key] });
+							if(caseObj.Image[key] && caseObj.Image[key].length > 0) this.otherImage.push({ prop: imgObj.EngName, column: imgObj.ImgName, content: caseObj.Image[key] });
 						}
 					}
 				}

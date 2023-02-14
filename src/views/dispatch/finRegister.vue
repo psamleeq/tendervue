@@ -368,10 +368,10 @@
 							</el-table-column>
 						</el-table>
 						<div v-if="deviceTypeNow == 3" class="expand-note">
-							<div>實際金額合計: ${{ detailAmount(row.Content).toLocaleString() }}</div>
-							<div>實際施作數量: {{ row.KitNotes.DesignDetail }}</div>
-							<div>實際施工方式: {{ row.KitNotes.DesignDesc }}</div>
-							<div>實際施作人力: {{ row.KitNotes.DesignWorker }}</div>
+							<div>實際金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div>
+							<div>實際施作數量: {{ row.KitNotes.DesignDetail || "-" }}</div>
+							<div>實際施工方式: {{ row.KitNotes.DesignDesc || "-" }}</div>
+							<div>實際施作人力: {{ row.KitNotes.DesignWorker || "-" }}</div>
 						</div>
 					</span>
 				</template>
@@ -1482,9 +1482,11 @@ export default {
 			margin: 10px 0 30px 0
 	.detail-note
 		margin-top: 10px
-	.expand-note > *
-		font-size: 14px
-		margin: 5px 0
+	.expand-note 
+		padding: 10px 0 0 10px
+		& > *
+			font-size: 14px
+			margin: 5px 0
 	/*去除el-upload组件動畫*/
 	.el-upload-list__item 
 		// transition-delay: -0.45s !important

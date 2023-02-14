@@ -153,10 +153,10 @@
 							/>
 						</el-table>
 						<div class="expand-note">
-							<div>設計金額合計: ${{ detailAmount(row.Content).toLocaleString() }}</div>
-							<div>設計施作數量: {{ row.KitNotes.DesignDetail }}</div>
-							<div>設計施工方式: {{ row.KitNotes.DesignDesc }}</div>
-							<div>設計施作人力: {{ row.KitNotes.DesignWorker }}</div>
+							<div>設計金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div>
+							<div>設計施作數量: {{ row.KitNotes.DesignDetail || "-" }}</div>
+							<div>設計施工方式: {{ row.KitNotes.DesignDesc || "-" }}</div>
+							<div>設計施作人力: {{ row.KitNotes.DesignWorker || "-" }}</div>
 						</div>
 					</span>
 				</template>
@@ -286,10 +286,10 @@
 							/>
 						</el-table>
 						<div class="expand-note">
-							<div>設計金額合計: ${{ detailAmount(row.Content).toLocaleString() }}</div>
-							<div>設計施作數量: {{ row.KitNotes.DesignDetail }}</div>
-							<div>設計施工方式: {{ row.KitNotes.DesignDesc }}</div>
-							<div>設計施作人力: {{ row.KitNotes.DesignWorker }}</div>
+							<div>設計金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div>
+							<div>設計施作數量: {{ row.KitNotes.DesignDetail || "-" }}</div>
+							<div>設計施工方式: {{ row.KitNotes.DesignDesc || "-" }}</div>
+							<div>設計施作人力: {{ row.KitNotes.DesignWorker || "-" }}</div>
 						</div>
 					</span>
 				</template>
@@ -1312,9 +1312,11 @@ export default {
 			cursor: pointer
 		.el-table__expand-icon
 			display: none
-	.expand-note > *
-		font-size: 14px
-		margin: 5px 0
+	.expand-note 
+		padding: 10px 0 0 10px
+		& > *
+			font-size: 14px
+			margin: 5px 0
 	.btn-dialog
 		padding: 5px 5px
 </style>

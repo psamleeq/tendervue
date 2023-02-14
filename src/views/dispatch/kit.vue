@@ -29,7 +29,7 @@
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
 		<el-table
-			ref="caseTable"
+			ref="kitTable"
 			empty-text="目前沒有資料"
 			:data="list"
 			border
@@ -102,6 +102,12 @@
 							:sortable="value.sortable"
 						/>
 					</el-table>
+					<div class="expand-note">
+						<div>設計金額合計: ${{ detailAmount(detail).toLocaleString() || "-" }}</div>
+						<div>設計施作數量: {{ row.DesignDetail || "-" }}</div>
+						<div>設計施工方式: {{ row.DesignDesc || "-" }}</div>
+						<div>設計施作人力: {{ row.DesignWorker || "-" }}</div>
+					</div>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -184,7 +190,7 @@
 					</template>
 				</el-table-column>
 			</el-table>
-			<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount.toLocaleString() }}</div>
+			<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
 			<div class="detail-note">
 				<el-input placeholder="請輸入" v-model="rowActive.DesignDetail">
 					<template slot="prepend">設計施作數量</template>
@@ -310,9 +316,6 @@ export default {
 	computed: {
 		detailPlus() {
 			return [ ...this.detail, this.newItem ]
-		},
-		detailAmount() {
-			return this.detailPlus.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		}
 	},
 	watch: { },
@@ -326,8 +329,11 @@ export default {
 			}).then(response => {
 				this.detail = response.data.list;
 				this.loading = false;
-				this.$refs.caseTable.toggleRowExpansion(row);
+				this.$refs.kitTable.toggleRowExpansion(row);
 			}).catch(err => this.loading = false);
+		},
+		detailAmount(content) {
+			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		},
 		getList() {
 			// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
@@ -451,7 +457,7 @@ export default {
 				})
 		},
 		beforeEdit(row) {
-			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
+			for(const row of this.list) this.$refs.kitTable.toggleRowExpansion(row, false);
 			this.rowActive = JSON.parse(JSON.stringify(row)); 
 			this.loading = true;
 
@@ -584,6 +590,11 @@ export default {
 			// border: 1px solid #DFE6EC
 			background-color: #DFE6EC
 			margin: 10px 0 30px 0
+	.expand-note 
+		padding: 10px 0 0 10px
+		& > *
+			font-size: 14px
+			margin: 5px 0
 	.btn-dialog
 		padding: 5px 5px
 </style>
