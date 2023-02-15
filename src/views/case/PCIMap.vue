@@ -69,6 +69,7 @@
 
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
+import { fromUrl, Pool } from "geotiff";
 import moment from "moment";
 import { getTenderRound } from "@/api/type";
 import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
@@ -96,6 +97,7 @@ export default {
 			showImgViewer: false,
 			caseSwitch: true,
 			screenWidth: window.innerWidth,
+			blockId: 0,
 			// map: null,
 			imgUrls: [],
 			// dataLayer: {},
@@ -112,7 +114,7 @@ export default {
 			},
 			headers: {
 				// PCIInfo
-				blockId: "區塊編號",
+				pciId: "區塊編號",
 				roadName: "道路名稱",
 				PCIValue: "PCI",
 
@@ -231,6 +233,7 @@ export default {
 	created() {
 		this.dataLayer = { PCIBlock: {} };
 		this.geoJSON = {};
+		this.geoTiffPool = new Pool();
 	},
 	async mounted() {
 		this.loading = true;
@@ -285,8 +288,8 @@ export default {
 				this.map = new google.maps.Map(this.$refs.map, {
 					center: location, // 中心點座標
 					zoom: 14, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
-					maxZoom: 24,
-					minZoom: 12,
+					// maxZoom: 24,
+					// minZoom: 12,
 					/*
 						roadmap 顯示默認道路地圖視圖。
 						satellite 顯示 Google 地球衛星圖像。
@@ -400,7 +403,34 @@ export default {
 					if(infoDelBtn) infoDelBtn.addEventListener("click", this.removeCaseStatus);
 
 					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
-					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { this.showImgViewer = true });
+					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { 
+						if(this.blockId != 0) {
+							this.loading = true;
+							const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
+							const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${this.blockId}.tif`;
+							fromUrl(url).then( async(geoTiffFile) => {
+								const imageSpec = await geoTiffFile.getImage(0);
+								// console.log(imageSpec);
+								const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
+								this.imgUrls = [ imgSrc ];
+								this.$el.querySelector("#map #info-btn").style.opacity = "1";
+								this.loading = false;
+								this.showImgViewer = true;
+
+								// contentText += `<img src="${imgSrc}" class="img" onerror="this.className='img hide-img'">`;
+								// contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
+								// contentText += `</div>`;
+							}).catch(err => {
+								console.log(err);
+								this.$el.querySelector("#map #info-btn").style.opacity = "0";
+								this.$message({
+									message: "尚無正射圖",
+									type: "error",
+								});
+								this.loading = false;
+							});
+						} else this.showImgViewer = true;
+					});
 				});
 				resolve();
 
@@ -422,6 +452,23 @@ export default {
 
 				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
 				this.dataLayer.case = new google.maps.Data({ map: this.map });
+
+				// NOTE: 測試正射圖
+				// const imageBounds = {
+				// 	north: 25.049850,
+				// 	south: 25.048093,
+				// 	east: 121.512028,
+				// 	west: 121.511287,
+				// };
+
+				// new google.maps.GroundOverlay(
+				// 	"https://storage.googleapis.com/demo-freeway20200701/test_2mm.png",
+				// 	imageBounds,
+				// 	{
+				// 		map: this.map,
+				// 		opacity: 0.8
+				// 	}
+				// );
 			})
 		},
 		changeTender() {
@@ -663,12 +710,38 @@ export default {
 			if(this.caseSwitch) this.dataLayer.case.setMap(this.map);
 			else this.dataLayer.case.setMap(null);
 		},
-		showContent(props, position) {
+		async toDataURL(geoTiffDataRGB, width, height) {
+			// console.log(typeof geoTiffDataRGB);
+			// console.log(geoTiffDataRGB);
+			const canvas = document.createElement("canvas");
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext('2d', { willReadFrequently: true });
+			const imageData = ctx.getImageData(0, 0, width, height);
+			// convert GeoTiff's RGBA values to ImageData's RGBA values
+			for (let i = 0; i < height; i++) {
+				for (let j = 0; j < width; j++) {
+					const srcIdx = 4 * i * width + 4 * j;
+					const idx = 4 * i * width + 4 * j;
+					imageData.data[idx] = geoTiffDataRGB[srcIdx];
+					imageData.data[idx + 1] = geoTiffDataRGB[srcIdx + 1];
+					imageData.data[idx + 2] = geoTiffDataRGB[srcIdx + 2];
+					imageData.data[idx + 3] = geoTiffDataRGB[srcIdx + 3];
+				}
+			}
+			ctx.putImageData(imageData, 0, 0);
+			return new Promise((resolve, reject) => {
+				resolve(canvas.toDataURL());
+			});
+		},
+		async showContent(props, position) {
+			this.blockId = 0;
 			// console.log(props);
-			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg` ];
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers) {
 				// console.log(key);
+				// console.log(props[key]);
+				this.imgUrls = [];
 				if(props[key]) {
 					contentText += `<div class="el-row" style="margin-bottom: 4px">`;
 					contentText += `<div class="el-col el-col-8" style="padding-left: 5px; font-size: 18px; line-height: 18px;">${this.headers[key]}</div>`;
@@ -677,12 +750,39 @@ export default {
 				}
 			}
 
-			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg" class="img" onerror="this.className='img hide-img'">`;
-			contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
-			contentText += `</div>`;
+			if(props.caseId) {
+				this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg` ];
+				contentText += `<img src="https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg" class="img" onerror="this.className='img hide-img'; document.getElementById('info-scrn-full-btn').style.opacity='0'">`;
+				contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; opacity: 1"><i class="el-icon-full-screen btn-text"></i></button>`;
+				contentText += `</div>`;
+			} else if(props.blockId) {
+				this.blockId = props.blockId;
+				const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
+				const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${this.blockId}.tif`;
+				// fromUrl(url).then( async(geoTiffFile) => {
+				// 	const imageSpec = await geoTiffFile.getImage(0);
+				// 	// console.log(imageSpec);
+				// 	const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
+				// 	this.imgUrls = [ imgSrc ];
+				// 	this.$el.querySelector("#map #info-btn").style.opacity = "1";
+
+				// 	// contentText += `<img src="${imgSrc}" class="img" onerror="this.className='img hide-img'">`;
+				// 	// contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
+				// 	// contentText += `</div>`;
+				// }).catch(err => {
+				// 	console.log(err);
+				// 	this.$el.querySelector("#map #info-btn").style.opacity = "0";
+				// });
+				
+				contentText += `<div id="info-btn" class="info-btn-group" style="opacity: 0.3">`;
+				contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="right: 65px; height: 30px; width: 30px; border-color: #909399"><i class="el-icon-full-screen btn-text" style="color: #909399"></i></button>`;
+				contentText += `<a href="${url}"><button type="button" id="info-download-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; border-color: #909399"><i class="el-icon-download btn-text" style="color: #909399"></i></button></a>`;
+				contentText += `</div>`;
+			}
+
 			// console.log(contentText);
 			this.infoWindow.setContent(contentText);
-			this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
+			this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10) });
 			this.infoWindow.setPosition(position);
 
 			this.infoWindow.open(this.map);
