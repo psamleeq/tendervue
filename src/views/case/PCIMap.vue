@@ -776,7 +776,7 @@ export default {
 				
 				contentText += `<div id="info-btn" class="info-btn-group" style="opacity: 0.3">`;
 				contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="right: 65px; height: 30px; width: 30px; border-color: #909399"><i class="el-icon-full-screen btn-text" style="color: #909399"></i></button>`;
-				contentText += `<a href="${url}"><button type="button" id="info-download-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; border-color: #909399"><i class="el-icon-download btn-text" style="color: #909399"></i></button></a>`;
+				contentText += `<a href="${url}" target="_blank"><button type="button" id="info-download-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; border-color: #909399"><i class="el-icon-download btn-text" style="color: #909399"></i></button></a>`;
 				contentText += `</div>`;
 			}
 
