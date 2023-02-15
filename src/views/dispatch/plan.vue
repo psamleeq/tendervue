@@ -196,6 +196,7 @@
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<span v-else>
 						<el-table
+							class="expandTable"
 							empty-text="目前沒有資料"
 							:data="row.Content"
 							border
@@ -203,6 +204,8 @@
 							highlight-current-row
 							:header-cell-style="{ 'background-color': '#F2F6FC' }"
 							stripe
+							show-summary
+							:summary-method="(param) => getSummaries(param, row)"
 							style="width: 100%"
 						>
 							<el-table-column type="index" label="序號" width="50" align="center" /> 
@@ -217,10 +220,10 @@
 							/>
 						</el-table>
 						<div class="expand-note">
-							<div>設計金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div>
-							<div>設計施作數量: {{ row.KitNotes.DesignDetail || "-" }}</div>
-							<div>設計施工方式: {{ row.KitNotes.DesignDesc || "-"}}</div>
-							<div>設計施作人力: {{ row.KitNotes.DesignWorker || "-" }}</div>
+							<!-- <div>金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div> -->
+							<div>施作數量: {{ row.KitNotes.DesignDetail || "-" }}</div>
+							<div>施工方式: {{ row.KitNotes.DesignDesc || "-"}}</div>
+							<div>施作人力: {{ row.KitNotes.DesignWorker || "-" }}</div>
 						</div>
 					</span>
 				</template>
@@ -298,17 +301,17 @@
 					</template>
 				</el-table-column>
 			</el-table>
-			<div class="detail-caption amount">設計金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
+			<div class="detail-caption amount">金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
 			<div>
 				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDetail">
-					<template slot="prepend">設計施作數量</template>
+					<template slot="prepend">施作數量</template>
 				</el-input>
 				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDesc">
-					<template slot="prepend">設計施工方式</template>
+					<template slot="prepend">施工方式</template>
 					<el-checkbox slot="append" v-model="rowActive.notesSync">更新「工程概述」</el-checkbox>
 				</el-input>
 				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignWorker">
-					<template slot="prepend">設計施作人力</template>
+					<template slot="prepend">施作人力</template>
 				</el-input>
 			</div>
 			<div slot="footer" class="dialog-footer">
@@ -493,23 +496,6 @@ export default {
 	},
 	methods: {
 		async handleCheckedChange(val) {
-			// const delay = (n) => new Promise( r => setTimeout(r, n*1000));
-
-			// for(const val of value) {
-			// 	let msgArr = [];
-			// 	for(const column in this.headers) {
-			// 		if(!['CaseNo', 'organAssign'].includes(column) && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
-			// 	}
-			// 	if(msgArr.length > 0) {
-			// 		this.$message({
-			// 			type: "warning",
-			// 			message: `請填入${val.UploadCaseNo}的${msgArr.join("、")}`
-			// 		});
-
-			// 		await delay(0.5);
-			// 	}
-			// }
-
 			this.tableSelect = val;
 			if(this.tableSelect.length == this.list.length) this.tableSelect.forEach((_, index) => this.$set(this.checkList, index, true));
 			if(this.tableSelect.length == 0) this.checkList = this.checkList.map(() => false);
@@ -521,10 +507,47 @@ export default {
 		toggleExpand(row) {
 			this.getTaskDetail(row).then(() => { 
 				this.$refs.caseTable.toggleRowExpansion(row);
+
+				// 調整總計列欄位
+				this.$nextTick(() => {
+					// const expandTableSummary = document.querySelectorAll("#expandTable .el-table__footer-wrapper tr>td");
+					const expandTableSumList = document.querySelectorAll(".expandTable .el-table__footer-wrapper tr");
+					// console.log(expandTableSumList);
+					if(expandTableSumList.length != 0) {
+						for(const tableList of expandTableSumList) {
+							// console.log(tableList);
+							const tdList = tableList.getElementsByTagName("td");
+							if(tdList.length != 0) {
+								tdList[0].colSpan = 4;
+								tdList[0].style.textAlign = "center";
+								tdList[1].style.display = "none";
+								tdList[2].style.display = "none";
+								tdList[3].style.display = "none";
+								tdList[4].colSpan = 2;
+								tdList[4].style.textAlign = "center";
+								tdList[5].style.display = "none";
+							}
+						}
+					}
+				});
 			}).catch(err => this.loading = false);
 		},
 		detailAmount(content) {
 			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
+		},
+		getSummaries(param, row) {
+			const { columns, data } = param;
+			const sums = [];
+			columns.forEach((column, index) => {
+				if (index === 0) {
+					sums[index] = `金額合計`;
+					return;
+				}
+				if(![1,2].includes(index)) {
+					if(column.property == "TaskPrice") sums[index] = this.detailAmount(row.Content).toLocaleString();
+				}
+			});
+			return sums;
 		},
 		getList() {
 			this.loading = true;

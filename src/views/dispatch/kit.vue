@@ -79,35 +79,39 @@
 
 			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
-					<span v-if="detail.length == 0">目前沒有資料</span>
-					<el-table
-						v-else
-						empty-text="目前沒有資料"
-						:data="detail"
-						border
-						fit
-						highlight-current-row
-						:header-cell-style="{ 'background-color': '#F2F6FC' }"
-						stripe
-						style="width: 100%"
-					>
-						<el-table-column type="index" label="序號" width="50" align="center" /> 
-						<el-table-column
-							v-for="(value, key) in detailHeaders"
-							:key="key"
-							:prop="key"
-							:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
-							:label="value.name"
-							align="center"
-							:sortable="value.sortable"
-						/>
-					</el-table>
-					<div class="expand-note">
-						<div>設計金額合計: ${{ detailAmount(detail).toLocaleString() || "-" }}</div>
-						<div>設計施作數量: {{ row.DesignDetail || "-" }}</div>
-						<div>設計施工方式: {{ row.DesignDesc || "-" }}</div>
-						<div>設計施作人力: {{ row.DesignWorker || "-" }}</div>
-					</div>
+					<span v-if="row.Content.length == 0">目前沒有資料</span>
+					<span v-else>
+						<el-table
+							class="expandTable"
+							empty-text="目前沒有資料"
+							:data="row.Content"
+							border
+							fit
+							highlight-current-row
+							:header-cell-style="{ 'background-color': '#F2F6FC' }"
+							stripe
+							show-summary
+							:summary-method="(param) => getSummaries(param, row)"
+							style="width: 100%"
+						>
+							<el-table-column type="index" label="序號" width="50" align="center" /> 
+							<el-table-column
+								v-for="(value, key) in detailHeaders"
+								:key="key"
+								:prop="key"
+								:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
+								:label="value.name"
+								align="center"
+								:sortable="value.sortable"
+							/>
+						</el-table>
+						<div class="expand-note">
+							<!-- <div>金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div> -->
+							<div>施作數量: {{ row.DesignDetail || "-" }}</div>
+							<div>施工方式: {{ row.DesignDesc || "-" }}</div>
+							<div>施作人力: {{ row.DesignWorker || "-" }}</div>
+						</div>
+					</span>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -190,16 +194,16 @@
 					</template>
 				</el-table-column>
 			</el-table>
-			<div class="detail-caption amount">設計數量金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
+			<div class="detail-caption amount">數量金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
 			<div class="detail-note">
 				<el-input placeholder="請輸入" v-model="rowActive.DesignDetail">
-					<template slot="prepend">設計施作數量</template>
+					<template slot="prepend">施作數量</template>
 				</el-input>
 				<el-input placeholder="請輸入" v-model="rowActive.DesignDesc">
-					<template slot="prepend">設計施工方式</template>
+					<template slot="prepend">施工方式</template>
 				</el-input>
 				<el-input placeholder="請輸入" v-model="rowActive.DesignWorker">
-					<template slot="prepend">設計施作人力</template>
+					<template slot="prepend">施作人力</template>
 				</el-input>
 				<!-- <el-input placeholder="請輸入" v-model="rowActive.kitNote">
 					<template slot="prepend">備註</template>
@@ -324,16 +328,54 @@ export default {
 	},
 	methods: {
 		toggleExpand(row) {
+			row.Content = [];
 			getTaskGroupDetail({
 				groupSN: row.SerialNo,
 			}).then(response => {
-				this.detail = response.data.list;
+				row.Content = response.data.list;
 				this.loading = false;
 				this.$refs.kitTable.toggleRowExpansion(row);
+
+				// 調整總計列欄位
+				this.$nextTick(() => {
+					// const expandTableSummary = document.querySelectorAll("#expandTable .el-table__footer-wrapper tr>td");
+					const expandTableSumList = document.querySelectorAll(".expandTable .el-table__footer-wrapper tr");
+					// console.log(expandTableSumList);
+					if(expandTableSumList.length != 0) {
+						for(const tableList of expandTableSumList) {
+							// console.log(tableList);
+							const tdList = tableList.getElementsByTagName("td");
+							if(tdList.length != 0) {
+								tdList[0].colSpan = 4;
+								tdList[0].style.textAlign = "center";
+								tdList[1].style.display = "none";
+								tdList[2].style.display = "none";
+								tdList[3].style.display = "none";
+								tdList[4].colSpan = 2;
+								tdList[4].style.textAlign = "center";
+								tdList[5].style.display = "none";
+							}
+						}
+					}
+				});
 			}).catch(err => this.loading = false);
 		},
 		detailAmount(content) {
 			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
+		},
+		getSummaries(param, row) {
+			const { columns, data } = param;
+			const sums = [];
+			columns.forEach((column, index) => {
+				if (index === 0) {
+					sums[index] = `金額合計`;
+					return;
+				}
+				if(![1,2].includes(index)) {
+					if(column.property == "TaskPrice") sums[index] = this.detailAmount(row.Content).toLocaleString();
+				}
+			});
+			return sums;
 		},
 		getList() {
 			// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
@@ -367,6 +409,7 @@ export default {
 						this.list.forEach(l => {
 							l.CreateTime = this.formatTime(l.CreateTime);
 							this.$set(l, "kitNote", "");
+							this.$set(l, "Content", []);
 							this.$set(l, "editKit", false);
 							this.$set(l, "editNote", false);
 						})
