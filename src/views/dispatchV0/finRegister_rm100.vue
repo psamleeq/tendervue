@@ -14,12 +14,6 @@
 				</div>
 			</div>
 
-			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">分派日期</div>
-				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-			</span>
-			<br />
-
 			<div class="filter-item">
 				<div v-if="listQuery.filterType == 1" class="select-contract">
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
@@ -316,13 +310,12 @@
 import moment from "moment";
 import { getTenderMap, getGuildMap } from "@/api/type";
 import { getFinRegisterV0 } from "@/api/dispatchV0";
-import TimePicker from "@/components/TimePicker";
 import CaseDetail from "@/components/CaseDetail_rm100";
 // import Pagination from "@/components/Pagination";
 
 export default {
 	name: "finRegisterV0",
-	components: { TimePicker, CaseDetail },
+	components: { CaseDetail },
 	data() {
 		return {
 			loading: false,
@@ -332,10 +325,6 @@ export default {
 			timeTabId: 1,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [
-				moment().subtract(1, 'd').startOf("day").toDate(),
-				moment().subtract(1, 'd').endOf("day").toDate(),
-			],
 			searchRange: "",
 			deviceTypeNow: 1,
 			listQuery: {
@@ -471,17 +460,11 @@ export default {
 			this.list = [];
 			this.listQuery.contractor = null;
 
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
-
 			getFinRegisterV0({
 				dteamSN: this.listQuery.filterType == 1 ? this.listQuery.dteamSN : null,
 				dispatchSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				deviceType: this.listQuery.deviceType,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
