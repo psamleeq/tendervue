@@ -44,7 +44,7 @@
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
 		<div v-if="!filterNow" class="filter-container">
-			<div class="filter-item">
+			<div v-if="deviceTypeNow != 3" class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<span>廠商</span>
@@ -54,9 +54,9 @@
 					</el-select>
 				</div>
 			</div>
-			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.contractor) > 0">
+			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && (deviceTypeNow == 3 || Number(listQuery.contractor) > 0)">
 				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.contractor) == 0" @click="dispatch()">分派</el-button>
+					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || !(deviceTypeNow == 3 || Number(listQuery.contractor) > 0)" @click="dispatch()">分派</el-button>
 				</span>
 			</el-tooltip>
 		</div>
@@ -578,10 +578,10 @@ export default {
 					this.checkList = Array.from({ length: this.list.length }, () => false);
 					this.deviceTypeNow = this.listQuery.deviceType;
 					this.filterNow = this.listQuery.filter;
-					this.listQuery.contractor = null;
+					this.listQuery.contractor = (this.deviceTypeNow == 3) ? 0 : null;
 
 					this.list.forEach(l => {
-						l.Contractor = this.options.guildMap[l.Contractor];
+						l.Contractor = this.options.guildMap[l.Contractor] || "-";
 						l.DatePlan = this.formatTime(l.DatePlan);
 						l.DatePlanBefore = this.formatTime(l.DatePlanBefore);
 						l.DateDeadline = this.formatTime(l.DateDeadline);
@@ -776,7 +776,11 @@ export default {
 				}).catch(err => {});
 		},
 		dispatch() {
-			this.$confirm(`確認將 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } 分派給 ${ this.options.guildMap[this.listQuery.contractor] }?`, "確認", { showClose: false })
+			let confirmText = `確認分派 案件編號${ this.tableSelect.map(caseSpec => caseSpec.CaseNo).join("、") } `;
+			if(this.deviceTypeNow != 3) confirmText += `給 ${ this.options.guildMap[this.listQuery.contractor] } `;
+			confirmText += `?`;
+
+			this.$confirm(confirmText, "確認", { showClose: false })
 				.then(() => {
 					const tableSelectFilter = this.tableSelect.filter(caseSpec => caseSpec.TaskRealGroup == 0);
 					const condition = this.deviceTypeNow == 3 && tableSelectFilter.length != 0;
@@ -806,14 +810,17 @@ export default {
 						}).then(response => {
 							if ( response.statusCode == 20000 ) {
 								this.$message({
-									message: "建立成功",
+									message: "分派成功",
 									type: "success",
 								});
-
 								this.getList();
 							} 
 						}).catch(err => {
 							console.log(err);
+							this.$message({
+								message: "分派失敗",
+								type: "error",
+							});
 							this.getList();
 						})
 					}

@@ -169,7 +169,7 @@
 		<br>
 
 		<div class="previewPdf filter-container">
-			<div v-if="deviceTypeNow == 3" class="filter-item">
+			<!-- <div v-if="deviceTypeNow == 3" class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<span>分派廠商</span>
@@ -178,7 +178,7 @@
 						<el-option v-for="(name, id) in options.guildMap" :key="id" :value="Number(id)" :label="name" />
 					</el-select>
 				</div>
-			</div>
+			</div> -->
 
 			<el-tooltip class="filter-item" effect="dark" content="請選擇案件" placement="bottom" :disabled="tableSelect.length != 0">
 				<div>

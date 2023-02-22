@@ -88,6 +88,24 @@ export function setDispatchSpec(data) {
 }
 
 //---------------------------------------
+// 派工審核
+export function getJobReview(query) {
+	return request({
+		url: '/dispatch/jobReview',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setJobSubCTR(data) {
+	return request({
+		url: '/dispatch/jobSubCTR',
+		method: 'post',
+		data
+	})
+}
+
+//---------------------------------------
 // 製作派工單
 export function getJobTicket(query) {
 	return request({

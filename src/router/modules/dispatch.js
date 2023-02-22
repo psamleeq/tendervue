@@ -35,6 +35,16 @@ const dispatchRouter = {
 			}
 		},
 		{
+			path: 'jobReview',
+			component: () => import('@/views/dispatch/jobReview'),
+			name: 'jobReview',
+			meta: {
+				title: '派工審核',
+				roles: ['restored.order'],
+				isNew: true
+			}
+		},
+		{
 			path: 'jobTicket',
 			component: () => import('@/views/dispatch/jobTicket'),
 			name: 'jobTicket',
