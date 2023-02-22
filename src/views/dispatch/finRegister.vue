@@ -51,16 +51,17 @@
 		</div>
 
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
-		<div v-if="list.length != 0" style="width: 240px; margin: 5px 5px 15px 10px;">
-			<el-row v-if="list[0].DateClose.length != 0" :gutter="5">
+		<div v-if="list.length != 0" style="width: 300px; margin: 5px 5px 15px 10px;">
+			<el-row v-if="list[0].DateClose.length != 0" :gutter="20">
 				<el-col :span="12">完工登錄日期: </el-col>
 				<el-col :span="12">{{ list[0].DateClose }}</el-col>
 			</el-row>
-			<el-row v-if="deviceTypeNow == 1" :gutter="5">
-				<el-col :span="8">總面積: </el-col>
-				<el-col :span="4">{{ Math.round(caseSum.areaSUM*10)/10 }}</el-col>
-				<el-col :span="8">總噸數: </el-col>
-				<el-col :span="4">{{ Math.round(caseSum.tonneSUM*10)/10 }}</el-col>
+			<el-row v-if="deviceTypeNow == 1" :gutter="20">
+				<el-col :span="6">總面積: </el-col>
+				<el-col :span="5">{{ Math.round(caseSum.areaSUM*10)/10 }}</el-col>
+				<el-col :span="2" />
+				<el-col :span="6">總噸數: </el-col>
+				<el-col :span="5">{{ Math.round(caseSum.tonneSUM*10)/10 }}</el-col>
 			</el-row>
 		</div>
 
@@ -972,7 +973,7 @@ export default {
 			if(row.editFormula) {
 				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
 				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula} * ${number}`)() * 100) / 100;
-			} else row.MillingArea = row.MillingLength * row.MillingWidth * number;
+			} else Math.round(row.MillingArea = row.MillingLength * row.MillingWidth * number * 100) / 100;
 		},
 		caseFilterList(list) {
 			// console.log(list);
@@ -995,7 +996,8 @@ export default {
 					DesignDetail: "",
 					DesignDesc: "",
 					DesignWorker: ""
-				}
+				},
+				Image: {}
 			};
 			this.showEdit = false;
 		},
@@ -1037,22 +1039,20 @@ export default {
 		},
 		beforeMImgEdit(row, imgUploadKey) {
 			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
-			this.rowActive = {};
+			this.rowActive = JSON.parse(JSON.stringify(row)); 
 			this.imgUploadKey = imgUploadKey; 
 			this.imgObj[this.imgUploadKey] = {  add: [], remove: [] };
 			this.showMImgUploadDialog = true;
-			this.rowActive = row;
 		},
 		beforeImgEdit(row) {
 			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
-			this.rowActive = {};
+			this.rowActive = JSON.parse(JSON.stringify(row)); 
 			this.imgObj = {};
 			this.imgTypePlus = {};
 			for(const imgId in row.Image) this.imgTypePlus[imgId] = { name: this.restoredImgMapFilter().filter(img => img.Id == imgId)[0].ImgName, isAdd: true };
 			for(const key of Object.keys(this.restoredImgRegularFilter())) this.imgObj[key] = {  add: [], remove: [] };
 			
 			this.showImgUploadDialog = true;
-			this.rowActive = row;
 			this.$set(this.rowActive, "imgId", null);
 		},
 		addPicType() {

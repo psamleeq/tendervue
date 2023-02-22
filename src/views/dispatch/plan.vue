@@ -612,7 +612,7 @@ export default {
 			if(row.editFormula) {
 				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
 				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100;
-			} else row.MillingArea = row.MillingLength * row.MillingWidth;
+			} else row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
 		},
 		caseFilterList(list) {
 			// console.log(list);

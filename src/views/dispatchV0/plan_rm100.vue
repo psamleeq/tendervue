@@ -386,7 +386,7 @@ export default {
 			if(row.accountflag0 == '1') {
 				for(const key in replaceObj) row.account0 = row.account0.replaceAll(key, replaceObj[key]);
 				row.acsum0 = Math.round(new Function(`return ${row.account0}`)() * 100) / 100;
-			} else row.acsum0 = row.elength * row.blength;
+			} else row.acsum0 = Math.round(row.elength * row.blength * 100) / 100;
 		},
 		beforeEdit(row) {
 			this.rowActive = row; 
