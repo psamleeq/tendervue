@@ -17,6 +17,14 @@ export function updatePCI(data) {
 	})
 }
 
+export function updatePCIByName(data) {
+	return request({
+		url: '/pciTool/updateByName',
+		method: 'put',
+		data
+	})
+}
+
 export function verifyPCI(data) {
 	return request({
 		url: '/pciTool/verify',

@@ -33,7 +33,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="key == 'round' ? 60 : null "
+				:width="key == 'round' ? 60 : ['roundStart', 'roundEnd'].includes(key) ? 100 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>
@@ -51,21 +51,44 @@
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="即時運算" align="center">
+			<el-table-column label="即時運算" align="center" width='200'>
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="primary" plain @click="calPCI(row.roundStart, row.roundEnd)">重新計算</el-button>
-					<el-button class="btn-action" type="info" plain @click="removeBlock()">排除運算</el-button>
+					<el-button-group>
+						<el-button class="btn-action" type="primary" plain @click="calPCI(row.roundStart, row.roundEnd)">重新計算</el-button>
+						<el-button class="btn-action" type="info" plain @click="removeBlock()">排除運算</el-button>
+					</el-button-group>
 				</template>
 			</el-table-column>
 
-			<el-table-column label="區塊重算" align="center">
+			<el-table-column label="區塊" align="center">
 				<template slot-scope="{ row }">
 					<el-row>
-						<el-col :span="16">
-							<el-input v-model="row.blockId" />
+						<el-col :span="14">
+							<el-input v-model="row.blockId" placeholder="區塊編碼" />
 						</el-col>
-						<el-col :span="8" style="height: 36px">
-							<el-button class="btn-action" type="primary" plain style="margin: 5px" @click="calPCISpec(row.blockId, row.roundStart, row.roundEnd)">重算</el-button>
+						<el-col :span="10" style="height: 36px">
+							<el-button-group style="margin: 5px">
+								<el-button class="btn-action" type="primary" plain @click="calPCISpec(row.blockId, row.roundStart, row.roundEnd, 0)">重算</el-button>
+								<el-button class="btn-action" type="info" plain @click="calPCISpec(row.blockId, row.roundStart, row.roundEnd, -1)">重置</el-button>
+								<el-button class="btn-action" type="success" plain @click="calPCISpec(row.blockId, row.roundStart, row.roundEnd, 100)">滿值</el-button>
+							</el-button-group>
+						</el-col>
+					</el-row>
+				</template>
+			</el-table-column>
+
+			<el-table-column label="路段" align="center">
+				<template slot-scope="{ row }">
+					<el-row>
+						<el-col :span="14">
+							<el-input v-model="row.roadName" placeholder="道路名稱" />
+						</el-col>
+						<el-col :span="10" style="height: 36px">
+							<el-button-group style="margin: 5px 0">
+								<el-button class="btn-action" type="primary" plain @click="calPCIRoad(row.roadName, row.roundStart, row.roundEnd, 0)">重算</el-button>
+								<el-button class="btn-action" type="info" plain @click="calPCIRoad(row.roadName, row.roundStart, row.roundEnd, -1)">重置</el-button>
+								<el-button class="btn-action" type="success" plain @click="calPCIRoad(row.roadName, row.roundStart, row.roundEnd, 100)">填滿</el-button>
+							</el-button-group>
 						</el-col>
 					</el-row>
 				</template>
@@ -85,7 +108,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getTenderRound, setTenderRound } from "@/api/type";
-import { resetPCI, updatePCI, verifyPCI } from "@/api/tool";
+import { resetPCI, updatePCI, updatePCIByName, verifyPCI } from "@/api/tool";
 
 export default {
 	name: "PCIManager",
@@ -152,6 +175,7 @@ export default {
 						l.roundStart = this.formatTime(l.roundStart);
 						l.roundEnd = this.formatTime(l.roundEnd);
 						this.$set(l, "blockId", "");
+						this.$set(l, "roadName", "");
 						this.$set(l, "edit", false);
 					});
 				}
@@ -201,7 +225,7 @@ export default {
 				} 
 			}).catch(err => console.log(err));
 		},
-		calPCISpec(blockId, timeStart, timeEnd) {
+		calPCISpec(blockId, timeStart, timeEnd, pciValue) {
 			if(!Number(blockId)) {
 				this.$message({
 					message: "請輸入正確區塊Id",
@@ -209,10 +233,29 @@ export default {
 				});
 				blockId = "";
 			} else {
-				updatePCI({ tenderId: this.listQuery.tenderId, blockId, timeStart, timeEnd }).then(response => {
+				updatePCI({ tenderId: this.listQuery.tenderId, pciValue, blockId, timeStart, timeEnd }).then(response => {
 					if (response.statusCode == 20000 ) {
+						const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '滿值';
 						this.$message({
-							message: "重算成功",
+							message: `${action}成功`,
+							type: "success",
+						});
+					} 
+				}).catch(err => console.log(err))
+			}
+		},
+		calPCIRoad(roadName, timeStart, timeEnd, pciValue) {
+			if(roadName.length == 0) {
+				this.$message({
+					message: "請輸入路名",
+					type: "error",
+				});
+			} else {
+				updatePCIByName({ tenderId: this.listQuery.tenderId, pciValue, roadName, timeStart, timeEnd }).then(response => {
+					if (response.statusCode == 20000 ) {
+						const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '填滿';
+						this.$message({
+							message: `${action}成功`,
 							type: "success",
 						});
 					} 
