@@ -1,6 +1,6 @@
 {
 	"name": "pbcadmin",
-	"version": "0.2.9",
+	"version": "0.2.10",
 	"description": "A magical vue admin. An out-of-box UI solution for enterprise applications. Newest development stack of vue. Lots of awesome features",
 	"author": "Pan <panfree23@gmail.com>",
 	"stg": {
@@ -50,6 +50,7 @@
 		"nprogress": "0.2.0",
 		"path-to-regexp": "2.4.0",
 		"pdf-lib": "^1.17.1",
+		"proj4": "^2.8.1",
 		"screenfull": "4.2.0",
 		"script-loader": "0.7.2",
 		"sortablejs": "1.8.4",

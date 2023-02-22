@@ -36,6 +36,13 @@
 			<el-card>
 				<el-collapse>
 					<el-collapse-item class="collapse-label" title="鋪面狀況指數">
+						<!-- TODO: 關閉鋪面圖層 -->
+						<!-- <el-row slot="title">
+							<el-col :span="18">鋪面狀況指數</el-col>
+							<el-col :span="6">
+								<el-switch v-model="blockSwitch" @change="switchBlock()" onclick="(function(e) { e.stopPropagation() }(event))" />
+							</el-col>
+						</el-row> -->
 						<el-row class="color-box" v-for="key in [ 6, 5, 4, 3, 2, 1, 0 ]" :key="`PCILevel_${key}`"  :style="`background-color: ${options.PCILevel[key].color}; width: 100%; margin-bottom: 0px`">
 							<el-col :span="7" style="padding: 0 5px">{{ options.PCILevel[key].description }}</el-col>
 							<el-col :span="7">({{ options.PCILevel[key].range[0] }} - {{ options.PCILevel[key].range[1] }})</el-col>
@@ -71,6 +78,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import { fromUrl, Pool } from "geotiff";
 import moment from "moment";
+import proj4 from 'proj4';
 import { getTenderRound } from "@/api/type";
 import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -88,6 +96,12 @@ const loaderOpt = {
 if(!sessionStorage.devMode && process.env.VUE_APP_MAP_KEY != undefined) loaderOpt.apiKey = process.env.VUE_APP_MAP_KEY;
 const loader = new Loader(loaderOpt);
 
+//定義常用座標系統
+// WGS84
+proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
+//TWD97 TM2
+proj4.defs("EPSG:3826", "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+
 export default {
 	name: "PCIMap",
 	components: { ElImageViewer },
@@ -95,6 +109,7 @@ export default {
 		return {
 			loading: false,
 			showImgViewer: false,
+			blockSwitch: true,
 			caseSwitch: true,
 			screenWidth: window.innerWidth,
 			blockId: 0,
@@ -638,6 +653,31 @@ export default {
 						this.showContent(event.feature.j, event.latLng);
 					});
 
+					// TODO: 右鍵顯示「正射」 (測試)
+					// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
+					// 	// console.log(event.feature.j);
+					// 	// this.loading = true;
+					// 	const blockId = event.feature.j.blockId;
+					// 	const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
+					// 	const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${blockId}.tif`;
+
+					// 	fromUrl(url).then( async(geoTiffFile) => {
+					// 			const imageSpec = await geoTiffFile.getImage(0);
+					// 			// console.log(imageSpec);
+					// 			const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
+					// 			// console.log(imgSrc);
+
+					// 			let [ west, south, east, north ] = imageSpec.getBoundingBox();
+					// 			[ west, south ] = proj4("EPSG:3826","EPSG:4326", [ west, south ] );
+					// 			[ east, north ] = proj4("EPSG:3826","EPSG:4326", [ east, north ] );
+
+					// 			console.log(west, south, east, north);
+					// 			const imageBounds = { west, south, east, north };
+					// 			new google.maps.GroundOverlay( imgSrc, imageBounds, { map: this.map } );
+					// 			// this.loading = false;
+					// 		}).catch(err => console.log(err));
+					// });
+
 					await this.focusMap();
 					this.loading = false;
 				}
@@ -665,7 +705,7 @@ export default {
 					let query = {};
 					query[key] = this.listQuery.filterId;
 
-					this.$router.push({ query: { ...this.$route.query , ...query } });
+					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, ...query } });
 
 					// let blockSpec;
 					// this.dataLayer.PCIBlock.forEach(features =>{ 
@@ -706,6 +746,10 @@ export default {
 				}
 			})
 		},
+		switchBlock() {
+			if(this.blockSwitch) this.dataLayer.PCIBlock.setMap(this.map);
+			else this.dataLayer.PCIBlock.setMap(null);
+		},
 		switchCase() {
 			if(this.caseSwitch) this.dataLayer.case.setMap(this.map);
 			else this.dataLayer.case.setMap(null);
@@ -731,7 +775,7 @@ export default {
 			}
 			ctx.putImageData(imageData, 0, 0);
 			return new Promise((resolve, reject) => {
-				resolve(canvas.toDataURL());
+				resolve(canvas.toDataURL('image/png'));
 			});
 		},
 		async showContent(props, position) {
