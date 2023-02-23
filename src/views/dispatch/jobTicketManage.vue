@@ -254,7 +254,7 @@ export default {
 				this.imgDOMObj [l.CaseNo] = image;
 			});
 		},
-		getList() {
+		getList(showMsg = true) {
 			if (!Number(this.listQuery.contractor)) {
 				this.$message({
 					message: "請選擇廠商",
@@ -278,7 +278,7 @@ export default {
 					// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 				}).then(response => {
 					if (response.data.list.length == 0) {
-						this.$message({
+						if(showMsg) this.$message({
 							message: "查無資料",
 							type: "error",
 						});
@@ -831,10 +831,10 @@ export default {
 								type: "error",
 							});
 						}
-						this.getList();
+						this.getList(false);
 					}).catch(err => {
 						console.log(err);
-						this.getList();
+						this.getList(false);
 					});
 				}).catch(err => {});
 		}

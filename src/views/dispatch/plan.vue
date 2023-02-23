@@ -549,7 +549,7 @@ export default {
 			});
 			return sums;
 		},
-		getList() {
+		getList(showMsg = true) {
 			this.loading = true;
 			this.list = [];
 			this.tableSelect = [];
@@ -568,7 +568,7 @@ export default {
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
 				if (response.data.list.length == 0) {
-					this.$message({
+					if(showMsg) this.$message({
 						message: "查無資料",
 						type: "error",
 					});
@@ -813,7 +813,7 @@ export default {
 									message: "分派成功",
 									type: "success",
 								});
-								this.getList();
+								this.getList(false);
 							} 
 						}).catch(err => {
 							console.log(err);
@@ -821,7 +821,7 @@ export default {
 								message: "分派失敗",
 								type: "error",
 							});
-							this.getList();
+							this.getList(false);
 						})
 					}
 				}).catch(err => {});
