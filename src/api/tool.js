@@ -24,11 +24,3 @@ export function updatePCIByName(data) {
 		data
 	})
 }
-
-export function verifyPCI(data) {
-	return request({
-		url: '/pciTool/verify',
-		method: 'post',
-		data
-	})
-}

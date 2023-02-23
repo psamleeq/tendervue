@@ -51,23 +51,20 @@
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="即時運算" align="center" width='200'>
+			<el-table-column label="即時運算" align="center" width='120'>
 				<template slot-scope="{ row }">
-					<el-button-group>
-						<el-button class="btn-action" type="primary" plain @click="calPCI(row.roundStart, row.roundEnd)">重新計算</el-button>
-						<el-button class="btn-action" type="info" plain @click="removeBlock()">排除運算</el-button>
-					</el-button-group>
+					<el-button class="btn-action" type="primary" plain @click="calPCI(row.roundStart, row.roundEnd)">重新計算</el-button>
 				</template>
 			</el-table-column>
 
 			<el-table-column label="區塊" align="center">
 				<template slot-scope="{ row }">
-					<el-row>
+					<el-row :gutter="5" type="flex" justify="center" align="middle">
 						<el-col :span="14">
 							<el-input v-model="row.blockId" placeholder="區塊編碼" />
 						</el-col>
-						<el-col :span="10" style="height: 36px">
-							<el-button-group style="margin: 5px">
+						<el-col :span="10">
+							<el-button-group>
 								<el-button class="btn-action" type="primary" plain @click="calPCISpec(row.blockId, row.roundStart, row.roundEnd, 0)">重算</el-button>
 								<el-button class="btn-action" type="info" plain @click="calPCISpec(row.blockId, row.roundStart, row.roundEnd, -1)">重置</el-button>
 								<el-button class="btn-action" type="success" plain @click="calPCISpec(row.blockId, row.roundStart, row.roundEnd, 100)">滿值</el-button>
@@ -79,12 +76,12 @@
 
 			<el-table-column label="路段" align="center">
 				<template slot-scope="{ row }">
-					<el-row>
+					<el-row :gutter="5" type="flex" justify="center" align="middle">
 						<el-col :span="14">
 							<el-input v-model="row.roadName" placeholder="道路名稱" />
 						</el-col>
-						<el-col :span="10" style="height: 36px">
-							<el-button-group style="margin: 5px 0">
+						<el-col :span="10">
+							<el-button-group>
 								<el-button class="btn-action" type="primary" plain @click="calPCIRoad(row.roadName, row.roundStart, row.roundEnd, 0)">重算</el-button>
 								<el-button class="btn-action" type="info" plain @click="calPCIRoad(row.roadName, row.roundStart, row.roundEnd, -1)">重置</el-button>
 								<el-button class="btn-action" type="success" plain @click="calPCIRoad(row.roadName, row.roundStart, row.roundEnd, 100)">填滿</el-button>
@@ -94,7 +91,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column label="操作" width="150" align="center">
+			<el-table-column label="操作" width="100" align="center">
 				<template slot-scope="{ row }">
 					<el-button v-if="!row.edit" class="btn-action" type="primary" plain @click="row.edit = true">編輯</el-button>
 					<el-button v-else type="info" class="btn-action" @click="row.edit = false; getList();">取消</el-button>
@@ -108,7 +105,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getTenderRound, setTenderRound } from "@/api/type";
-import { resetPCI, updatePCI, updatePCIByName, verifyPCI } from "@/api/tool";
+import { resetPCI, updatePCI, updatePCIByName } from "@/api/tool";
 
 export default {
 	name: "PCIManager",
@@ -210,16 +207,6 @@ export default {
 				if (response.statusCode == 20000 ) {
 					this.$message({
 						message: "重置成功",
-						type: "success",
-					});
-				} 
-			}).catch(err => console.log(err));
-		},
-		removeBlock() {
-			verifyPCI({ tenderId: this.listQuery.tenderId }).then(response => {
-				if (response.statusCode == 20000 ) {
-					this.$message({
-						message: "排除成功",
 						type: "success",
 					});
 				} 
