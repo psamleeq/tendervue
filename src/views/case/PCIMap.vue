@@ -939,6 +939,12 @@ export default {
 					color: #FFF
 				.el-input__suffix
 					display: none
+	.img-preview
+		width: 100%
+		.el-image-viewer__mask
+			opacity: 0.7
+		.el-icon-circle-close
+			color:  #FFF
 	#map
 		overflow: hidden
 		background: none !important
