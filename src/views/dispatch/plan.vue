@@ -607,11 +607,13 @@ export default {
 		},
 		calArea(row) {
 			const replaceObj = { " ": "", "m": "", "M": "", "=": "", "＝": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
-			"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
+				"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
+			// const regex = new RegExp('^[0-9*+\/().-]+$', 'g');
+			const regex = /^[^*+/-](?:[*+/\-]?[(]*\d+\.?\d*[)]*)+$/g;
 			
-			if(row.editFormula) {
+			if(row.editFormula || (row.MillingFormula && row.MillingFormula != '0' && row.MillingFormula.length != 0)) {
 				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
-				row.MillingArea = Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100;
+				row.MillingArea = regex.test(row.MillingFormula) ? Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100 : 0;
 			} else row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
 		},
 		caseFilterList(list) {
@@ -736,11 +738,12 @@ export default {
 					this.loading = true;
 					row.edit = false;
 					this.showEdit = false;
-					if([1,2].includes(this.deviceTypeNow)) this.calArea(row);
 					
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
 					if([1,2].includes(this.deviceTypeNow)) {
-						if(row.editFormula) {
+						this.calArea(caseSpec);
+						
+						if(caseSpec.MillingFormula && caseSpec.MillingFormula != '0' && caseSpec.MillingFormula.length != 0) {
 							delete caseSpec.MillingLength;
 							delete caseSpec.MillingWidth;
 						} else delete caseSpec.MillingFormula;
@@ -796,7 +799,7 @@ export default {
 							if([1,2].includes(this.deviceTypeNow)) {
 								this.calArea(row); 
 
-								if(row.editFormula) {
+								if(row.MillingFormula && row.MillingFormula != '0' && row.MillingFormula.length != 0) {
 									delete row.MillingLength;
 									delete row.MillingWidth;
 								} else delete row.MillingFormula;

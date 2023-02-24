@@ -500,11 +500,13 @@ export default {
 		},
 		calArea(row) {
 			const replaceObj = { " ": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
-			"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
+				"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
+			// const regex = new RegExp('^[0-9*+\/().-]+$', 'g');
+			const regex = /^[^*+/-](?:[*+/\-]?[(]*\d+\.?\d*[)]*)+$/g;
 			
 			if(row.accountflag == '1') {
 				for(const key in replaceObj) row.account = row.account.replaceAll(key, replaceObj[key]);
-				row.acsum = Math.round(new Function(`return ${row.account}`)() * 100) / 100;
+				row.acsum = regex.test(row.account0) ? Math.round(new Function(`return ${row.account}`)() * 100) / 100 : 0;
 			} else row.acsum = Math.round(row.elength1 * row.blength1 * 100) / 100;
 		},
 		beforeEdit(row) {
