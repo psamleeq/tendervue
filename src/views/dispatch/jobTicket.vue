@@ -141,7 +141,7 @@
 							:header-cell-style="{ 'background-color': '#F2F6FC' }"
 							stripe
 							show-summary
-							:summary-method="(param) => getSummaries(param, row)"
+							:summary-method="(param) => getSummaries(param, row.Content)"
 							style="width: 100%"
 						>
 							<el-table-column type="index" label="序號" width="50" align="center" /> 
@@ -277,7 +277,7 @@
 							:header-cell-style="{ 'background-color': '#F2F6FC' }"
 							stripe
 							show-summary
-							:summary-method="(param) => getSummaries(param, row)"
+							:summary-method="(param) => getSummaries(param, row.Content)"
 							style="width: 100%"
 						>
 							<el-table-column type="index" label="序號" width="50" align="center" /> 
@@ -639,7 +639,7 @@ export default {
 		detailAmount(content) {
 			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
 		},
-		getSummaries(param, row) {
+		getSummaries(param, content) {
 			const { columns, data } = param;
 			const sums = [];
 			columns.forEach((column, index) => {
@@ -648,7 +648,7 @@ export default {
 					return;
 				}
 				if(![1,2].includes(index)) {
-					if(column.property == "TaskPrice") sums[index] = this.detailAmount(row.Content).toLocaleString();
+					if(column.property == "TaskPrice") sums[index] = this.detailAmount(content).toLocaleString();
 				}
 			});
 			return sums;
@@ -708,7 +708,7 @@ export default {
 			return new Promise(resolve => {
 			row.Content = [];
 				getTaskReal({ taskRealGroup: row.TaskRealGroup }).then(response => {
-					row.Content = response.data.list;
+					row.Content = response.data.list.filter(l => l.GroupId == row.TaskRealGroup);
 					resolve();
 				}).catch(err => this.loading = false);
 			})
