@@ -255,7 +255,7 @@ export default {
 					return acc;
 				}, {});
 
-				if(this.$route.query.tenderRound) this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
+				if(this.$route.query.tenderRound && Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
 				else if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
 				this.changeTender(true);
 			});
