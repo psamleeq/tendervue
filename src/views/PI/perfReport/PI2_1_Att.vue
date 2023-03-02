@@ -53,7 +53,10 @@
 
 						<h3>廠商通報</h3>
 						<el-form-item label="行政區">
-							<el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" />
+							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="getList()">
+								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
+							</el-select>
+							<!-- <el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" /> -->
 						</el-form-item>
 						<el-form-item label="本日通報">
 							<el-input-number v-model="inputForm.caseReportTotal" controls-position="right" :min="0" @change="setPDFinputs" />
@@ -130,6 +133,44 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
+			districtList: {
+				// 100: {
+				// 	"name": "中正區"
+				// },
+				103: {
+					"name": "大同區"
+				},
+				104: {
+					"name": "中山區"
+				},
+				// 105: {
+				// 	"name": "松山區"
+				// },
+				// 106: {
+				// 	"name": "大安區"
+				// },
+				// 108: {
+				// 	"name": "萬華區"
+				// },
+				// 110: {
+				// 	"name": "信義區"
+				// },
+				// 111: {
+				// 	"name": "士林區"
+				// },
+				// 112: {
+				// 	"name": "北投區"
+				// },
+				// 114: {
+				// 	"name": "內湖區"
+				// },
+				// 115: {
+				// 	"name": "南港區"
+				// },
+				// 116: {
+				// 	"name": "文山區"
+				// }
+			},
 			template: {},
 			inputForm: {
 				caseReportTotal: 0,
@@ -144,6 +185,7 @@ export default {
 				serialNumber1: '1111102102',
 				serialNumber2: '1111102103',
 				date: '111年11月02日',
+				zipCode: '104',
 				district: '中山區',
 				caseReportTotal: '0 筆',
 				ACTotal_Obs: '0 筆',
@@ -215,6 +257,7 @@ export default {
 		setPDFinputs() {
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
+			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			for(let i=0; i < this.template.schemas.length; i++) {
 				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
@@ -231,6 +274,7 @@ export default {
 			this.list = [];
 
 			getCaseCount({
+				zipCode: Number(this.inputs.zipCode),
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {

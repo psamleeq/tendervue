@@ -2,7 +2,7 @@
 	<div class="app-container PI-case-check" v-loading="loading">
 		<h2>稽核結果</h2>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
@@ -161,8 +161,9 @@ export default {
 			caseTotal: 0,
 			daterange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
 			searchRange: "",
+			zipCodeNow: 0,
 			listQuery: {
-				dist: 104
+				zipCode: 104
 			},
 			headers: {
 				UploadCaseNo: {
@@ -223,52 +224,40 @@ export default {
 			resultList: [],
 			districtList: {
 				// 100: {
-				// 	"name": "中正區",
-				// 	"engName": "Zhongzheng"
+				// 	"name": "中正區"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區"
+				},
 				104: {
-					"name": "中山區",
-					"engName": "Zhongshan"
+					"name": "中山區"
 				},
 				// 105: {
-				// 	"name": "松山區",
-				// 	"engName": "Songshan"
+				// 	"name": "松山區"
 				// },
 				// 106: {
-				// 	"name": "大安區",
-				// 	"engName": "Da’an"
+				// 	"name": "大安區"
 				// },
 				// 108: {
-				// 	"name": "萬華區",
-				// 	"engName": "Wanhua",
+				// 	"name": "萬華區"
 				// },
 				// 110: {
-				// 	"name": "信義區",
-				// 	"engName": "Xinyi"
+				// 	"name": "信義區"
 				// },
 				// 111: {
-				// 	"name": "士林區",
-				// 	"engName": "Shilin"
+				// 	"name": "士林區"
 				// },
 				// 112: {
-				// 	"name": "北投區",
-				// 	"engName": "Beitou"
+				// 	"name": "北投區"
 				// },
 				// 114: {
-				// 	"name": "內湖區",
-				// 	"engName": "Neihu"
+				// 	"name": "內湖區"
 				// },
 				// 115: {
-				// 	"name": "南港區",
-				// 	"engName": "Nangang"
+				// 	"name": "南港區"
 				// },
 				// 116: {
-				// 	"name": "文山區",
-				// 	"engName": "Wenshan"
+				// 	"name": "文山區"
 				// }
 			},
 			options: {
@@ -334,6 +323,7 @@ export default {
 			};
 
 			getCheckResult({
+				zipCode: this.listQuery.zipCode,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
@@ -344,6 +334,7 @@ export default {
 					});
 				} else this.resultList = response.data.list;
 
+				this.zipCodeNow = this.listQuery.zipCode;
 				this.caseTotal = response.data.caseTotal;
 				Object.assign(this.checkNum, response.data.summary);
 				this.checkNum.SV.AC.total = Math.round(this.caseTotal * 0.15 * 0.6, 0);
@@ -408,6 +399,7 @@ export default {
 			const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 
 			getCaseList({
+				zipCode: this.zipCodeNow,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {

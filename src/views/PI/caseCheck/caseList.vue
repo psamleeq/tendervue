@@ -2,7 +2,7 @@
 	<div class="app-container PI-case-list" v-loading="loading">
 		<h2>案件列表</h2>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<span class="time-picker">
@@ -366,8 +366,9 @@ export default {
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
 			searchRange: "",
+			zipCodeNow: 0,
 			listQuery: {
-				dist: 104
+				zipCode: 104
 			},
 			resultHeader: {
 				UploadCaseNo: {
@@ -426,52 +427,40 @@ export default {
 			rowActive: {},
 			districtList: {
 				// 100: {
-				// 	"name": "中正區",
-				// 	"engName": "Zhongzheng"
+				// 	"name": "中正區"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區"
+				},
 				104: {
-					"name": "中山區",
-					"engName": "Zhongshan"
+					"name": "中山區"
 				},
 				// 105: {
-				// 	"name": "松山區",
-				// 	"engName": "Songshan"
+				// 	"name": "松山區"
 				// },
 				// 106: {
-				// 	"name": "大安區",
-				// 	"engName": "Da’an"
+				// 	"name": "大安區"
 				// },
 				// 108: {
-				// 	"name": "萬華區",
-				// 	"engName": "Wanhua",
+				// 	"name": "萬華區"
 				// },
 				// 110: {
-				// 	"name": "信義區",
-				// 	"engName": "Xinyi"
+				// 	"name": "信義區"
 				// },
 				// 111: {
-				// 	"name": "士林區",
-				// 	"engName": "Shilin"
+				// 	"name": "士林區"
 				// },
 				// 112: {
-				// 	"name": "北投區",
-				// 	"engName": "Beitou"
+				// 	"name": "北投區"
 				// },
 				// 114: {
-				// 	"name": "內湖區",
-				// 	"engName": "Neihu"
+				// 	"name": "內湖區"
 				// },
 				// 115: {
-				// 	"name": "南港區",
-				// 	"engName": "Nangang"
+				// 	"name": "南港區"
 				// },
 				// 116: {
-				// 	"name": "文山區",
-				// 	"engName": "Wenshan"
+				// 	"name": "文山區"
 				// }
 			},
 			options: {
@@ -578,6 +567,7 @@ export default {
 			this.resultList = [];
 
 			getCaseList({
+				zipCode: this.listQuery.zipCode,
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then((response) => {
@@ -588,6 +578,7 @@ export default {
 					});
 				} else {
 					this.isArchive = response.data.list[0].Archive;
+					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.resultList = response.data.resultList;
 					this.list.forEach(l => {
@@ -616,6 +607,7 @@ export default {
 			const OrganCheck = this.rowActive.OrganCheck == 2 ? Number(`${this.rowActive.OrganCheck}${this.rowActive.ReasonType}`) : this.rowActive.OrganCheck;
 
 			setCaseList( this.rowActive.id, {
+				zipCode: this.zipCodeNow,
 				organAssign: this.rowActive.organAssign,
 				BType: this.rowActive.BType,
 				BrokeType: this.rowActive.BrokeType,
@@ -653,6 +645,7 @@ export default {
 			let date = moment(this.searchDate).format("YYYY-MM-DD");
 
 			archiveCaseList({
+				zipCode: this.zipCodeNow,
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {

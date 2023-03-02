@@ -2,7 +2,7 @@
 	<div class="app-container PI-case-upload" v-loading="loading">
 		<h2>案件上傳</h2>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<span class="time-picker">
@@ -289,8 +289,9 @@ export default {
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
 			searchRange: "",
+			zipCodeNow: 0,
 			listQuery: {
-				dist: 104
+				zipCode: 104
 			},
 			headers: {
 				UploadCaseNo: {
@@ -349,51 +350,39 @@ export default {
 			districtList: {
 				// 100: {
 				// 	"name": "中正區",
-				// 	"engName": "Zhongzheng"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區"
+				},
 				104: {
-					"name": "中山區",
-					"engName": "Zhongshan"
+					"name": "中山區"
 				},
 				// 105: {
-				// 	"name": "松山區",
-				// 	"engName": "Songshan"
+				// 	"name": "松山區"
 				// },
 				// 106: {
-				// 	"name": "大安區",
-				// 	"engName": "Da’an"
+				// 	"name": "大安區"
 				// },
 				// 108: {
-				// 	"name": "萬華區",
-				// 	"engName": "Wanhua",
+				// 	"name": "萬華區"
 				// },
 				// 110: {
-				// 	"name": "信義區",
-				// 	"engName": "Xinyi"
+				// 	"name": "信義區"
 				// },
 				// 111: {
-				// 	"name": "士林區",
-				// 	"engName": "Shilin"
+				// 	"name": "士林區"
 				// },
 				// 112: {
-				// 	"name": "北投區",
-				// 	"engName": "Beitou"
+				// 	"name": "北投區"
 				// },
 				// 114: {
-				// 	"name": "內湖區",
-				// 	"engName": "Neihu"
+				// 	"name": "內湖區"
 				// },
 				// 115: {
-				// 	"name": "南港區",
-				// 	"engName": "Nangang"
+				// 	"name": "南港區"
 				// },
 				// 116: {
-				// 	"name": "文山區",
-				// 	"engName": "Wenshan"
+				// 	"name": "文山區"
 				// }
 			},
 			options: {
@@ -500,6 +489,7 @@ export default {
 			this.tableSelect = [];
 			getCaseList({
 				isList: false,
+				zipCode: this.listQuery.zipCode,
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
 			}).then(response => {
@@ -509,6 +499,7 @@ export default {
 						type: "error",
 					});
 				} else {
+					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.list.forEach(l => {
 						l.DeviceType = Number(l.DeviceType);
@@ -541,6 +532,7 @@ export default {
 			this.loading = true;
 
 			addCaseList({
+				zipCode: this.zipCodeNow,
 				caseList: this.caseFilterList([...this.caseList, ...this.tableSelect ])
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
@@ -680,7 +672,7 @@ export default {
 			if(this.caseMinus.list.length == this.list.length) {
 				this.$message({
 					type: "warning",
-					message: "日期不符，請重新上傳正確csv"
+					message: "行政區域或日期不符，請重新上傳正確csv"
 				});
 				this.handleRemove();
 			} else {
@@ -762,7 +754,7 @@ export default {
 					padding: 0 10px
 		.upload-csv
 			display: inline-flex
-			flex-direction: row-reverse
+			// flex-direction: row-reverse
 			border: 1px solid rgba(#909399, 0.6)
 			border-radius: 5px
 			&.is-ready > .el-upload.el-upload--text
