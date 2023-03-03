@@ -12,11 +12,6 @@
 					</el-select>
 				</div>
 			</div>
-
-			<!-- <span class="filter-item">
-				<div style="font-size: 12px; color: #909399">分派日期</div>
-				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
-			</span> -->
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
@@ -29,6 +24,10 @@
 			</div>
 			<br>
 
+			<span class="filter-item">
+				<div style="font-size: 12px; color: #909399">建單日期</div>
+				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			</span>
 			<div class="filter-item">
 				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px" >
 					<span slot="prepend">派工單號</span>
@@ -51,7 +50,7 @@
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已退回</el-checkbox>
 		</div>
 
-		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+		<h5 v-if="list.length != 0 && (!listQuery.filterStr || listQuery.filterStr.length == 0)">查詢期間：{{ searchRange }}</h5>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -143,14 +142,19 @@ import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { getTenderMap, getGuildMap } from "@/api/type";
 import { getJobTicketList, getJobTicketSpec, revokeDispatch } from "@/api/dispatch";
+import TimePicker from "@/components/TimePicker";
 
 export default {
 	name: "jobTicketManage",
-	components: { },
+	components: { TimePicker },
 	data() {
 		return {
 			loading: false,
 			screenWidth: window.innerWidth,
+			daterange: [
+				moment().subtract(1, 'd').startOf("day").toDate(),
+				moment().subtract(1, 'd').endOf("day").toDate(),
+			],
 			searchRange: "",
 			deviceTypeNow: 1,
 			contractorNow: "",
@@ -265,17 +269,17 @@ export default {
 				this.list = [];
 				this.deviceTypeNow = this.listQuery.deviceType;
 
-				// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-				// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
-				// this.searchRange = startDate + " - " + endDate;
+				let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+				let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+				this.searchRange = startDate + " - " + endDate;
 
 				getJobTicketList({
 					filter: this.listQuery.filter,
 					contractor: this.listQuery.contractor,
 					dispatchSN: this.listQuery.filterStr,
 					deviceType: this.listQuery.deviceType,
-					// timeStart: startDate,
-					// timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+					timeStart: startDate,
+					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 				}).then(response => {
 					if (response.data.list.length == 0) {
 						if(showMsg) this.$message({
