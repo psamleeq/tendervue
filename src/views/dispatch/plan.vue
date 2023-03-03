@@ -611,7 +611,7 @@ export default {
 			// const regex = new RegExp('^[0-9*+\/().-]+$', 'g');
 			const regex = /^[^*+/-](?:[*+/\-]?[(]*\d+\.?\d*[)]*)+$/g;
 			
-			if(row.editFormula || (row.MillingFormula && row.MillingFormula != '0' && row.MillingFormula.length != 0)) {
+			if( (row.editFormula == undefined && row.MillingFormula && row.MillingFormula != '0' && row.MillingFormula.length != 0) || row.editFormula)  {
 				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
 				row.MillingArea = regex.test(row.MillingFormula) ? Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100 : 0;
 			} else row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
@@ -739,6 +739,7 @@ export default {
 					row.edit = false;
 					this.showEdit = false;
 					
+					if(!row.editFormula) row.MillingFormula = '0';
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
 					if([1,2].includes(this.deviceTypeNow)) {
 						this.calArea(caseSpec);
