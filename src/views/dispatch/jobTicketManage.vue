@@ -58,7 +58,7 @@
 			:key="deviceTypeNow"
 			border
 			fit
-			highlight-current-row
+			:row-class-name="tableRowClassName"
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
 			stripe
 			style="width: 100%"
@@ -151,8 +151,9 @@ export default {
 		return {
 			loading: false,
 			screenWidth: window.innerWidth,
+			timeTabId: 4,
 			daterange: [
-				moment().subtract(1, 'd').startOf("day").toDate(),
+				moment().startOf("month").toDate(),
 				moment().subtract(1, 'd').endOf("day").toDate(),
 			],
 			searchRange: "",
@@ -249,6 +250,10 @@ export default {
 	},
 	mounted() { },
 	methods: {
+		tableRowClassName({row, rowIndex}) {
+			if (row.DateClose.length != 0) return 'success-row';
+			return '';
+		},
 		imgPreload() {
 			//img preload
 			this.imgDOMObj = {};
@@ -881,6 +886,10 @@ export default {
 					padding-left: 10px
 					text-align: left
 	.el-table
+		.success-row 
+			background: #f0f9eb
+			&.hover-row > td
+				background-color: initial !important
 		.btn-action
 			margin-left: 5px
 			padding: 5px
