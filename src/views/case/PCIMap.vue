@@ -238,6 +238,7 @@ export default {
 					}
 				],
 				districtMap: {
+					103: "大同區",
 					104: "中山區"
 				}
 			}
