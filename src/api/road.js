@@ -123,3 +123,11 @@ export function getPCIBlock(query) {
 		params: query
 	})
 }
+
+export function getBlockCase(query) {
+	return request({
+		url: '/road/blockCaseList',
+		method: 'get',
+		params: query
+	})
+}

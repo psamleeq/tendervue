@@ -71,6 +71,20 @@
 			:on-close="() => { showImgViewer = false; }"
 			:url-list="imgUrls"
 		/>
+
+		<el-dialog class="dialog-map" :visible.sync="showCaseList" width="640px">
+			<el-table :data="caseList" border>
+				<el-table-column
+				v-for="(value, key) in headers.caseList"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
+				:sortable="value.sortable"
+				:formatter="formatter"
+			/>
+			</el-table>
+		</el-dialog>
 	</div>
 </template>
 
@@ -80,7 +94,7 @@ import { fromUrl, Pool } from "geotiff";
 import moment from "moment";
 import proj4 from 'proj4';
 import { getTenderRound } from "@/api/type";
-import { getPCIBlock, getRoadCaseGeo } from "@/api/road";
+import { getPCIBlock, getRoadCaseGeo, getBlockCase } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
@@ -108,6 +122,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			showCaseList: false,
 			showImgViewer: false,
 			blockSwitch: true,
 			caseSwitch: true,
@@ -128,19 +143,46 @@ export default {
 				filterId: null
 			},
 			headers: {
-				// PCIInfo
-				pciId: "區塊編號",
-				roadName: "道路名稱",
-				PCIValue: "PCI",
+				caseList: {
+					caseId: {
+						name: "缺失編號",
+						sortable: true,
+					},
+					caseName: {
+						name: "缺失類型",
+						sortable: true,
+					},
+					caseLevel: {
+						name: "損壞程度",
+						sortable: true,
+					},
+					caseLength: {
+						name: "長度(m)",
+						sortable: true,
+					},
+					caseArea: {
+						name: "面積(㎡)",
+						sortable: true,
+					}
+				},
+				content: {
+					// caseInfo
+					caseId: "缺失編號",
+					caseName: "缺失類型",
+					caseLevel: "損壞程度",
+					length: "長度(m)",
+					depth: "深度(cm)",
 
-				// caseInfo
-				caseId: "缺失編號",
-				caseName: "缺失類型",
-				caseLevel: "損壞程度",
-				length: "長度(m)",
-				area: "面積(㎡)",
-				depth: "深度(cm)"
+					// PCIInfo
+					pciId: "區塊編號",
+					roadName: "道路名稱",
+					area: "面積(㎡)",
+					PCIValue: "PCI",
+
+					updateTime: "更新時間"
+				}
 			},
+			caseList: [],
 			options: { 
 				tenderRoundMap : {},
 				PCILevel: {
@@ -446,6 +488,28 @@ export default {
 								this.loading = false;
 							});
 						} else this.showImgViewer = true;
+					});
+
+					const caseListBtn = this.$el.querySelector("#map #case-list-btn");
+					if(caseListBtn) caseListBtn.addEventListener("click", () => { 
+						this.caseList = [];
+						if(this.blockId != 0) {
+							this.loading = true;
+							const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+							const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
+							const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
+							
+							getBlockCase({
+								tenderId: tenderRound.tenderId,
+								blockId: this.blockId,
+								timeStart: startDate,
+								timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+							}).then(response => {
+								this.caseList = response.data.list;
+								this.showCaseList = true;
+								this.loading = false;
+							}).catch(err => this.loading = false);
+						} else this.showCaseList = true;
 					});
 				});
 				resolve();
@@ -781,16 +845,18 @@ export default {
 		},
 		async showContent(props, position) {
 			this.blockId = 0;
-			// console.log(props);
 			let contentText = `<div style="width: 400px;">`;
-			for(const key in this.headers) {
+			for(const key in this.headers.content) {
 				// console.log(key);
 				// console.log(props[key]);
 				this.imgUrls = [];
 				if(props[key]) {
+					let prop = props[key];
+					if(["updateTime"].includes(key)) prop = this.formatTime(props[key]);
+
 					contentText += `<div class="el-row" style="margin-bottom: 4px">`;
-					contentText += `<div class="el-col el-col-8" style="padding-left: 5px; font-size: 18px; line-height: 18px;">${this.headers[key]}</div>`;
-					contentText += `<div class="el-col el-col-16" style="font-size: 18px; line-height: 18px;">${props[key]}</div>`;
+					contentText += `<div class="el-col el-col-8" style="padding-left: 5px; font-size: 18px; line-height: 18px;">${this.headers.content[key]}</div>`;
+					contentText += `<div class="el-col el-col-16" style="font-size: 18px; line-height: 18px;">${prop}</div>`;
 					contentText += `</div>`;
 				}
 			}
@@ -819,7 +885,8 @@ export default {
 				// 	this.$el.querySelector("#map #info-btn").style.opacity = "0";
 				// });
 				
-				contentText += `<div id="info-btn" class="info-btn-group" style="opacity: 0.3">`;
+				contentText += `<div id="info-btn" class="info-btn-group" style="opacity: 0.5">`;
+				contentText += `<button type="button" id="case-list-btn" class="info-btn scrn-full el-button el-button--default" style="right: 100px; height: 30px; width: 30px; border-color: #409EFF"><i class="el-icon-tickets btn-text" style="color: #409EFF"></i></button>`;
 				contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="right: 65px; height: 30px; width: 30px; border-color: #909399"><i class="el-icon-full-screen btn-text" style="color: #909399"></i></button>`;
 				contentText += `<a href="${url}" target="_blank"><button type="button" id="info-download-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; border-color: #909399"><i class="el-icon-download btn-text" style="color: #909399"></i></button></a>`;
 				contentText += `</div>`;
@@ -844,7 +911,7 @@ export default {
 			else return row[column.property] || "-";
 		},
 		formatTime(time) {
-			return moment(time).utc().format("YYYY-MM-DD");
+			return moment(time).utc().format("YYYY-MM-DD hh:mm");
 		}
 	},
 };
