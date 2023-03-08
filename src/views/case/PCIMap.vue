@@ -654,7 +654,17 @@ export default {
 
 						// console.log(color);
 
-						if(feature.j.isLine) {
+						if(feature.j.isPoint) {
+							const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
+							return { 
+								icon: { 
+									url: `/assets/icon/icon_case_${caseLevelMap[feature.j.caseLevel]}.png`,
+									anchor: new google.maps.Point(5, 5),
+									scaledSize: new google.maps.Size(25, 25),
+								},
+								zIndex: feature.j.isLine ? 1000 - feature.j.length : 1000 - feature.j.area
+							};
+						} else if(feature.j.isLine) {
 							return { 
 								strokeColor: color,
 								strokeWeight: 3,

@@ -8,13 +8,13 @@
 						<div class="el-input-group__prepend">
 							<span>合約</span>
 						</div>
-						<el-select v-model.number="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender">
+						<el-select v-model.number="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" @change="listQuery.pageCurrent = 1; getList();">
 							<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="Number(id)" :label="name" />
 						</el-select>
 					</div>
 				</div>
 			</div>
-			<el-button class="filter-item" type="primary" icon="el-icon-search" style="margin-left: 20px" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
+			<!-- <el-button class="filter-item" type="primary" icon="el-icon-search" style="margin-left: 20px" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button> -->
 		</div>
 
 		<el-table
