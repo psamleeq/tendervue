@@ -907,7 +907,7 @@ export default {
 			for(const markers of this.markers) markers.setMap(null);
 		},
 		formatter(row, column) {
-			if (Number(row[column.property])) return row[column.property].toLocaleString();
+			if (!['caseId'].includes(column.property) && Number(row[column.property])) return row[column.property].toLocaleString();
 			else return row[column.property] || "-";
 		},
 		formatTime(time) {
