@@ -472,7 +472,9 @@ export default {
 								// console.log(imageSpec);
 								const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
 								this.imgUrls = [ imgSrc ];
-								this.$el.querySelector("#map #info-btn").style.opacity = "1";
+								// this.$el.querySelector("#map #info-btn").style.opacity = "1";
+								this.$el.querySelector("#map #info-scrn-full-btn").style.opacity = "1";
+								this.$el.querySelector("#map #info-download-btn").style.opacity = "1";
 								this.loading = false;
 								this.showImgViewer = true;
 
@@ -481,7 +483,9 @@ export default {
 								// contentText += `</div>`;
 							}).catch(err => {
 								console.log(err);
-								this.$el.querySelector("#map #info-btn").style.opacity = "0";
+								// this.$el.querySelector("#map #info-btn").style.opacity = "0";
+								this.$el.querySelector("#map #info-scrn-full-btn").style.display = "none";
+								this.$el.querySelector("#map #info-download-btn").style.display = "none";
 								this.$message({
 									message: "尚無正射圖",
 									type: "error",
@@ -888,10 +892,10 @@ export default {
 				// 	this.$el.querySelector("#map #info-btn").style.opacity = "0";
 				// });
 				
-				contentText += `<div id="info-btn" class="info-btn-group" style="opacity: 0.5">`;
+				contentText += `<div id="info-btn" class="info-btn-group">`;
 				contentText += `<button type="button" id="case-list-btn" class="info-btn scrn-full el-button el-button--default" style="right: 100px; height: 30px; width: 30px; border-color: #409EFF"><i class="el-icon-tickets btn-text" style="color: #409EFF"></i></button>`;
-				contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="right: 65px; height: 30px; width: 30px; border-color: #909399"><i class="el-icon-full-screen btn-text" style="color: #909399"></i></button>`;
-				contentText += `<a href="${url}" target="_blank"><button type="button" id="info-download-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; border-color: #909399"><i class="el-icon-download btn-text" style="color: #909399"></i></button></a>`;
+				contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="right: 65px; height: 30px; width: 30px; border-color: #909399"><i class="el-icon-full-screen btn-text" style="color: #909399; opacity: 0.5"></i></button>`;
+				contentText += `<a href="${url}" target="_blank"><button type="button" id="info-download-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; border-color: #909399"><i class="el-icon-download btn-text" style="color: #909399; opacity: 0.5"></i></button></a>`;
 				contentText += `</div>`;
 			}
 
