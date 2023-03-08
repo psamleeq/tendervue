@@ -128,6 +128,7 @@ export default {
 			caseSwitch: true,
 			screenWidth: window.innerWidth,
 			blockId: 0,
+			pciId: 0,
 			// map: null,
 			imgUrls: [],
 			// dataLayer: {},
@@ -501,7 +502,7 @@ export default {
 							
 							getBlockCase({
 								tenderId: tenderRound.tenderId,
-								blockId: this.blockId,
+								blockId: this.pciId,
 								timeStart: startDate,
 								timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 							}).then(response => {
@@ -845,6 +846,7 @@ export default {
 		},
 		async showContent(props, position) {
 			this.blockId = 0;
+			this.pciId = 0;
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.content) {
 				// console.log(key);
@@ -868,6 +870,7 @@ export default {
 				contentText += `</div>`;
 			} else if(props.blockId) {
 				this.blockId = props.blockId;
+				this.pciId = props.pciId;
 				const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
 				const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${this.blockId}.tif`;
 				// fromUrl(url).then( async(geoTiffFile) => {
