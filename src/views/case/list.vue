@@ -407,16 +407,20 @@ export default {
 				fillColor: '#F56C6C',
 				fillOpacity: 0.8
 			});
+			if(row.isPoint) {
+				this.map.setCenter({ lat: row.wkb_geometry.coordinates[1], lng: row.wkb_geometry.coordinates[0] });
+			} else {
+				const depth = row.isLine ? 1 : 2;
+				const paths = row.wkb_geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
+				const bounds = new google.maps.LatLngBounds();
+				paths.forEach(position => bounds.extend(position));
+				this.map.fitBounds(bounds);
+				// this.map.setCenter(bounds.getCenter());
+				// this.map.panToBounds(bounds);
+			}
 
-			const depth = row.isLine ? 1 : 2;
-			const paths = row.wkb_geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
-			const bounds = new google.maps.LatLngBounds();
-			paths.forEach(position => bounds.extend(position));
-			this.map.fitBounds(bounds);
 			const zoom = this.map.getZoom();
 			this.map.setZoom(zoom < 21 ? 21 : zoom);
-			// this.map.setCenter(bounds.getCenter());
-			// this.map.panToBounds(bounds);
 		},
 		getList() {
 			this.loading = true;

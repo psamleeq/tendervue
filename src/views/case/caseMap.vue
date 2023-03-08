@@ -719,15 +719,22 @@ export default {
 						resolve();
 					}
 
-					const depth = caseSpec.properties.isLine ? 1 : 2;
-					// console.log(caseSpec.properties.isLine, depth);
-					const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
-					// console.log(paths);
+					if(caseSpec.properties.isPoint) {
+						this.map.setCenter({ lat: caseSpec.geometry.coordinates[1], lng: caseSpec.geometry.coordinates[0] });
+						const zoom = this.map.getZoom();
+						this.map.setZoom(zoom < 21 ? 21 : zoom);
+						this.showCaseContent(caseSpec.properties, { lat: caseSpec.geometry.coordinates[1], lng: caseSpec.geometry.coordinates[0] });
+					} else {
+						const depth = caseSpec.properties.isLine ? 1 : 2;
+						// console.log(caseSpec.properties.isLine, depth);
+						const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
+						// console.log(paths);
 
-					const bounds = new google.maps.LatLngBounds();
-					paths.forEach(position => bounds.extend(position));
-					this.map.fitBounds(bounds);
-					this.showCaseContent(caseSpec.properties, paths[Math.floor(paths.length / 2)]);
+						const bounds = new google.maps.LatLngBounds();
+						paths.forEach(position => bounds.extend(position));
+						this.map.fitBounds(bounds);
+						this.showCaseContent(caseSpec.properties, paths[Math.floor(paths.length / 2)]);
+					}
 
 					resolve();
 				} else if(this.listQuery.filterType == 2) {
