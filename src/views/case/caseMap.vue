@@ -188,6 +188,7 @@ export default {
 					}
 				],
 				districtMap: {
+					103: "大同區",
 					104: "中山區"
 				}
 			}
@@ -577,7 +578,7 @@ export default {
 								strokeWeight: 3,
 								strokeOpacity: 1,
 								fillOpacity: 0,
-								zIndex: 5
+								zIndex: 1000 - feature.j.length
 							};
 						} else {
 							return { 
@@ -586,7 +587,7 @@ export default {
 								strokeOpacity: 1,
 								fillColor: color,
 								fillOpacity: 0.8,
-								zIndex: 5
+								zIndex: 1000 - feature.j.area
 							};
 						}
 					});

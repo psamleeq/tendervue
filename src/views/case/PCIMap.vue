@@ -75,14 +75,14 @@
 		<el-dialog class="dialog-map" :visible.sync="showCaseList" width="640px">
 			<el-table :data="caseList" border>
 				<el-table-column
-				v-for="(value, key) in headers.caseList"
-				:key="key"
-				:prop="key"
-				:label="value.name"
-				align="center"
-				:sortable="value.sortable"
-				:formatter="formatter"
-			/>
+					v-for="(value, key) in headers.caseList"
+					:key="key"
+					:prop="key"
+					:label="value.name"
+					align="center"
+					:sortable="value.sortable"
+					:formatter="formatter"
+				/>
 			</el-table>
 		</el-dialog>
 	</div>
@@ -655,7 +655,7 @@ export default {
 								strokeWeight: 3,
 								strokeOpacity: 1,
 								fillOpacity: 0,
-								zIndex: 5
+								zIndex: 1000 - feature.j.length
 							};
 						} else {
 							return { 
@@ -664,7 +664,7 @@ export default {
 								strokeOpacity: 1,
 								fillColor: color,
 								fillOpacity: 1,
-								zIndex: 5
+								zIndex: 1000 - feature.j.area
 							};
 						}
 					});
