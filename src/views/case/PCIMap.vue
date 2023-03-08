@@ -781,7 +781,7 @@ export default {
 					});
 					resolve();
 				} else {
-					const key = this.listQuery.filterType == 1 ? 'blockId' : 'roadName';
+					const key = this.listQuery.filterType == 1 ? 'pciId' : 'roadName';
 					let query = {};
 					query[key] = this.listQuery.filterId;
 
