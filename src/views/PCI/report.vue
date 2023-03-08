@@ -242,11 +242,12 @@ export default {
 						return curr;
 					}, []);
 					this.list.forEach(l => {
+						const createYear = String(l.createYear).slice(2);
 						for(const month of l.createMonth) {
 							const createMonth = String(month).padStart(2, 0);
 
 							if(!this.headers_PCI.hasOwnProperty(`PCIValue_${createMonth}`)) {
-								this.$set(this.headers_PCI, `PCIValue_${createMonth}`, {name: `PCI_22${createMonth}`, sortable: false });
+								this.$set(this.headers_PCI, `PCIValue_${createMonth}`, {name: `PCI_${createYear}${createMonth}`, sortable: false });
 							}
 						}	
 						this.$set(l, "roadId", `${this.roadIdMap[l.id.slice(-1)]}-${l.id.slice(-4, -1)}`);
