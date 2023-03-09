@@ -114,8 +114,6 @@ export default {
 			imgUrls: [],
 			// dataLayer: {},
 			infoWindow: null,
-			markers: [],
-			polyLines: [],
 			// geoJSON: {},
 			caseInfo: [],
 			selectCase: {},
@@ -487,8 +485,6 @@ export default {
 			this.loading = true;
 			let isCompleted = false;
 			this.clearAll();
-			this.markers = [];
-			this.polyLines = {};
 			this.caseInfo = [];
 			this.selectCase = {};
 
@@ -819,8 +815,6 @@ export default {
 
 			this.infoWindow.close();
 			this.map.data.forEach(feature => this.map.data.remove(feature));
-			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
-			for(const markers of this.markers) markers.setMap(null);
 		},
 		formatter(row, column) {
 			if (Number(row[column.property])) return row[column.property].toLocaleString();

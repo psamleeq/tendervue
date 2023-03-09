@@ -33,7 +33,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="key == 'round' ? 60 : ['roundStart', 'roundEnd'].includes(key) ? 100 : null"
+				:width="key == 'round' ? 60 : ['roundStart', 'roundEnd'].includes(key) ? 200 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>

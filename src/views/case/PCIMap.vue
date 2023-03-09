@@ -125,7 +125,7 @@ export default {
 			showCaseList: false,
 			showImgViewer: false,
 			blockSwitch: true,
-			caseSwitch: true,
+			caseSwitch: false,
 			screenWidth: window.innerWidth,
 			blockId: 0,
 			pciId: 0,
@@ -133,8 +133,6 @@ export default {
 			imgUrls: [],
 			// dataLayer: {},
 			infoWindow: null,
-			markers: [],
-			polyLines: [],
 			// geoJSON: {},
 			caseInfo: [],
 			selectCase: {},
@@ -536,7 +534,7 @@ export default {
 				this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
 
 				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
-				this.dataLayer.case = new google.maps.Data({ map: this.map });
+				this.dataLayer.case = new google.maps.Data();
 
 				// NOTE: 測試正射圖
 				// const imageBounds = {
@@ -578,8 +576,6 @@ export default {
 		async getList() {
 			this.loading = true;
 			this.clearAll();
-			this.markers = [];
-			this.polyLines = {};
 
 			// 載入case GeoJSON
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
@@ -587,108 +583,7 @@ export default {
 			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 			
-			getRoadCaseGeo({
-				tenderId: tenderRound.tenderId,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-			}).then(response => {
-				if(Object.keys(response.data.geoJSON).length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.caseInfo = response.data.summary;
-					this.caseInfo.forEach(info => {
-						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-						let index = this.options.colorMap.filter(color => color.name == '其他')[0].index;
-						if(info.caseName) {
-							const colorFilter = this.options.colorMap.filter(color => {
-								let caseFlag = false;
-								for(const name of color.name) {
-									caseFlag = (info.caseName.indexOf(name) != -1);
-									// console.log(info.caseName, name, caseFlag);
-									if(caseFlag) break;
-								}
-
-								return caseFlag; 
-							})
-							// console.log(colorFilter);
-							
-							if(colorFilter.length > 0) {
-								color = colorFilter[0].color;
-								index = colorFilter[0].index;
-							}
-						}
-
-						this.$set(info, "color", color);
-						this.$set(info, "index", index);
-						// console.log(JSON.stringify(info));
-						this.$set(this.selectCase, info.caseName, { switch: true, level: 0 });
-					})
-
-					this.caseInfo.sort((a, b) => (a.index - b.index));
-
-					this.geoJSON.case = JSON.parse(response.data.geoJSON);
-					// console.log(this.geoJSON.case);
-					this.dataLayer.case.addGeoJson(this.geoJSON.case);
-
-					this.dataLayer.case.setStyle(feature => { 
-						// console.log(feature.j.caseName);
-						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-						if(feature.j.caseName) {
-							const colorFilter = this.options.colorMap.filter(color => {
-								let caseFlag = false;
-								for(const name of color.name) {
-									caseFlag = (feature.j.caseName.indexOf(name) != -1);
-									// console.log(name, caseFlag);
-									if(caseFlag) break;
-								}
-
-								return caseFlag; 
-							})
-							// console.log(colorFilter);
-							
-							if(colorFilter.length > 0) color = colorFilter[0].color;
-						}
-
-						// console.log(color);
-
-						if(feature.j.isPoint) {
-							const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
-							return { 
-								icon: { 
-									url: `/assets/icon/icon_case_${caseLevelMap[feature.j.caseLevel]}.png`,
-									anchor: new google.maps.Point(5, 5),
-									scaledSize: new google.maps.Size(25, 25),
-								},
-								zIndex: feature.j.isLine ? 1000 - feature.j.length : 1000 - feature.j.area
-							};
-						} else if(feature.j.isLine) {
-							return { 
-								strokeColor: color,
-								strokeWeight: 3,
-								strokeOpacity: 1,
-								fillOpacity: 0,
-								zIndex: 1000 - feature.j.length
-							};
-						} else {
-							return { 
-								strokeColor: '#BDBDBD',
-								strokeWeight: 1,
-								strokeOpacity: 1,
-								fillColor: color,
-								fillOpacity: 1,
-								zIndex: 1000 - feature.j.area
-							};
-						}
-					});
-
-					this.dataLayer.case.addListener('click', (event) => {
-						this.showContent(event.feature.j, event.latLng);
-					});
-				}
-			}).catch(err => this.loading = false);
+			if(this.caseSwitch) await this.getCaseGeo();
 
 			// 載入PCI切塊 GeoJson
 			getPCIBlock({ tenderId: tenderRound.tenderId }).then(async (response) => {
@@ -761,6 +656,122 @@ export default {
 					await this.focusMap();
 					this.loading = false;
 				}
+			}).catch(err => this.loading = false);
+		},
+		async getCaseGeo() {
+			this.loading = true;
+
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
+			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
+
+			return new Promise((resolve, reject) => {
+				getRoadCaseGeo({
+					tenderId: tenderRound.tenderId,
+					timeStart: startDate,
+					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+				}).then(response => {
+					if(Object.keys(response.data.geoJSON).length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.caseInfo = response.data.summary;
+						this.caseInfo.forEach(info => {
+							let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
+							let index = this.options.colorMap.filter(color => color.name == '其他')[0].index;
+							if(info.caseName) {
+								const colorFilter = this.options.colorMap.filter(color => {
+									let caseFlag = false;
+									for(const name of color.name) {
+										caseFlag = (info.caseName.indexOf(name) != -1);
+										// console.log(info.caseName, name, caseFlag);
+										if(caseFlag) break;
+									}
+
+									return caseFlag; 
+								})
+								// console.log(colorFilter);
+								
+								if(colorFilter.length > 0) {
+									color = colorFilter[0].color;
+									index = colorFilter[0].index;
+								}
+							}
+
+							this.$set(info, "color", color);
+							this.$set(info, "index", index);
+							// console.log(JSON.stringify(info));
+							this.$set(this.selectCase, info.caseName, { switch: true, level: 0 });
+						})
+
+						this.caseInfo.sort((a, b) => (a.index - b.index));
+
+						this.geoJSON.case = JSON.parse(response.data.geoJSON);
+						// console.log(this.geoJSON.case);
+						this.dataLayer.case.addGeoJson(this.geoJSON.case);
+
+						this.dataLayer.case.setStyle(feature => { 
+							// console.log(feature.j.caseName);
+							let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
+							if(feature.j.caseName) {
+								const colorFilter = this.options.colorMap.filter(color => {
+									let caseFlag = false;
+									for(const name of color.name) {
+										caseFlag = (feature.j.caseName.indexOf(name) != -1);
+										// console.log(name, caseFlag);
+										if(caseFlag) break;
+									}
+
+									return caseFlag; 
+								})
+								// console.log(colorFilter);
+								
+								if(colorFilter.length > 0) color = colorFilter[0].color;
+							}
+
+							// console.log(color);
+
+							if(feature.j.isPoint) {
+								const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
+								return { 
+									icon: { 
+										url: `/assets/icon/icon_case_${caseLevelMap[feature.j.caseLevel]}.png`,
+										anchor: new google.maps.Point(5, 5),
+										scaledSize: new google.maps.Size(25, 25),
+									},
+									zIndex: feature.j.isLine ? 1000 - feature.j.length : 1000 - feature.j.area
+								};
+							} else if(feature.j.isLine) {
+								return { 
+									strokeColor: color,
+									strokeWeight: 3,
+									strokeOpacity: 1,
+									fillOpacity: 0,
+									zIndex: 1000 - feature.j.length
+								};
+							} else {
+								return { 
+									strokeColor: '#BDBDBD',
+									strokeWeight: 1,
+									strokeOpacity: 1,
+									fillColor: color,
+									fillOpacity: 1,
+									zIndex: 1000 - feature.j.area
+								};
+							}
+						});
+
+						this.dataLayer.case.addListener('click', (event) => {
+							this.showContent(event.feature.j, event.latLng);
+						});
+
+						this.loading = false;
+						resolve();
+					}
+				}).catch(err => this.loading = false);
 			})
 		},
 		async search() {
@@ -830,7 +841,11 @@ export default {
 			if(this.blockSwitch) this.dataLayer.PCIBlock.setMap(this.map);
 			else this.dataLayer.PCIBlock.setMap(null);
 		},
-		switchCase() {
+		async switchCase() {
+			let caseDataLayerNum = 0;
+			this.dataLayer.case.forEach(() => caseDataLayerNum++);
+			if(caseDataLayerNum == 0) await this.getCaseGeo();
+
 			if(this.caseSwitch) this.dataLayer.case.setMap(this.map);
 			else this.dataLayer.case.setMap(null);
 		},
@@ -918,10 +933,7 @@ export default {
 		},
 		clearAll() {
 			this.infoWindow.close();
-
 			for(const type of [ "PCIBlock", "case" ]) this.dataLayer[type].forEach(feature => this.dataLayer[type].remove(feature));
-			for(const polyline of Object.values(this.polyLines)) polyline.setMap(null);
-			for(const markers of this.markers) markers.setMap(null);
 		},
 		formatter(row, column) {
 			if (!['caseId'].includes(column.property) && Number(row[column.property])) return row[column.property].toLocaleString();
