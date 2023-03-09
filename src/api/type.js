@@ -1,9 +1,18 @@
 import request from '@/utils/request'
 
+//區域
+export function getDistMap(query) {
+	return request({
+		url: '/type/unitZip',
+		method: 'get',
+		params: query
+	})
+}
+
 // 區域Geo
 export function getDistGeo(query) {
 	return request({
-		url: '/type/unitZip',
+		url: '/type/unitZipGeo',
 		method: 'get',
 		params: query
 	})
@@ -12,7 +21,7 @@ export function getDistGeo(query) {
 // PCI區塊Geo
 export function getBlockGeo(query) {
 	return request({
-		url: '/type/block',
+		url: '/type/blockGeo',
 		method: 'get',
 		params: query
 	})

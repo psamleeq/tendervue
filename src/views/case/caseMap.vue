@@ -84,7 +84,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
-import { getTenderRound, getBlockGeo } from "@/api/type";
+import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
 import { getRoadCaseGeo, setRoadCase } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
@@ -185,10 +185,7 @@ export default {
 						color: "#607D8B"
 					}
 				],
-				districtMap: {
-					103: "大同區",
-					104: "中山區"
-				}
+				districtMap: {}
 			}
 		};
 	},
@@ -247,6 +244,7 @@ export default {
 				this.listQuery.filterType = 2;
 				this.listQuery.filterId = this.$route.query.blockId;
 			}
+			getDistMap().then(response => this.options.districtMap = response.data.districtMap);
 			getTenderRound().then(response => {
 				this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
 					const roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`
