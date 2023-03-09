@@ -940,7 +940,7 @@ export default {
 			else return row[column.property] || "-";
 		},
 		formatTime(time) {
-			return moment(time).utc().format("YYYY-MM-DD hh:mm");
+			return moment(time).local().format("YYYY-MM-DD hh:mm");
 		}
 	},
 };
