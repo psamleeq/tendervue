@@ -517,6 +517,9 @@ export default {
 						type: "error",
 					});
 				} else {
+					// 載入區塊
+					this.getBlock();
+					
 					this.caseInfo = response.data.summary;
 					this.caseInfo.forEach(info => {
 						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
@@ -628,17 +631,20 @@ export default {
 				}
 				// this.switchBlockType();
 				if(this.$route.query.caseId) await this.search();
+				// this.loading = false;
 
-				if(isCompleted) this.loading = false;
-				else isCompleted = true;
+				// if(isCompleted) this.loading = false;
+				// else isCompleted = true;
 			}).catch(err => this.loading = false);
-
-			// 載入區塊
+		},
+		getBlock() {
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 			this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
 			this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
 
-			await getBlockGeo({ 
+			getBlockGeo({ 
 				tenderId: tenderRound.tenderId,
+				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
 				blockType: [1, 2]
 			}).then(async (response) => {
 				if(response.data.geoJSON.length == 0) {
@@ -647,7 +653,6 @@ export default {
 						type: "error",
 					});
 				} else {
-					
 					this.geoJSON.block = JSON.parse(response.data.geoJSON);
 					this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block.block_bell);
 					this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block.block_nco);
@@ -655,11 +660,12 @@ export default {
 
 					if(this.$route.query.blockId) this.search();
 
-					if(isCompleted) this.loading = false;
-					else isCompleted = true;
+					// if(isCompleted) this.loading = false;
+					// else isCompleted = true;
+
+					this.loading = false;
 				}
 			})
-
 		},
 		removeCaseStatus() {
 			// console.log(this.currCaseId);
