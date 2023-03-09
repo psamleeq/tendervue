@@ -455,10 +455,11 @@ export default {
 			})
 		},
 		changeTender() {
+			const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
+
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
-				const condition = zipCode == 1001 || this.options.districtMap[zipCode].includes(feature.j.TOWNNAME);
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.j.TOWNNAME);
 
 				return {
 					strokeColor: "#827717",
@@ -469,6 +470,11 @@ export default {
 					zIndex: 0
 				}
 			});
+
+			const bounds = new google.maps.LatLngBounds();
+			const boundary = JSON.parse(this.options.districtMap[zipCode].boundary);
+			boundary.coordinates.flat().forEach(position => bounds.extend({ lat: position[1], lng: position[0] }));
+			this.map.fitBounds(bounds);
 
 			this.$router.push({ query: { ...this.$route.query , tenderRound: this.listQuery.tenderRound } });
 			this.getList();
