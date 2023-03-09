@@ -588,7 +588,7 @@ export default {
 			// 載入PCI切塊 GeoJson
 			getPCIBlock({ tenderId: tenderRound.tenderId }).then(async (response) => {
 				// console.log("getPCIBlock");
-				if(Object.keys(response.data.geoJSON).length == 0) {
+				if(response.data.geoJSON.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
@@ -672,7 +672,7 @@ export default {
 					timeStart: startDate,
 					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 				}).then(response => {
-					if(Object.keys(response.data.geoJSON).length == 0) {
+					if(response.data.geoJSON.length == 0) {
 						this.$message({
 							message: "查無資料",
 							type: "error",

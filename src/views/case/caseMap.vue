@@ -499,7 +499,7 @@ export default {
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 			}).then(async (response) => {
-				if(Object.keys(response.data.geoJSON).length == 0) {
+				if(response.data.geoJSON.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
