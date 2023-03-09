@@ -54,9 +54,9 @@ export function getTenderRound(query) {
 	})
 }
 
-export function setTenderRound(id, data) {
+export function setTenderRound(data) {
 	return request({
-		url: `/type/tenderRound/${id}`,
+		url: `/type/tenderRound/`,
 		method: 'put',
 		data
 	})

@@ -311,10 +311,23 @@ export default {
 				this.listQuery.filterId = this.$route.query.roadName;
 			}
 			getDistMap().then(response => this.options.districtMap = response.data.districtMap);
-			getTenderRound().then(response => {
+			getTenderRound({ isMap: true }).then(response => {
 				this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
-					const roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`
-					acc[roundId] = { name: `${cur.tenderName} Round${cur.round}`, tenderId: cur.tenderId, zipCode: cur.ZipCode, roundStart: cur.roundStart, roundEnd: cur.roundEnd };
+					let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
+					if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+
+					let name = `${cur.tenderName}`;
+					if(cur.title.length != 0) name += `_${cur.title}`;
+					name += ` Round${cur.round}`;
+
+					acc[roundId] = { 
+						name, 
+						tenderId: cur.tenderId, 
+						isMain: cur.zipCodeSpec == 0,
+						zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
+						roundStart: cur.roundStart, 
+						roundEnd: cur.roundEnd
+					};
 					return acc;
 				}, {});
 
@@ -584,7 +597,10 @@ export default {
 			if(this.caseSwitch) await this.getCaseGeo();
 
 			// 載入PCI切塊 GeoJson
-			getPCIBlock({ tenderId: tenderRound.tenderId }).then(async (response) => {
+			getPCIBlock({ 
+				tenderId: tenderRound.tenderId,
+				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode
+			}).then(async (response) => {
 				// console.log("getPCIBlock");
 				if(response.data.geoJSON.length == 0) {
 					this.$message({
@@ -667,6 +683,7 @@ export default {
 			return new Promise((resolve, reject) => {
 				getRoadCaseGeo({
 					tenderId: tenderRound.tenderId,
+					zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
 					timeStart: startDate,
 					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 				}).then(response => {

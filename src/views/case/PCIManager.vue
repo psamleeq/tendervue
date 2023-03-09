@@ -183,7 +183,7 @@ export default {
 			this.$confirm(`確定修改Round${row.round}的區間為${row.roundStart} - ${row.roundEnd}?`, "確認", {
 					showClose: false,
 				}).then(() => {
-				setTenderRound( row.id, { timeStart: row.roundStart, timeEnd: row.roundEnd } ).then(response => {
+				setTenderRound( { tenderId: row.tenderId, round: row.round, timeStart: row.roundStart, timeEnd: row.roundEnd } ).then(response => {
 					if (response.statusCode == 20000 ) {
 						this.$message({
 							message: "修改成功",
