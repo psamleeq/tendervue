@@ -60,7 +60,6 @@
 			fit
 			:row-class-name="tableRowClassName"
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
-			stripe
 			style="width: 100%"
 		>
 
@@ -887,7 +886,7 @@ export default {
 					text-align: left
 	.el-table
 		.success-row 
-			background: #f0f9eb
+			background: #F0F9EB
 			&.hover-row > td
 				background-color: initial !important
 		.btn-action

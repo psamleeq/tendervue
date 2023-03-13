@@ -67,9 +67,8 @@
 			:key="deviceTypeNow"
 			border
 			fit
-			highlight-current-row
+			:row-class-name="tableRowClassName"
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
-			stripe
 			style="width: 100%"
 		>
 			<el-table-column label="順序" prop="OrderIndex" width="50" align="center" fixed />
@@ -871,6 +870,10 @@ export default {
 		} 
 	},
 	methods: {
+		tableRowClassName({row, rowIndex}) {
+			if (row.DateClose.length != 0) return 'success-row';
+			return '';
+		},
 		cellCheckBox(row, index) {
 			if(this.checkList[index]) this.$refs.caseTable.toggleRowSelection(row, true);
 			else this.$refs.caseTable.toggleRowSelection(row, false);
@@ -1558,6 +1561,10 @@ export default {
 		left: 50%
 		transform: translateX(-50%)
 	.el-table
+		.success-row 
+			background: #F0F9EB
+			&.hover-row > td
+				background-color: initial !important
 		.el-input__inner
 			padding: 0 5px
 		.btn-tag
