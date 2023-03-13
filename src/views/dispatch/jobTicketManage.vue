@@ -153,7 +153,7 @@ export default {
 			timeTabId: 4,
 			daterange: [
 				moment().startOf("month").toDate(),
-				moment().subtract(1, 'd').endOf("day").toDate(),
+				moment().endOf("day").toDate(),
 			],
 			searchRange: "",
 			deviceTypeNow: 1,
