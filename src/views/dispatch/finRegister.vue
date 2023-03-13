@@ -105,8 +105,8 @@
 						<span v-else-if="row.IsMarkingNow == 1 && row.DateClose_MK">{{ formatTime(row.DateClose_MK) }}完工</span>
 						<span v-else-if="row.IsMarkingNow == 1 && row.OrderSN_MK">派工單{{ row.OrderSN_MK }}</span>
 						<span v-else-if="row.IsMarkingNow == 1 && row.Contractor_MK">已分派</span>
+						<el-checkbox v-else-if="row.edit && !isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
 						<span v-else-if="row.IsMarkingNow == 1">已提交</span>
-						<el-checkbox v-else-if="!row.edit && !isAllCompleted" v-model="row[column.property]" :true-label='1' :false-label='0' />
 						<span v-else> - </span>
 					</span>
 					<span v-else>
@@ -1356,7 +1356,6 @@ export default {
 
 					if(!row.editFormula) row.MillingFormula = '0';
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
-					delete caseSpec.IsMarking;
 
 					if([1,2].includes(this.deviceTypeNow)) {
 						this.calArea(caseSpec);
