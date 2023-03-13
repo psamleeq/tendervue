@@ -115,7 +115,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column label="狀態" min-width="30" align="center">
+			<el-table-column :key="deviceTypeNow" label="狀態" min-width="30" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.IsActive == 0" style="color: #F56C6C">退回
 						<!-- <i class="el-icon-close" style="color: #F56C6C" /> -->
