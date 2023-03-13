@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container job-ticket-manage" v-loading="loading">
-		<h2>派工單列表</h2>
+		<h2>派工單管理</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -76,7 +76,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:min-width="30"
+				:min-width="['Amount'].includes(key) ? 60 : 30"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
@@ -95,6 +95,15 @@
 							</el-tooltip>
 						</span>
 						<span v-else> - </span>
+					</span>
+					<span v-else-if="[ 'Amount' ].includes(column.property)">
+						<el-input v-if="row.edit && row.DateClose.length != 0" v-model.number="row.Amount" style="width: 80%" />
+						<span v-else>{{ row.DateClose.length != 0 ? row.Amount : "-" }}</span>
+						<el-button v-if="row.DateClose.length != 0 && !row.edit" type="text" style="margin-left: 10px" size="mini" @click="row.edit = true"><i class="el-icon-edit" /></el-button>
+						<span v-if="row.edit">
+							<el-button type="text" @click="editJobTicketAmt(row)"><i class="el-icon-check" style="color: #67C23A"/></el-button>
+							<el-button type="text" style="margin-left: 5px" @click="row.edit=false; getList()"><i class="el-icon-close" style="color: #F56C6C" /></el-button> 
+						</span>
 					</span>
 					<span v-else>
 						<span>{{ row[column.property] || "-" }}</span>
@@ -140,7 +149,7 @@ import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getJobTicketList, getJobTicketSpec, revokeDispatch } from "@/api/dispatch";
+import { getJobTicketList, getJobTicketSpec, setJobTicketAmt, revokeDispatch } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 
 export default {
@@ -195,6 +204,10 @@ export default {
 				},
 				DateClose: {
 					name: "完工時間",
+					sortable: false,
+				},
+				Amount: {
+					name: "總金額",
 					sortable: false,
 				}
 			},
@@ -305,6 +318,8 @@ export default {
 							l.CaseNoInActiveArr = l.CaseNoInActiveArr.filter(caseNo => Number(caseNo) != 0);
 							l.DateAssign = this.formatDate(l.DateAssign);
 							l.DateClose = this.formatDate(l.DateClose);
+
+							this.$set(l, "edit", false);
 						})
 					}
 					this.loading = false;
@@ -776,6 +791,31 @@ export default {
 				await this.createPdf_footer();
 				resolve();
 			});
+		},
+		editJobTicketAmt(row) {
+			this.$confirm(`確認修改 派工單號${row.OrderSN} 的金額為 ${row.Amount} ?`, "確認", { showClose: false })
+				.then(() => {
+					setJobTicketAmt({
+						orderSN: row.OrderSN,
+						amount: Number(row.Amount)
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "修改成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "修改失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					});
+				}).catch(err => {});
 		},
 		editJobTicket(row) {
 			this.$router.push({

@@ -201,3 +201,11 @@ export function getJobTicketSpec(query) {
 		params: query
 	})
 }
+
+export function setJobTicketAmt(data) {
+	return request({
+		url: '/dispatch/jobTicketAmt',
+		method: 'put',
+		data
+	})
+}
