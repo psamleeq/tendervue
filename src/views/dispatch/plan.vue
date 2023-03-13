@@ -169,10 +169,11 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column :label="filterNow ? '主任分派日期' : '是否退件'" width="110" align="center">
+			<el-table-column :label="filterNow ? '主任分派日期' : '是否退件'" width="120" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.IsReturn"> 前ㄧ分派時間: </span>
 					<span>{{ row.DatePlanBefore || "-" }}</span>
+					<div v-if="row.IsReturn && row.StateNotes"> 原因: {{ row.StateNotes }}</div>
 				</template>
 			</el-table-column>
 			

@@ -214,10 +214,10 @@
 				</template>
 			</el-table-column>
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
-			<el-table-column label="退回" width="60" align="center" fixed>
+			<el-table-column label="退回" width="100" align="center" fixed>
 				<template slot-scope="{ row }">
-					<span v-if="deviceTypeNow == 4"> - </span>
-					<el-button v-else type="danger" size="mini" style="padding: 5px" @click="removeDispatch(row)">退回</el-button>
+					<span v-if="deviceTypeNow == 4 && row.DeviceType != 4"> - </span>
+					<el-button v-else type="danger" size="mini" style="padding: 5px" @click="beforeRemove(row, 1)">主任</el-button>
 				</template>
 			</el-table-column>
 			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
@@ -304,6 +304,30 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
+		<!-- Dialog: 案件退回 -->
+		<el-dialog
+			:visible.sync="showRevokeConfirm"
+			width="300px"
+			:show-close="false"
+			:close-on-click-modal="false"
+			:close-on-press-escape="false"
+			center
+		>	
+			<span slot="title">
+				<span v-if="rowActive.revokeType == 1">確認退回 案件編號{{ rowActive.CaseNo }} 至「主任分派」?</span>
+				<span v-else-if="rowActive.revokeType == 2">確認退回 案件編號{{ rowActive.CaseNo }} 至「製作派工單」?</span>
+			</span>
+			<div v-if="rowActive.revokeType == 1">原因: 
+				<el-select v-model="rowActive.revokeReason">
+					<el-option v-for="( name, key ) in options.reasonType" :key="key" :label="name" :value="Number(key)" />
+				</el-select>
+			</div>
+			<span slot="footer" class="footer-btns">
+				<el-button @click="showRevokeConfirm = false; getList();">取消</el-button>
+				<el-button type="primary" @click="removeDispatch()">確定</el-button>
+			</span>
+		</el-dialog>
+
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
 			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" :deviceTypeNow="deviceTypeNow" />
@@ -344,6 +368,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			showRevokeConfirm: false,
 			showJobTicket: true,
 			showDetailDialog: true,
 			screenWidth: window.innerWidth,
@@ -465,6 +490,7 @@ export default {
 			// total: 0,
 			list: [],
 			detail: [],
+			rowActive: {},
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect: [],
@@ -482,6 +508,10 @@ export default {
 					1: "合約",
 					2: "通報單號",
 					3: "地點(關鍵字)"
+				},
+				reasonType: {
+					1: "無需施作",
+					2: "退回重派"
 				}
 			},
 			pdfSetting: {
@@ -1281,31 +1311,41 @@ export default {
 				URL.revokeObjectURL(url);
 			});
 		},
-		removeDispatch(row) {
-			this.$confirm(`確認退回 案件編號${row.CaseNo}?`, "確認", { showClose: false })
-				.then(() => {
-					revokeDispatch({
-						revokeType: this.deviceTypeNow == 4 ? 2 : 1,
-						deviceType: this.deviceTypeNow,
-						serialNo: row.SerialNo
-					}).then(response => {
-						if ( response.statusCode == 20000 ) {
-							this.$message({
-								message: "退回成功",
-								type: "success",
-							});
-						} else {
-							this.$message({
-								message: "退回失敗",
-								type: "error",
-							});
-						}
-						this.getList(false);
-					}).catch(err => {
-						console.log(err);
-						this.getList(false);
+		// 退回
+		beforeRemove(row, revokeType) {
+			this.rowActive = JSON.parse(JSON.stringify(row)); 
+			this.$set(this.rowActive, "revokeType", revokeType);
+			if(revokeType == 1) this.$set(this.rowActive, "revokeReason", 1);
+
+			this.showRevokeConfirm = true;
+		},
+		removeDispatch() {
+			// revokeType(退回類型)- 1: 退回主任分派, 2: 退回廠商製作派工單"
+			if(this.rowActive.revokeType == 1) this.rowActive.revokeReason = this.options.reasonType[this.rowActive.revokeReason];
+			revokeDispatch({
+				revokeType: this.rowActive.revokeType,
+				revokeReason: this.rowActive.revokeReason,
+				deviceType: this.deviceTypeNow,
+				serialNo: this.rowActive.SerialNo
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "退回成功",
+						type: "success",
 					});
-				}).catch(err => {});
+				} else {
+					this.$message({
+						message: "退回失敗",
+						type: "error",
+					});
+				}
+				this.getList(false);
+				this.showRevokeConfirm = false;
+			}).catch(err => {
+				console.log(err);
+				this.getList(false);
+				this.showRevokeConfirm = false;
+			});
 		}
 	},
 };
