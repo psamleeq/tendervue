@@ -123,11 +123,14 @@
 
 		<br>
 
-		<el-tooltip effect="dark" content="請選擇案件" placement="bottom" :disabled="tableSelect.length != 0">
-			<div>
-				<el-button class="btn-previewPdf" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽派工單</el-button>
-			</div>
-		</el-tooltip>
+		<div class="previewPdf filter-container">
+			<el-tooltip class="filter-item" effect="dark" content="請選擇案件" placement="bottom" :disabled="tableSelect.length != 0">
+				<el-button-group>
+					<el-button type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽</el-button>
+					<el-button type="primary" icon="el-icon-download" :disabled="tableSelect.length == 0" @click="previewPdf(true)">製作</el-button>
+				</el-button-group>
+			</el-tooltip>
+		</div>
 
 		<el-divider />
 
@@ -1124,7 +1127,7 @@ export default {
 				resolve();
 			});
 		},
-		previewPdf() {
+		previewPdf(isInstant = false) {
 			this.loading = true;
 
 			this.createPdf().then(() => {
@@ -1145,10 +1148,14 @@ export default {
 				));
 
 				this.viewer.updateTemplate({ basePdf: this.pdfDoc.output('bloburl'), schemas });
-				this.viewer.setInputs([{ "OrderSN": "(預覽列印)" }]);
 
-				this.loading = false;
-				this.showJobTicket = true;
+				if(isInstant) this.downloadPdf();
+				else {
+					this.viewer.setInputs([{ "OrderSN": "(預覽列印)" }]);
+
+					this.loading = false;
+					this.showJobTicket = true;
+				}
 			})
 		},
 		caseFilterList(list) {
@@ -1194,8 +1201,15 @@ export default {
 								this.getList();
 							}
 						}
-					}).catch(err => { console.log(err) });
-				}).catch(err => { console.log(err) });
+					}).catch(err => { 
+						console.log(err);
+						this.showJobTicket = false;
+						this.getList();
+					});
+				}).catch(err => { 
+					console.log(err);
+					this.loading = false;
+				});
 		},
 		handleDownload(filename) {
 			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
@@ -1250,10 +1264,9 @@ export default {
 					border-bottom-left-radius: 0
 					padding-left: 10px
 					text-align: left
-	.btn-previewPdf
-		position: relative
-		left: 50%
-		transform: translateX(-50%)
+	.previewPdf
+		display: flex
+		justify-content: center
 	.el-table
 		.case-assign
 			background-color: #EBEEF5
