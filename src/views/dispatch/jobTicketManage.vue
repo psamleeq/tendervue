@@ -184,7 +184,7 @@ export default {
 			loading: false,
 			showRevokeConfirm: false,
 			screenWidth: window.innerWidth,
-			timeTabId: 4,
+			timeTabId: 2,
 			daterange: [
 				moment().startOf("month").toDate(),
 				moment().endOf("day").toDate(),
