@@ -463,7 +463,7 @@ export default {
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect: [],
-			apiHeader: [ "SerialNo", "RestoredId", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes", "TaskRealGroup" ],
+			apiHeader: [ "SerialNo", "RestoredId", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes", "TaskRealGroup", "KitNotes" ],
 			options: {
 				tenderMap: {},
 				guildMap: {},
@@ -757,7 +757,7 @@ export default {
 
 						if(this.deviceTypeNow == 3) {
 							if(this.detail.length > 0) caseSpec.KitContent = this.detail;
-							caseSpec.KitNotes = JSON.stringify(row.KitNotes);
+							caseSpec.KitNotes = JSON.stringify(caseSpec.KitNotes);
 							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
 						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
 					}
@@ -805,7 +805,7 @@ export default {
 									delete row.MillingLength;
 									delete row.MillingWidth;
 								} else delete row.MillingFormula;
-							}
+							} else if(this.deviceTypeNow == 3) row.KitNotes = JSON.stringify(row.KitNotes);
 						});
 
 						setDispatch({

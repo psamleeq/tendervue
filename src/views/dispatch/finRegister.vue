@@ -308,7 +308,7 @@
 				<template slot-scope="{ row }">
 					<span v-if="deviceTypeNow == 4 && row.IsCancel" style="color: #F56C6C">不需施作</span>
 					<el-button-group v-else-if="!row.edit">
-						<el-button v-if="!isAllCompleted" :type="row.DateRecord == null && TaskRealGroup == TaskRealGroup_Plan ? 'success' : 'info'" :plain="!row.Content.length != 0" size="mini" @click="beforeEdit(row)">登錄</el-button>
+						<el-button v-if="!isAllCompleted" :type="row.DateRecord == null && row.TaskRealGroup == row.TaskRealGroup_Plan ? 'success' : 'info'" :plain="!row.Content.length != 0" size="mini" @click="beforeEdit(row)">登錄</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
 					<span v-else> - </span>
