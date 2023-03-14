@@ -962,14 +962,14 @@ export default {
 			});
 			return sums;
 		},
-		getList() {
+		getList(showMsg = true) {
 			if (!Number(this.listQuery.contractor)) {
 				this.$message({
 					message: "請選擇廠商",
 					type: "error",
 				});
 			} else if (!Number(this.listQuery.filterStr)) {
-				this.$message({
+				if(showMsg) this.$message({
 					message: "請輸入正確派工單號",
 					type: "error",
 				});

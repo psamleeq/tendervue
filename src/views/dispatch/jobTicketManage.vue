@@ -26,7 +26,7 @@
 
 			<span class="filter-item">
 				<div style="font-size: 12px; color: #909399">建單日期</div>
-				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+				<time-picker shortcutType="year" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 			</span>
 			<div class="filter-item">
 				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px" >
@@ -124,7 +124,7 @@
 						<!-- <i class="el-icon-check" style="color: #67C23A" /> -->
 					</span>
 					<span v-else>
-						<span> - </span>
+						<span>施工中</span>
 						<!-- <el-button class="btn-action" type="danger" plain size="mini" round @click="setCaseStatus(row, 8)">退回</el-button> -->
 					</span>
 				</template>
