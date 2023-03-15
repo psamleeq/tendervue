@@ -101,8 +101,8 @@ export default {
       isShowChangePassword: false,
       isShowSwitchGuild: false,
       joinedGuildList: [],
-      guildId: localStorage.getItem("guildid"),
-      guildName: localStorage.getItem("guildname"),
+      guildId: localStorage.guildId,
+      guildName: localStorage.guildName,
       list: {
         originPassword: "",
         changePassword: "",

@@ -100,6 +100,9 @@ const actions = {
 				// to fixed https://github.com/PanJiaChen/vue-element-admin/issues/2485
 				dispatch('tagsView/delAllViews', null, { root: true })
 
+				// reset GeoJSON
+				dispatch('block/resetGeoJSON', null, { root: true });
+
 				resolve()
 			}).catch(error => {
 				reject(error)
@@ -135,6 +138,9 @@ const actions = {
 
 		// reset visited views and cached views
 		dispatch('tagsView/delAllViews', null, { root: true })
+
+		// reset GeoJSON
+		dispatch('block/resetGeoJSON', null, { root: true });
 	}
 }
 

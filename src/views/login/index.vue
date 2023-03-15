@@ -156,8 +156,8 @@ export default {
 				if (valid) {
 					this.loading = true;
 					this.$store.dispatch("user/login", this.loginForm).then((response) => {
-							localStorage.setItem("username", this.loginForm.username);
-							// localStorage.setItem("uid", response.uid);
+							localStorage.username = this.loginForm.username;
+							// localStorage.uid = response.uid;
 
 							this.$router.push({
 								path: this.redirect || "/",

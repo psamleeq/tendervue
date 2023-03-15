@@ -61,7 +61,7 @@ export default {
   components: { PanThumb },
   data() {
     return {
-      name: localStorage.getItem("username"),
+      name: localStorage.username,
       // emptyGif: 'https://wpimg.wallstcn.com/0e03b7da-db9e-4819-ba10-9016ddfdaed3',
       emptyGif: "/assets/gif/report.gif",
       headers: {
@@ -89,7 +89,7 @@ export default {
     },
     getLoginList() {
       // getLoginLog({
-      //   userName: localStorage.getItem("username")
+      //   userName: localStorage.username
       // }).then((response) => {
       //   this.loginList = response.data.list;
       //   this.loginList.forEach((l) => {

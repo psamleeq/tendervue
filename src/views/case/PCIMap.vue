@@ -89,12 +89,13 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import { Loader } from "@googlemaps/js-api-loader";
 import { fromUrl, Pool } from "geotiff";
 import moment from "moment";
 import proj4 from 'proj4';
-import { getDistMap, getTenderRound } from "@/api/type";
-import { getPCIBlock, getRoadCaseGeo, getBlockCase } from "@/api/road";
+import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
+import { getBlockPCI, getRoadCaseGeo, getBlockCase } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
@@ -282,7 +283,9 @@ export default {
 			}
 		};
 	},
-	computed: { },
+	computed: {
+		...mapGetters(["blockGeo"])
+	},
 	watch: { },
 	created() {
 		this.dataLayer = { PCIBlock: {} };
@@ -303,9 +306,9 @@ export default {
 		// 初始化Google Map
 		loader.load().then(async() => {
 			await this.initMap();
-			if (this.$route.query.blockId) {
+			if (this.$route.query.pciId) {
 				this.listQuery.filterType = 1;
-				this.listQuery.filterId = this.$route.query.blockId;
+				this.listQuery.filterId = this.$route.query.pciId;
 			} else if (this.$route.query.roadName) {
 				this.listQuery.filterType = 2;
 				this.listQuery.filterId = this.$route.query.roadName;
@@ -545,7 +548,112 @@ export default {
 				this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
 
 				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
+				this.dataLayer.PCIBlock.setStyle(feature => {
+					// console.log(feature);
+					const PCISpec = feature.j.PCIValue;
+					let  filterLevel = [];
+					if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
+					else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
+					else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
+						// console.log(level, PCISpec);
+						return PCISpec >= level.range[0] && PCISpec < level.range[1]
+					});
+					// console.log(filterLevel);
+
+					return {
+						strokeColor: '#FFF',
+						strokeWeight: 1,
+						strokeOpacity: 1,
+						fillColor: filterLevel[0][1].color,
+						fillOpacity: filterLevel[0][0] != -1 ? 1 - filterLevel[0][0] * 0.1 : 0.4,
+						zIndex: filterLevel[0][0] != -1 ? 2 : 1
+					}
+				});
+
+				this.dataLayer.PCIBlock.addListener('click', (event) => {
+					this.showContent(event.feature.j, event.latLng);
+				});
+
+				// TODO: 右鍵顯示「正射」 (測試)
+				// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
+				// 	// console.log(event.feature.j);
+				// 	// this.loading = true;
+				// 	const blockId = event.feature.j.blockId;
+				// 	const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
+				// 	const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${blockId}.tif`;
+
+				// 	fromUrl(url).then( async(geoTiffFile) => {
+				// 			const imageSpec = await geoTiffFile.getImage(0);
+				// 			// console.log(imageSpec);
+				// 			const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
+				// 			// console.log(imgSrc);
+
+				// 			let [ west, south, east, north ] = imageSpec.getBoundingBox();
+				// 			[ west, south ] = proj4("EPSG:3826","EPSG:4326", [ west, south ] );
+				// 			[ east, north ] = proj4("EPSG:3826","EPSG:4326", [ east, north ] );
+
+				// 			console.log(west, south, east, north);
+				// 			const imageBounds = { west, south, east, north };
+				// 			new google.maps.GroundOverlay( imgSrc, imageBounds, { map: this.map } );
+				// 			// this.loading = false;
+				// 		}).catch(err => console.log(err));
+				// });
+
 				this.dataLayer.case = new google.maps.Data();
+				this.dataLayer.case.setStyle(feature => { 
+					// console.log(feature.j.caseName);
+					let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
+					if(feature.j.caseName) {
+						const colorFilter = this.options.colorMap.filter(color => {
+							let caseFlag = false;
+							for(const name of color.name) {
+								caseFlag = (feature.j.caseName.indexOf(name) != -1);
+								// console.log(name, caseFlag);
+								if(caseFlag) break;
+							}
+
+							return caseFlag; 
+						})
+						// console.log(colorFilter);
+						
+						if(colorFilter.length > 0) color = colorFilter[0].color;
+					}
+
+					// console.log(color);
+
+					if(feature.j.isPoint) {
+						const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
+						return { 
+							icon: { 
+								url: `/assets/icon/icon_case_${caseLevelMap[feature.j.caseLevel]}.png`,
+								anchor: new google.maps.Point(5, 5),
+								scaledSize: new google.maps.Size(25, 25),
+							},
+							zIndex: feature.j.isLine ? 1000 - feature.j.length : 1000 - feature.j.area
+						};
+					} else if(feature.j.isLine) {
+						return { 
+							strokeColor: color,
+							strokeWeight: 3,
+							strokeOpacity: 1,
+							fillOpacity: 0,
+							zIndex: 1000 - feature.j.length
+						};
+					} else {
+						return { 
+							strokeColor: '#BDBDBD',
+							strokeWeight: 1,
+							strokeOpacity: 1,
+							fillColor: color,
+							fillOpacity: 1,
+							zIndex: 1000 - feature.j.area
+						};
+					}
+				});
+
+				this.dataLayer.case.addListener('click', (event) => {
+					this.showContent(event.feature.j, event.latLng);
+				});
 
 				// NOTE: 測試正射圖
 				// const imageBounds = {
@@ -601,82 +709,135 @@ export default {
 			this.searchRange = startDate + " - " + endDate;
 			
 			if(this.caseSwitch) await this.getCaseGeo();
+			
+			// 載入區塊
+			if(!this.blockGeo[this.listQuery.tenderRound] || this.blockGeo[this.listQuery.tenderRound].length == 0) await this.getBlock();
+			else this.geoJSON.block = JSON.parse(this.blockGeo[this.listQuery.tenderRound]);
 
-			// 載入PCI切塊 GeoJson
-			getPCIBlock({ 
+			getBlockPCI({ 
 				tenderId: tenderRound.tenderId,
 				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode
 			}).then(async (response) => {
-				// console.log("getPCIBlock");
-				if(response.data.geoJSON.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					const summary = response.data.summary[0];
-					Object.keys(this.options.PCILevel).forEach(key => {
-						const levelText = this.options.PCILevel[key].text;
-						this.options.PCILevel[key].total = summary[levelText];
-					})
-					
-					this.geoJSON.block = JSON.parse(response.data.geoJSON);
-					this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
-					this.dataLayer.PCIBlock.setStyle(feature => {
-						// console.log(feature);
-						const PCISpec = feature.j.PCIValue;
-						let  filterLevel = [];
-						if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
-						else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
-						else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
-							// console.log(level, PCISpec);
-							return PCISpec >= level.range[0] && PCISpec < level.range[1]
-						});
-						// console.log(filterLevel);
+				const summary = response.data.summary[0];
+				Object.keys(this.options.PCILevel).forEach(key => {
+					const levelText = this.options.PCILevel[key].text;
+					this.options.PCILevel[key].total = summary[levelText];
+				})
 
-						return {
-							strokeColor: '#FFF',
-							strokeWeight: 1,
-							strokeOpacity: 1,
-							fillColor: filterLevel[0][1].color,
-							fillOpacity: filterLevel[0][0] != -1 ? 1 - filterLevel[0][0] * 0.1 : 0.4,
-							zIndex: filterLevel[0][0] != -1 ? 2 : 1
-						}
-					});
+				const list = response.data.list;
+				this.geoJSON.block.block_bell.features.forEach(block => {
+					const PCIData = list.filter(l => l.pciId == block.properties.pciId);
+					if(PCIData.length > 0) block.properties.PCIValue = PCIData[0].PCI_real;
+				});
+				this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block.block_bell);
 
-					this.dataLayer.PCIBlock.addListener('click', (event) => {
-						this.showContent(event.feature.j, event.latLng);
-					});
-
-					// TODO: 右鍵顯示「正射」 (測試)
-					// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
-					// 	// console.log(event.feature.j);
-					// 	// this.loading = true;
-					// 	const blockId = event.feature.j.blockId;
-					// 	const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
-					// 	const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${blockId}.tif`;
-
-					// 	fromUrl(url).then( async(geoTiffFile) => {
-					// 			const imageSpec = await geoTiffFile.getImage(0);
-					// 			// console.log(imageSpec);
-					// 			const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
-					// 			// console.log(imgSrc);
-
-					// 			let [ west, south, east, north ] = imageSpec.getBoundingBox();
-					// 			[ west, south ] = proj4("EPSG:3826","EPSG:4326", [ west, south ] );
-					// 			[ east, north ] = proj4("EPSG:3826","EPSG:4326", [ east, north ] );
-
-					// 			console.log(west, south, east, north);
-					// 			const imageBounds = { west, south, east, north };
-					// 			new google.maps.GroundOverlay( imgSrc, imageBounds, { map: this.map } );
-					// 			// this.loading = false;
-					// 		}).catch(err => console.log(err));
-					// });
-
-					await this.focusMap();
-					this.loading = false;
-				}
+				await this.focusMap();
+				this.loading = false;
 			}).catch(err => this.loading = false);
+
+			// 載入PCI切塊 GeoJson
+			// getPCIBlock({ 
+			// 	tenderId: tenderRound.tenderId,
+			// 	zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode
+			// }).then(async (response) => {
+			// 	// console.log("getPCIBlock");
+			// 	if(response.data.geoJSON.length == 0) {
+			// 		this.$message({
+			// 			message: "查無資料",
+			// 			type: "error",
+			// 		});
+			// 	} else {
+			// 		const summary = response.data.summary[0];
+			// 		Object.keys(this.options.PCILevel).forEach(key => {
+			// 			const levelText = this.options.PCILevel[key].text;
+			// 			this.options.PCILevel[key].total = summary[levelText];
+			// 		})
+					
+			// 		this.geoJSON.block = JSON.parse(response.data.geoJSON);
+			// 		this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
+			// 		this.dataLayer.PCIBlock.setStyle(feature => {
+			// 			// console.log(feature);
+			// 			const PCISpec = feature.j.PCIValue;
+			// 			let  filterLevel = [];
+			// 			if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
+			// 			else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
+			// 			else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
+			// 				// console.log(level, PCISpec);
+			// 				return PCISpec >= level.range[0] && PCISpec < level.range[1]
+			// 			});
+			// 			// console.log(filterLevel);
+
+			// 			return {
+			// 				strokeColor: '#FFF',
+			// 				strokeWeight: 1,
+			// 				strokeOpacity: 1,
+			// 				fillColor: filterLevel[0][1].color,
+			// 				fillOpacity: filterLevel[0][0] != -1 ? 1 - filterLevel[0][0] * 0.1 : 0.4,
+			// 				zIndex: filterLevel[0][0] != -1 ? 2 : 1
+			// 			}
+			// 		});
+
+			// 		this.dataLayer.PCIBlock.addListener('click', (event) => {
+			// 			this.showContent(event.feature.j, event.latLng);
+			// 		});
+
+			// 		// TODO: 右鍵顯示「正射」 (測試)
+			// 		// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
+			// 		// 	// console.log(event.feature.j);
+			// 		// 	// this.loading = true;
+			// 		// 	const blockId = event.feature.j.blockId;
+			// 		// 	const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
+			// 		// 	const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${blockId}.tif`;
+
+			// 		// 	fromUrl(url).then( async(geoTiffFile) => {
+			// 		// 			const imageSpec = await geoTiffFile.getImage(0);
+			// 		// 			// console.log(imageSpec);
+			// 		// 			const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
+			// 		// 			// console.log(imgSrc);
+
+			// 		// 			let [ west, south, east, north ] = imageSpec.getBoundingBox();
+			// 		// 			[ west, south ] = proj4("EPSG:3826","EPSG:4326", [ west, south ] );
+			// 		// 			[ east, north ] = proj4("EPSG:3826","EPSG:4326", [ east, north ] );
+
+			// 		// 			console.log(west, south, east, north);
+			// 		// 			const imageBounds = { west, south, east, north };
+			// 		// 			new google.maps.GroundOverlay( imgSrc, imageBounds, { map: this.map } );
+			// 		// 			// this.loading = false;
+			// 		// 		}).catch(err => console.log(err));
+			// 		// });
+
+			// 		await this.focusMap();
+			// 		this.loading = false;
+			// 	}
+			// }).catch(err => this.loading = false);
+		},
+		async getBlock() {
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			this.dataLayer.PCIBlock.forEach(feature => this.dataLayer.PCIBlock.remove(feature));
+
+			return new Promise((resolve, reject) => {
+				getBlockGeo({ 
+					tenderId: tenderRound.tenderId,
+					zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
+					blockType: [1, 2]
+				}).then(async (response) => {
+					if(response.data.geoJSON.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.$store.dispatch('block/setGeoJSON', { 
+							tenderRound: this.listQuery.tenderRound, 
+							JSONString: response.data.geoJSON 
+						});
+						this.geoJSON.block = JSON.parse(response.data.geoJSON);
+						// this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block.block_bell);
+						// this.loading = false;
+						resolve();
+					}
+				})
+			})
 		},
 		async getCaseGeo() {
 			this.loading = true;
@@ -734,61 +895,6 @@ export default {
 						// console.log(this.geoJSON.case);
 						this.dataLayer.case.addGeoJson(this.geoJSON.case);
 
-						this.dataLayer.case.setStyle(feature => { 
-							// console.log(feature.j.caseName);
-							let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-							if(feature.j.caseName) {
-								const colorFilter = this.options.colorMap.filter(color => {
-									let caseFlag = false;
-									for(const name of color.name) {
-										caseFlag = (feature.j.caseName.indexOf(name) != -1);
-										// console.log(name, caseFlag);
-										if(caseFlag) break;
-									}
-
-									return caseFlag; 
-								})
-								// console.log(colorFilter);
-								
-								if(colorFilter.length > 0) color = colorFilter[0].color;
-							}
-
-							// console.log(color);
-
-							if(feature.j.isPoint) {
-								const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
-								return { 
-									icon: { 
-										url: `/assets/icon/icon_case_${caseLevelMap[feature.j.caseLevel]}.png`,
-										anchor: new google.maps.Point(5, 5),
-										scaledSize: new google.maps.Size(25, 25),
-									},
-									zIndex: feature.j.isLine ? 1000 - feature.j.length : 1000 - feature.j.area
-								};
-							} else if(feature.j.isLine) {
-								return { 
-									strokeColor: color,
-									strokeWeight: 3,
-									strokeOpacity: 1,
-									fillOpacity: 0,
-									zIndex: 1000 - feature.j.length
-								};
-							} else {
-								return { 
-									strokeColor: '#BDBDBD',
-									strokeWeight: 1,
-									strokeOpacity: 1,
-									fillColor: color,
-									fillOpacity: 1,
-									zIndex: 1000 - feature.j.area
-								};
-							}
-						});
-
-						this.dataLayer.case.addListener('click', (event) => {
-							this.showContent(event.feature.j, event.latLng);
-						});
-
 						this.loading = false;
 						resolve();
 					}
@@ -816,9 +922,6 @@ export default {
 					const key = this.listQuery.filterType == 1 ? 'pciId' : 'roadName';
 					let query = {};
 					query[key] = this.listQuery.filterId;
-
-					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, ...query } });
-
 					// let blockSpec;
 					// this.dataLayer.PCIBlock.forEach(features =>{ 
 					// 	if(features.j[key] == this.listQuery.filterId) blockSpec = features;
@@ -835,20 +938,20 @@ export default {
 							message: "查無資料",
 							type: "error",
 						});
-
 						resolve();
+					} else {
+						this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, ...query } });
+						
+						const bounds = new google.maps.LatLngBounds();
+						for(const feature of featureList) {
+							this.dataLayer.PCIBlock.overrideStyle(feature, { strokeColor: "#FF6F00", zIndex: 3 });
+							const paths = feature.getGeometry();
+							// console.log(paths);
+							paths.forEachLatLng(position => bounds.extend(position));
+						}
+						this.map.fitBounds(bounds);
+						resolve();	
 					}
-					
-					const bounds = new google.maps.LatLngBounds();
-					for(const feature of featureList) {
-						this.dataLayer.PCIBlock.overrideStyle(feature, { strokeColor: "#FF6F00", zIndex: 3 });
-						const paths = feature.getGeometry();
-						// console.log(paths);
-						paths.forEachLatLng(position => bounds.extend(position));
-					}
-					this.map.fitBounds(bounds);
-
-					resolve();	
 				}
 			})
 		},

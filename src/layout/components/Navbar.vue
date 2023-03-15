@@ -73,8 +73,8 @@ export default {
 	},
 	data() {
 		return {
-			username: localStorage.getItem("username"),
-			uid: localStorage.getItem("uid"),
+			username: localStorage.username,
+			uid: localStorage.uid,
 			role: this.$store.getters.roles,
 			menuOpen: false,
 		};
@@ -89,6 +89,7 @@ export default {
 		async logout() {
 			await this.$store.dispatch("user/logout");
 			localStorage.clear();
+			sessionStorage.clear();
 			this.$router.push(`/login?redirect=${this.$route.fullPath}`);
 		},
 		showChangePassword() {

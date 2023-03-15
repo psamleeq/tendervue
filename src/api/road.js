@@ -116,9 +116,9 @@ export function getRoadStatus(query) {
 }
 
 // PCI地圖
-export function getPCIBlock(query) {
+export function getBlockPCI(query) {
 	return request({
-		url: '/road/PCIBlock',
+		url: '/road/blockPCI',
 		method: 'get',
 		params: query
 	})

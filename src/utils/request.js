@@ -85,6 +85,7 @@ service.interceptors.response.use(
 					// 跳至登入頁
 					store.dispatch('user/resetToken')
 					localStorage.clear();
+					sessionStorage.clear();
 					let fullPath = router.currentRoute.fullPath;
 					let query = fullPath.indexOf('login') == -1 ? { redirect: fullPath } : {};
 

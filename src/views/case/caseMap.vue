@@ -82,6 +82,7 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
@@ -190,6 +191,7 @@ export default {
 		};
 	},
 	computed: {
+		...mapGetters(["blockGeo"]),
 		selectCaseAll: {
 			get() {
 				const onNum = Object.values(this.selectCase).reduce((acc, cur) => {
@@ -452,123 +454,8 @@ export default {
 					fillOpacity: 0,
 					zIndex: 2
 				});
-			})
-		},
-		changeTender() {
-			const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
 
-			this.dataLayer.district.setStyle(feature => {
-				// console.log(feature);
-				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.j.TOWNNAME);
-
-				return {
-					strokeColor: "#827717",
-					strokeWeight: 3,
-					strokeOpacity: 0.2,
-					fillColor: "#000000",
-					fillOpacity: condition ? 0 : 0.7,
-					zIndex: 0
-				}
-			});
-
-			const bounds = new google.maps.LatLngBounds();
-			const boundary = JSON.parse(this.options.districtMap[zipCode].boundary);
-			boundary.coordinates.flat().forEach(position => bounds.extend({ lat: position[1], lng: position[0] }));
-			this.map.fitBounds(bounds);
-
-			this.$router.push({ query: { ...this.$route.query , tenderRound: this.listQuery.tenderRound } });
-			this.getList();
-		},
-		getGeoJSONFilter() {
-			this.geoJSONFilter = { features: [] };
-			if(this.geoJSON.case != undefined && Object.keys(this.geoJSON.case).length > 0) {
-				this.geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON.case));
-				const selectCaseList = Object.keys(this.selectCase).filter(caseName => this.selectCase[caseName].switch);
-				const selectCaseLvMap = selectCaseList.reduce((acc, cur) => { 
-					acc[cur] = this.selectCase[cur].level == 0 ? this.selectCase[cur].level : this.options.levelMap[this.selectCase[cur].level];
-					return acc
-				}, {});
-
-				this.geoJSONFilter.features = this.geoJSONFilter.features.filter(feature => {
-					const caseName = feature.properties.caseName;
-					const caseLevel = feature.properties.caseLevel;
-					const levelFilter= selectCaseLvMap[feature.properties.caseName];
-
-					return (selectCaseList.includes(caseName)) && (levelFilter == 0 || caseLevel == levelFilter);
-				});
-			}
-		},
-		async getList() {
-			this.loading = true;
-			let isCompleted = false;
-			this.clearAll();
-			this.caseInfo = [];
-			this.selectCase = {};
-
-			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
-			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
-
-			// 載入缺失
-			await getRoadCaseGeo({
-				tenderId: tenderRound.tenderId,
-				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-			}).then(async (response) => {
-				if(response.data.geoJSON.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					// 載入區塊
-					this.getBlock();
-					
-					this.caseInfo = response.data.summary;
-					this.caseInfo.forEach(info => {
-						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-						let index = this.options.colorMap.filter(color => color.name == '其他')[0].index;
-						if(info.caseName) {
-							const colorFilter = this.options.colorMap.filter(color => {
-								let caseFlag = false;
-								for(const name of color.name) {
-									caseFlag = (info.caseName.indexOf(name) != -1);
-									// console.log(info.caseName, name, caseFlag);
-									if(caseFlag) break;
-								}
-
-								return caseFlag; 
-							})
-							// console.log(colorFilter);
-							
-							if(colorFilter.length > 0) {
-								color = colorFilter[0].color;
-								index = colorFilter[0].index;
-							}
-						}
-
-						this.$set(info, "color", color);
-						this.$set(info, "index", index);
-						// console.log(JSON.stringify(info));
-						this.$set(this.selectCase, info.caseName, { switch: true, level: 0 });
-					})
-
-					this.caseInfo.sort((a, b) => (a.index - b.index));
-
-					this.geoJSON.case = JSON.parse(response.data.geoJSON);
-					// console.log(this.geoJSON.case);
-					this.getGeoJSONFilter();
-					this.map.data.addGeoJson(this.geoJSON.case);
-					// this.map.data.setStyle({ 
-					// 	strokeColor: '#009688',
-					// 	strokeWeight: 1,
-					// 	strokeOpacity: 0.5,
-					// 	fillColor: '#EF5350',
-					// 	fillOpacity: 0.8
-					// });
-					this.map.data.setStyle(feature => { 
+				this.map.data.setStyle(feature => { 
 						// console.log(feature.j.caseName);
 						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
 						if(feature.j.caseName) {
@@ -625,19 +512,125 @@ export default {
 						this.showCaseContent(event.feature.j, event.latLng);
 					});
 
-					// this.map.data.addListener('rightclick', (event) => {
-					// 	console.log("rightclick: ",event);
+			})
+		},
+		changeTender() {
+			const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
 
-					// 	this.infoWindow.setContent(event.latLng.toString());
-					// 	this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
-					// 	this.infoWindow.setPosition(event.latLng);
+			this.dataLayer.district.setStyle(feature => {
+				// console.log(feature);
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.j.TOWNNAME);
 
-					// 	this.infoWindow.open(this.map);
-					// });
+				return {
+					strokeColor: "#827717",
+					strokeWeight: 3,
+					strokeOpacity: 0.2,
+					fillColor: "#000000",
+					fillOpacity: condition ? 0 : 0.7,
+					zIndex: 0
+				}
+			});
+
+			const bounds = new google.maps.LatLngBounds();
+			const boundary = JSON.parse(this.options.districtMap[zipCode].boundary);
+			boundary.coordinates.flat().forEach(position => bounds.extend({ lat: position[1], lng: position[0] }));
+			this.map.fitBounds(bounds);
+
+			this.$router.push({ query: { ...this.$route.query , tenderRound: this.listQuery.tenderRound } });
+			this.getList();
+		},
+		getGeoJSONFilter() {
+			this.geoJSONFilter = { features: [] };
+			if(this.geoJSON.case != undefined && Object.keys(this.geoJSON.case).length > 0) {
+				this.geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON.case));
+				const selectCaseList = Object.keys(this.selectCase).filter(caseName => this.selectCase[caseName].switch);
+				const selectCaseLvMap = selectCaseList.reduce((acc, cur) => { 
+					acc[cur] = this.selectCase[cur].level == 0 ? this.selectCase[cur].level : this.options.levelMap[this.selectCase[cur].level];
+					return acc
+				}, {});
+
+				this.geoJSONFilter.features = this.geoJSONFilter.features.filter(feature => {
+					const caseName = feature.properties.caseName;
+					const caseLevel = feature.properties.caseLevel;
+					const levelFilter= selectCaseLvMap[feature.properties.caseName];
+
+					return (selectCaseList.includes(caseName)) && (levelFilter == 0 || caseLevel == levelFilter);
+				});
+			}
+		},
+		async getList() {
+			this.loading = true;
+			this.clearAll();
+			this.caseInfo = [];
+			this.selectCase = {};
+
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
+			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
+
+			// 載入缺失
+			await getRoadCaseGeo({
+				tenderId: tenderRound.tenderId,
+				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+			}).then(async (response) => {
+				if(response.data.geoJSON.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					// 載入區塊
+					if(!this.blockGeo[this.listQuery.tenderRound] || this.blockGeo[this.listQuery.tenderRound].length == 0) await this.getBlock();
+					else {
+						this.geoJSON.block = JSON.parse(this.blockGeo[this.listQuery.tenderRound]);
+						this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block.block_bell);
+						this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block.block_nco);
+						this.switchBlockType();
+						if(this.$route.query.blockId) this.search();
+					}
+					
+					this.caseInfo = response.data.summary;
+					this.caseInfo.forEach(info => {
+						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
+						let index = this.options.colorMap.filter(color => color.name == '其他')[0].index;
+						if(info.caseName) {
+							const colorFilter = this.options.colorMap.filter(color => {
+								let caseFlag = false;
+								for(const name of color.name) {
+									caseFlag = (info.caseName.indexOf(name) != -1);
+									// console.log(info.caseName, name, caseFlag);
+									if(caseFlag) break;
+								}
+
+								return caseFlag; 
+							})
+							// console.log(colorFilter);
+							
+							if(colorFilter.length > 0) {
+								color = colorFilter[0].color;
+								index = colorFilter[0].index;
+							}
+						}
+
+						this.$set(info, "color", color);
+						this.$set(info, "index", index);
+						// console.log(JSON.stringify(info));
+						this.$set(this.selectCase, info.caseName, { switch: true, level: 0 });
+					})
+
+					this.caseInfo.sort((a, b) => (a.index - b.index));
+
+					this.geoJSON.case = JSON.parse(response.data.geoJSON);
+					// console.log(this.geoJSON.case);
+					this.getGeoJSONFilter();
+					this.map.data.addGeoJson(this.geoJSON.case);
 				}
 				// this.switchBlockType();
 				if(this.$route.query.caseId) await this.search();
-				// this.loading = false;
+				else this.loading = false;
 
 				// if(isCompleted) this.loading = false;
 				// else isCompleted = true;
@@ -648,29 +641,36 @@ export default {
 			this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
 			this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
 
-			getBlockGeo({ 
-				tenderId: tenderRound.tenderId,
-				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
-				blockType: [1, 2]
-			}).then(async (response) => {
-				if(response.data.geoJSON.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.geoJSON.block = JSON.parse(response.data.geoJSON);
-					this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block.block_bell);
-					this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block.block_nco);
-					this.switchBlockType();
+			return new Promise((resolve, reject) => {
+				getBlockGeo({ 
+					tenderId: tenderRound.tenderId,
+					zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
+					blockType: [1, 2]
+				}).then(async (response) => {
+					if(response.data.geoJSON.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.$store.dispatch('block/setGeoJSON', { 
+							tenderRound: this.listQuery.tenderRound, 
+							JSONString: response.data.geoJSON 
+						});
+						this.geoJSON.block = JSON.parse(response.data.geoJSON);
+						this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block.block_bell);
+						this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block.block_nco);
+						this.switchBlockType();
 
-					if(this.$route.query.blockId) this.search();
+						if(this.$route.query.blockId) this.search();
 
-					// if(isCompleted) this.loading = false;
-					// else isCompleted = true;
+						// if(isCompleted) this.loading = false;
+						// else isCompleted = true;
 
-					this.loading = false;
-				}
+						// this.loading = false;
+						resolve();
+					}
+				})
 			})
 		},
 		removeCaseStatus() {
@@ -719,15 +719,13 @@ export default {
 				for(const block of Object.values(this.dataLayer.PCIBlock)) block.revertStyle();
 
 				if(!this.listQuery.filterId || this.listQuery.filterId.length == 0) resolve();
-				if(this.listQuery.filterId.length != 0 && !Number(this.listQuery.filterId)) {
+				else if(this.listQuery.filterId.length != 0 && !Number(this.listQuery.filterId)) {
 					this.$message({
 						message: "請輸入正確編號",
 						type: "error",
 					});
 					resolve();
-				} 
-
-				if(this.listQuery.filterType == 1) {
+				} else if(this.listQuery.filterType == 1) {
 					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, caseId: this.listQuery.filterId }});
 					const caseSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.caseId == this.listQuery.filterId))[0];
 					if(caseSpec == undefined ) {
@@ -735,15 +733,13 @@ export default {
 							message: "查無資料",
 							type: "error",
 						});
-
 						resolve();
-					}
-
-					if(caseSpec.properties.isPoint) {
+					} else if(caseSpec.properties.isPoint) {
 						this.map.setCenter({ lat: caseSpec.geometry.coordinates[1], lng: caseSpec.geometry.coordinates[0] });
 						const zoom = this.map.getZoom();
 						this.map.setZoom(zoom < 21 ? 21 : zoom);
 						this.showCaseContent(caseSpec.properties, { lat: caseSpec.geometry.coordinates[1], lng: caseSpec.geometry.coordinates[0] });
+						resolve();
 					} else {
 						const depth = caseSpec.properties.isLine ? 1 : 2;
 						// console.log(caseSpec.properties.isLine, depth);
@@ -754,9 +750,8 @@ export default {
 						paths.forEach(position => bounds.extend(position));
 						this.map.fitBounds(bounds);
 						this.showCaseContent(caseSpec.properties, paths[Math.floor(paths.length / 2)]);
+						resolve();
 					}
-
-					resolve();
 				} else if(this.listQuery.filterType == 2) {
 					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, blockId: this.listQuery.filterId }});
 
@@ -790,18 +785,18 @@ export default {
 						});
 
 						resolve();
+					} else {
+						// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
+						const paths = blockSpec.getGeometry();
+						// console.log(paths);
+
+						const bounds = new google.maps.LatLngBounds();
+						// paths.forEach(position => bounds.extend(position));
+						paths.forEachLatLng(position => bounds.extend(position));
+						this.map.fitBounds(bounds);
+
+						resolve();
 					}
-
-					// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
-					const paths = blockSpec.getGeometry();
-					// console.log(paths);
-
-					const bounds = new google.maps.LatLngBounds();
-					// paths.forEach(position => bounds.extend(position));
-					paths.forEachLatLng(position => bounds.extend(position));
-					this.map.fitBounds(bounds);
-
-					resolve();
 				}
 			})
 		},
