@@ -647,7 +647,6 @@ export default {
 			let blockType = [];
 			if(!this.blockGeo_bell[this.listQuery.tenderRound] || this.blockGeo_bell[this.listQuery.tenderRound].length == 0) blockType.push(1);
 			if(!this.blockGeo_nco[this.listQuery.tenderRound] || this.blockGeo_nco[this.listQuery.tenderRound].length == 0 ) blockType.push(2);
-			console.log(blockType);
 
 			return new Promise((resolve, reject) => {
 				getBlockGeo({ 
@@ -725,7 +724,7 @@ export default {
 			if(this.listQuery.blockType.includes(2)) this.dataLayer.PCIBlock.nco.setMap(this.map);
 		},
 		caseFilter() {
-			this.clearAll();
+			this.clearAll(false);
 			this.getGeoJSONFilter();
 			this.map.data.addGeoJson(this.geoJSONFilter);
 		},
@@ -847,14 +846,15 @@ export default {
 
 			this.infoWindow.open(this.map);
 		},
-		clearAll() {
+		clearAll(clearBlock = true) {
 			// for(const block of Object.values(this.dataLayer.PCIBlock)) {
 			// 	block.revertStyle();
 			// 	block.setMap(null);
 			// }
-
-			this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
-			this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
+			if(clearBlock) {
+				this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
+				this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
+			}
 
 			this.infoWindow.close();
 			this.map.data.forEach(feature => this.map.data.remove(feature));
