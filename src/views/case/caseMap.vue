@@ -31,6 +31,7 @@
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
+				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">重整</el-button>
 			</div>
 			<span v-if="caseInfo.length != 0" style="background-color: #F2F6FC; margin: 0 5px; opacity: 0.8;">查詢期間：{{ searchRange }}</span>
 		</div>
@@ -191,7 +192,7 @@ export default {
 		};
 	},
 	computed: {
-		...mapGetters(["blockGeo"]),
+		...mapGetters(["blockGeo_bell", "blockGeo_nco"]),
 		selectCaseAll: {
 			get() {
 				const onNum = Object.values(this.selectCase).reduce((acc, cur) => {
@@ -583,9 +584,13 @@ export default {
 					});
 				} else {
 					// 載入區塊
-					if(!this.blockGeo[this.listQuery.tenderRound] || this.blockGeo[this.listQuery.tenderRound].length == 0) await this.getBlock();
+					if(!this.blockGeo_bell[this.listQuery.tenderRound] || this.blockGeo_bell[this.listQuery.tenderRound].length == 0 
+						|| !this.blockGeo_nco[this.listQuery.tenderRound] || this.blockGeo_nco[this.listQuery.tenderRound].length == 0 ) await this.getBlock();
 					else {
-						this.geoJSON.block = JSON.parse(this.blockGeo[this.listQuery.tenderRound]);
+						this.geoJSON.block = {
+							block_bell: JSON.parse(this.blockGeo_bell[this.listQuery.tenderRound]),
+							block_nco: JSON.parse(this.blockGeo_nco[this.listQuery.tenderRound])
+						};
 						this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block.block_bell);
 						this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block.block_nco);
 						this.switchBlockType();
@@ -638,14 +643,17 @@ export default {
 		},
 		getBlock() {
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-			this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
-			this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
+
+			let blockType = [];
+			if(!this.blockGeo_bell[this.listQuery.tenderRound] || this.blockGeo_bell[this.listQuery.tenderRound].length == 0) blockType.push(1);
+			if(!this.blockGeo_nco[this.listQuery.tenderRound] || this.blockGeo_nco[this.listQuery.tenderRound].length == 0 ) blockType.push(2);
+			console.log(blockType);
 
 			return new Promise((resolve, reject) => {
 				getBlockGeo({ 
 					tenderId: tenderRound.tenderId,
 					zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
-					blockType: [1, 2]
+					blockType
 				}).then(async (response) => {
 					if(response.data.geoJSON.length == 0) {
 						this.$message({
@@ -653,15 +661,28 @@ export default {
 							type: "error",
 						});
 					} else {
-						this.$store.dispatch('block/setGeoJSON', { 
-							tenderRound: this.listQuery.tenderRound, 
-							JSONString: response.data.geoJSON 
-						});
 						this.geoJSON.block = JSON.parse(response.data.geoJSON);
+
+						if(blockType.includes(1)) {
+							if(this.blockGeo_nco[this.listQuery.tenderRound] && this.blockGeo_nco[this.listQuery.tenderRound].length != 0 ) this.geoJSON.block.block_nco = JSON.parse(this.blockGeo_nco[this.listQuery.tenderRound]);
+							this.$store.dispatch('block/setGeoJSON_bell', { 
+								tenderRound: this.listQuery.tenderRound, 
+								JSONString: JSON.stringify(this.geoJSON.block.block_bell)
+							});
+						}
+
+						if(blockType.includes(2)) {
+							if(this.blockGeo_bell[this.listQuery.tenderRound] && this.blockGeo_bell[this.listQuery.tenderRound].length != 0) this.geoJSON.block.block_bell = JSON.parse(this.blockGeo_bell[this.listQuery.tenderRound]);
+							this.$store.dispatch('block/setGeoJSON_nco', { 
+								tenderRound: this.listQuery.tenderRound, 
+								JSONString: JSON.stringify(this.geoJSON.block.block_nco)
+							});
+						}
+						
 						this.dataLayer.PCIBlock.bell.addGeoJson(this.geoJSON.block.block_bell);
 						this.dataLayer.PCIBlock.nco.addGeoJson(this.geoJSON.block.block_nco);
-						this.switchBlockType();
 
+						this.switchBlockType();
 						if(this.$route.query.blockId) this.search();
 
 						// if(isCompleted) this.loading = false;
@@ -831,6 +852,9 @@ export default {
 			// 	block.revertStyle();
 			// 	block.setMap(null);
 			// }
+
+			this.dataLayer.PCIBlock.bell.forEach(feature => this.dataLayer.PCIBlock.bell.remove(feature));
+			this.dataLayer.PCIBlock.nco.forEach(feature => this.dataLayer.PCIBlock.nco.remove(feature));
 
 			this.infoWindow.close();
 			this.map.data.forEach(feature => this.map.data.remove(feature));

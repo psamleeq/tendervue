@@ -25,6 +25,7 @@
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
+				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">重整</el-button>
 			</div>
 		</div>
 
@@ -284,7 +285,7 @@ export default {
 		};
 	},
 	computed: {
-		...mapGetters(["blockGeo"])
+		...mapGetters(["blockGeo_bell"])
 	},
 	watch: { },
 	created() {
@@ -711,8 +712,8 @@ export default {
 			if(this.caseSwitch) await this.getCaseGeo();
 			
 			// 載入區塊
-			if(!this.blockGeo[this.listQuery.tenderRound] || this.blockGeo[this.listQuery.tenderRound].length == 0) await this.getBlock();
-			else this.geoJSON.block = JSON.parse(this.blockGeo[this.listQuery.tenderRound]);
+			if(!this.blockGeo_bell[this.listQuery.tenderRound] || this.blockGeo_bell[this.listQuery.tenderRound].length == 0) await this.getBlock();
+			else this.geoJSON.block = JSON.parse(this.blockGeo_bell[this.listQuery.tenderRound]);
 
 			getBlockPCI({ 
 				tenderId: tenderRound.tenderId,
@@ -725,11 +726,11 @@ export default {
 				})
 
 				const list = response.data.list;
-				this.geoJSON.block.block_bell.features.forEach(block => {
+				this.geoJSON.block.features.forEach(block => {
 					const PCIData = list.filter(l => l.pciId == block.properties.pciId);
 					if(PCIData.length > 0) block.properties.PCIValue = PCIData[0].PCI_real;
 				});
-				this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block.block_bell);
+				this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
 
 				await this.focusMap();
 				this.loading = false;
@@ -819,7 +820,7 @@ export default {
 				getBlockGeo({ 
 					tenderId: tenderRound.tenderId,
 					zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
-					blockType: [1, 2]
+					blockType: [1]
 				}).then(async (response) => {
 					if(response.data.geoJSON.length == 0) {
 						this.$message({
@@ -827,11 +828,12 @@ export default {
 							type: "error",
 						});
 					} else {
-						this.$store.dispatch('block/setGeoJSON', { 
+						this.geoJSON.block = JSON.parse(response.data.geoJSON).block_bell;
+
+						this.$store.dispatch('block/setGeoJSON_bell', { 
 							tenderRound: this.listQuery.tenderRound, 
-							JSONString: response.data.geoJSON 
+							JSONString: JSON.stringify(this.geoJSON.block)
 						});
-						this.geoJSON.block = JSON.parse(response.data.geoJSON);
 						// this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block.block_bell);
 						// this.loading = false;
 						resolve();

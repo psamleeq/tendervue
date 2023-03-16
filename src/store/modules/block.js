@@ -1,10 +1,14 @@
 const state = {
-	blockGeo: {}
+	blockGeo_bell: {},
+	blockGeo_nco: {}
 }
 
 const mutations = {
-	SET_BLOCK: (state, { tenderRound, JSONString }) => {
-		state.blockGeo[tenderRound] = JSONString;
+	SET_BLOCK_BELL: (state, { tenderRound, JSONString }) => {
+		state.blockGeo_bell[tenderRound] = JSONString;
+	},
+	SET_BLOCK_NCO: (state, { tenderRound, JSONString }) => {
+		state.blockGeo_nco[tenderRound] = JSONString;
 	},
 	RESET_BLOCK: (state) => {
 		state.blockGeo = {};
@@ -12,8 +16,11 @@ const mutations = {
 }
 
 const actions = {
-	setGeoJSON({ commit }, { tenderRound, JSONString }) {
-		commit('SET_BLOCK', { tenderRound, JSONString });
+	setGeoJSON_bell({ commit }, { tenderRound, JSONString }) {
+		commit('SET_BLOCK_BELL', { tenderRound, JSONString });
+	},
+	setGeoJSON_nco({ commit }, { tenderRound, JSONString }) {
+		commit('SET_BLOCK_NCO', { tenderRound, JSONString });
 	},
 	resetGeoJSON({ commit }) {
 		commit('RESET_BLOCK', {});
