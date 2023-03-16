@@ -314,7 +314,7 @@ export default {
 				this.listQuery.filterType = 2;
 				this.listQuery.filterId = this.$route.query.roadName;
 			}
-			getDistMap().then(response => this.options.districtMap = response.data.districtMap);
+			await getDistMap().then(response => this.options.districtMap = response.data.districtMap);
 			getTenderRound({ isMap: true }).then(response => {
 				this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
 					let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
