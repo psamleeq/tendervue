@@ -547,9 +547,10 @@ export default {
 			this.dataLayer.addListener('mouseover', (event) => {
 				// console.log(event);
 				this.infoWindow.setContent(`道路編碼: ${event.feature.j.roadCode}`);
-
 				const bounds = new google.maps.LatLngBounds();
-				event.feature.h.h[0].h.forEach(position => bounds.extend(position));
+				let geometry = event.feature.getGeometry().h[0].h;
+				if(geometry.length < 3) geometry = geometry[0].h;
+				geometry.forEach(position => bounds.extend(position));
 				this.infoWindow.setPosition(bounds.getCenter());
 
 				this.infoWindow.open(this.map);

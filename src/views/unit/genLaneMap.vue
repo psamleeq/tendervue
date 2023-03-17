@@ -498,7 +498,9 @@ export default {
 							this.infoWindow.setContent(`車道編碼: ${event.feature.j.laneCode}`);
 
 							const bounds = new google.maps.LatLngBounds();
-							event.feature.h.h[0].h.forEach(position => bounds.extend(position));
+							let geometry = event.feature.getGeometry().h[0].h;
+							if(geometry.length < 3) geometry = geometry[0].h;
+							geometry.forEach(position => bounds.extend(position));
 							this.infoWindow.setPosition(bounds.getCenter());
 
 							this.infoWindow.open(this.map);
