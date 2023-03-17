@@ -408,7 +408,9 @@ export default {
 				fillOpacity: 0.8
 			});
 
-			const paths = row.wkb_geometry.coordinates.flat().map(point => ({ lat: point[1], lng: point[0] }));
+			let geometry = row.wkb_geometry.coordinates.flat();
+			if(geometry[0].length != 2) geometry = geometry.flat();
+			const paths = geometry.map(point => ({ lat: point[1], lng: point[0] }));
 			const bounds = new google.maps.LatLngBounds();
 			paths.forEach(position => bounds.extend(position));
 			this.map.fitBounds(bounds);
