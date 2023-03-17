@@ -17,6 +17,7 @@ import expAnalysisRouter from './modules/expAnalysis';
 import PIRouter from './modules/PI';
 import otherRouter from './modules/other';
 import carRouter from './modules/car';
+import priceRouter from './modules/price';
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -104,6 +105,7 @@ export const asyncRoutes = [
 	caseListRouter,
 	dispatchV0Router,
 	dispatchRouter,
+  priceRouter,
 	PCIRouter,
 	PIRouter,
 	expAnalysisRouter,
