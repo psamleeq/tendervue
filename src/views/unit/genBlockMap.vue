@@ -946,11 +946,11 @@ export default {
 					});
 				}
 			}
-			// console.log(pointList);
 
 			// 將最後兩格合併
 			const lastIndex = pointList.length - 1;
-			if(calcDistance(pointList[lastIndex-1].point, pointList[lastIndex].point) < this.listQuery.splitLen) pointList.splice(lastIndex-1, 1);
+			if(pointList.length > 2 && calcDistance(pointList[lastIndex-1].point, pointList[lastIndex].point) < this.listQuery.splitLen) pointList.splice(lastIndex-1, 1);
+
 			return pointList
 		},
 		// 切割線段 - 垂直點
