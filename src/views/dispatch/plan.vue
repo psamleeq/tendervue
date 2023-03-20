@@ -749,6 +749,8 @@ export default {
 							delete caseSpec.MillingLength;
 							delete caseSpec.MillingWidth;
 						} else delete caseSpec.MillingFormula;
+
+						delete caseSpec.KitNotes;
 					} else if([3,4].includes(this.deviceTypeNow)) {
 						this.detail.forEach(row => {
 							row.number == Number(row.number);
@@ -805,6 +807,8 @@ export default {
 									delete row.MillingLength;
 									delete row.MillingWidth;
 								} else delete row.MillingFormula;
+
+								delete row.KitNotes;
 							} else if(this.deviceTypeNow == 3) row.KitNotes = JSON.stringify(row.KitNotes);
 						});
 
