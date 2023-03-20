@@ -985,6 +985,10 @@ export default {
 					}
 				}
 			}
+
+			// 將最後兩格合併
+			const lastIndex = pointList.length - 1;
+			if(calcDistance(pointList[lastIndex].point, linesPosSpec[0]) > 0) pointList[lastIndex].point = linesPosSpec[0];
 			return pointList
 		},
 		splitBlock(splitPList1, splitPList2, line1, line2) {
