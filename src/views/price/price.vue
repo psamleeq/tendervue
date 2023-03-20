@@ -451,7 +451,12 @@ export default {
                 });
               this.total = 0;
             } else {
-              this.list = response.data.list;
+              response.data.list.forEach((element) => {
+                this.list = response.data.list.filter(
+                  () => element.DateClose.length != 0
+                );
+                console.log(this.list);
+              });
               this.checkList = Array.from(
                 { length: this.list.length },
                 () => false
