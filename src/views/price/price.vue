@@ -162,7 +162,7 @@
             <span v-else>{{
               row.DateClose.length != 0 ? row.Amount : "-"
             }}</span>
-            <el-button
+            <!-- <el-button
               v-if="row.DateClose.length != 0 && !row.edit"
               type="text"
               style="margin-left: 10px"
@@ -183,7 +183,7 @@
                 "
                 ><i class="el-icon-close" style="color: #f56c6c"
               /></el-button>
-            </span>
+            </span> -->
           </span>
           <span v-else>
             <span>{{ row[column.property] || "-" }}</span>
@@ -202,17 +202,9 @@
         align="center"
       >
         <template slot-scope="{ row }">
-          <span v-if="row.IsActive == 0" style="color: #f56c6c"
-            >退回
-            <!-- <i class="el-icon-close" style="color: #F56C6C" /> -->
-          </span>
-          <span v-else-if="row.DateClose.length != 0" style="color: #67c23a"
+          <span v-if="row.DateClose.length != 0" style="color: #67c23a"
             >完成
             <!-- <i class="el-icon-check" style="color: #67C23A" /> -->
-          </span>
-          <span v-else>
-            <span>施工中</span>
-            <!-- <el-button class="btn-action" type="danger" plain size="mini" round @click="setCaseStatus(row, 8)">退回</el-button> -->
           </span>
         </template>
       </el-table-column>
@@ -455,7 +447,7 @@ export default {
                 this.list = response.data.list.filter(
                   () => element.DateClose.length != 0
                 );
-                console.log(this.list);
+                // console.log(this.list);
               });
               this.checkList = Array.from(
                 { length: this.list.length },
@@ -1297,8 +1289,8 @@ export default {
       });
       this.caseTotal = tempCaseTotal;
       this.priceTotal = tempPriceTotal;
-      console.log("案件數" + this.caseTotal);
-      console.log("金額" + this.priceTotal);
+      // console.log("案件數" + this.caseTotal);
+      // console.log("金額" + this.priceTotal);
     },
   },
 };
