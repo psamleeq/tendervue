@@ -122,6 +122,7 @@
 					</span>
 					<span v-else-if="row.DateClose.length != 0" style="color: #67C23A">完成
 						<!-- <i class="el-icon-check" style="color: #67C23A" /> -->
+						<el-button v-if="checkPermission(['restored.reporter'])" type="success" size="mini" plain round style="padding: 5px" @click="unFinRegisterSpec(row)">復原</el-button>
 					</span>
 					<span v-else>
 						<span>施工中</span>
@@ -172,8 +173,9 @@ import moment from "moment";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
+import checkPermission from '@/utils/permission';
 import { getTenderMap, getGuildMap } from "@/api/type";
-import { getJobTicketList, getJobTicketSpec, setJobTicketAmt, revokeDispatch } from "@/api/dispatch";
+import { getJobTicketList, getJobTicketSpec, setJobTicketAmt, revokeDispatch, unFinRegister } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 
 export default {
@@ -292,6 +294,7 @@ export default {
 	},
 	mounted() { },
 	methods: {
+		checkPermission,
 		tableRowClassName({row, rowIndex}) {
 			if (row.DateClose.length != 0) return 'success-row';
 			return '';
@@ -837,6 +840,30 @@ export default {
 						} else {
 							this.$message({
 								message: "修改失敗",
+								type: "error",
+							});
+						}
+						this.getList();
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					});
+				}).catch(err => {});
+		},
+		unFinRegisterSpec(row) {
+			this.$confirm(`確認解除 派工單號${row.OrderSN} 「完工登錄」狀態?`, "確認", { showClose: false })
+				.then(() => {
+					unFinRegister({
+						orderSN: row.OrderSN
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "解除成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "解除失敗",
 								type: "error",
 							});
 						}

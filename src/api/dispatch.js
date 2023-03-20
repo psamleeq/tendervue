@@ -209,3 +209,11 @@ export function setJobTicketAmt(data) {
 		data
 	})
 }
+
+export function unFinRegister(data) {
+	return request({
+		url: '/dispatch/unFinRegister',
+		method: 'put',
+		data
+	})
+}
