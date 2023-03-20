@@ -903,7 +903,7 @@ export default {
 	},
 	methods: {
 		tableRowClassName({row, rowIndex}) {
-			if (row.DateClose.length != 0) return 'success-row';
+			if (row.IsCompleted) return 'success-row';
 			return '';
 		},
 		cellCheckBox(row, index) {
