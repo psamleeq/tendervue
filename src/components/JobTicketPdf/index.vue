@@ -508,7 +508,7 @@ export default {
 						// console.log(startY);
 
 						this.pdfDoc.autoTable({ 
-							head: [ imgTable.map((l, i) => (`${(i+1) + this.pdfSetting.FA.imgTableSize*imgIndex + this.pdfSetting.FA.imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
+							head: [ imgTable.map((l, i) => (`${(i+1) + this.pdfSetting.FA.imgTableSize*imgIndex + this.pdfSetting.FA.imgTableSize*2*pageIndex} - ${l.CaseNo} \n ${l.Notes}`)) ],
 							// body: [ imgTable.map(l => l.ImgZoomOut) ],
 							body: [ imgTable.map(l => l.CaseNo) ],
 							theme: 'plain',
