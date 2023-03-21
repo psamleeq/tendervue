@@ -57,8 +57,29 @@ export default {
 		return {
 			showJobTicket: true,
 			pdfSetting: {
+				format: 'a4',
 				fontSize: 14,
-				lineHeight: (14 + 2) * 0.35
+				lineHeight: (14 + 2) * 0.35,
+				AC: {
+					orientation: 'p', //portrait
+					pageSize: 8,
+					imgTableSize: 4
+				},
+				HR: {
+					orientation: 'l', //landscape
+					pageSize: 5,
+					imgTableSize: 5
+				},
+				FA: {
+					orientation: 'p', //portrait
+					pageSize: 4,
+					imgTableSize: 4
+				},
+				MK: {
+					orientation: 'l', //landscape
+					pageSize: 5,
+					imgTableSize: 5
+				},
 			}
 		}
 	},
@@ -147,6 +168,7 @@ export default {
 		async createPdf_header(OrderSN = "          ") {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
+				console.log(width, height);
 				const contractor = this.guildMap[this.contractorNow];
 				this.pdfDoc.setFontSize(this.pdfSetting.fontSize-4);
 				this.pdfDoc.setTextColor('#999999');
@@ -183,16 +205,13 @@ export default {
 		},
 		async createPdf_AC(OrderSN = "          ") {
 			return new Promise(async (resolve, reject) => {
-				const pageSize = 8;
-				const imgTableSize = 4;
-
 				// PDF排版
 				let tonneSUM = 0;
 				let areaSUM = 0;
 				const splitTable = this.tableSelect.reduce((acc, cur) => {
 					tonneSUM += cur.tonne;
 					areaSUM += cur.MillingArea;
-					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					if(acc[acc.length-1].length < this.pdfSetting.AC.pageSize) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
 				}, [[]]);
@@ -201,7 +220,7 @@ export default {
 				const areaSUMHeader = areaSUM;
 
 				for(const [ pageIndex, table ] of splitTable.entries()) {
-					this.pdfDoc.addPage();
+					this.pdfDoc.addPage(this.pdfSetting.format, this.pdfSetting.AC.orientation);
 					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 					await this.createPdf_header(OrderSN);
 
@@ -227,7 +246,7 @@ export default {
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任分派日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
-							order: (i+1) + pageSize*pageIndex, 
+							order: (i+1) + this.pdfSetting.AC.pageSize*pageIndex, 
 							// DatePlan: l.DatePlan, 
 							CaseNo: l.CaseNo, 
 							Postal_vil: l.Postal_vil,
@@ -282,7 +301,7 @@ export default {
 					// this.pdfDoc.setLineDashPattern([0], 0);
 
 					const splitImgTable = table.reduce((acc, cur) => {
-						if(acc[acc.length-1].length < imgTableSize) acc[acc.length-1].push(cur);
+						if(acc[acc.length-1].length < this.pdfSetting.AC.imgTableSize) acc[acc.length-1].push(cur);
 						else acc.push([cur]);
 						return acc;
 					}, [[]]);
@@ -293,7 +312,7 @@ export default {
 						// console.log(startY);
 
 						this.pdfDoc.autoTable({ 
-							head: [ imgTable.map((l, i) => (`${(i+1) + imgTableSize*imgIndex + imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
+							head: [ imgTable.map((l, i) => (`${(i+1) + this.pdfSetting.AC.imgTableSize*imgIndex + this.pdfSetting.AC.imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
 							// body: [ imgTable.map(l => l.ImgZoomOut) ],
 							body: [ imgTable.map(l => l.CaseNo) ],
 							theme: 'plain',
@@ -318,25 +337,22 @@ export default {
 		},
 		async createPdf_HR(OrderSN = "          ") {
 			return new Promise(async (resolve, reject) => {
-				const pageSize = 8;
-				const imgTableSize = 4;
-
 				// PDF排版
 				const splitTable = this.tableSelect.reduce((acc, cur) => {
-					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					if(acc[acc.length-1].length < this.pdfSetting.HR.pageSize) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
 				}, [[]]);
 
 				for(const [ pageIndex, table ] of splitTable.entries()) {
-					this.pdfDoc.addPage();
+					this.pdfDoc.addPage(this.pdfSetting.format, this.pdfSetting.HR.orientation);
 					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 					await this.createPdf_header(OrderSN);
 
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任分派日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
-							order: (i+1) + pageSize*pageIndex, 
+							order: (i+1) + this.pdfSetting.HR.pageSize*pageIndex, 
 							// DatePlan: l.DatePlan, 
 							CaseNo: `${l.CaseNo}\n${l.CaseSN}`, 
 							DistressName: l.DistressName,
@@ -374,14 +390,14 @@ export default {
 					});
 
 					const splitImgTable = table.reduce((acc, cur) => {
-						if(acc[acc.length-1].length < imgTableSize) acc[acc.length-1].push(cur);
+						if(acc[acc.length-1].length < this.pdfSetting.HR.imgTableSize) acc[acc.length-1].push(cur);
 						else acc.push([cur]);
 						return acc;
 					}, [[]]);
 
 					for(const [imgIndex, imgTable] of splitImgTable.entries()) {
 						this.pdfDoc.autoTable({ 
-							head: [ imgTable.map((l, i) => (`${(i+1) + imgTableSize*imgIndex + imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
+							head: [ imgTable.map((l, i) => (`${(i+1) + this.pdfSetting.HR.imgTableSize*imgIndex + this.pdfSetting.HR.imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
 							// body: [ imgTable.map(l => l.ImgZoomOut) ],
 							body: [ imgTable.map(l => l.CaseNo) ],
 							theme: 'plain',
@@ -406,18 +422,15 @@ export default {
 		},
 		async createPdf_FA(OrderSN = "          ") {
 			return new Promise(async (resolve, reject) => {
-				const pageSize = 4;
-				const imgTableSize = 4;
-
 				// PDF排版
 				const splitTable = this.tableSelect.reduce((acc, cur) => {
-					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					if(acc[acc.length-1].length < this.pdfSetting.FA.pageSize) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
 				}, [[]]);
 
 				for(const [ pageIndex, table ] of splitTable.entries()) {
-					this.pdfDoc.addPage();
+					this.pdfDoc.addPage(this.pdfSetting.format, this.pdfSetting.FA.orientation);
 					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 					await this.createPdf_header(OrderSN);
 
@@ -437,7 +450,7 @@ export default {
 							for(let j = 0; j < 4; j++) {
 								let rowSpan = j == 0 ? 4 : 1;
 								rowArr.push({ 
-									order: { rowSpan, content: (i+1) + pageSize*pageIndex }, 
+									order: { rowSpan, content: (i+1) + this.pdfSetting.FA.pageSize*pageIndex }, 
 									// DatePlan: l.DatePlan, 
 									CaseNo: { rowSpan, content: `${l.CaseNo}\n${l.CaseSN}` }, 
 									Place: { rowSpan, content: `${l.Postal_vil}\n${l.Place}` },
@@ -484,7 +497,7 @@ export default {
 					// this.pdfDoc.setLineDashPattern([0], 0);
 
 					const splitImgTable = table.reduce((acc, cur) => {
-						if(acc[acc.length-1].length < imgTableSize) acc[acc.length-1].push(cur);
+						if(acc[acc.length-1].length < this.pdfSetting.FA.imgTableSize) acc[acc.length-1].push(cur);
 						else acc.push([cur]);
 						return acc;
 					}, [[]]);
@@ -495,7 +508,7 @@ export default {
 						// console.log(startY);
 
 						this.pdfDoc.autoTable({ 
-							head: [ imgTable.map((l, i) => (`${(i+1) + imgTableSize*imgIndex + imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
+							head: [ imgTable.map((l, i) => (`${(i+1) + this.pdfSetting.FA.imgTableSize*imgIndex + this.pdfSetting.FA.imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
 							// body: [ imgTable.map(l => l.ImgZoomOut) ],
 							body: [ imgTable.map(l => l.CaseNo) ],
 							theme: 'plain',
@@ -520,25 +533,22 @@ export default {
 		},
 		async createPdf_MK(OrderSN = "          ") {
 			return new Promise(async (resolve, reject) => {
-				const pageSize = 6;
-				const imgTableSize = 4;
-
 				// PDF排版
 				const splitTable = this.tableSelect.reduce((acc, cur) => {
-					if(acc[acc.length-1].length < pageSize) acc[acc.length-1].push(cur);
+					if(acc[acc.length-1].length < this.pdfSetting.MK.pageSize) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
 				}, [[]]);
 
 				for(const [ pageIndex, table ] of splitTable.entries()) {
-					this.pdfDoc.addPage();
+					this.pdfDoc.addPage(this.pdfSetting.format, this.pdfSetting.MK.orientation);
 					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 					await this.createPdf_header(OrderSN);
 
 					this.pdfDoc.autoTable({ 
 						// head: [[ '順序', '主任分派日期', '道管編號', '損壞類別', '維修地點', '算式', '面積', '深度', '頓數' ]],
 						body: table.map((l, i) => ({ 
-							order: (i+1) + pageSize*pageIndex, 
+							order: (i+1) + this.pdfSetting.MK.pageSize*pageIndex, 
 							// DatePlan: l.DatePlan, 
 							CaseNo: `${l.CaseNo}\n${l.CaseSN}`, 
 							Place: `${l.Postal_vil}\n${l.Place}`,
@@ -558,7 +568,7 @@ export default {
 						columnStyles: {
 							order: { halign: 'center', cellWidth: 6 },
 							CaseNo: { halign: 'center', cellWidth: 26 },
-							Place: { cellWidth: 26, minCellHeight: 18 },
+							Place: { cellWidth: 30, minCellHeight: 16 },
 							areaSUM: { halign: 'center', cellWidth: 12 }
 						},
 						startY: this.pdfSetting.lineHeight * 2 + 25,
@@ -571,7 +581,7 @@ export default {
 					// this.pdfDoc.setLineDashPattern([0], 0);
 
 					const splitImgTable = table.reduce((acc, cur) => {
-						if(acc[acc.length-1].length < imgTableSize) acc[acc.length-1].push(cur);
+						if(acc[acc.length-1].length < this.pdfSetting.MK.imgTableSize) acc[acc.length-1].push(cur);
 						else acc.push([cur]);
 						return acc;
 					}, [[]]);
@@ -582,7 +592,7 @@ export default {
 						// console.log(startY);
 
 						this.pdfDoc.autoTable({ 
-							head: [ imgTable.map((l, i) => (`${(i+1) + imgTableSize*imgIndex + imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
+							head: [ imgTable.map((l, i) => (`${(i+1) + this.pdfSetting.MK.imgTableSize*imgIndex + this.pdfSetting.MK.imgTableSize*2*pageIndex} - ${l.CaseNo}`)) ],
 							// body: [ imgTable.map(l => l.ImgZoomOut) ],
 							body: [ imgTable.map(l => l.CaseNo) ],
 							theme: 'plain',
@@ -608,12 +618,28 @@ export default {
 		previewPdf(isInstant = false) {
 			this.$emit('update:loading', true);
 			this.createPdf().then(() => {
+				let orientation = '';
+				switch(this.deviceTypeNow) {
+					case 1:
+						orientation = this.pdfSetting.AC.orientation;
+						break;
+					case 2:
+						orientation = this.pdfSetting.HR.orientation;
+						break;
+					case 3:
+						orientation = this.pdfSetting.FA.orientation;
+						break;
+					case 4:
+						orientation = this.pdfSetting.MK.orientation;
+						break;
+				}
+				
 				const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => (
 					{
 							"OrderSN": {
 								"type": "text",
 								"position": {
-									"x": 167.64,
+									"x": orientation == 'p' ? 168 : 255,
 									"y": 26
 								},
 								"width": 27.24,
