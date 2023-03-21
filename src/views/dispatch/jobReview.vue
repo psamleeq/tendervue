@@ -368,10 +368,10 @@ export default {
 				// 	name: "案件類型",
 				// 	sortable: false,
 				// },
-				// Contractor: {
-				// 	name: "廠商",
-				// 	sortable: false
-				// },
+				Contractor: {
+					name: "廠商",
+					sortable: true
+				},
 				Place: {
 					name: "案件地點",
 					sortable: false
@@ -522,6 +522,7 @@ export default {
 			this.listQuery.deviceType = this.deviceTypeNow = 3;
 			const guildFilter = Object.keys(this.options.guildMap).filter(key => this.options.guildMap[key] == '泓景');
 			this.listQuery.contractor = this.contractorNow = (guildFilter.length > 0) ? Number(guildFilter[0]) : null;
+			this.getList();
 		});
 	},
 	mounted() {
@@ -609,7 +610,7 @@ export default {
 					this.contractorNow = this.listQuery.contractor;
 
 					this.list.forEach((l, i) => {
-						// l.Contractor = this.options.guildMap[l.Contractor]; 
+						l.Contractor = this.options.guildMap[l.Contractor]; 
 						l.DatePlan = this.formatDate(l.DatePlan);
 						// l.DateClose_AC = this.formatDate(l.DateClose_AC);
 						// this.$set(l, "detailTime", false);

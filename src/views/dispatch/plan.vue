@@ -54,9 +54,9 @@
 					</el-select>
 				</div>
 			</div>
-			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && (deviceTypeNow == 3 || Number(listQuery.contractor) > 0)">
+			<el-tooltip effect="dark" content="請選擇廠商和案件" placement="bottom" :disabled="tableSelect.length != 0 && Number(listQuery.contractor) > 0">
 				<span>
-					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || !(deviceTypeNow == 3 || Number(listQuery.contractor) > 0)" @click="dispatch()">分派</el-button>
+					<el-button class="filter-item" type="success" icon="el-icon-s-claim" :disabled="tableSelect.length == 0 || Number(listQuery.contractor) == 0" @click="dispatch()">分派</el-button>
 				</span>
 			</el-tooltip>
 		</div>
@@ -579,7 +579,11 @@ export default {
 					this.checkList = Array.from({ length: this.list.length }, () => false);
 					this.deviceTypeNow = this.listQuery.deviceType;
 					this.filterNow = this.listQuery.filter;
-					this.listQuery.contractor = (this.deviceTypeNow == 3) ? 0 : null;
+					this.listQuery.contractor = null;
+					if(this.deviceTypeNow == 3) {
+						const guildFilter = Object.keys(this.options.guildMap).filter(key => this.options.guildMap[key] == '泓景');
+						if(guildFilter.length > 0) this.listQuery.contractor = Number(guildFilter[0]);
+					}
 
 					this.list.forEach(l => {
 						l.Contractor = this.options.guildMap[l.Contractor] || "-";
