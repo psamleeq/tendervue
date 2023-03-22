@@ -1068,4 +1068,17 @@ export default {
 			margin: 5px 0
 	.btn-dialog
 		padding: 5px 5px
+.el-dialog
+		.el-dialog__body > div
+			margin-top: 10px
+		.el-select
+			margin-top: 5px
+			margin-bottom: 5px
+			width: 250px
+		.revokeReasonNote
+			margin-top: 5px
+			width: 250px
+		.footer-btns
+			display: flex
+			justify-content: center
 </style>
