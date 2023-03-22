@@ -878,7 +878,7 @@ export default {
 			background: #EBEEF5
 			&.hover-row > td
 				background-color: initial !important
-		.btn-revoke
+	.btn-revoke
 		padding: 5px 10px
 		margin-left: 5px
 	.el-dialog
