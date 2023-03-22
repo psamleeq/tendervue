@@ -306,6 +306,8 @@
 				<el-select v-model="rowActive.revokeReason">
 					<el-option v-for="( name, key ) in options.reasonType" :key="key" :label="name" :value="Number(key)" />
 				</el-select>
+				備註:
+				<el-input v-model="revokeTextarea" class="revokeReasonNote" type="textarea" :rows="2" placeholder="請輸入備註" />
 			</div>
 			<span slot="footer" class="footer-btns">
 				<el-button @click="showRevokeConfirm = false; getList();">取消</el-button>
@@ -480,7 +482,8 @@ export default {
 					1: "無需施作",
 					2: "退回重派"
 				}
-			}
+			},
+			revokeTextarea: ""
 		};
 	},
 	computed: {	
@@ -689,16 +692,19 @@ export default {
 		beforeRemove(row, revokeType) {
 			this.rowActive = JSON.parse(JSON.stringify(row)); 
 			this.$set(this.rowActive, "revokeType", revokeType);
+			this.$set(this.rowActive, "revokeTextarea", this.revokeTextarea);
 			if(revokeType == 1) this.$set(this.rowActive, "revokeReason", 1);
 
 			this.showRevokeConfirm = true;
 		},
 		removeDispatch() {
 			// revokeType(退回類型)- 1: 退回主任分派, 2: 退回廠商製作派工單"
-			if(this.rowActive.revokeType == 1) this.rowActive.revokeReason = this.options.reasonType[this.rowActive.revokeReason];
+			if (this.rowActive.revokeType == 1)
+				this.rowActive.revokeReason = this.options.reasonType[this.rowActive.revokeReason];
+			let mergeRevokeReason = String(this.rowActive.revokeReason) + "-" + String(this.revokeTextarea);
 			revokeDispatch({
 				revokeType: this.rowActive.revokeType,
-				revokeReason: this.rowActive.revokeReason,
+				revokeReason: mergeRevokeReason,
 				deviceType: this.deviceTypeNow,
 				serialNo: this.rowActive.SerialNo
 			}).then(response => {
@@ -776,4 +782,17 @@ export default {
 			margin: 5px 0
 	.btn-dialog
 		padding: 5px 5px
+.el-dialog
+		.el-dialog__body > div
+			margin-top: 10px
+		.el-select
+			margin-top: 5px
+			margin-bottom: 5px
+			width: 250px
+		.revokeReasonNote
+			margin-top: 5px
+			width: 250px
+		.footer-btns
+			display: flex
+			justify-content: center
 </style>
