@@ -1,9 +1,17 @@
 import request from '@/utils/request';
 
-// 成效指標 - 案件列表
+// 成效指標 - 案件稽核
 export function getCaseList(query) {
 	return request({
 		url: '/PI/caseList',
+		method: 'get',
+		params: query
+	})
+}
+
+export function getUnacceptedCaseList(query) {
+	return request({
+		url: '/PI/unacceptedCaseList',
 		method: 'get',
 		params: query
 	})

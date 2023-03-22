@@ -35,6 +35,16 @@ const PIRouter = {
 					}
 				},
 				{
+					path: 'caseList_unaccepted',
+					component: () => import('@/views/PI/caseCheck/caseList_unaccepted'),
+					name: 'PICaseList_unaccepted',
+					meta: {
+						title: '不合理案件申覆',
+						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
+						isNew: true
+					}
+				},
+				{
 					path: 'checkResult',
 					component: () => import('@/views/PI/caseCheck/checkResult'),
 					name: 'PICheckResult',

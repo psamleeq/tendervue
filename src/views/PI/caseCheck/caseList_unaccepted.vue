@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container PI-case-list" v-loading="loading">
-		<h2>案件列表</h2>
+	<div class="app-container unaccepted-PI-case-list" v-loading="loading">
+		<h2>不合理案件申覆</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
@@ -35,25 +35,15 @@
 				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			</span>
 
-			<el-popover
-				placement="top"
-				width="260"
-				title="確定「輸出報表」？"
-				v-model="showDlConfirm">
-				<p>「輸出報表」後，<br/>{{ searchRange }}的案件列表將<span style="color: #F56C6C">無法修改</span>。</p>
-				<div style="text-align: center; margin: 0">
-					<el-button size="mini" type="text" @click="showDlConfirm = false">取消</el-button>
-					<el-button type="primary" size="mini" @click="handleDownload">確定</el-button>
-				</div>
-				<el-button
-					slot="reference"
-					v-if="checkPermission(['PIcase.editor'])"
-					class="filter-item"
-					type="info"
-					icon="el-icon-document"
-					:disabled="isArchive || list.length == 0"
-				>輸出報表</el-button>
-			</el-popover>
+			<el-button
+				slot="reference"
+				v-if="checkPermission(['PIcase.editor'])"
+				class="filter-item"
+				type="info"
+				icon="el-icon-document"
+				:disabled="list.length == 0"
+				@click="handleDownload"
+			>輸出報表</el-button>
 		</div>
 		
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -66,10 +56,8 @@
 						<svg-icon icon-class="form" class-name="card-panel-icon" />
 					</div>
 					<div class="card-panel-description">
-						<div class="card-panel-text">案件數</div>
-						<div class="card-panel-num">{{ list.length }}
-							<span class="fail-num">({{ checkNum.unaccepted }})</span>
-						</div>
+						<div class="card-panel-text">不合理案件數</div>
+						<div class="card-panel-num">{{ list.length }}</div>
 					</div>
 				</div>
 			</el-col>
@@ -79,11 +67,9 @@
 						<svg-icon icon-class="people" class-name="card-panel-icon" />
 					</div>
 					<div class="card-panel-description">
-						<div class="card-panel-text">監造抽查 (15%)</div>
+						<div class="card-panel-text">監造審核</div>
 						<div class="card-panel-num"> 
-							路面: {{ checkNum.SV.AC.check }} <span class="fail-num">({{ checkNum.SV.AC.fail }})</span> / {{ checkNum.SV.AC.total }} 
-							<br>
-							設施: {{ checkNum.SV.facility.check }} <span class="fail-num">({{ checkNum.SV.facility.fail }})</span> / {{ checkNum.SV.facility.total }}
+							{{ checkNum.SV.check }} <span class="fail-num">({{ checkNum.SV.fail }})</span>
 						</div>
 					</div>
 				</div>
@@ -94,11 +80,9 @@
 						<svg-icon icon-class="domain" class-name="card-panel-icon" />
 					</div>
 					<div class="card-panel-description">
-						<div class="card-panel-text">機關抽查 (5%)</div>
+						<div class="card-panel-text">機關審核</div>
 						<div class="card-panel-num">
-							路面: {{ checkNum.Organ.AC.check }} <span class="fail-num">({{ checkNum.Organ.AC.fail }})</span> / {{ checkNum.Organ.AC.total }} 
-							<br>
-							設施: {{ checkNum.Organ.facility.check }} <span class="fail-num">({{ checkNum.Organ.facility.fail }})</span> / {{ checkNum.Organ.facility.total }}
+							{{ checkNum.Organ.check }} <span class="fail-num">({{ checkNum.Organ.fail }})</span>
 						</div>
 					</div>
 				</div>
@@ -109,10 +93,9 @@
 						<svg-icon icon-class="message-alert" class-name="card-panel-icon" />
 					</div>
 					<div class="card-panel-description">
-						<div class="card-panel-text">不合格件數</div>
+						<div class="card-panel-text">通過件數</div>
 						<div class="card-panel-num">
-							<span> {{ reasonTypeArr[1] }} <el-tooltip class="item" effect="dark" content="損壞情形說明與現況不符(PI1.2)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip></span>	 / 
-							<span> {{ reasonTypeArr[2] }} <el-tooltip class="item" effect="dark" content="損壞程度與現況不符(PI2.2)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip></span>
+							<span> {{ checkNum.pass }}</span>
 						</div>
 					</div>
 				</div>
@@ -121,10 +104,10 @@
 
 		<br />
 
-		<!-- 抽查結果列表 -->
+		<!-- 案件列表 -->
 		<el-table
 			empty-text="目前沒有資料"
-			:data="resultList"
+			:data="list"
 			border
 			fit
 			highlight-current-row
@@ -132,54 +115,7 @@
 			stripe
 			style="width: 100%"
 		>
-			<el-table-column label="序號" type="index" width="100" align="center" />
-			<el-table-column
-				v-for="(value, key) in resultHeader"
-				:key="key"
-				:prop="key"
-				:label="value.name"
-				align="center"
-				:formatter="formatter"
-				:sortable="value.sortable"
-			>
-				<template slot-scope="{ row, column }">
-					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
-					<span v-else>{{ formatter(row, column) }}</span>
-				</template>
-			</el-table-column>
-			<el-table-column label="不合格原因(監造)" align="center">
-				<template slot-scope="{ row }">
-					<span v-if="[21, 22].includes(row.SVCheck)">{{ options.reasonType[row.SVCheck % 10] }}</span>
-					<span v-else> - </span>
-				</template>
-			</el-table-column>
-			<el-table-column label="不合格原因(機關)" align="center">
-				<template slot-scope="{ row }">
-					<span v-if="[21, 22].includes(row.OrganCheck)">{{ options.reasonType[row.OrganCheck % 10] }}</span>
-					<span v-else> - </span>
-				</template>
-			</el-table-column>
-
-			<!-- NOTE: 展示用，還未實作 -->
-			<el-table-column label="操作" align="center">
-				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="info" plain size="mini" round disabled @click="showMap(row)">地圖</el-button>
-				</template>
-			</el-table-column>
-		</el-table>
-		<br>
-
-		<!-- 案件列表 -->
-		<el-table
-			empty-text="目前沒有資料"
-			:data="list"
-			border
-			fit
-			:row-class-name="tableRowClassName"
-			:header-cell-style="{'background-color': '#F2F6FC'}"
-			style="width: 100%"
-		>
-			<el-table-column label="序號" type="index" width="45" align="center" />
+			<el-table-column label="序號" type="index" width="40" align="center" />
 			<!-- <el-table-column label="案件編號" prop="UploadCaseNo" align="center">
 				<template slot-scope="{ row }">
 					<template v-if="row.edit">
@@ -209,32 +145,15 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['organAssign'].includes(key) ? 70 : ['UploadCaseNo', 'CaseDate', 'DeviceType'].includes(key) ? 120 : null"
+				:width="['StateNotes'].includes(key) ? 250 : ['organAssign'].includes(key) ? 60 : ['CaseDate', 'DeviceType', 'BType', 'BrokeStatus'].includes(key) ? 115 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
-					<span v-else-if="!isArchive && checkPermission(['PIcase.editor']) && [ 'organAssign', 'BType', 'BrokeType', 'BrokeStatus', 'PCIValue', 'State' ].includes(column.property)">
-						<span v-if="row.edit">
-							<span v-if="[ 'organAssign' ].includes(column.property)">
-								<el-checkbox v-model.number="row[column.property]" :true-label="1" :false-label="0" />
-							</span>
-							<el-select v-else-if="[ 'BType', 'BrokeType', 'BrokeStatus' ].includes(column.property)" class="edit-select" v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]" size="mini" popper-class="type-select">
-								<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
-							</el-select>
-							<el-input-number 
-								v-else-if="[ 'PCIValue' ].includes(column.property)" 
-								class="edit-number"
-								v-model.number="row[column.property]"
-								controls-position="right"
-								size="mini"
-								:precision="1"
-								:step="0.1"
-								:min="0"
-								:max="100"
-								style="width: 80px"
-							/>
+					<span v-else-if="checkPermission(['PIcase.editor']) && [ 'State', 'StateNotes' ].includes(column.property)">
+						<span v-if="[ 'StateNotes' ].includes(column.property) && row.edit">
+							<input v-if="[ 'StateNotes' ].includes(column.property)" v-model="row[column.property]" />
 							<el-button type="text" @click="rowActive = row; setResult();">
 								<i class="el-icon-success" />
 							</el-button>
@@ -245,7 +164,6 @@
 						<span v-else-if="[ 'State' ].includes(column.property)">
 							<el-button v-if="!(row.State & 1)" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
 							<el-button v-else class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
-							<el-tooltip v-if="row.State & 1" effect="dark" :content="row.StateNotes" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
 						</span>
 						<span v-else>
 							<span>{{ formatter(row, column) }}</span>
@@ -257,35 +175,35 @@
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="監造抽查" width="160px" align="center">
+			<el-table-column label="監造審核" width="100px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="!isArchive && !row.State && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
+					<template v-if="!(row.State & 2) && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
 						<el-button-group>
-							<el-button v-for="(name, type) in options.resultType" :key="type" :type="type == 1 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, 'SVCheck', Number(type))">{{ name }}</el-button>
+							<el-button type="success" size="mini" @click="beforeSetResult(row, 2)">通過</el-button>
 						</el-button-group>
 					</template>
 					<template v-else>
-						<span v-if="row.SVCheck >= 1">
-							<i v-if="row.SVCheck == 1" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-							<i v-else-if="[21, 22].includes(row.SVCheck)" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
-							<el-button v-if="!isArchive && checkPermission(['PIcase.inspector'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, 'SVCheck', 0)">撤銷</el-button>
+						<span v-if="row.State & 1">
+							<i v-if="row.State & 2" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+							<i v-else-if="!(row.State & 2)" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
+							<el-button v-if="checkPermission(['PIcase.inspector'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -2)">撤銷</el-button>
 						</span>
 						<span v-else> - </span>
 					</template>
 				</template>
 			</el-table-column>
-			<el-table-column label="機關抽查" width="160px" align="center">
+			<el-table-column label="機關審核" width="100px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="!isArchive && !row.State && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
+					<template v-if="(row.State & 2) && !(row.State & 4) && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
 						<el-button-group>
-							<el-button v-for="(name, type) in options.resultType" :key="type" :type="type == 1 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, 'OrganCheck', Number(type))">{{ name }}</el-button>
+							<el-button type="success" size="mini" @click="beforeSetResult(row, 4)">通過</el-button>
 						</el-button-group>
 					</template>
 					<template v-else>
-						<span v-if="row.OrganCheck >= 1">
-							<i v-if="row.OrganCheck == 1" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-							<i v-else-if="[21, 22].includes(row.OrganCheck)" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
-							<el-button v-if="!isArchive && checkPermission(['PIcase.supervisor'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, 'OrganCheck', 0)">撤銷</el-button>
+						<span v-if="row.State & 2">
+							<i v-if="row.State & 4" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+							<i v-else-if="!(row.State & 4)" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
+							<el-button v-if="checkPermission(['PIcase.supervisor'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -4)">撤銷</el-button>
 						</span>
 						<span v-else> - </span>
 					</template>
@@ -333,15 +251,10 @@
 			:close-on-press-escape="false"
 			center
 		>	
-			<span slot="title">確認提交 {{ rowActive.UploadCaseNo }}的抽查結果？</span>
+			<span slot="title">確認提交 {{ rowActive.UploadCaseNo }}的審核結果？</span>
 			<div>來源案號: {{ rowActive.CaseNo }}</div>
-			<div v-if="rowActive.resultType == 0" style="color: #F56C6C" >撤銷抽查</div>
-			<div v-else>抽查結果: <span :style="rowActive.resultType == 1 ? 'color: #67C23A' : 'color: #F56C6C'">{{ options.resultType[rowActive.resultType] }}</span></div>
-			<div v-if="rowActive.resultType == 2">原因: 
-				<el-select v-model="rowActive.ReasonType">
-					<el-option v-for="( name, key ) in options.reasonType" :key="key" :label="name" :value="Number(key)" />
-				</el-select>
-			</div>
+			<div v-if="rowActive.resultType < 0" style="color: #F56C6C" >撤銷審核</div>
+			<div v-else>審核結果: <span style="color: #67C23A">通過</span></div>
 			<span slot="footer" class="footer-btns">
 				<el-button @click="showResultConfirm = false; getList();">取消</el-button>
 				<el-button type="primary" @click="setResult()">確定</el-button>
@@ -353,20 +266,18 @@
 <script>
 import moment from "moment";
 import { getTypeMap } from "@/api/type";
-import { getCaseList, setCaseList, archiveCaseList } from "@/api/PI";
+import { getUnacceptedCaseList, setCaseList } from "@/api/PI";
 import checkPermission from '@/utils/permission';
 
 export default {
-	name: "PICaseList",
+	name: "PICaseList_unaccepted",
 	data() {
 		return {
 			loading: false,
 			timeTabId: 1,
 			dateTimePickerVisible: false,
-			showUnacceptedConfirm: false,
 			showResultConfirm: false,
-			showDlConfirm: false,
-			isArchive: false,
+			showUnacceptedConfirm: false,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -449,16 +360,19 @@ export default {
 					name: "損壞狀況",
 					sortable: false
 				},
-				PCIValue: {
-					name: "PCI",
+				// PCIValue: {
+				// 	name: "PCI",
+				// 	sortable: false
+				// },
+				StateNotes: {
+					name: "判定原因",
 					sortable: false
 				},
 				State: {
-					name: "不合理案件",
+					name: "廠商審核",
 					sortable: false
 				}
 			},
-			resultList: [],
 			list: [],
 			rowActive: {},
 			districtList: {
@@ -502,65 +416,26 @@ export default {
 			options: {
 				DeviceType: {},
 				BType: {},
-				// BrokeType: {
-				// 	1: "輕度",
-				// 	2: "中度",
-				// 	3: "重度"
-				// },
 				BrokeStatus: {
 					1: "觀察", //輕度
 					2: "短期改善", //中度
 					3: "立即改善", //重度
 				},
-				resultType: {
-					1: "合格",
-					2: "不合格"
-				},
-				reasonType: {
-					1: "損壞情形說明與現況不符(PI1.2)",
-					2: "損壞程度與現況不符(PI2.2)"
-				},
 			}
 		};
 	},
-	computed: {
-		reasonTypeArr() {
-			let reasonTypeArr = { 1: 0, 2: 0 };
-			this.resultList.forEach(l => {
-				for(let type of Object.keys(this.options.reasonType)) {
-					if(l.SVCheck > 0 && String(l.SVCheck).split("")[1] == type) reasonTypeArr[type]++;
-					if(l.OrganCheck > 0 && String(l.OrganCheck).split("")[1] == type) reasonTypeArr[type]++;
-				}
-			})
-			return reasonTypeArr
-		},
+	computed: { 
 		checkNum() {
 			return { 
-				unaccepted: this.list.filter(l => l.State > 0).length,
 				SV: { 
-					AC: { 
-						check: this.list.filter(l => l.SVCheck != 0 && l.DeviceType == 1).length, 
-						fail: this.list.filter(l => l.SVCheck > 1 && l.DeviceType == 1).length,
-						total: Math.round(this.list.length * 0.15 * 0.6, 0) 
-					}, 
-					facility: { 
-						check: this.list.filter(l => l.SVCheck != 0 && l.DeviceType != 1).length, 
-						fail: this.list.filter(l => l.SVCheck > 1 && l.DeviceType != 1).length,
-						total: Math.round(this.list.length * 0.15 * 0.4, 0) 
-					} 
+					check: this.list.filter(l => l.State & 2 ).length, 
+					fail: this.list.filter(l => !(l.State & 2)).length
 				}, 
 				Organ: { 
-					AC: { 
-						check: this.list.filter(l => l.OrganCheck != 0 && l.DeviceType == 1).length, 
-						fail: this.list.filter(l => l.OrganCheck > 1 && l.DeviceType == 1).length,
-						total: Math.round(this.list.length * 0.05 * 0.6, 0) 
-					}, 
-					facility: {
-						check: this.list.filter(l => l.OrganCheck != 0 && l.DeviceType != 1).length, 
-						fail: this.list.filter(l => l.OrganCheck > 1 && l.DeviceType != 1).length,
-						total: Math.round(this.list.length * 0.05 * 0.4, 0) 
-					} 
-				} 
+					check: this.list.filter(l =>  l.State & 4).length, 
+					fail: this.list.filter(l => !(l.State & 4)).length
+				},
+				pass: this.list.filter(l =>  (l.State & 2) && (l.State & 4)).length
 			};
 		}
 	},
@@ -573,10 +448,6 @@ export default {
 	},
 	methods: {
 		checkPermission,
-		tableRowClassName({row, rowIndex}) {
-			if (row.State > 0) return 'mark-row';
-			return '';
-		},
 		dateShortcuts(index) {
 			this.timeTabId = index;
 
@@ -603,11 +474,9 @@ export default {
 			this.loading = true;
 			let date = moment(this.searchDate).format("YYYY-MM-DD");
 			this.searchRange = date;
-			this.isArchive = false;
 			this.list = [];
-			this.resultList = [];
 
-			getCaseList({
+			getUnacceptedCaseList({
 				zipCode: this.listQuery.zipCode,
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
@@ -618,10 +487,8 @@ export default {
 						type: "error",
 					});
 				} else {
-					this.isArchive = response.data.list[0].Archive;
 					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
-					this.resultList = response.data.resultList;
 					this.list.forEach(l => {
 						this.$set(l, "showSVCheck", false);
 						this.$set(l, "showOrganCheck", false);
@@ -636,31 +503,18 @@ export default {
 			this.rowActive.State = result;
 			this.showUnacceptedConfirm = true;
 		},
-		beforeSetResult(row, columnName, result) {
-			row[`show${columnName}`] = false;
+		beforeSetResult(row, result) {
 			this.rowActive = JSON.parse(JSON.stringify(row));
-
-			if(result == 2) this.$set(this.rowActive, "ReasonType", 1);
-			else this.$set(this.rowActive, "ReasonType", 0);
-
-			this.rowActive[columnName] = result;
-			this.$set(this.rowActive, "resultType", result);
+			this.rowActive.resultType = result;
+			this.rowActive.State += result;
+			if(!(this.rowActive.State & 2)) this.rowActive.State = 1;
 			this.showResultConfirm = true;
 		},
 		setResult() {
 			this.showUnacceptedConfirm = false;
 			this.showResultConfirm = false;
-			
-			let SVCheck = 0;
-			let OrganCheck = 0;
-			if(this.rowActive.State > 0) {
-				SVCheck = 0;
-				OrganCheck = 0;
-			} else {
-				this.rowActive.StateNotes = '';
-				SVCheck = this.rowActive.SVCheck == 2 ? Number(`${this.rowActive.SVCheck}${this.rowActive.ReasonType}`) : this.rowActive.SVCheck;
-				OrganCheck = this.rowActive.OrganCheck == 2 ? Number(`${this.rowActive.OrganCheck}${this.rowActive.ReasonType}`) : this.rowActive.OrganCheck;
-			}
+
+			if(this.rowActive.State == 0) this.rowActive.StateNotes = '';
 
 			setCaseList( this.rowActive.id, {
 				zipCode: this.zipCodeNow,
@@ -669,9 +523,7 @@ export default {
 				BrokeType: this.rowActive.BrokeType,
 				PCIValue: this.rowActive.PCIValue,
 				State: this.rowActive.State,
-				StateNotes: this.rowActive.StateNotes,
-				SVCheck: SVCheck,
-				OrganCheck: OrganCheck
+				StateNotes: this.rowActive.StateNotes
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -699,49 +551,32 @@ export default {
 			return moment(time).format("YYYY/MM/DD");
 		},
 		handleDownload() {
-			this.showDlConfirm = false;
-			let date = moment(this.searchDate).format("YYYY-MM-DD");
+			console.log("handleDownload");
+			const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造審核", "機關審核", "通過"]);
+			const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Pass"]);
+			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
+			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
+			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
+				l.CaseDate = this.formatTime(l.CaseDate);
+				l.DeviceType = this.options.DeviceType[l.DeviceType];
+				l.organAssign =  l.organAssign == 1 ? "是" : "";
+				l.BType = this.options.BType[l.BType];
+				l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
+				l.SVCheck = (l.State & 2) ? "V" : "-";
+				l.OrganCheck = (l.State & 4) ? "V" : "-";
+				l.Pass = (l.State & 2) && (l.State & 4) ? "V" : "-";
+				l.State = (l.State & 1) ? "V" : "-";
+				return l
+			}) 
+			const data = this.formatJson(filterVal, dataList);
 
-			archiveCaseList({
-				zipCode: this.zipCodeNow,
-				timeStart: date,
-				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
-			}).then(response => {
-				const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
-				const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
-				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
-				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
-				const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
-					l.CaseDate = this.formatTime(l.CaseDate);
-					l.DeviceType = this.options.DeviceType[l.DeviceType];
-					l.organAssign =  l.organAssign == 1 ? "是" : "";
-					l.State =  l.State > 0 ? "是" : "";
-					l.BType = this.options.BType[l.BType];
-					// l.BrokeType = this.options.BrokeType[l.BrokeType];
-					l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
-					l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
-
-					const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
-					if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];
-					else l.Note = "";
-
-					l.SVCheck = l.SVCheck == 0 ? "" : l.SVCheck == 1 ? "V" : "X";
-					l.OrganCheck = l.OrganCheck == 0 ? "" : l.OrganCheck == 1 ? "V" : "X";
-					return l
-				}) 
-				const data = this.formatJson(filterVal, dataList);
-
-				import("@/vendor/Export2Excel").then((excel) => {
-					excel.export_json_to_excel({
-						header: tHeader,
-						data,
-					});
+			import("@/vendor/Export2Excel").then((excel) => {
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
 				});
-				this.getList();
-			}).catch(err => {
-				console.log(err);
-				this.getList();
-			})
+			});
+			this.getList();
 		},
 		formatJson(filterVal, jsonData) {
 			return jsonData.map((v) => filterVal.map((j) => v[j]));
@@ -754,7 +589,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PI-case-list
+.unaccepted-PI-case-list
 	height: calc(100vh - 50px)
 	overflow: scroll
 	.filter-container 
@@ -846,10 +681,7 @@ export default {
 						color: #F56C6C
 						// font-size: 20px
 						vertical-align: text-top
-	.icon-tooltip
-		font-size: 16px
-		color: #606266
-		margin-left: 3px
+
 	.el-icon-edit
 		color: #67C23A
 		margin-bottom: 5px
@@ -873,12 +705,7 @@ export default {
 	.edit-number.el-input-number .el-input__inner
 		padding: 0 10px
 		text-align: left
-	.el-table
-		.mark-row 
-			background: #EBEEF5
-			&.hover-row > td
-				background-color: initial !important
-		.btn-revoke
+	.btn-revoke
 		padding: 5px 10px
 		margin-left: 5px
 	.el-dialog
