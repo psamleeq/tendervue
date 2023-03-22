@@ -10,7 +10,7 @@ const dispatchRouter = {
 	meta: {
 		title: '計價管理',
 		icon: 'clipboard-account-outline',
-		roles: ['restored'],
+		roles: ['Pricing'],
 		isNew: true
 	},
 	children: [
@@ -21,7 +21,7 @@ const dispatchRouter = {
 			name: 'priceManage',
 			meta: {
 				title: '計價管理',
-				roles: ['restored.viewer'],
+				roles: ['Pricing.viewer'],
 				isNew: true
 			}
 		},

@@ -103,7 +103,6 @@
       :key="deviceTypeNow"
       border
       fit
-      :row-class-name="tableRowClassName"
       :header-cell-style="{ 'background-color': '#F2F6FC' }"
       style="width: 100%"
       @selection-change="handleSelectionChange"
@@ -196,16 +195,8 @@
 
 <script>
 import moment from "moment";
-import { jsPDF } from "jspdf";
-import { applyPlugin } from "jspdf-autotable";
-applyPlugin(jsPDF);
 import { getTenderMap, getGuildMap } from "@/api/type";
-import {
-  getJobTicketList,
-  getJobTicketSpec,
-  setJobTicketAmt,
-  revokeDispatch,
-} from "@/api/dispatch";
+import { getJobTicketList } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 
 export default {
@@ -286,10 +277,6 @@ export default {
           2: "退回重派",
         },
       },
-      pdfSetting: {
-        fontSize: 14,
-        lineHeight: (14 + 2) * 0.35,
-      },
       //案件總數
       caseTotal: 0,
       //金額總數
@@ -298,55 +285,13 @@ export default {
     };
   },
   computed: {},
-  watch: {
-    "pdfSetting.fontSize"() {
-      this.pdfSetting.lineHeight = (this.pdfSetting.fontSize + 2) * 0.35;
-    },
-  },
+  watch: { },
   created() {
-    getTenderMap().then((response) => {
-      this.options.tenderMap = response.data.tenderMap;
-    });
-    getGuildMap().then((response) => {
-      this.options.guildMap = response.data.guildMap;
-    });
-
-    // 讀入字型
-    const readBlob = (blob) => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-    };
-
-    fetch("/assets/font/edukai-4.0.ttf")
-      .then((res) => res.blob())
-      .then(async (blob) => readBlob(blob))
-      .then((dataUri) => dataUri.substr(dataUri.indexOf("base64,") + 7))
-      .then((fontBString) => {
-        // init jsPDF
-        this.pdfDoc = new jsPDF();
-        this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
-        this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
-        this.pdfDoc.setFont("edukai");
-      });
+    getTenderMap().then((response) => { this.options.tenderMap = response.data.tenderMap; });
+    getGuildMap().then((response) => { this.options.guildMap = response.data.guildMap; });
   },
   mounted() {},
   methods: {
-    tableRowClassName({ row, rowIndex }) {
-      if (row.DateClose.length != 0) return "success-row";
-      return "";
-    },
-    // imgPreload() {
-    //   //img preload
-    //   this.imgDOMObj = {};
-    //   this.caseSpec.forEach((l) => {
-    //     let image = new Image();
-    //     image.src = l.ImgZoomOut;
-    //     this.imgDOMObj[l.CaseNo] = image;
-    //   });
-    // },
     getList(showMsg = true) {
       if (!Number(this.listQuery.contractor)) {
         this.$message({
@@ -467,10 +412,6 @@ export default {
 					padding-left: 10px
 					text-align: left
 	.el-table
-		.success-row
-			background: #F0F9EB
-			&.hover-row > td
-				background-color: initial !important
 		.btn-action
 			margin-left: 5px
 			padding: 5px
