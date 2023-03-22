@@ -558,6 +558,7 @@
         <el-button
           @click="
             showRevokeConfirm = false;
+            revokeTextarea = '';
             getList();
           "
           >取消</el-button
@@ -767,6 +768,7 @@ export default {
         fontSize: 14,
         lineHeight: (14 + 2) * 0.35,
       },
+      revokeTextarea: "",
     };
   },
   computed: {
