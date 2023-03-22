@@ -10,7 +10,7 @@ const PIRouter = {
 	meta: {
 		title: '成效指標',
 		icon: 'el-icon-s-check',
-		roles: ['PIcase']
+		roles: ['PIcase', 'PIreport']
 	},
 	children: [
 		{
@@ -63,7 +63,7 @@ const PIRouter = {
 			redirect: 'noRedirect',
 			meta: { 
 				title: '日報表', 
-				roles: ['beta'],
+				roles: ['PIreport'],
 				vTag: 'Alpha' 
 			},
 			children: [
@@ -83,7 +83,7 @@ const PIRouter = {
 					name: 'PI2_1_Att',
 					meta: { 
 						title: 'PI2.1附件', 
-						roles: ['beta'],
+						roles: ['PIreport.21'],
 						vTag: 'Alpha' 
 					}
 				},
@@ -93,7 +93,7 @@ const PIRouter = {
 					name: 'PI3_1_Att',
 					meta: {
 						title: 'PI3.1附件',
-						roles: ['beta'],
+						roles: ['PIreport.31'],
 						vTag: 'Alpha'
 					}
 				}
