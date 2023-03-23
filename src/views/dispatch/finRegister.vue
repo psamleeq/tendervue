@@ -633,7 +633,7 @@
 				<el-input v-model="revokeTextarea" class="revokeReasonNote" type="textarea" :rows="2" placeholder="請輸入備註" />
 			</div>
 			<span slot="footer" class="footer-btns">
-				<el-button @click="showRevokeConfirm = false; getList();">取消</el-button>
+				<el-button @click="showRevokeConfirm = false;revokeTextarea=''; getList();">取消</el-button>
 				<el-button type="primary" @click="removeDispatch()">確定</el-button>
 			</span>
 		</el-dialog>
@@ -906,8 +906,9 @@ export default {
 	},
 	methods: {
 		tableRowClassName({row, rowIndex}) {
-			if (row.IsCompleted) return 'success-row';
-			return '';
+			if (row.IsCompleted)return 'success-row'
+			else return 'danger-row'
+			// return '';
 		},
 		cellCheckBox(row, index) {
 			if(this.checkList[index]) this.$refs.caseTable.toggleRowSelection(row, true);
@@ -1449,12 +1450,19 @@ export default {
 		finishRegister() {
 			this.$confirm(`確認將 派工單號${this.orderSNNow} 完工登錄?`, "確認", { showClose: false })
 				.then(() => {
-					const tableSelectFilter = this.list.filter(caseSpec =>  !Boolean(caseSpec.IsCancel) && (caseSpec.Content && caseSpec.Content.length == 0));
-					const condition = [3, 4].includes(this.deviceTypeNow) && tableSelectFilter.length != 0;
-					if(condition) {
+					const tableSelectFilter1 = this.list.filter(caseSpec =>  !Boolean(caseSpec.IsCompleted) && (caseSpec.Content && caseSpec.Content.length == 0));
+					const condition1 = [1, 2].includes(this.deviceTypeNow) && tableSelectFilter1.length != 0;
+					const tableSelectFilter2 = this.list.filter(caseSpec =>  !Boolean(caseSpec.IsCancel) && (caseSpec.Content && caseSpec.Content.length == 0));
+					const condition2 = [3, 4].includes(this.deviceTypeNow) && tableSelectFilter2.length != 0;
+					if(condition1) {
 						this.$message({
 							type: "error",
-							message: `案件編號${ tableSelectFilter.map(caseSpec => caseSpec.CaseNo).join("、") } 未填入「登錄數量」`
+							message: `案件編號${ tableSelectFilter1.map(caseSpec => caseSpec.CaseNo).join("、") } 未確認資料登錄`
+						});
+					}else if(condition2) {
+						this.$message({
+							type: "error",
+							message: `案件編號${ tableSelectFilter2.map(caseSpec => caseSpec.CaseNo).join("、") } 未填入「登錄數量」`
 						});
 					} else {
 						this.loading = true;
@@ -1610,6 +1618,10 @@ export default {
 	.el-table
 		.success-row 
 			background: #F0F9EB
+			&.hover-row > td
+				background-color: initial !important
+		.danger-row
+			background: #F9EBEB
 			&.hover-row > td
 				background-color: initial !important
 		.el-input__inner
