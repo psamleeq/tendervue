@@ -5,35 +5,7 @@
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<span class="time-picker">
-				<el-button-group v-if="!dateTimePickerVisible">
-					<el-button
-						v-for="(t, i) in pickerOptions.shortcuts"
-						:key="i"
-						type="primary"
-						:plain="i != timeTabId"
-						size="mini"
-						@click="dateShortcuts(i)"
-					>{{ t.text }}</el-button>
-				</el-button-group>
-				<el-date-picker
-					v-else
-					class="filter-item"
-					v-model="searchDate"
-					type="date"
-					placeholder="日期"
-					:picker-options="pickerOptions"
-					:clearable="false"
-					@change="timeTabId = -1"
-				/>
-				<el-button
-					:type="dateTimePickerVisible ? 'info' : 'primary'"
-					plain
-					size="mini"
-					@click="dateTimePickerVisible = !dateTimePickerVisible"
-				>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
-				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			</span>
+			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 
 			<el-button
 				slot="reference"
@@ -268,46 +240,18 @@ import moment from "moment";
 import { getTypeMap } from "@/api/type";
 import { getUnacceptedCaseList, setCaseList } from "@/api/PI";
 import checkPermission from '@/utils/permission';
+import TimePicker from '@/components/TimePicker';
+import { dateWatcher } from "@/utils/pickerOptions";
 
 export default {
 	name: "PICaseList_unaccepted",
+	components: { TimePicker },
 	data() {
 		return {
 			loading: false,
-			timeTabId: 1,
-			dateTimePickerVisible: false,
 			showResultConfirm: false,
 			showUnacceptedConfirm: false,
-			pickerOptions: {
-				firstDayOfWeek: 1,
-				shortcuts: [
-					{
-						text: "今日",
-						onClick(picker) {
-							const date = moment();
-							picker.$emit("pick", date);
-						},
-					},
-					{
-						text: "昨日",
-						onClick(picker) {
-							const date = moment().subtract(1, "d");
-							picker.$emit("pick", date);
-						}
-					},
-					{
-						text: "前日",
-						onClick(picker) {
-							const date = moment().subtract(2, "d");
-							picker.$emit("pick", date);
-						}
-					}
-				],
-				disabledDate(date) {
-					return moment(date).valueOf() >= moment().endOf("d").valueOf();
-				},
-			},
-			searchDate: moment().startOf("d").subtract(1, "d"),
+			daterange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
 			searchRange: "",
 			zipCodeNow: 0,
 			listQuery: {
@@ -448,38 +392,18 @@ export default {
 	},
 	methods: {
 		checkPermission,
-		dateShortcuts(index) {
-			this.timeTabId = index;
-
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
-			};
-
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
-					break;
-			}
-			this.getList();
-		},
 		getList() {
 			this.loading = true;
-			let date = moment(this.searchDate).format("YYYY-MM-DD");
-			this.searchRange = date;
+			dateWatcher(this.daterange);
+			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
 			this.list = [];
 
 			getUnacceptedCaseList({
 				zipCode: this.listQuery.zipCode,
-				timeStart: date,
-				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 			}).then((response) => {
 				if (response.data.list.length == 0) {
 					this.$message({
