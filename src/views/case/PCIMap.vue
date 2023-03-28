@@ -715,6 +715,7 @@ export default {
 			if(!this.blockGeo_bell[this.listQuery.tenderRound] || this.blockGeo_bell[this.listQuery.tenderRound].length == 0) await this.getBlock();
 			else this.geoJSON.block = JSON.parse(this.blockGeo_bell[this.listQuery.tenderRound]);
 
+			// 獲取PCI
 			getBlockPCI({ 
 				tenderId: tenderRound.tenderId,
 				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode
@@ -735,82 +736,6 @@ export default {
 				await this.focusMap();
 				this.loading = false;
 			}).catch(err => this.loading = false);
-
-			// 載入PCI切塊 GeoJson
-			// getPCIBlock({ 
-			// 	tenderId: tenderRound.tenderId,
-			// 	zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode
-			// }).then(async (response) => {
-			// 	// console.log("getPCIBlock");
-			// 	if(response.data.geoJSON.length == 0) {
-			// 		this.$message({
-			// 			message: "查無資料",
-			// 			type: "error",
-			// 		});
-			// 	} else {
-			// 		const summary = response.data.summary[0];
-			// 		Object.keys(this.options.PCILevel).forEach(key => {
-			// 			const levelText = this.options.PCILevel[key].text;
-			// 			this.options.PCILevel[key].total = summary[levelText];
-			// 		})
-					
-			// 		this.geoJSON.block = JSON.parse(response.data.geoJSON);
-			// 		this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
-			// 		this.dataLayer.PCIBlock.setStyle(feature => {
-			// 			// console.log(feature);
-			// 			const PCISpec = feature.j.PCIValue;
-			// 			let  filterLevel = [];
-			// 			if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
-			// 			else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
-			// 			else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
-			// 				// console.log(level, PCISpec);
-			// 				return PCISpec >= level.range[0] && PCISpec < level.range[1]
-			// 			});
-			// 			// console.log(filterLevel);
-
-			// 			return {
-			// 				strokeColor: '#FFF',
-			// 				strokeWeight: 1,
-			// 				strokeOpacity: 1,
-			// 				fillColor: filterLevel[0][1].color,
-			// 				fillOpacity: filterLevel[0][0] != -1 ? 1 - filterLevel[0][0] * 0.1 : 0.4,
-			// 				zIndex: filterLevel[0][0] != -1 ? 2 : 1
-			// 			}
-			// 		});
-
-			// 		this.dataLayer.PCIBlock.addListener('click', (event) => {
-			// 			this.showContent(event.feature.j, event.latLng);
-			// 		});
-
-			// 		// TODO: 右鍵顯示「正射」 (測試)
-			// 		// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
-			// 		// 	// console.log(event.feature.j);
-			// 		// 	// this.loading = true;
-			// 		// 	const blockId = event.feature.j.blockId;
-			// 		// 	const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
-			// 		// 	const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${blockId}.tif`;
-
-			// 		// 	fromUrl(url).then( async(geoTiffFile) => {
-			// 		// 			const imageSpec = await geoTiffFile.getImage(0);
-			// 		// 			// console.log(imageSpec);
-			// 		// 			const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
-			// 		// 			// console.log(imgSrc);
-
-			// 		// 			let [ west, south, east, north ] = imageSpec.getBoundingBox();
-			// 		// 			[ west, south ] = proj4("EPSG:3826","EPSG:4326", [ west, south ] );
-			// 		// 			[ east, north ] = proj4("EPSG:3826","EPSG:4326", [ east, north ] );
-
-			// 		// 			console.log(west, south, east, north);
-			// 		// 			const imageBounds = { west, south, east, north };
-			// 		// 			new google.maps.GroundOverlay( imgSrc, imageBounds, { map: this.map } );
-			// 		// 			// this.loading = false;
-			// 		// 		}).catch(err => console.log(err));
-			// 		// });
-
-			// 		await this.focusMap();
-			// 		this.loading = false;
-			// 	}
-			// }).catch(err => this.loading = false);
 		},
 		async getBlock() {
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
