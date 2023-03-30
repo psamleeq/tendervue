@@ -244,8 +244,14 @@
 						</span>
 						<span v-else-if="[ 'State' ].includes(column.property)">
 							<el-button v-if="!(row.State & 1)" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
-							<el-button v-else class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
-							<el-tooltip v-if="row.State & 1" effect="dark" :content="row.StateNotes" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
+							<span v-else>
+								<span v-if="(row.State & 4)" style="color: #67C23A">申覆通過</span>
+								<span v-else-if="(row.State & 2)">監造通過</span>
+								<span v-else-if="(row.State & 1)">申覆中</span>
+								<el-tooltip effect="dark" :content="row.StateNotes" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
+								<br>
+								<el-button class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
+							</span>
 						</span>
 						<span v-else>
 							<span>{{ formatter(row, column) }}</span>
