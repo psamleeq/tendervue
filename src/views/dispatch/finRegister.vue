@@ -339,6 +339,40 @@
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<span v-else>
+						<h4>設計數量</h4>
+						<el-table
+							class="taskTable"
+							empty-text="目前沒有資料"
+							:data="row.Content_Plan"
+							border
+							fit
+							highlight-current-row
+							:header-cell-style="{ 'background-color': '#F2F6FC' }"
+							stripe
+							show-summary
+							:summary-method="(param) => getSummaries(param, row.Content_Plan)"
+							style="width: 100%"
+						>
+							<el-table-column type="index" label="序號" width="50" align="center" /> 
+							<el-table-column
+								v-for="(value, key) in detailHeaders[deviceTypeNow]"
+								:key="key"
+								:prop="key"
+								:min-width="tableMinWidth(key)"
+								:label="value.name"
+								align="center"
+								:sortable="value.sortable"
+							>
+								<template slot-scope="{ row: rowSpec, column: colSpec }">
+									<span v-if="['ItemPaint', 'ItemType'].includes(colSpec.property)">{{ options[`${colSpec.property}Map`][rowSpec[colSpec.property]].name }}</span>
+									<span v-else>{{ rowSpec[colSpec.property] }}</span>
+								</template>
+							</el-table-column>
+						</el-table>
+
+						<el-divider />
+
+						<h4>實際數量</h4>
 						<el-table
 							class="taskTable"
 							empty-text="目前沒有資料"
