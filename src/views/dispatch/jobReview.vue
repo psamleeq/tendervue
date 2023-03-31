@@ -310,7 +310,7 @@
 				<el-input v-model="revokeTextarea" class="revokeReasonNote" type="textarea" :rows="2" placeholder="請輸入備註" />
 			</div>
 			<span slot="footer" class="footer-btns">
-				<el-button @click="showRevokeConfirm = false; getList();">取消</el-button>
+				<el-button @click="showRevokeConfirm = false; revokeTextarea=''; getList();">取消</el-button>
 				<el-button type="primary" @click="removeDispatch()">確定</el-button>
 			</span>
 		</el-dialog>
