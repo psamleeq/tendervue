@@ -115,6 +115,14 @@ export function getJobTicket(query) {
 	})
 }
 
+export function getJobTicketSort(query) {
+	return request({
+		url: '/dispatch/jobTicketSort',
+		method: 'get',
+		params: query
+	})
+}
+
 export function confirmJobTicket(data) {
 	return request({
 		url: '/dispatch/jobConfirm',
