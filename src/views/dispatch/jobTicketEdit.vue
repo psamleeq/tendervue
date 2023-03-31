@@ -2,7 +2,12 @@
 	<div class="app-container job-ticket-edit" v-loading="loading">
 		<h2>修改派工單 {{ listQuery.orderSN }}</h2>
 
-		<h3>已派工案件</h3>
+		<h3>已派工案件
+			<el-button-group>
+				<el-button type="primary" size="mini" icon="el-icon-sort" :disabled="tableSelect.length == 0" @click="caseSort()">排序(距離)</el-button>
+				<el-button type="primary" size="mini" plain :disabled="tableSelect.length == 0" @click="showMapViewer()">檢視</el-button>
+			</el-button-group>
+		</h3>
 		<el-table
 			ref="selectTable"
 			empty-text="目前沒有資料"
@@ -242,6 +247,11 @@
 
 		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
 
+		<!-- Dialog: 地圖檢視 -->
+		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="800px">
+			<map-viewer :map.sync="map" style="height: 500px"/>
+		</el-dialog>
+
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
 			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" :deviceTypeNow="deviceTypeNow" />
@@ -256,23 +266,26 @@
 <script>
 import moment from "moment";
 import { getGuildMap } from "@/api/type";
-import { getJobTicket, getFinRegister, editJobTicket, getTaskReal } from "@/api/dispatch";
+import { getJobTicket, getJobTicketSort, getFinRegister, editJobTicket, getTaskReal } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import JobTicketPdf from "@/components/JobTicketPdf";
 import CaseDetail from "@/components/CaseDetail";
 // import Pagination from "@/components/Pagination";
+import MapViewer from "@/components/MapViewer";
 
 export default {
 	name: "jobTicketEdit",
-	components: { JobTicketPdf, CaseDetail },
+	components: { JobTicketPdf, CaseDetail, MapViewer },
 	data() {
 		return {
 			loading: false,
+			dialogMapVisible: true,
 			showDetailDialog: true,
 			screenWidth: window.innerWidth,
 			searchRange: "",
 			deviceTypeNow: 1,
 			contractorNow: 0,
+			map: {},
 			listQuery: {
 				deviceType: 1,
 				contractor: null,
@@ -431,9 +444,13 @@ export default {
 	},
 	watch: { },
 	async created() {
+		// marker
+		this.markers = [];
+
 		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
 	},
 	mounted() {
+		this.dialogMapVisible = false;
 		this.showDetailDialog = false;
 
 		if (this.$route.params.deviceType && this.$route.params.contractor && this.$route.params.orderSN ) {
@@ -572,6 +589,77 @@ export default {
 		showDetail(row) {
 			this.loading = true;
 			this.$refs.caseDetail.getDetail(row);
+		},
+		caseSort() {
+			const caseList = this.tableSelect.map(caseSpec => (caseSpec.SerialNo));
+			getJobTicketSort({ caseList }).then(response => {
+				const caseSortedList = response.data.list;
+				this.tableSelect.forEach(caseSpec => {
+					const index = caseSortedList.indexOf(caseSpec.SerialNo);
+					this.$set(caseSpec, "OrderIndex", index + 1);
+					this.$set(caseSpec, "OrderIndexNew", index + 1);
+				})
+				this.tableSelect.sort((a, b) => (a.OrderIndexNew - b.OrderIndex));
+
+				this.resetOrder();
+
+				// TODO: 測試地圖展示
+				// this.showMapViewer();
+			}).catch(err => console.log(err));
+		},
+		showMapViewer() {
+			// console.log("showMap");
+			// icon格式
+			this.iconStyle = {
+				ylw_blank: {
+					url: "https://maps.google.com/mapfiles/kml/paddle/ylw-blank.png",
+					anchor: new google.maps.Point(15, 30),
+					scaledSize: new google.maps.Size(30, 30)
+				},
+				grn_pushpin: {
+					url: "https://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png",
+					anchor: new google.maps.Point(10, 35),
+					scaledSize: new google.maps.Size(35, 35)
+				}
+			}
+
+			for(const markers of this.markers) markers.setMap(null);
+			this.markers = [];
+			const bounds = new google.maps.LatLngBounds();
+
+			this.tableSelect.forEach(caseSpec => {
+				const position =  { lat: Number(caseSpec.CoordinateY), lng: Number(caseSpec.CoordinateX) };
+				const marker = new google.maps.Marker({
+					title: `${caseSpec.OrderIndex}: ${caseSpec.CaseNo}`,
+					isPin: false,
+					map: this.map,
+					position,
+					icon: this.iconStyle.ylw_blank
+				})
+
+				// marker.addListener('click', (event) => {
+				// 	if(!marker.isPin) {
+				// 		marker.isPin = true;
+
+						marker.setLabel({
+							text: `${caseSpec.OrderIndex}`,
+							color: '#409EFF',
+							fontSize: '24px',
+							fontWeight: 'bold'
+						});
+				// 		marker.setIcon(this.iconStyle.grn_pushpin);
+				// 	} else {
+				// 		marker.isPin = false;
+				// 		marker.setLabel("");
+				// 		marker.setIcon(this.iconStyle.ylw_blank);
+				// 	}
+				// });
+
+				bounds.extend(position);
+				this.markers.push(marker);
+			})
+			this.map.fitBounds(bounds);
+			this.dialogMapVisible = true;
 		},
 		formatDate(time) {
 			return moment(time).format("YYYY-MM-DD");
