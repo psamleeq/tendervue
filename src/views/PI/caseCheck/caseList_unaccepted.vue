@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container unaccepted-PI-case-list" v-loading="loading">
-		<h2>不合理案件申覆</h2>
+		<h2>申覆稽核</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />

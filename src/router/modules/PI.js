@@ -30,7 +30,7 @@ const PIRouter = {
 					component: () => import('@/views/PI/caseCheck/caseList'),
 					name: 'PICaseList',
 					meta: {
-						title: '案件列表',
+						title: '案件稽核',
 						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor']
 					}
 				},
@@ -39,9 +39,8 @@ const PIRouter = {
 					component: () => import('@/views/PI/caseCheck/caseList_unaccepted'),
 					name: 'PICaseList_unaccepted',
 					meta: {
-						title: '不合理案件申覆',
-						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor'],
-						isNew: true
+						title: '申覆稽核(不合理案件)',
+						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor']
 					}
 				},
 				{
