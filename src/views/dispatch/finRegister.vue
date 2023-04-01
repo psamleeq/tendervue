@@ -339,8 +339,9 @@
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<span v-else>
-						<h4>設計數量</h4>
+						<h4 v-if="deviceTypeNow == 3">設計數量</h4>
 						<el-table
+							v-if="deviceTypeNow == 3"
 							class="taskTable"
 							empty-text="目前沒有資料"
 							:data="row.Content_Plan"
@@ -370,9 +371,9 @@
 							</el-table-column>
 						</el-table>
 
-						<el-divider />
+						<el-divider v-if="deviceTypeNow == 3" />
 
-						<h4>實際數量</h4>
+						<h4 v-if="deviceTypeNow == 3">實際數量</h4>
 						<el-table
 							class="taskTable"
 							empty-text="目前沒有資料"
@@ -382,7 +383,7 @@
 							highlight-current-row
 							:header-cell-style="{ 'background-color': '#F2F6FC' }"
 							stripe
-							show-summary
+							:show-summary="deviceTypeNow == 3"
 							:summary-method="(param) => getSummaries(param, row.Content)"
 							style="width: 100%"
 						>
@@ -517,7 +518,7 @@
 						highlight-current-row
 						:header-cell-style="{ 'background-color': '#F2F6FC' }"
 						stripe
-						show-summary
+						:show-summary="deviceTypeNow == 3"
 						:summary-method="(param) => getSummaries(param, rowActive.Content)"
 						style="width: 100%"	
 					>
@@ -578,7 +579,7 @@
 									</span>
 									<span v-else-if="['ItemPaint', 'ItemType'].includes(column.property)">
 										<span v-if="row.isAdd">
-											<el-select v-model.number="row[column.property]" placeholder="請選擇" size="mini" popper-class="type-select">
+											<el-select v-model.number="row[column.property]" placeholder="請選擇" size="mini" popper-class="type-select" style="width: 120px">
 												<el-option v-for="(val, id) in options[`${column.property}Map`]" :key="id" :value="Number(id)" :label="val.name" />
 											</el-select>
 										</span>
@@ -979,7 +980,7 @@ export default {
 		},
 		tableMinWidth(key) {
 			if(this.deviceTypeNow == 3) return ['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30;
-			else if(this.deviceTypeNow == 4) return ['MillingFormula'].includes(key) ? 90 : ['MillingArea'].includes(key) ? 20 : 50;
+			else if(this.deviceTypeNow == 4) return ['MillingFormula'].includes(key) ? 90 : ['MillingArea'].includes(key) ? 20 : 55;
 			else return null;
 		},
 		detailAmount(content) {
