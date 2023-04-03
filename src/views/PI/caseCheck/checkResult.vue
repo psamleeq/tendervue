@@ -40,7 +40,9 @@
 					</div>
 					<div class="card-panel-description">
 						<div class="card-panel-text">案件數</div>
-						<div class="card-panel-num">{{ caseTotal }}</div>
+						<div class="card-panel-num">{{ caseTotal }}
+							<span class="fail-num"> ({{ checkNum.unaccepted.pass }}/{{ checkNum.unaccepted.total }})</span>
+						</div>
 					</div>
 				</div>
 			</el-col>
@@ -212,6 +214,7 @@ export default {
 				}
 			},
 			checkNum: {
+				unaccepted: { pass: 0, total: 0 },
 				SV: { 
 					AC: { check: 0, fail: 0, total: 0 }, 
 					facility: { check: 0, fail: 0, total: 0 } 
@@ -312,6 +315,7 @@ export default {
 			this.searchRange = startDate + " - " + endDate;
 			this.resultList = [];
 			this.checkNum = {
+				unaccepted: { pass: 0, total: 0 },
 				SV: { 
 					AC: { check: 0, fail: 0, total: 0 }, 
 					facility: { check: 0, fail: 0, total: 0 } 

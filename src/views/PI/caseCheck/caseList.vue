@@ -68,7 +68,7 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">案件數</div>
 						<div class="card-panel-num">{{ list.length }}
-							<span class="fail-num">({{ checkNum.unaccepted }})</span>
+							<span class="fail-num"> ({{ checkNum.unaccepted.pass }}/{{ checkNum.unaccepted.total }})</span>
 						</div>
 					</div>
 				</div>
@@ -542,7 +542,10 @@ export default {
 		},
 		checkNum() {
 			return { 
-				unaccepted: this.list.filter(l => l.State > 0).length,
+				unaccepted: {
+					pass: this.list.filter(l =>  (l.State & 2) && (l.State & 4)).length,
+					total: this.list.filter(l => l.State > 0).length
+				},
 				SV: { 
 					AC: { 
 						check: this.list.filter(l => l.SVCheck != 0 && l.DeviceType == 1).length, 
