@@ -208,6 +208,7 @@
 						<span v-if="row.State & 1">
 							<i v-if="row.State & 2" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
 							<i v-else-if="row.State & 32" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
+							<span v-else>監造審核中</span>
 							<el-button v-if="checkPermission(['PIcase.inspector'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 						</span>
 						<span v-else> - </span>
@@ -226,6 +227,7 @@
 						<span v-if="row.State & 2">
 							<i v-if="row.State & 4" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
 							<i v-else-if="row.State & 64" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
+							<span v-else>機關審核中</span>
 							<el-button v-if="checkPermission(['PIcase.supervisor'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 						</span>
 						<span v-else> - </span>
@@ -509,6 +511,8 @@ export default {
 			this.rowActive = JSON.parse(JSON.stringify(row));
 			this.rowActive.resultType = result;
 			if(result == -1) {
+				if(this.rowActive.State & 2) this.rowActive.State -= 2;
+				if(this.rowActive.State & 4) this.rowActive.State -= 4;
 				if(this.rowActive.State & 32) this.rowActive.State -= 32;
 				if(this.rowActive.State & 64) this.rowActive.State -= 64;
 			} else this.rowActive.State += result;

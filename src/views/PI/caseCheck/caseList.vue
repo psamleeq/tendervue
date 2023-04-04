@@ -273,7 +273,7 @@
 			</el-table-column>
 			<el-table-column label="監造抽查" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="!isArchive && (row.State & 32 || row.State & 64) && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
+					<template v-if="!isArchive && (row.State == 0 || row.State & 32 || row.State & 64) && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
 						<el-button-group>
 							<el-button v-for="(name, type) in options.resultType" :key="type" :type="type == 1 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, 'SVCheck', Number(type))">{{ name }}</el-button>
 						</el-button-group>
@@ -290,7 +290,7 @@
 			</el-table-column>
 			<el-table-column label="機關抽查" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="!isArchive && (row.State & 32 || row.State & 64) && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
+					<template v-if="!isArchive && (row.State == 0 || row.State & 32 || row.State & 64) && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
 						<el-button-group>
 							<el-button v-for="(name, type) in options.resultType" :key="type" :type="type == 1 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, 'OrganCheck', Number(type))">{{ name }}</el-button>
 						</el-button-group>
