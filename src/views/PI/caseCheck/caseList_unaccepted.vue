@@ -73,8 +73,56 @@
 				</div>
 			</el-col>
 		</el-row>
+		<br>
 
-		<br />
+		<!-- 審核結果列表 -->
+		<el-table
+			empty-text="目前沒有資料"
+			:data="resultList"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
+			<el-table-column label="序號" type="index" width="100" align="center" />
+			<el-table-column
+				v-for="(value, key) in resultHeader"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
+				:formatter="formatter"
+				:sortable="value.sortable"
+			>
+				<template slot-scope="{ row, column }">
+					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
+					<span v-else-if="column.property == 'StateNotes'">{{ row.StateNotes.Firm || "-" }}</span>
+					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column label="不通過原因(監造)" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.State & 32">{{ row.StateNotes.SV }}</span>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+			<el-table-column label="不通過原因(機關)" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.State & 64">{{ row.StateNotes.Organ }}</span>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+
+			<!-- NOTE: 展示用，還未實作 -->
+			<el-table-column label="操作" align="center">
+				<template slot-scope="{ row }">
+					<el-button class="btn-action" type="info" plain size="mini" round disabled @click="showMap(row)">地圖</el-button>
+				</template>
+			</el-table-column>
+		</el-table>
+		<br>
 
 		<!-- 案件列表 -->
 		<el-table
@@ -125,7 +173,7 @@
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
 					<span v-else-if="checkPermission(['PIcase.editor']) && [ 'State', 'StateNotes' ].includes(column.property)">
 						<span v-if="[ 'StateNotes' ].includes(column.property) && row.edit">
-							<input v-if="[ 'StateNotes' ].includes(column.property)" v-model="row[column.property]" />
+							<input v-if="[ 'StateNotes' ].includes(column.property)" v-model="row.StateNotes.Firm" />
 							<el-button type="text" @click="rowActive = row; setResult();">
 								<i class="el-icon-success" />
 							</el-button>
@@ -135,7 +183,8 @@
 						</span>
 						<span v-else-if="[ 'State' ].includes(column.property)">
 							<el-button v-if="!(row.State & 1)" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
-							<el-button v-else class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
+							<el-button v-else-if="row.State == 1" class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
+							<span v-else> - </span>
 						</span>
 						<span v-else>
 							<span>{{ formatter(row, column) }}</span>
@@ -147,35 +196,37 @@
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="監造審核" width="100px" align="center">
+			<el-table-column label="監造審核" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="!(row.State & 2) && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
+					<template v-if="(!(row.State & 2) && !(row.State & 32)) && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
 						<el-button-group>
-							<el-button type="success" size="mini" @click="beforeSetResult(row, 2)">通過</el-button>
+							<!-- <el-button type="success" size="mini" @click="beforeSetResult(row, 2)">通過</el-button> -->
+							<el-button v-for="(name, type) in options.resultType.SV" :key="type" :type="type == 2 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
 						</el-button-group>
 					</template>
 					<template v-else>
 						<span v-if="row.State & 1">
 							<i v-if="row.State & 2" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-							<i v-else-if="!(row.State & 2)" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
-							<el-button v-if="checkPermission(['PIcase.inspector'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -2)">撤銷</el-button>
+							<i v-else-if="row.State & 32" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
+							<el-button v-if="checkPermission(['PIcase.inspector'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 						</span>
 						<span v-else> - </span>
 					</template>
 				</template>
 			</el-table-column>
-			<el-table-column label="機關審核" width="100px" align="center">
+			<el-table-column label="機關審核" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="(row.State & 2) && !(row.State & 4) && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
+					<template v-if="(row.State & 2) && (!(row.State & 4) && !(row.State & 64)) && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
 						<el-button-group>
-							<el-button type="success" size="mini" @click="beforeSetResult(row, 4)">通過</el-button>
+							<!-- <el-button type="success" size="mini" @click="beforeSetResult(row, 4)">通過</el-button> -->
+							<el-button v-for="(name, type) in options.resultType.Organ" :key="type" :type="type == 4 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
 						</el-button-group>
 					</template>
 					<template v-else>
 						<span v-if="row.State & 2">
 							<i v-if="row.State & 4" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-							<i v-else-if="!(row.State & 4)" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
-							<el-button v-if="checkPermission(['PIcase.supervisor'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -4)">撤銷</el-button>
+							<i v-else-if="row.State & 64" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
+							<el-button v-if="checkPermission(['PIcase.supervisor'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 						</span>
 						<span v-else> - </span>
 					</template>
@@ -225,8 +276,16 @@
 		>	
 			<span slot="title">確認提交 {{ rowActive.UploadCaseNo }}的審核結果？</span>
 			<div>來源案號: {{ rowActive.CaseNo }}</div>
+			<div v-if="rowActive.StateNotes">廠商判定原因: {{ rowActive.StateNotes.Firm || "-" }}</div>
 			<div v-if="rowActive.resultType < 0" style="color: #F56C6C" >撤銷審核</div>
-			<div v-else>審核結果: <span style="color: #67C23A">通過</span></div>
+			<div v-else>審核結果: 
+				<span v-if="rowActive.State & 2 || rowActive.State & 4" style="color: #67C23A">通過</span>
+				<span v-else-if="rowActive.State & 32 || rowActive.State & 64" style="color: #F56C6C">不通過</span>
+			</div>
+			<div v-if="rowActive.State & 32 || rowActive.State & 64">原因: 
+				<el-input v-if="rowActive.State & 64" v-model="rowActive.StateNotes.Organ" />
+				<el-input v-else-if="rowActive.State & 32" v-model="rowActive.StateNotes.SV" />
+			</div>
 			<span slot="footer" class="footer-btns">
 				<el-button @click="showResultConfirm = false; getList();">取消</el-button>
 				<el-button type="primary" @click="setResult()">確定</el-button>
@@ -261,6 +320,10 @@ export default {
 				UploadCaseNo: {
 					name: "案件編號",
 					sortable: true
+				},
+				StateNotes: {
+					name: "判定原因",
+					sortable: false
 				}
 			},
 			headers: {
@@ -365,6 +428,16 @@ export default {
 					2: "短期改善", //中度
 					3: "立即改善", //重度
 				},
+				resultType: {
+					SV: {
+						2: "通過",
+						32: "不通過"
+					},
+					Organ: {
+						4: "通過",
+						64: "不通過"
+					}
+				},
 			}
 		};
 	},
@@ -372,12 +445,12 @@ export default {
 		checkNum() {
 			return { 
 				SV: { 
-					check: this.list.filter(l => l.State & 2 ).length, 
-					fail: this.list.filter(l => !(l.State & 2)).length
+					check: this.list.filter(l => l.State & 2).length, 
+					fail: this.list.filter(l => l.State & 32).length
 				}, 
 				Organ: { 
 					check: this.list.filter(l =>  l.State & 4).length, 
-					fail: this.list.filter(l => !(l.State & 4)).length
+					fail: this.list.filter(l => l.State & 64).length
 				},
 				pass: this.list.filter(l =>  (l.State & 2) && (l.State & 4)).length
 			};
@@ -414,11 +487,16 @@ export default {
 					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.list.forEach(l => {
+						for(const key of ["Firm", "SV", "Organ"]) {
+							if(!l.StateNotes.hasOwnProperty(key)) this.$set(l.StateNotes, key, "");
+						}
+
 						this.$set(l, "showSVCheck", false);
 						this.$set(l, "showOrganCheck", false);
 						this.$set(l, "edit", false);
 					})
 				}
+				this.resultList = this.list.filter(l => (l.State & 32) || (l.State & 64));
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
@@ -430,8 +508,11 @@ export default {
 		beforeSetResult(row, result) {
 			this.rowActive = JSON.parse(JSON.stringify(row));
 			this.rowActive.resultType = result;
-			this.rowActive.State += result;
-			if(!(this.rowActive.State & 2)) this.rowActive.State = 1;
+			if(result == -1) {
+				if(this.rowActive.State & 32) this.rowActive.State -= 32;
+				if(this.rowActive.State & 64) this.rowActive.State -= 64;
+			} else this.rowActive.State += result;
+
 			this.showResultConfirm = true;
 		},
 		setResult() {
@@ -447,7 +528,7 @@ export default {
 				BrokeType: this.rowActive.BrokeType,
 				PCIValue: this.rowActive.PCIValue,
 				State: this.rowActive.State,
-				StateNotes: this.rowActive.StateNotes
+				StateNotes: JSON.stringify(this.rowActive.StateNotes)
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -467,6 +548,7 @@ export default {
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
 			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
 			else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];
+			else if(column.property == 'StateNotes') return row.StateNotes.Firm || "-";
 			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
 			else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
@@ -486,10 +568,11 @@ export default {
 				l.organAssign =  l.organAssign == 1 ? "是" : "";
 				l.BType = this.options.BType[l.BType];
 				l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
-				l.SVCheck = (l.State & 2) ? "V" : "-";
-				l.OrganCheck = (l.State & 4) ? "V" : "-";
-				l.Pass = (l.State & 2) && (l.State & 4) ? "V" : "-";
+				l.SVCheck = (l.State & 2) ? "V" : (l.State & 32) ? "X" : "-";
+				l.OrganCheck = (l.State & 4) ? "V" : (l.State & 64) ? "X" :  "-";
+				l.Pass = (l.State & 2) && (l.State & 4) ? "V" :  (l.State & 32) || (l.State & 64) ? "X" : "-";
 				l.State = (l.State & 1) ? "V" : "-";
+				l.StateNotes = l.StateNotes.Firm;
 				return l
 			}) 
 			const data = this.formatJson(filterVal, dataList);

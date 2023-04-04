@@ -366,8 +366,8 @@ export default {
 			this.showDlConfirm = false;
 			if(list == undefined) list = this.resultList;
 
-			const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
-			const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
+			const tHeader = Object.values(this.headers).map(value => value.name).concat(["不合理案件", "監造抽查", "機關抽查", "備註"]);
+			const filterVal = Object.keys(this.headers).concat(["State", "SVCheck", "OrganCheck", "Note"]);
 			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
 			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
 			const dataList = JSON.parse(JSON.stringify(list)).map(l => {
@@ -378,6 +378,7 @@ export default {
 				// l.BrokeType = this.options.BrokeType[l.BrokeType];
 				l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
 				l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
+				l.State =  (l.State & 2) && (l.State && 4) ? "是" : "";
 
 				const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
 				if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];

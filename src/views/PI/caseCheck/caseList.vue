@@ -118,8 +118,7 @@
 				</div>
 			</el-col>
 		</el-row>
-
-		<br />
+		<br>
 
 		<!-- 抽查結果列表 -->
 		<el-table
@@ -245,12 +244,21 @@
 						<span v-else-if="[ 'State' ].includes(column.property)">
 							<el-button v-if="!(row.State & 1)" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
 							<span v-else>
-								<span v-if="(row.State & 4)" style="color: #67C23A">申覆通過</span>
-								<span v-else-if="(row.State & 2)">監造通過</span>
-								<span v-else-if="(row.State & 1)">申覆中</span>
-								<el-tooltip effect="dark" :content="row.StateNotes" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
+								<span v-if="(row.State & 2) && (row.State & 4)" style="color: #67C23A">申覆通過</span>
+								<span v-else-if="row.State & 64" style="color: #F56C6C">機關不同意</span>
+								<span v-else-if="row.State & 32" style="color: #F56C6C">監造不同意</span>
+								<span v-else-if="row.State & 2">監造通過</span>
+								<span v-else-if="row.State & 1">申覆中</span>
+								<el-tooltip effect="dark" placement="bottom">
+									<span slot="content">
+										<span v-if="row.State & 64">{{ row.StateNotes.Organ }}</span>
+										<span v-else-if="row.State & 32">{{ row.StateNotes.SV }}</span>
+										<span v-else>{{ row.StateNotes.Firm }}</span>
+									</span>
+									<i class="icon-tooltip el-icon-warning" />
+								</el-tooltip>
 								<br>
-								<el-button class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
+								<el-button v-if="row.State == 1" class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
 							</span>
 						</span>
 						<span v-else>
@@ -265,7 +273,7 @@
 			</el-table-column>
 			<el-table-column label="監造抽查" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="!isArchive && !row.State && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
+					<template v-if="!isArchive && (row.State & 32 || row.State & 64) && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
 						<el-button-group>
 							<el-button v-for="(name, type) in options.resultType" :key="type" :type="type == 1 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, 'SVCheck', Number(type))">{{ name }}</el-button>
 						</el-button-group>
@@ -282,7 +290,7 @@
 			</el-table-column>
 			<el-table-column label="機關抽查" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="!isArchive && !row.State && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
+					<template v-if="!isArchive && (row.State & 32 || row.State & 64) && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
 						<el-button-group>
 							<el-button v-for="(name, type) in options.resultType" :key="type" :type="type == 1 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, 'OrganCheck', Number(type))">{{ name }}</el-button>
 						</el-button-group>
@@ -321,7 +329,7 @@
 				<div style="color: #F56C6C">(將會清除抽查結果。)</div>
 				<br>
 				<div>原因: 
-					<el-input v-model="rowActive.StateNotes" />
+					<el-input v-model="rowActive.StateNotes.Firm" />
 				</div>
 			</span>
 			<span slot="footer" class="footer-btns">
@@ -632,6 +640,10 @@ export default {
 					this.list = response.data.list;
 					this.resultList = response.data.resultList;
 					this.list.forEach(l => {
+						for(const key of ["Firm", "SV", "Organ"]) {
+							if(!l.StateNotes.hasOwnProperty(key)) this.$set(l.StateNotes, key, "");
+						}
+
 						this.$set(l, "showSVCheck", false);
 						this.$set(l, "showOrganCheck", false);
 						this.$set(l, "edit", false);
@@ -678,7 +690,7 @@ export default {
 				BrokeType: this.rowActive.BrokeType,
 				PCIValue: this.rowActive.PCIValue,
 				State: this.rowActive.State,
-				StateNotes: this.rowActive.StateNotes,
+				StateNotes: JSON.stringify(this.rowActive.StateNotes),
 				SVCheck: SVCheck,
 				OrganCheck: OrganCheck
 			}).then(response => {
@@ -724,11 +736,11 @@ export default {
 					l.CaseDate = this.formatTime(l.CaseDate);
 					l.DeviceType = this.options.DeviceType[l.DeviceType];
 					l.organAssign =  l.organAssign == 1 ? "是" : "";
-					l.State =  l.State > 0 ? "是" : "";
 					l.BType = this.options.BType[l.BType];
 					// l.BrokeType = this.options.BrokeType[l.BrokeType];
 					l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
 					l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
+					l.State =  (l.State & 2) && (l.State && 4) ? "是" : "";
 
 					const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
 					if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];
