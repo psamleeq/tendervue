@@ -68,7 +68,11 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">案件數</div>
 						<div class="card-panel-num">{{ list.length }}
-							<span class="fail-num"> ({{ checkNum.unaccepted.pass }}/{{ checkNum.unaccepted.total }})</span>
+							<div class="fail-num"> 
+								({{ checkNum.unaccepted.pass }} <el-tooltip class="item" effect="dark" content="不合理案件申覆通過數(PI1.1)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
+								/
+								{{ checkNum.unaccepted.total }} <el-tooltip class="item" effect="dark" content="廠商申覆不合理案件數" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>)
+							</div>
 						</div>
 					</div>
 				</div>
