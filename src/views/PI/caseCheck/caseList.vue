@@ -218,7 +218,7 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
-					<span v-else-if="!isArchive && checkPermission(['PIcase.editor']) && [ 'organAssign', 'BType', 'BrokeType', 'BrokeStatus', 'PCIValue', 'State' ].includes(column.property)">
+					<span v-else-if="!isArchive && checkPermission(['PIcase.editor']) && [ 'organAssign', 'BType', 'BrokeType', 'BrokeStatus', 'PCIValue' ].includes(column.property)">
 						<span v-if="row.edit">
 							<span v-if="[ 'organAssign' ].includes(column.property)">
 								<el-checkbox v-model.number="row[column.property]" :true-label="1" :false-label="0" />
@@ -245,26 +245,6 @@
 								<i class="el-icon-error" />
 							</el-button>
 						</span>
-						<span v-else-if="[ 'State' ].includes(column.property)">
-							<el-button v-if="!(row.State & 1)" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
-							<span v-else>
-								<span v-if="(row.State & 2) && (row.State & 4)" style="color: #67C23A">申覆通過</span>
-								<span v-else-if="row.State & 64" style="color: #F56C6C">機關不同意</span>
-								<span v-else-if="row.State & 32" style="color: #F56C6C">監造不同意</span>
-								<span v-else-if="row.State & 2">監造通過</span>
-								<span v-else-if="row.State & 1">申覆中</span>
-								<el-tooltip effect="dark" placement="bottom">
-									<span slot="content">
-										<span v-if="row.State & 64">{{ row.StateNotes.Organ }}</span>
-										<span v-else-if="row.State & 32">{{ row.StateNotes.SV }}</span>
-										<span v-else>{{ row.StateNotes.Firm }}</span>
-									</span>
-									<i class="icon-tooltip el-icon-warning" />
-								</el-tooltip>
-								<br>
-								<el-button v-if="row.State == 1" class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
-							</span>
-						</span>
 						<span v-else>
 							<span>{{ formatter(row, column) }}</span>
 							<el-link @click="row.edit = true" style="margin-left: 5px">
@@ -273,6 +253,29 @@
 						</span>
 					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column label="不合理案件" width="160px" align="center">
+				<template slot-scope="{ row }">
+					<el-button v-if="checkPermission(['PIcase.editor']) && !(row.State & 1) && row.SVCheck == 0 && row.OrganCheck == 0" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
+					<span v-else>
+						<span v-if="(row.State & 2) && (row.State & 4)" style="color: #67C23A">申覆通過</span>
+						<span v-else-if="row.State & 64" style="color: #F56C6C">機關不同意</span>
+						<span v-else-if="row.State & 32" style="color: #F56C6C">監造不同意</span>
+						<span v-else-if="row.State & 2">監造通過</span>
+						<span v-else-if="row.State & 1">申覆中</span>
+						<span v-else> - </span>
+						<el-tooltip v-if="row.State > 0" effect="dark" placement="bottom">
+							<span slot="content">
+								<span v-if="row.State & 64">{{ row.StateNotes.Organ }}</span>
+								<span v-else-if="row.State & 32">{{ row.StateNotes.SV }}</span>
+								<span v-else>{{ row.StateNotes.Firm }}</span>
+							</span>
+							<i class="icon-tooltip el-icon-warning" />
+						</el-tooltip>
+						<br>
+						<el-button v-if="checkPermission(['PIcase.editor']) && row.State == 1" class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
+					</span>
 				</template>
 			</el-table-column>
 			<el-table-column label="監造抽查" width="160px" align="center">
@@ -470,10 +473,6 @@ export default {
 				PCIValue: {
 					name: "PCI",
 					sortable: false
-				},
-				State: {
-					name: "不合理案件",
-					sortable: false
 				}
 			},
 			resultList: [],
@@ -595,8 +594,9 @@ export default {
 	methods: {
 		checkPermission,
 		tableRowClassName({row, rowIndex}) {
-			if (row.State > 0) return 'mark-row';
-			return '';
+			if ((row.State & 2) && (row.State & 4)) return 'unaccepted-row';
+			else if (row.State > 0) return 'mark-row';
+			else return '';
 		},
 		dateShortcuts(index) {
 			this.timeTabId = index;
@@ -711,7 +711,7 @@ export default {
 			})
 		},
 		formatter(row, column) {
-			if([ 'organAssign', 'State' ].includes(column.property)) return row[column.property] == 1 ? '是' : '-';
+			if([ 'organAssign' ].includes(column.property)) return row[column.property] == 1 ? '是' : '-';
 			else if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
 			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
@@ -899,10 +899,14 @@ export default {
 		padding: 0 10px
 		text-align: left
 	.el-table
-		.mark-row 
+		.mark-row
 			background: #EBEEF5
-			&.hover-row > td
-				background-color: initial !important
+			&:hover
+				background: #EBEEF5
+		.unaccepted-row
+			background: rgb(253, 226, 226)
+			&:hover
+				background: rgb(253, 226, 226)
 	.btn-revoke
 		padding: 5px 10px
 		margin-left: 5px

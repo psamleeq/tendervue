@@ -184,7 +184,7 @@
 						<span v-else-if="[ 'State' ].includes(column.property)">
 							<el-button v-if="!(row.State & 1)" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
 							<el-button v-else-if="row.State == 1" class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
-							<span v-else> - </span>
+							<i v-else class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
 						</span>
 						<span v-else>
 							<span>{{ formatter(row, column) }}</span>
@@ -193,6 +193,7 @@
 							</el-link>
 						</span>
 					</span>
+					<i v-else-if="[ 'State' ].includes(column.property)" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
