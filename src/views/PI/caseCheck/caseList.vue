@@ -901,12 +901,12 @@ export default {
 	.el-table
 		.mark-row
 			background: #EBEEF5
-			&:hover
-				background: #EBEEF5
 		.unaccepted-row
 			background: rgb(253, 226, 226)
-			&:hover
-				background: rgb(253, 226, 226)
+		.el-table__row:hover > td
+			background: inherit
+		.el-button--danger
+			padding: 7px 9px
 	.btn-revoke
 		padding: 5px 10px
 		margin-left: 5px

@@ -210,7 +210,7 @@
 							<i v-if="row.State & 2" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
 							<i v-else-if="row.State & 32" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
 							<span v-else>監造審核中</span>
-							<el-button v-if="checkPermission(['PIcase.inspector'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+							<el-button v-if="checkPermission(['PIcase.inspector']) && (!(row.State & 4) && !(row.State & 64))" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 						</span>
 						<span v-else> - </span>
 					</template>
@@ -433,12 +433,12 @@ export default {
 				},
 				resultType: {
 					SV: {
-						2: "通過",
-						32: "不通過"
+						2: "同意",
+						32: "反對"
 					},
 					Organ: {
-						4: "通過",
-						64: "不通過"
+						4: "同意",
+						64: "反對"
 					}
 				},
 			}
