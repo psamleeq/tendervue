@@ -1114,7 +1114,8 @@ export default {
 			return Object.assign(restoredImgRegularFilter, this.imgTypePlus, this.imgNote)
 		},
 		restoredImgMapFilter() {
-			return this.options.restoredImgMap.filter(image => !Object.keys(this.imgTypePlus).includes(String(image.Id)) && (image.DeviceType == 0 || image.DeviceType == this.deviceTypeNow) );		
+			const mergeObj =  { ...this.imgTypePlus, ...this.imgNote };
+			return this.options.restoredImgMap.filter(image => !Object.keys(mergeObj).includes(String(image.Id)) && (image.DeviceType == 0 || image.DeviceType == this.deviceTypeNow) );		
 		},
 		handleChange(file, fileList, key = this.imgUploadKey) {
 			// console.log(file, fileList);
