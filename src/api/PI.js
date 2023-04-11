@@ -57,3 +57,13 @@ export function getCaseCount(query) {
 		params: query
 	})
 }
+
+
+//保固案件列表
+export function getCaseWarrantyList(query) {
+	return request({
+		url: 'PI/caseWarrantyList',
+		method: 'get',
+		params: query
+	})
+}

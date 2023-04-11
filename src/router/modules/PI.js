@@ -136,6 +136,15 @@ const PIRouter = {
 				roles: ['PIcase.analyst']
 			}
 		},
+		{
+			path: 'caseWarrantyList',
+			component: () => import('@/views/PI/caseWarrantyList'),
+			name: 'caseWarrantyList',
+			meta: { 
+				title: '保固案件列表', 
+				roles: ['PIcase.analyst']
+			}
+		},
 	]
 }
 export default PIRouter
