@@ -1207,7 +1207,7 @@ export default {
 
 			this.imgObj = {};
 			this.imgTypePlus = {};
-			for(const imgId in row.Image) this.imgTypePlus[imgId] = { name: this.restoredImgMapFilter().filter(img => img.Id == imgId)[0].ImgName, isAdd: true };
+			for(const imgId in row.Image) this.imgTypePlus[imgId] = { name:  this.options.restoredImgMap.filter(img => img.Id == imgId)[0].ImgName, isAdd: true };
 			for(const key of Object.keys(this.restoredImgRegularFilter())) this.imgObj[key] = {  add: [], remove: [] };
 			
 			this.showImgUploadDialog = true;
