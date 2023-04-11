@@ -291,7 +291,7 @@
 			</div>
 			<span slot="footer" class="footer-btns">
 				<el-button @click="showResultConfirm = false; getList();">取消</el-button>
-				<el-button type="primary" @click="setResult()">確定</el-button>
+				<el-button type="primary" :loading="loading" @click="setResult()">確定</el-button>
 			</span>
 		</el-dialog>
 	</div>
@@ -311,9 +311,10 @@ export default {
 	data() {
 		return {
 			loading: false,
+			timeTabId: 0,
 			showResultConfirm: false,
 			showUnacceptedConfirm: false,
-			daterange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
+			daterange: [ moment().startOf("month").toDate(), moment().endOf("month").toDate() ],
 			searchRange: "",
 			zipCodeNow: 0,
 			listQuery: {
@@ -521,6 +522,7 @@ export default {
 			this.showResultConfirm = true;
 		},
 		setResult() {
+			this.loading = true;
 			this.showUnacceptedConfirm = false;
 			this.showResultConfirm = false;
 
