@@ -808,7 +808,6 @@ export default {
 				remove: []
 			},
 			imgTypePlus: {},
-			imgNote: {},
 			// total: 0,
 			list: [],
 			detail: [],
@@ -898,7 +897,20 @@ export default {
 						deviceTypeFilter: [ 4 ]
 					}
 				},
-				restoredImgMap: []
+				restoredImgMap: [],
+				restoredImgFacility: {
+					regular: [
+						{ name: "側溝", imgId: [ 9, 10, 11 ] },
+						{ name: "人行道", imgId: [ 13 ] }
+					],
+					items: [
+						{ keyWord: "混凝土", imgId: [ 14 ] },
+						{ keyWord: "格柵蓋板", imgId: [ 23 ] },
+						{ keyWord: "鋼筋", imgId: [ 15, 16, 17, 18 ] },
+						{ keyWord: "鋼版", imgId: [ 21, 22 ] },
+						{ keyWord: "磚", imgId: [ 19 ] }
+					]
+				}
 			},
 			revokeTextarea: ""
 		};
@@ -1145,11 +1157,11 @@ export default {
 				if(!props.hasOwnProperty('deviceTypeFilter')) restoredImgRegularFilter[key] = props;
 				else if(props.deviceTypeFilter.includes(this.deviceTypeNow)) restoredImgRegularFilter[key] = props;
 			})
-			return Object.assign(restoredImgRegularFilter, this.imgTypePlus, this.imgNote)
+
+			return Object.assign(restoredImgRegularFilter, this.imgTypePlus)
 		},
 		restoredImgMapFilter() {
-			const mergeObj =  { ...this.imgTypePlus, ...this.imgNote };
-			return this.options.restoredImgMap.filter(image => !Object.keys(mergeObj).includes(String(image.Id)) && (image.DeviceType == 0 || image.DeviceType == this.deviceTypeNow) );		
+			return this.options.restoredImgMap.filter(image => !Object.keys(this.imgTypePlus).includes(String(image.Id)) && (image.DeviceType == 0 || image.DeviceType == this.deviceTypeNow) );		
 		},
 		handleChange(file, fileList, key = this.imgUploadKey) {
 			// console.log(file, fileList);
@@ -1183,69 +1195,43 @@ export default {
 		},
 		beforeImgEdit(row) {
 			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
-			this.rowActive = JSON.parse(JSON.stringify(row));
 
-			//(設施)增加照片之預設
-			if(this.deviceTypeNow == 3) {
-				this.getTaskDetail(row).then(()=>{
-					this.imgNote={};
-					const gutterObj = {
-						9:"施作現場高度照",
-						10:"現場清除後照",
-						11:"完工後養護照"
-					}
-					if(this.rowActive.DName === '側溝') {
-						for(const key in gutterObj) {
-							this.imgNote[key] = { name: gutterObj[key], isAdd: false };
-							this.imgObj[key] = { add: [], remove: [] };
-						}
-					}
-					else if (this.rowActive.DName === '人行道') {
-						this.imgNote[13] = { name: "1比3水泥砂漿照", isAdd: false };
-						this.imgObj[13] = { add: [], remove: [] };
-					}
+			this.getTaskDetail(row).then(()=> {
+				this.rowActive = JSON.parse(JSON.stringify(row));
+				this.imgObj = {};
+				this.imgTypePlus = {};
+
+				for(const imgId in row.Image) this.imgTypePlus[imgId] = { name: this.restoredImgMapFilter().filter(img => img.Id == imgId)[0].ImgName, isAdd: true };
+
+				//(設施)增加照片之預設
+				if(this.deviceTypeNow == 3) {
+					let imgIdList = [];
+					const imgRegular = this.options.restoredImgFacility.regular.filter(facType => facType.name === this.rowActive.DName);
+					if(imgRegular.length != 0) imgIdList.push(...imgRegular[0].imgId);
 
 					//獲取工程項目名稱
 					let taskName = "";
-					for(const t of row.Content) taskName += t.TaskName;
+					for(const t of this.rowActive.Content) taskName += t.TaskName;
 					// console.log(taskName);
 
-					const taskObj = {
-						1:"堆高機",
-						2:"挖土車",
-						3:"鋪裝機",
-						4:"壓路機",
-						5:"灑水車",
-						12:"交維照片",
-						14:"混凝土",
-						15:"鋼筋",
-						16:"鋼筋",
-						17:"鋼筋",
-						18:"鋼筋",
-						19:"磚",
-						20:"切割機",
-						21:"鋼版",
-						22:"鋼版",
-						23:"格柵蓋板",
-						24:"收交維照片",
-						25:"保固缺失改善"
+					for(const itemSpec of this.options.restoredImgFacility.items) {
+						if(taskName.includes(itemSpec.keyWord)) imgIdList.push(...itemSpec.imgId);
 					}
-					for(const keyId in taskObj){
-						if(taskName.includes(taskObj[keyId])) {
-							this.imgNote[keyId] = { name: this.options.restoredImgMap.filter(img => img.Id == keyId)[0].ImgName, isAdd: false };
-							this.imgObj[keyId] = { add: [], remove: [] };						
+
+					for(const imgId of imgIdList) {
+						if(Object.hasOwn(this.imgTypePlus, String(imgId))) this.imgTypePlus[imgId].isAdd = false;
+						else {
+							this.imgTypePlus[imgId] = { name: this.options.restoredImgMap.filter(img => img.Id == imgId)[0].ImgName, isAdd: false };
+							this.imgObj[imgId] = { add: [], remove: [] };	
 						}
 					}
-				})
-			}
+				}
 
-			this.imgObj = {};
-			this.imgTypePlus = {};
-			for(const imgId in row.Image) this.imgTypePlus[imgId] = { name: this.restoredImgMapFilter().filter(img => img.Id == imgId)[0].ImgName, isAdd: true };
-			for(const key of Object.keys(this.restoredImgRegularFilter())) this.imgObj[key] = { add: [], remove: [] };
-			
-			this.showImgUploadDialog = true;
-			this.$set(this.rowActive, "imgId", null);			
+				for(const key of Object.keys(this.restoredImgRegularFilter())) this.imgObj[key] = { add: [], remove: [] };
+				
+				this.showImgUploadDialog = true;
+				this.$set(this.rowActive, "imgId", null);
+			});
 		},
 		addPicType() {
 			if(!this.rowActive.imgId) return;
