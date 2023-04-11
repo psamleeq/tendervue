@@ -2,7 +2,7 @@
 	<div class="app-container">
 		<h2>保固案件</h2>
 		<el-table
- 		:data="list"
+ 		:data="newlist"
  		border
 		:header-cell-style="{'background-color': '#F2F6FC'}"
  		style="width: 100%">
@@ -29,6 +29,7 @@ export default {
 		return {
 			loading: false,
 			list: [],
+			newlist:[],
 			headers: {
 				id: {
 					name: "編號",
@@ -62,8 +63,7 @@ export default {
 				// 	sortable: false,
 				// 	width:100
 				// },
-			},
-			originDate:[]
+			}
 		};
 	},
 	computed: {
@@ -86,6 +86,7 @@ export default {
 			this.loading = true;
 
 			this.list = [];
+			this.newlist = [];
 			getCaseWarrantyList().then((response) => {
 				if (response.data.list.length == 0) {
 					this.$message({
@@ -95,6 +96,8 @@ export default {
 				} else {
 					this.list = response.data.list;
 					// console.log(this.list)
+					this.newlist = JSON.parse(JSON.stringify(this.list));
+					
 					this.computedDateWarranty();
 					this.formatDateDeadline();
 					this.formatDateCompleted();
@@ -105,46 +108,46 @@ export default {
 		},	
 		
 		formatDateCompleted(){
-			for(const val in this.list){
+			for(const val in this.newlist){
 				// 將ISO時間戳記轉換為Date對象
-				const date = new Date(Date.parse(this.list[val].DateCompleted));
+				const date = new Date(Date.parse(this.newlist[val].DateCompleted));
 				// 設置Date對象的時區為UTC
 				const year = date.getUTCFullYear() - 1911;
 				const month = date.getUTCMonth() + 1;
 				const day = date.getUTCDate();
 				const hour = date.getUTCHours().toString().padStart(2, '0');
 				const minute = date.getUTCMinutes().toString().padStart(2, '0');
-				this.list[val].DateCompleted = `${year}/${month}/${day} ${hour}:${minute}`
+				this.newlist[val].DateCompleted = `${year}/${month}/${day} ${hour}:${minute}`
 			}
 		},
 		formatDateDeadline(){
-			for(const val in this.list){
+			for(const val in this.newlist){
 				const date = new Date(Date.parse(this.list[val].DateDeadline));
 				const year = date.getUTCFullYear() - 1911;
 				const month = date.getUTCMonth() + 1;
 				const day = date.getUTCDate();
 				const hour = date.getUTCHours().toString().padStart(2, '0');
 				const minute = date.getUTCMinutes().toString().padStart(2, '0');
-				this.list[val].DateDeadline = `${year}/${month}/${day} ${hour}:${minute}`
+				this.newlist[val].DateDeadline = `${year}/${month}/${day} ${hour}:${minute}`
 			}
 		},
 		computedDateWarranty(){
 			
-			for(const val in this.list){
-				if(this.list[val].DistressType=="坑洞"||this.list[val].DistressType=="人孔高差"||this.list[val].DistressType=="人行道"){
-					const date = new Date(Date.parse(this.list[val].DateCompleted));
+			for(const val in this.newlist){
+				if(this.newlist[val].DistressType=="坑洞"||this.newlist[val].DistressType=="人孔高差"||this.newlist[val].DistressType=="人行道"){
+					const date = new Date(Date.parse(this.newlist[val].DateCompleted));
 					date.setUTCDate(date.getUTCDate() + 13);
 					const year = date.getUTCFullYear() - 1911;
 					const month = date.getUTCMonth() + 1;
 					const day = date.getUTCDate();
-					this.list[val].DateWarranty = `${year}/${month}/${day}`
+					this.newlist[val].DateWarranty = `${year}/${month}/${day}`
 				}else {
-					const date = new Date(Date.parse(this.list[val].DateCompleted));
+					const date = new Date(Date.parse(this.newlist[val].DateCompleted));
 					date.setUTCDate(date.getUTCDate() + 179);
 					const year = date.getUTCFullYear() - 1911;
 					const month = date.getUTCMonth() + 1;
 					const day = date.getUTCDate();
-					this.list[val].DateWarranty = `${year}/${month}/${day}`
+					this.newlist[val].DateWarranty = `${year}/${month}/${day}`
 				}
 				
 			}
