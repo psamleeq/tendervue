@@ -162,7 +162,6 @@ export default {
 		return {
 			loading: false,
 			timeTabId: 1,
-			dateTimePickerVisible: false,
 			showDlConfirm: false,
 			caseTotal: 0,
 			daterange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],

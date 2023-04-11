@@ -365,7 +365,7 @@
 			</div>
 			<span slot="footer" class="footer-btns">
 				<el-button @click="showResultConfirm = false; getList();">取消</el-button>
-				<el-button type="primary" @click="setResult()">確定</el-button>
+				<el-button type="primary" :loading="loading" @click="setResult()">確定</el-button>
 			</span>
 		</el-dialog>
 	</div>
@@ -673,6 +673,7 @@ export default {
 			this.showResultConfirm = true;
 		},
 		setResult() {
+			this.loading = true;
 			this.showUnacceptedConfirm = false;
 			this.showResultConfirm = false;
 			
