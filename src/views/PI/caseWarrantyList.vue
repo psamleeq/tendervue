@@ -14,9 +14,9 @@
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
-				:circle="screenWidth<567"
 				@click="handleDownload"
-			>輸出報表</el-button>
+			>
+			輸出報表</el-button>
 
 			<el-upload :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
 				<el-button type="success">上傳CSV</el-button>
@@ -29,7 +29,7 @@
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 		
 		<el-table
-			:data="newlist"
+			:data="list"
 			border
 			:header-cell-style="{'background-color': '#F2F6FC'}"
 			style="width: 100%"
@@ -89,6 +89,7 @@
 				:header-cell-style="{'background-color': '#F2F6FC'}"
 				stripe
 				style="width: 100%"
+				
 				@selection-change="(selection) => tableSelect = selection"
 			>
 				<el-table-column type="selection" width="55" align="center" />
@@ -179,7 +180,6 @@ export default {
 			apiHeader: [ "UploadCaseNo", "CaseDate", "Place", "DateDeadline", "DateCompleted", "DateWarranty", "DistressType", "DistressLevel", "DistressSrc" ],
 			tableSelect: [],
 			list: [],
-			newlist:[],
 			csvData: [],
 			csvFileList: [],
 			districtList: {
@@ -234,7 +234,6 @@ export default {
 			this.searchRange = startDate + " - " + endDate;
 
 			this.list = [];
-			this.newlist = [];
 			getCaseWarrantyList({
 				zipCode: this.listQuery.zipCode,
 				timeStart: startDate,
@@ -248,7 +247,6 @@ export default {
 				} else {
 					this.list = response.data.list;
 					// console.log(this.list)
-					this.newlist = JSON.parse(JSON.stringify(this.list));
 					
 					// this.computedDateWarranty();
 					// this.formatDateDeadline();
@@ -258,7 +256,26 @@ export default {
 			}).catch(err => { this.loading = false; });
 		},
 		createList() {
+			this.loading = true;
+			// console.log(this.tableSelect)
+			
+			addCaseWarrantyList({
+				zipCode: this.listQuery.zipCode,
+				caseList: this.tableSelect
+			}).then(response =>{
+				console.log(response);
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "建立成功",
+						type: "success",
+					});
 
+					this.handleRemove()
+					this.showCsvList = false
+				} 
+			}).catch(err=>{
+				console.log(err);
+			})
 		},
 		formatter(row, column) {
 			if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
@@ -267,50 +284,48 @@ export default {
 		formatTime(time) {
 			return moment(time).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
 		},
-		formatDateCompleted() {
-			for(const val in this.newlist){
-				// 將ISO時間戳記轉換為Date對象
-				const date = new Date(Date.parse(this.newlist[val].DateCompleted));
-				// 設置Date對象的時區為UTC
-				const year = date.getUTCFullYear() - 1911;
-				const month = date.getUTCMonth() + 1;
-				const day = date.getUTCDate();
-				const hour = date.getUTCHours().toString().padStart(2, '0');
-				const minute = date.getUTCMinutes().toString().padStart(2, '0');
-				this.newlist[val].DateCompleted = `${year}/${month}/${day} ${hour}:${minute}`
-			}
-		},
-		formatDateDeadline() {
-			for(const val in this.newlist){
-				const date = new Date(Date.parse(this.list[val].DateDeadline));
-				const year = date.getUTCFullYear() - 1911;
-				const month = date.getUTCMonth() + 1;
-				const day = date.getUTCDate();
-				const hour = date.getUTCHours().toString().padStart(2, '0');
-				const minute = date.getUTCMinutes().toString().padStart(2, '0');
-				this.newlist[val].DateDeadline = `${year}/${month}/${day} ${hour}:${minute}`
-			}
-		},
-		computedDateWarranty() {
-			for(const val in this.newlist){
-				if(this.newlist[val].DistressType=="坑洞"||this.newlist[val].DistressType=="人孔高差"||this.newlist[val].DistressType=="人行道"){
-					const date = new Date(Date.parse(this.newlist[val].DateCompleted));
-					date.setUTCDate(date.getUTCDate() + 13);
-					const year = date.getUTCFullYear();
-					const month = date.getUTCMonth() + 1;
-					const day = date.getUTCDate();
-					this.newlist[val].DateWarranty = `${year}/${month}/${day}`
-				}else {
-					const date = new Date(Date.parse(this.newlist[val].DateCompleted));
-					date.setUTCDate(date.getUTCDate() + 179);
-					const year = date.getUTCFullYear();
-					const month = date.getUTCMonth() + 1;
-					const day = date.getUTCDate();
-					this.newlist[val].DateWarranty = `${year}/${month}/${day}`
-				}
+		// formatDateCompleted() {
+		// 	for(const val in this.newlist){
+		// 		const date = new Date(Date.parse(this.newlist[val].DateCompleted));
+		// 		const year = date.getUTCFullYear() - 1911;
+		// 		const month = date.getUTCMonth() + 1;
+		// 		const day = date.getUTCDate();
+		// 		const hour = date.getUTCHours().toString().padStart(2, '0');
+		// 		const minute = date.getUTCMinutes().toString().padStart(2, '0');
+		// 		this.newlist[val].DateCompleted = `${year}/${month}/${day} ${hour}:${minute}`
+		// 	}
+		// },
+		// formatDateDeadline() {
+		// 	for(const val in this.newlist){
+		// 		const date = new Date(Date.parse(this.list[val].DateDeadline));
+		// 		const year = date.getUTCFullYear() - 1911;
+		// 		const month = date.getUTCMonth() + 1;
+		// 		const day = date.getUTCDate();
+		// 		const hour = date.getUTCHours().toString().padStart(2, '0');
+		// 		const minute = date.getUTCMinutes().toString().padStart(2, '0');
+		// 		this.newlist[val].DateDeadline = `${year}/${month}/${day} ${hour}:${minute}`
+		// 	}
+		// },
+		// computedDateWarranty() {
+		// 	for(const val in this.newlist){
+		// 		if(this.newlist[val].DistressType=="坑洞"||this.newlist[val].DistressType=="人孔高差"||this.newlist[val].DistressType=="人行道"){
+		// 			const date = new Date(Date.parse(this.newlist[val].DateCompleted));
+		// 			date.setUTnewlistCDate(date.getUTCDate() + 13);
+		// 			const year = date.getUTCFullYear();
+		// 			const month = date.getUTCMonth() + 1;
+		// 			const day = date.getUTCDate();
+		// 			this.newlist[val].DateWarranty = `${year}/${month}/${day}`
+		// 		}else {
+		// 			const date = new Date(Date.parse(this.newlist[val].DateCompleted));
+		// 			date.setUTCDate(date.getUTCDate() + 179);
+		// 			const year = date.getUTCFullYear();
+		// 			const month = date.getUTCMonth() + 1;
+		// 			const day = date.getUTCDate();
+		// 			this.newlist[val].DateWarranty = `${year}/${month}/${day}`
+		// 		}
 				
-			}
-		},
+		// 	}
+		// },
 		readCSV(file, fileList) {
 			if(fileList.length > 1) fileList.shift();
 			this.csvFileList = JSON.parse(JSON.stringify(fileList));
@@ -356,6 +371,7 @@ export default {
 				});
 				this.handleRemove(); 
 			} else {
+				const defaultSelectedRows = [];
 				this.csvData.forEach(data => {
 					Object.keys(data).forEach(oldKey => {
 						const newKeyArr = Object.keys(this.headers).filter(key => this.headers[key].name == oldKey);
@@ -365,10 +381,21 @@ export default {
 
 					if(['坑洞', '人孔高差'].includes(data.DistressType)) data.DateWarranty = moment(data.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
 					else data.DateWarranty = moment(data.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
+
+					
+					if (data.DateWarranty !== "Invalid date") {
+						defaultSelectedRows.push(data);
+    				}
+					
 				});
-				this.computedDateWarranty();
-				
-				this.$refs.caseTable.toggleAllSelection();
+				//不勾選保固日期異常者
+				this.$nextTick(() => {
+      				for (let i = 0; i < defaultSelectedRows.length; i++) {
+      				  this.$refs.caseTable.toggleRowSelection(defaultSelectedRows[i], true);
+      				}
+    			});
+				// this.computedDateWarranty();
+				// this.$refs.caseTable.toggleAllSelection();
 				this.showCsvList = true;
 			}
 		},
@@ -402,7 +429,12 @@ export default {
 			this.loading = false;
 		},
 		handleDownload() {
-			let tHeader = Object.values(this.headers);
+			let headersObj = Object.values(this.headers);
+			let tHeader = []
+			headersObj.forEach(element => {
+				tHeader.push(element.name)
+			});
+			// console.log(tHeader)
 			let filterVal = Object.keys(this.headers);
 			let data = this.formatJson(filterVal, this.list);
 
