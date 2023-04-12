@@ -56,7 +56,9 @@
 			</el-popover>
 		</div>
 		
-		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}
+			<span v-if="isArchive" style="color: #F56C6C">(已封存)</span>
+		</h5>
 
 		<!-- 資訊列表 -->
 		<el-row :gutter="40" class="panel-group">
