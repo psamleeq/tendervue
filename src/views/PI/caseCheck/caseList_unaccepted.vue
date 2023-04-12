@@ -7,6 +7,7 @@
 			</el-select>
 			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
 
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			<el-button
 				slot="reference"
 				v-if="checkPermission(['PIcase.editor'])"
