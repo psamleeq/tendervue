@@ -590,6 +590,7 @@ export default {
 			this.resultList = [];
 
 			getCaseList({
+				caseType: 1,
 				zipCode: this.listQuery.zipCode,
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")

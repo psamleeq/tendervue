@@ -2,7 +2,12 @@
 	<div class="app-container PI-case-upload" v-loading="loading">
 		<h2>案件上傳</h2>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
+			<div style="font-size: 12px; color: #909399">查報來源</div>
+			<el-select class="filter-item" v-model.number="listQuery.caseType">
+				<el-option label="自巡" :value="1" />
+				<el-option label="其他" :value="2" />
+			</el-select>
+			<el-select class="filter-item" v-model.number="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<span class="time-picker">
@@ -291,12 +296,17 @@ export default {
 			searchRange: "",
 			zipCodeNow: 0,
 			listQuery: {
+				caseType: 1,
 				zipCode: 104
 			},
 			headers: {
 				UploadCaseNo: {
 					name: "案件編號",
 					sortable: true
+				},
+				DistressSrc: {
+					name: "查報來源",
+					sortable: false
 				},
 				CaseDate: {
 					name: "查報日期",
@@ -335,8 +345,8 @@ export default {
 					sortable: false
 				}
 			},
-			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情形" ],
-			apiHeader: [ "UploadCaseNo", "CaseSN", "CaseDate", "DeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
+			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情形", "查報來源" ],
+			apiHeader: [ "UploadCaseNo", "DistressSrc", "CaseSN", "CaseDate", "DeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
 			tableSelect: [],
 			list: [],
 			listRepeat: [],
@@ -412,7 +422,7 @@ export default {
 				const caseItem = this.list.filter(l => l.CaseNo == caseNo)[0];
 				// const caseItem = this.list.filter(l => l.CaseNo.length > 0 ? l.CaseNo == caseNo : l.UploadCaseNo == caseNo )[0];
 				if(caseItem.UploadCaseNo == undefined && !isNaN(caseItem.CaseNo)) caseItem.UploadCaseNo = caseItem.CaseNo;
-				caseErrList.push({ ...caseItem, note: `無法匹配(DB) \n ${caseItem.casetype}`, edit: false });
+				caseErrList.push({ ...caseItem, note: `無法匹配(DB) \n ${caseItem.DistressSrc}`, edit: false });
 			}
 
 			for(const caseNo of this.caseMinus.csv) {
@@ -489,6 +499,7 @@ export default {
 			this.tableSelect = [];
 			getCaseList({
 				isList: false,
+				caseType: this.listQuery.caseType,
 				zipCode: this.listQuery.zipCode,
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
@@ -630,6 +641,7 @@ export default {
 			}
 		},
 		csvToArray(str, delimiter = ",") {
+			str = str.replace(/\"(.*)[\r\n|\n](.*)\"/g, "$1$2");
 			const headers = str.slice(0, str.indexOf("\n")).split(delimiter).map(header => header.replace(/\r\n/g,'').trim());
 			const rows = str.slice(str.indexOf("\n") + 1).split("\n").filter(row => row.length != 0);
 			const regex = new RegExp(`("[^"]+"|[^,]+)*${delimiter}`, 'g');
@@ -679,7 +691,6 @@ export default {
 				let csvRepeat = Array.from({length: this.csvData.length}, () => false);
 				this.list.forEach(l => {
 					l.CaseType = l.BTName;
-
 					this.csvData.forEach((data, index) => {
 						if(csvRepeat[index]) return;
 						else if(!moment(data["查報日期"]).isSame(moment(l.CaseDate))) {
@@ -687,15 +698,15 @@ export default {
 							if(outOfDateIndex != -1) this.caseMinus.csv.splice(outOfDateIndex, 1);
 							csvRepeat[index] = true;
 						// } else if(( data["案件編號"] == l.CaseNo || data["來源編號"] == l.CaseNo) && !Object.keys(this.csvRepeatObj).includes(data["來源編號"])) {
-						} else if((data["案件編號"] == l.CaseNo || data["來源編號"] == l.CaseNo) && (l.UploadCaseNo == undefined || l.UploadCaseNo.length == 0)) {
+						} else if((data["案件編號"] == l.CaseNo || data["來源編號"] == l.CaseNo)) {
 							if(data["案件編號"] == l.CaseNo && (data["來源編號"].length == 0 || data["來源編號"] == l.CaseNo)) {
 								const otherSrcIndex = this.caseMinus.list.indexOf(data["案件編號"]);
 								if(otherSrcIndex != -1) this.caseMinus.list.splice(otherSrcIndex, 1);
 							}
 							l.UploadCaseNo = data["案件編號"];
+							l.DistressSrc = data["查報來源"];
 							l.CaseName = data["查報地點"];
 							l.CaseType = data["損壞情形"];
-
 							csvRepeat[index] = true;
 						}
 					})

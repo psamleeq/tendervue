@@ -9,14 +9,6 @@ export function getCaseList(query) {
 	})
 }
 
-export function getUnacceptedCaseList(query) {
-	return request({
-		url: '/PI/unacceptedCaseList',
-		method: 'get',
-		params: query
-	})
-}
-
 export function addCaseList(data) {
 	return request({
 		url: '/PI/caseList',

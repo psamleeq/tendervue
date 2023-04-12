@@ -301,7 +301,7 @@
 <script>
 import moment from "moment";
 import { getTypeMap } from "@/api/type";
-import { getUnacceptedCaseList, setCaseList } from "@/api/PI";
+import { getCaseList, setCaseList } from "@/api/PI";
 import checkPermission from '@/utils/permission';
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
@@ -478,7 +478,8 @@ export default {
 			this.searchRange = startDate + " - " + endDate;
 			this.list = [];
 
-			getUnacceptedCaseList({
+			getCaseList({
+				caseType: 2,
 				zipCode: this.listQuery.zipCode,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
