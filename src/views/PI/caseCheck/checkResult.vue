@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container PI-case-check" v-loading="loading">
-		<h2>稽核結果</h2>
+		<h2>稽核結果(自巡)</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
@@ -39,14 +39,8 @@
 						<svg-icon icon-class="form" class-name="card-panel-icon" />
 					</div>
 					<div class="card-panel-description">
-						<div class="card-panel-text">案件數</div>
-						<div class="card-panel-num">{{ caseTotal }}
-							<div class="fail-num"> 
-								({{ checkNum.unaccepted.pass }} <el-tooltip class="item" effect="dark" content="不合理案件申覆通過數(PI1.1)" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
-								/
-								{{ checkNum.unaccepted.total }} <el-tooltip class="item" effect="dark" content="廠商申覆不合理案件數" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>)
-							</div>
-						</div>
+						<div class="card-panel-text">廠商通報數</div>
+						<div class="card-panel-num">{{ caseTotal }}</div>
 					</div>
 				</div>
 			</el-col>
@@ -217,7 +211,6 @@ export default {
 				}
 			},
 			checkNum: {
-				unaccepted: { pass: 0, total: 0 },
 				SV: { 
 					AC: { check: 0, fail: 0, total: 0 }, 
 					facility: { check: 0, fail: 0, total: 0 } 
@@ -369,8 +362,8 @@ export default {
 			this.showDlConfirm = false;
 			if(list == undefined) list = this.resultList;
 
-			const tHeader = Object.values(this.headers).map(value => value.name).concat(["不合理案件", "監造抽查", "機關抽查", "備註"]);
-			const filterVal = Object.keys(this.headers).concat(["State", "SVCheck", "OrganCheck", "Note"]);
+			const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
+			const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
 			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
 			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
 			const dataList = JSON.parse(JSON.stringify(list)).map(l => {
@@ -381,7 +374,6 @@ export default {
 				// l.BrokeType = this.options.BrokeType[l.BrokeType];
 				l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
 				l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
-				l.State =  (l.State & 2) && (l.State && 4) ? "是" : "";
 
 				const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
 				if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];

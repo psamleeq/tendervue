@@ -30,7 +30,7 @@ const PIRouter = {
 					component: () => import('@/views/PI/caseCheck/caseList'),
 					name: 'PICaseList',
 					meta: {
-						title: '案件稽核',
+						title: '案件稽核(自巡)',
 						roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor']
 					}
 				},
@@ -48,7 +48,7 @@ const PIRouter = {
 					component: () => import('@/views/PI/caseCheck/checkResult'),
 					name: 'PICheckResult',
 					meta: {
-						title: '稽核結果',
+						title: '稽核結果(自巡)',
 						roles: ['PIcase.viewer']
 					}
 				},

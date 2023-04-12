@@ -632,7 +632,7 @@ export default {
 		csvToArray(str, delimiter = ",") {
 			const headers = str.slice(0, str.indexOf("\n")).split(delimiter).map(header => header.replace(/\r\n/g,'').trim());
 			const rows = str.slice(str.indexOf("\n") + 1).split("\n").filter(row => row.length != 0);
-			const regex = /("[^"]+"|[^,]+)*,/g;
+			const regex = new RegExp(`("[^"]+"|[^,]+)*${delimiter}`, 'g');
 
 			const result = rows.map(row => {
 				const values = row.split(regex).filter(row => row == undefined || row.length != 0).map(row => {
