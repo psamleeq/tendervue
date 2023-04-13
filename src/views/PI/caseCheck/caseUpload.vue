@@ -2,11 +2,17 @@
 	<div class="app-container PI-case-upload" v-loading="loading">
 		<h2>案件上傳</h2>
 		<div class="filter-container">
-			<div style="font-size: 12px; color: #909399">查報來源</div>
-			<el-select class="filter-item" v-model.number="listQuery.caseType">
-				<el-option label="自巡" :value="1" />
-				<el-option label="其他" :value="2" />
-			</el-select>
+			<div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>查報來源</span>
+					</div>
+					<el-select v-model.number="listQuery.caseType" popper-class="type-select">
+						<el-option label="自巡" :value="1" />
+						<el-option label="其他" :value="2" />
+					</el-select>
+				</div>
+			</div>
 			<el-select class="filter-item" v-model.number="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
