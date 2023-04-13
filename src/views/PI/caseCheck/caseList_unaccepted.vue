@@ -386,6 +386,7 @@ export default {
 				}
 			},
 			list: [],
+			resultList: [],
 			rowActive: {},
 			districtList: {
 				// 100: {
@@ -492,6 +493,8 @@ export default {
 				} else {
 					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
+					this.resultList = response.data.resultList;
+
 					this.list.forEach(l => {
 						for(const key of ["Firm", "SV", "Organ"]) {
 							if(!l.StateNotes.hasOwnProperty(key)) this.$set(l.StateNotes, key, "");
@@ -502,7 +505,6 @@ export default {
 						this.$set(l, "edit", false);
 					})
 				}
-				this.resultList = this.list.filter(l => (l.State & 32) || (l.State & 64));
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
