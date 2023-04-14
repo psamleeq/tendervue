@@ -1,17 +1,17 @@
 <template>
 	<div class="app-container inspect-case" v-loading="loading">
 		<h2>缺失分析</h2>
-		<aside>資料初始為2022年6月，未來規劃將此頁面移動至「缺失管理」。</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為{{ districtList[zipCodeNow].start }}</aside>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<el-radio-group v-model="listQuery.inspectType" @change="getList">
 				<el-radio-button v-for="(name, type) in inspectType" :key="type" :label="Number(type)">{{ name }}</el-radio-button>
 			</el-radio-group>
-			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			<el-button
+			<!-- <el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
@@ -102,8 +102,9 @@ export default {
 			screenWidth: window.innerWidth,
 			// daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
 			// searchRange: "",
+			zipCodeNow: 104,
 			listQuery: {
-				dist: 104,
+				zipCode: 104,
 				inspectType: 1
 			},
 			headers: {
@@ -126,13 +127,13 @@ export default {
 				// 	"name": "中正區",
 				// 	"engName": "Zhongzheng"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區",
+					"start": "2023年2月"
+				},
 				104: {
 					"name": "中山區",
-					"engName": "Zhongshan"
+					"start": "2022年6月"
 				},
 				// 105: {
 				// 	"name": "松山區",
@@ -194,6 +195,7 @@ export default {
 
 			this.list = [];
 			getInspectCase({
+				zipCode: this.listQuery.zipCode,
 				inspectType: this.listQuery.inspectType
 			}).then(response => {
 				if (response.data.list.length == 0) {
@@ -202,6 +204,7 @@ export default {
 						type: "error",
 					});
 				} else {
+					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					const total = this.list.reduce((acc, curr) => acc + curr.total, 0);
 					this.list.forEach(l => this.$set(l, 'percent', Math.floor(l.total / total * 10000) / 100));

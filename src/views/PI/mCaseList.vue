@@ -1,9 +1,9 @@
 <template>
 	<div class="app-container mCase-list" v-loading="loading">
 		<h2>維護案件</h2>
-		<aside>資料初始為2022年6月</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為{{ districtList[zipCodeNow].start }}</aside>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<el-select class="filter-item" v-model="listQuery.caseType" :disabled="Object.keys(options.caseType).length <= 1">
@@ -102,12 +102,13 @@ export default {
 			timeTabId: 4,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate()],
+			daterange: [ moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
 			searchRange: "",
 			caseTypeNow: 11,
+			zipCodeNow: 104,
 			listQuery: {
 				caseType: 11,
-				dist: 104
+				zipCode: 104
 			},
 			headers: {
 				CaseNo: {
@@ -183,13 +184,13 @@ export default {
 				// 	"name": "中正區",
 				// 	"engName": "Zhongzheng"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區",
+					"start": "2023年2月"
+				},
 				104: {
 					"name": "中山區",
-					"engName": "Zhongshan"
+					"start": "2022年6月"
 				},
 				// 105: {
 				// 	"name": "松山區",
@@ -292,6 +293,7 @@ export default {
 
 			this.list = [];
 			getMCaseList({
+				zipCode: this.listQuery.zipCode,
 				caseType: this.listQuery.caseType,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
@@ -302,6 +304,7 @@ export default {
 						type: "error",
 					});
 				} else {
+					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.list.forEach(l => {
 						// 計算保固日期

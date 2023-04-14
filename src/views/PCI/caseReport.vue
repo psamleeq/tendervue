@@ -1,14 +1,14 @@
 <template>
 	<div class="app-container case-report" v-loading="loading">
 		<h2>案件分析</h2>
-		<aside>資料初始為2022年6月</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為{{ districtList[zipCodeNow].start }}</aside>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			<el-button
+			<!-- <el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
@@ -148,8 +148,9 @@ export default {
 			screenWidth: window.innerWidth,
 			// daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
 			// searchRange: "",
+			zipCodeNow: 104,
 			listQuery: {
-				dist: 104,
+				zipCode: 104,
 				caseType: "",
 				month: "",
 				pageCurrent: 1,
@@ -217,13 +218,13 @@ export default {
 				// 	"name": "中正區",
 				// 	"engName": "Zhongzheng"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區",
+					"start": "2023年2月"
+				},
 				104: {
 					"name": "中山區",
-					"engName": "Zhongshan"
+					"start": "2022年6月"
 				},
 				// 105: {
 				// 	"name": "松山區",
@@ -284,13 +285,16 @@ export default {
 			// this.searchRange = startDate + " - " + endDate;
 
 			this.list = [];
-			getCaseAndPCI().then(response => {
+			getCaseAndPCI({
+				zipCode: this.listQuery.zipCode
+			}).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
 				} else {
+					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.list.forEach((l, i) => {
 						if(l.PCIAverage != undefined) l.PCIAverage = Math.floor((l.PCIAverage) * 100) / 100;
@@ -306,6 +310,7 @@ export default {
 			this.loading = true;
 			this.showCaseList = true;
 			getCaseList({
+				zipCode: this.zipCodeNow,
 				caseType: this.listQuery.caseType,
 				month: this.listQuery.month,
 				pageCurrent: this.listQuery.pageCurrent,

@@ -1,9 +1,9 @@
 <template>
 	<div class="app-container PCI-report" v-loading="loading">
 		<h2>單元報表</h2>
-		<aside>資料初始為2022年6月</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為{{ districtList[zipCodeNow].start }}</aside>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
@@ -75,8 +75,9 @@ export default {
 			screenWidth: window.innerWidth,
 			daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
 			searchRange: "",
+			zipCodeNow: 104,
 			listQuery: {
-				dist: 104,
+				zipCode: 104,
 				pageCurrent: 1,
 				pageSize: 50,
 			},
@@ -93,10 +94,10 @@ export default {
 					name: "道路名稱",
 					sortable: false
 				},
-				roadId: {
-					name: "道路編號",
-					sortable: false
-				},
+				// roadId: {
+				// 	name: "道路編號",
+				// 	sortable: false
+				// },
 				roadArea: {
 					name: "道路面積",
 					sortable: false
@@ -124,13 +125,13 @@ export default {
 				// 	"name": "中正區",
 				// 	"engName": "Zhongzheng"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區",
+					"start": "2023年2月"
+				},
 				104: {
 					"name": "中山區",
-					"engName": "Zhongshan"
+					"start": "2022年6月"
 				},
 				// 105: {
 				// 	"name": "松山區",
@@ -214,6 +215,7 @@ export default {
 
 			this.list = [];
 			getPCIList({
+				zipCode: this.listQuery.zipCode,
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 				timeStart: startDate,
@@ -226,6 +228,7 @@ export default {
 					});
 					this.total = 0;
 				} else {
+					this.zipCodeNow = this.listQuery.zipCode;
 					this.total = response.data.total;
 					this.list = response.data.list;
 					this.headers_PCI = {};
@@ -275,6 +278,7 @@ export default {
 			const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
 
 			getPCIList({
+				zipCode: this.listQuery.zipCode,
 				pageCurrent: 1,
 				pageSize: this.total,
 				timeStart: startDate,

@@ -1,9 +1,9 @@
 <template>
 	<div class="app-container mCase-statics" v-loading="loading">
 		<h2>維護數量</h2>
-		<aside>資料初始為2022年6月</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為{{ districtList[zipCodeNow].start }}</aside>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
@@ -88,8 +88,9 @@ export default {
 			screenWidth: window.innerWidth,
 			daterange: [ moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
 			searchRange: "",
+			zipCodeNow: 104,
 			listQuery: {
-				dist: 104
+				zipCode: 104
 			},
 			headers: {
 				type: {
@@ -119,13 +120,13 @@ export default {
 				// 	"name": "中正區",
 				// 	"engName": "Zhongzheng"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區",
+					"start": "2023年2月"
+				},
 				104: {
 					"name": "中山區",
-					"engName": "Zhongshan"
+					"start": "2022年6月"
 				},
 				// 105: {
 				// 	"name": "松山區",
@@ -185,6 +186,7 @@ export default {
 
 			this.list = [];
 			getCaseReport({
+				zipCode: this.listQuery.zipCode,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 			}).then((response) => {
@@ -194,6 +196,7 @@ export default {
 						type: "error",
 					});
 				} else {
+					this.zipCodeNow = this.listQuery.zipCode;
 					const obj = response.data.list;
 					this.list = Object.keys(obj).map(key => ({ type: this.typeMap[key], count: obj[key].count, area: Math.floor(obj[key].area * 100) / 100 }) );
 					this.setChartOptions();
