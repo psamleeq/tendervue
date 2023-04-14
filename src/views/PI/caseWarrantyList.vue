@@ -108,6 +108,18 @@
 							<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
 							<span v-else> - </span>
 						</span>
+						<span v-else-if="[ 'DateCompleted' ].includes(column.property)">
+							<el-date-picker 
+								ref="datePicker"
+								class="datePicker" 
+								v-model="row[column.property]"
+								type="date" 
+								placeholder="請選擇日期"
+								value-format="yyyy/MM/dd"
+								:format="formattedDate(row)"
+								@blur="finalCheckCvs(row)"
+							></el-date-picker>
+						</span>
 						<span v-else>{{ formatter(row, column) }}</span>
 					</template>
 				</el-table-column>
@@ -115,7 +127,6 @@
 		</el-dialog>
 	</div>
 </template>
-
 <script>
 import moment from "moment";
 import jschardet from "jschardet";
@@ -219,10 +230,10 @@ export default {
 				// 116: {
 				// 	"name": "文山區"
 				// }
-			}
+			},
+			checkDateWarranty:true,
 		};
 	},
-	computed: { },
 	mounted() {
 		this.showCsvList = false;
 	},
@@ -247,42 +258,56 @@ export default {
 				} else {
 					this.list = response.data.list;
 					// console.log(this.list)
-					
-					// this.computedDateWarranty();
-					// this.formatDateDeadline();
-					// this.formatDateCompleted();
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
 		createList() {
 			this.loading = true;
-			// console.log(this.tableSelect)
-			
-			addCaseWarrantyList({
-				zipCode: this.listQuery.zipCode,
-				caseList: this.tableSelect
-			}).then(response =>{
-				console.log(response);
-				if ( response.statusCode == 20000 ) {
-					this.$message({
-						message: "建立成功",
-						type: "success",
-					});
-
-					this.handleRemove()
-					this.showCsvList = false
-				} 
-			}).catch(err=>{
-				console.log(err);
+			let arr = [];
+			this.tableSelect.map((val)=>{
+				arr.push(val.DateWarranty);
 			})
+			if(arr.includes("Invalid date")){
+				this.checkDateWarranty = false;
+			}else{
+				this.checkDateWarranty = true;
+			}
+			if(this.checkDateWarranty){
+				addCaseWarrantyList({
+					zipCode: this.listQuery.zipCode,
+					caseList: this.tableSelect
+				}).then(response =>{
+					console.log(response);
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: "建立成功",
+							type: "success",
+						});
+
+						this.handleRemove()
+						this.showCsvList = false
+					} 
+				}).catch(err=>{
+					console.log(err);
+				})
+			}else{
+				this.$message({
+						message: "保固日期異常",
+						type: "warning",
+				});
+			}
 		},
 		formatter(row, column) {
 			if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
 		},
 		formatTime(time) {
-			return moment(time).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
+			if(time == "Invalid date"){
+				return
+			}else{
+				return moment(time).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
+			}
 		},
 		// formatDateCompleted() {
 		// 	for(const val in this.newlist){
@@ -297,7 +322,7 @@ export default {
 		// },
 		// formatDateDeadline() {
 		// 	for(const val in this.newlist){
-		// 		const date = new Date(Date.parse(this.list[val].DateDeadline));
+		// 		const date = new Date(Date.parse(this.newlist[val].DateDeadline));
 		// 		const year = date.getUTCFullYear() - 1911;
 		// 		const month = date.getUTCMonth() + 1;
 		// 		const day = date.getUTCDate();
@@ -371,7 +396,6 @@ export default {
 				});
 				this.handleRemove(); 
 			} else {
-				const defaultSelectedRows = [];
 				this.csvData.forEach(data => {
 					Object.keys(data).forEach(oldKey => {
 						const newKeyArr = Object.keys(this.headers).filter(key => this.headers[key].name == oldKey);
@@ -379,21 +403,13 @@ export default {
 						delete data[oldKey];
 					});
 
-					if(['坑洞', '人孔高差'].includes(data.DistressType)) data.DateWarranty = moment(data.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
-					else data.DateWarranty = moment(data.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
-
-					
-					if (data.DateWarranty !== "Invalid date") {
-						defaultSelectedRows.push(data);
-    				}
+					if(['坑洞', '人孔高差'].includes(data.DistressType)) {
+						data.DateWarranty = moment(data.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
+					}else{
+						data.DateWarranty = moment(data.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
+					}
 					
 				});
-				//不勾選保固日期異常者
-				this.$nextTick(() => {
-      				for (let i = 0; i < defaultSelectedRows.length; i++) {
-      				  this.$refs.caseTable.toggleRowSelection(defaultSelectedRows[i], true);
-      				}
-    			});
 				// this.computedDateWarranty();
 				// this.$refs.caseTable.toggleAllSelection();
 				this.showCsvList = true;
@@ -412,13 +428,48 @@ export default {
 				});
 
 				return headers.reduce((object, header, index) => {
-					if([ "查報日期", "預計完工日期", "實際完工時間" ].includes(header)) object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD");
-					else object[header] = values[index];
-					return object;
+					if([ "查報日期", "預計完工日期", "實際完工時間" ].includes(header)){
+						if(values[index]==""){
+							object[header] = ""
+						}else{
+							object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD");
+						}
+					} 
+					else{
+						object[header] = values[index]; 
+					} 
+					return object
 				}, {});
 			});	
 
 			return result
+		},
+		//案件上傳之日期選擇器相關方法
+		formattedDate(row){
+			const formattedDate = moment(row.DateCompleted).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
+			// console.log(formattedDate)
+			this.finalCheckCvs()
+			return formattedDate
+		},
+		finalCheckCvs(){
+			const selectedRows = [];
+			this.csvData.forEach(data => {
+				if(['坑洞', '人孔高差'].includes(data.DistressType)) {
+					data.DateWarranty = moment(data.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
+				}else{
+					data.DateWarranty = moment(data.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
+				}
+				
+				if (data.DateWarranty !== "Invalid date") {
+					selectedRows.push(data);
+				}
+			});
+			//不勾選保固日期異常者
+			this.$nextTick(() => {
+				for (let i = 0; i < selectedRows.length; i++) {
+				  this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
+				}
+			});			
 		},
 		handleRemove(file, fileList) {
 			this.csvData = [];
@@ -446,7 +497,11 @@ export default {
 			});
 		},
 		formatJson(filterVal, jsonData) {
-			return jsonData.map((v) => filterVal.map((j) => v[j]));
+			return jsonData.map((v) => filterVal.map((j) => {
+				if(j.indexOf('Date') != -1) return v[j] ? this.formatTime(v[j]) : "-";
+				else return v[j] && v[j] != '0' ? v[j] : "-";
+			}));
+			
 		},
 	},
 };
@@ -486,4 +541,23 @@ export default {
 	.el-dialog
 		.el-dialog__body > div
 			margin-top: 10px
+		
+.datePicker
+	font-size: 5px
+	.el-input__inner
+		width: 80px
+		height: 30px
+		padding:0 0 0 8px
+	.el-input__icon
+		display: none
+
+
+// .el-date-picker__editor-wrap .el-input__inner
+// 	font-size: 5px
+// .el-date-picker__editor-wrap .el-input__inner,
+// .el-date-picker__editor-wrap .el-input__inner::placeholder
+// 	color: #000
+// .el-date-picker__editor-wrap
+// 	font-size: 10px !important
+
 </style>
