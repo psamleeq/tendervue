@@ -80,6 +80,7 @@
 			<h3>案件數: {{ tableSelect.length }}件</h3>
 			<el-table
 				ref="caseTable"
+				:row-key="csvData.UploadCaseNo"
 				empty-text="目前沒有資料"
 				:data="csvData"
 				border
@@ -89,7 +90,6 @@
 				:header-cell-style="{'background-color': '#F2F6FC'}"
 				stripe
 				style="width: 100%"
-				
 				@selection-change="(selection) => tableSelect = selection"
 			>
 				<el-table-column type="selection" width="55" align="center" />
@@ -110,15 +110,14 @@
 						</span>
 						<span v-else-if="[ 'DateCompleted' ].includes(column.property)">
 							<el-date-picker 
-								ref="datePicker"
 								class="datePicker" 
 								v-model="row[column.property]"
 								type="date" 
 								placeholder="請選擇日期"
 								value-format="yyyy/MM/dd"
 								:format="formattedDate(row)"
-								@blur="finalCheckCvs(row)"
-							></el-date-picker>
+								@blur="finalCheckCvs(row)" 
+							/>
 						</span>
 						<span v-else>{{ formatter(row, column) }}</span>
 					</template>
@@ -467,7 +466,7 @@ export default {
 			//不勾選保固日期異常者
 			this.$nextTick(() => {
 				for (let i = 0; i < selectedRows.length; i++) {
-				  this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
+					this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
 				}
 			});			
 		},
