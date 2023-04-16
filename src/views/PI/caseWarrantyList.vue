@@ -77,10 +77,10 @@
 				<el-button @click="showCsvList = false; handleRemove();">取消</el-button>
 			</div>
 
-			<h3>案件數: {{ tableSelect.length }}件</h3>
+			<h3>案件數: {{ tableSelect.length }} / {{ csvData.length }} 件</h3>
 			<el-table
 				ref="caseTable"
-				:row-key="csvData.UploadCaseNo"
+				row-key="UploadCaseNo"
 				empty-text="目前沒有資料"
 				:data="csvData"
 				border
@@ -103,7 +103,7 @@
 					:sortable="value.sortable"
 					:show-overflow-tooltip="key == 'Place'"
 				>
-					<template slot-scope="{ row, column }">
+					<template slot-scope="{ row, column, $index }">
 						<span v-if="[ 'UploadCaseNo' ].includes(column.property)">
 							<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
 							<span v-else> - </span>
@@ -116,7 +116,7 @@
 								placeholder="請選擇日期"
 								value-format="yyyy/MM/dd"
 								:format="formattedDate(row)"
-								@blur="finalCheckCvs(row)" 
+								@input="finalCheckCvs($index, row)" 
 							/>
 						</span>
 						<span v-else>{{ formatter(row, column) }}</span>
@@ -450,7 +450,7 @@ export default {
 			this.finalCheckCvs()
 			return formattedDate
 		},
-		finalCheckCvs(){
+		finalCheckCvs(index, row){
 			const selectedRows = [];
 			this.csvData.forEach(data => {
 				if(['坑洞', '人孔高差'].includes(data.DistressType)) {
@@ -463,12 +463,15 @@ export default {
 					selectedRows.push(data);
 				}
 			});
+
 			//不勾選保固日期異常者
 			this.$nextTick(() => {
 				for (let i = 0; i < selectedRows.length; i++) {
 					this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
 				}
-			});			
+			});
+			
+			this.$set(this.csvData, index, row);
 		},
 		handleRemove(file, fileList) {
 			this.csvData = [];
