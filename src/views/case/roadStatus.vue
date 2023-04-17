@@ -54,7 +54,7 @@
 				</div>
 			</div>
 
-			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" style="margin-left: 20px" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button>
@@ -123,7 +123,7 @@ export default {
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
 			map: {},
-			daterange: [ moment().subtract(1, "month").startOf("month").toDate(), moment().subtract(1, "month").endOf("month").toDate() ],
+			dateRange: [ moment().subtract(1, "month").startOf("month").toDate(), moment().subtract(1, "month").endOf("month").toDate() ],
 			searchRange: "",
 			filterType: {
 				groupType: 1,
@@ -322,8 +322,8 @@ export default {
 		getList() {
 			this.loading = true;
 
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 			this.list = [];
 			this.filterType.groupType = this.listQuery.groupType;
@@ -366,8 +366,8 @@ export default {
 			return moment(time).utc().format("YYYY-MM-DD");
 		},
 		async handleDownload() {
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
 			let query = {
 				groupType: this.listQuery.groupType,

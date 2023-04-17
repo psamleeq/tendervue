@@ -15,7 +15,7 @@
 
 			<span class="filter-item">
 				<div style="font-size: 12px; color: #909399">成案日期</div>
-				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span>
 			<br />
 
@@ -212,7 +212,7 @@ export default {
 			timeTabId: 1,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [
+			dateRange: [
 				moment().subtract(1, 'd').startOf("day").toDate(),
 				moment().subtract(1, 'd').endOf("day").toDate(),
 			],
@@ -341,8 +341,8 @@ export default {
 			this.list = [];
 			this.listQuery.contractor = null;
 
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
 			getDispatchListV0({
@@ -404,8 +404,8 @@ export default {
 		async handleDownload() {
 			// await this.dateWatcher();
 
-			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			// const startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			// const endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
 			getRoadUnit({
 				pageCurrent: 1,

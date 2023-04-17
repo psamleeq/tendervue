@@ -30,7 +30,7 @@
         <label v-if="hidden" class="filter-item">
           起
           <el-date-picker
-            v-model="daterangeProps[0]"
+            v-model="dateRangeProps[0]"
             style="width: 200px"
             :type="type"
             placeholder="開始日期"
@@ -41,7 +41,7 @@
         <label v-if="hidden" class="filter-item">
           迄
           <el-date-picker
-            v-model="daterangeProps[1]"
+            v-model="dateRangeProps[1]"
             style="width: 200px"
             :type="type"
             placeholder="結束日期"
@@ -98,7 +98,7 @@ export default {
 			type: String,
 			default: 'year'
 		},
-		daterange: {
+		dateRange: {
 			required: true,
 			type: Array
 		},
@@ -118,18 +118,18 @@ export default {
     }
   },
   computed: {
-    daterangeProps: {
+    dateRangeProps: {
       get() {
-        return this.daterange
+        return this.dateRange
       },
       set(val) {
-        this.$emit('update:daterange', val)
+        this.$emit('update:dateRange', val)
       }
     }
   },
   watch: {
-    daterangeProps() {
-      dateWatcher(this.daterangeProps);
+    dateRangeProps() {
+      dateWatcher(this.dateRangeProps);
     },
   },
   methods: {
@@ -144,7 +144,7 @@ export default {
     },
     dateShortcuts(index, shortcutType) {
 			this.timeTabIdProps = index;
-      this.daterangeProps = dateShortcuts(index, shortcutType, this.hasWeek);
+      this.dateRangeProps = dateShortcuts(index, shortcutType, this.hasWeek);
       this.$emit('update:pageCurrent', 1);
       // this.$emit('search');
     }

@@ -3,7 +3,7 @@
 		<h2>每月降雨天數(台北)</h2>
 		<aside>資料初始為2022年6月</aside>
 		<div class="filter-container">
-			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/> -->
 			<!-- <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button> -->
 			<el-button-group>
 				<el-button
@@ -67,7 +67,7 @@ export default {
 			timeTabId: moment().year(),
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
+			dateRange: [ moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
 			searchRange: "",
 			headers: {
 				1: {
@@ -150,7 +150,7 @@ export default {
 			const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
 			let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
 			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().subtract(1, "d").endOf("d").toDate();
-			this.daterange = [ dateStart, dateEnd ];
+			this.dateRange = [ dateStart, dateEnd ];
 
 			return new Promise(resolve => resolve());
 		},
@@ -159,8 +159,8 @@ export default {
 			this.list = [];
 			await this.dateWatcher();
 
-			const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			const startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			const endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
 			// 抓取降雨天數
 			if(this.timeTabId == moment().year()) {
@@ -198,6 +198,7 @@ export default {
 
 			// 抓取坑洞數
 			getCaseAndPCI({
+				zipCode: 104,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 			}).then(response => {

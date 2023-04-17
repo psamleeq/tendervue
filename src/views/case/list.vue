@@ -22,7 +22,7 @@
 					</el-input>
 				</el-tooltip>
 			</div>
-			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/> -->
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> -->
@@ -177,8 +177,8 @@ export default {
 			// timeTabId: moment().year(),
 			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			// daterange: [
-			// 	moment().month(5).startOf("month").toDate(),
+			// dateRange: [
+			// 	moment().year(2022).month(5).startOf("month").toDate(),
 			// 	moment().endOf("year").toDate(),
 			// ],
 			searchRange: "",
@@ -557,8 +557,8 @@ export default {
 		async handleDownload() {
 			// await this.dateWatcher();
 
-			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			// const startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			// const endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
 			getRoadUnit({
 				pageCurrent: 1,

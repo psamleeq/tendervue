@@ -26,7 +26,7 @@
 
 			<span class="filter-item">
 				<div style="font-size: 12px; color: #909399">建單日期</div>
-				<time-picker shortcutType="year" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+				<time-picker shortcutType="year" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span>
 			<div class="filter-item">
 				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px" >
@@ -189,7 +189,7 @@ export default {
 			showRevokeConfirm: false,
 			screenWidth: window.innerWidth,
 			timeTabId: 2,
-			daterange: [
+			dateRange: [
 				moment().startOf("month").toDate(),
 				moment().endOf("day").toDate(),
 			],
@@ -290,8 +290,8 @@ export default {
 				this.list = [];
 				this.deviceTypeNow = this.listQuery.deviceType;
 
-				let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-				let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 				this.searchRange = startDate + " - " + endDate;
 
 				getJobTicketList({

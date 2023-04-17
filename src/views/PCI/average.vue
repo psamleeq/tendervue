@@ -1,12 +1,12 @@
 <template>
 	<div class="app-container PCI-average" v-loading="loading">
 		<h2>變動統計</h2>
-		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為{{ districtList[zipCodeNow].start }}</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為 {{ tenderStartDate }}</aside>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/> -->
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			<!-- <el-button
 				class="filter-item"
@@ -100,7 +100,7 @@ export default {
 			// timeTabId: -1,
 			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			// daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
+			// dateRange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
 			// searchRange: "",
 			zipCodeNow: 104,
 			listQuery: {
@@ -130,11 +130,11 @@ export default {
 				// },
 				103: {
 					"name": "大同區",
-					"start": "2023年2月"
+					"start": "2023/2/1"
 				},
 				104: {
 					"name": "中山區",
-					"start": "2022年6月"
+					"start": "2022/6/1"
 				},
 				// 105: {
 				// 	"name": "松山區",
@@ -176,6 +176,11 @@ export default {
 			chart: null
 		};
 	},
+	computed: {
+		tenderStartDate() {
+			return moment(this.districtList[this.zipCodeNow].start).format("yyyy年MM月")
+		}
+	},
 	mounted() {
 		this.chart = echarts.init(this.$refs.chart, 'macarons', {
 			width: 'auto',
@@ -186,12 +191,12 @@ export default {
 	methods: {
 		getList() {
 			this.loading = true;
-			// if (moment(this.daterange[1]).isAfter(moment())) {
-			//   this.daterange[1] = moment().endOf("d").toDate();
+			// if (moment(this.dateRange[1]).isAfter(moment())) {
+			//   this.dateRange[1] = moment().endOf("d").toDate();
 			// }
 
-			// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			// let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			// let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			// this.searchRange = startDate + " - " + endDate;
 
 			this.list = [];

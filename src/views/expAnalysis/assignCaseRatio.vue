@@ -2,7 +2,7 @@
 	<div class="app-container assign-case-ratio" v-loading="loading">
 		<h2>機關交辦金額統計</h2>
 		<!-- <div class="filter-container">
-			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			<el-button
 				class="filter-item"
@@ -108,7 +108,7 @@ export default {
 			// timeTabId: -1,
 			// dateTimePickerVisible: false,
 			// screenWidth: window.innerWidth,
-			// daterange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
+			// dateRange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
 			// searchRange: "",
 			headers: {
 				month: {

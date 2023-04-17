@@ -15,7 +15,7 @@
 
 			<!-- <span class="filter-item">
 				<div style="font-size: 12px; color: #909399">分派日期</div>
-				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span> -->
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">

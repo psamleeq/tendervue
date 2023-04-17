@@ -53,7 +53,7 @@
         <time-picker
           shortcutType="year"
           :timeTabId.sync="timeTabId"
-          :daterange.sync="daterange"
+          :dateRange.sync="dateRange"
           @search="getList"
         />
       </span>
@@ -208,7 +208,7 @@ export default {
       showRevokeConfirm: false,
       screenWidth: window.innerWidth,
       timeTabId: 2,
-      daterange: [
+      dateRange: [
         moment().startOf("month").toDate(),
         moment().endOf("day").toDate(),
       ],
@@ -303,8 +303,8 @@ export default {
         this.list = [];
         this.deviceTypeNow = this.listQuery.deviceType;
 
-        let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-        let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+        let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+        let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
         this.searchRange = startDate + " - " + endDate;
 
         getJobTicketList({

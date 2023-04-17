@@ -12,7 +12,7 @@
 					</el-select>
 				</div>
 			</div>
-			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/> -->
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-tooltip class="item" effect="dark" content="請選擇合約並搜尋" placement="bottom" :disabled="list.length != 0">
@@ -198,8 +198,8 @@ export default {
 			// timeTabId: moment().year(),
 			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			// daterange: [
-			// 	moment().month(5).startOf("month").toDate(),
+			// dateRange: [
+			// 	moment().year(2022).month(5).startOf("month").toDate(),
 			// 	moment().endOf("year").toDate(),
 			// ],
 			// searchRange: "",
@@ -283,8 +283,8 @@ export default {
 	},
 	methods: {
 		getList() {
-			// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			// let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			// let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			// this.searchRange = startDate + " - " + endDate;
 			
 			if (!this.listQuery.dteamSN) {
@@ -400,8 +400,8 @@ export default {
 		async handleDownload() {
 			// await this.dateWatcher();
 
-			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			// const startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			// const endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
 			getRoadUnit({
 				pageCurrent: 1,
