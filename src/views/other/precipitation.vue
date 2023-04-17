@@ -1,10 +1,12 @@
 <template>
 	<div class="app-container precipitation" v-loading="loading">
 		<h2>每月降雨天數(台北)</h2>
-		<aside>資料初始為2022年6月</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為 {{ tenderStartDate }}</aside>
 		<div class="filter-container">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1" style="width: 150px">
+				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
 			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/> -->
-			<!-- <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button> -->
 			<el-button-group>
 				<el-button
 					v-for="(t, i) in yearShortcuts"
@@ -15,6 +17,7 @@
 					@click="dateShortcuts(i)"
 				>{{ i }}</el-button>
 			</el-button-group>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 
 			<!-- <el-button
 				class="filter-item"
@@ -69,6 +72,10 @@ export default {
 			screenWidth: window.innerWidth,
 			dateRange: [ moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
 			searchRange: "",
+			zipCodeNow: 104,
+			listQuery: {
+				zipCode: 104,
+			},
 			headers: {
 				1: {
 					name: "一月",
@@ -120,39 +127,86 @@ export default {
 				}
 			},
 			list: [],
+			districtList: {
+				// 100: {
+				// 	"name": "中正區",
+				// 	"engName": "Zhongzheng"
+				// },
+				103: {
+					"name": "大同區",
+					"start": "2023/2/1"
+				},
+				104: {
+					"name": "中山區",
+					"start": "2022/6/1"
+				},
+				// 105: {
+				// 	"name": "松山區",
+				// 	"engName": "Songshan"
+				// },
+				// 106: {
+				// 	"name": "大安區",
+				// 	"engName": "Da’an"
+				// },
+				// 108: {
+				// 	"name": "萬華區",
+				// 	"engName": "Wanhua",
+				// },
+				// 110: {
+				// 	"name": "信義區",
+				// 	"engName": "Xinyi"
+				// },
+				// 111: {
+				// 	"name": "士林區",
+				// 	"engName": "Shilin"
+				// },
+				// 112: {
+				// 	"name": "北投區",
+				// 	"engName": "Beitou"
+				// },
+				// 114: {
+				// 	"name": "內湖區",
+				// 	"engName": "Neihu"
+				// },
+				// 115: {
+				// 	"name": "南港區",
+				// 	"engName": "Nangang"
+				// },
+				// 116: {
+				// 	"name": "文山區",
+				// 	"engName": "Wenshan"
+				// }
+			},
 		};
 	},
 	computed: {
 		yearShortcuts() {
-			const startYear = 2022;
-			const diff = moment().diff(moment([startYear]), 'years');
-			let yearShortcuts = {
-				2022: {
-					dateStart: "2022/6/1",
-					// dateEnd: "2022/12/31"
-				}
-			};
+			const startYear = moment(this.districtList[this.listQuery.zipCode].start).year();
+			let yearShortcuts = {};
+			yearShortcuts[startYear] = { dateStart: this.districtList[this.listQuery.zipCode].start };
+
+			const diff = moment().diff([ startYear ], 'years');
 			for(let i = 1; i <= diff; i++) yearShortcuts[startYear+i] = {};
 
 			return yearShortcuts;
 		},
-	},
-	created() {
-		if(moment().isSameOrBefore('2022-12-31')) {
-			for(const month in this.headers) if(month < 6) delete this.headers[month];
+		tenderStartDate() {
+			return moment(this.districtList[this.zipCodeNow].start).format("yyyy年MM月")
 		}
 	},
+	created() { },
 	mounted() {
 		this.getList(); 
 	},
 	methods: {
 		async dateWatcher() {
-			const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
-			let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
-			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().subtract(1, "d").endOf("d").toDate();
-			this.dateRange = [ dateStart, dateEnd ];
-
-			return new Promise(resolve => resolve());
+			return new Promise(resolve => {
+				const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
+				let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
+				if(moment(dateEnd).isAfter(moment())) dateEnd = moment().subtract(1, "d").endOf("d").toDate();
+				this.dateRange = [ dateStart, dateEnd ];
+				resolve();
+			})
 		},
 		async getList() {
 			this.loading = true;
@@ -174,7 +228,7 @@ export default {
 						const month = moment(curr.Date).month() + 1;
 						const precipitationSpec = curr.weatherElements.Precipitation;
 						
-						if(Number(precipitationSpec) > 0) {
+						if(moment(curr.Date).isBetween(...this.dateRange) && Number(precipitationSpec) > 0) {
 							if(init[month] == undefined) init[month] = 1;
 							else init[month]++;
 						}
@@ -198,10 +252,11 @@ export default {
 
 			// 抓取坑洞數
 			getCaseAndPCI({
-				zipCode: 104,
+				zipCode: this.listQuery.zipCode,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 			}).then(response => {
+				this.zipCodeNow = this.listQuery.zipCode;
 				this.searchRange = `${startDate} - ${endDate}`;
 
 				if (response.data.list.length == 0) {

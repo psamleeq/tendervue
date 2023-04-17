@@ -1,16 +1,19 @@
 <template>
 	<div class="app-container exp-compare" v-loading="loading">
 		<h2>經費(估算/執行)</h2>
-		<!-- <div class="filter-container">
+		<div class="filter-container">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1" style="width: 150px">
+				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			<el-button
+			<!-- <el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				:circle="screenWidth<567"
 				@click="handleDownload"
-			>輸出報表</el-button>
-		</div> -->
+			>輸出報表</el-button> -->
+		</div>
 
 		<div class="chart" ref="chart" />
 
@@ -54,6 +57,10 @@ export default {
 	data() {
 		return {
 			loading: false,
+			zipCodeNow: 104,
+			listQuery: {
+				zipCode: 104,
+			},
 			headers: {
 				month: {
 					name: "月份",
@@ -79,6 +86,56 @@ export default {
 			typeMap: {},
 			estList: [],
 			execList: [],
+			districtList: {
+				// 100: {
+				// 	"name": "中正區",
+				// 	"engName": "Zhongzheng"
+				// },
+				103: {
+					name: "大同區",
+					start: "2023/2/1",
+				},
+				104: {
+					name: "中山區",
+					start: "2022/6/1",
+				},
+				// 105: {
+				// 	"name": "松山區",
+				// 	"engName": "Songshan"
+				// },
+				// 106: {
+				// 	"name": "大安區",
+				// 	"engName": "Da’an"
+				// },
+				// 108: {
+				// 	"name": "萬華區",
+				// 	"engName": "Wanhua",
+				// },
+				// 110: {
+				// 	"name": "信義區",
+				// 	"engName": "Xinyi"
+				// },
+				// 111: {
+				// 	"name": "士林區",
+				// 	"engName": "Shilin"
+				// },
+				// 112: {
+				// 	"name": "北投區",
+				// 	"engName": "Beitou"
+				// },
+				// 114: {
+				// 	"name": "內湖區",
+				// 	"engName": "Neihu"
+				// },
+				// 115: {
+				// 	"name": "南港區",
+				// 	"engName": "Nangang"
+				// },
+				// 116: {
+				// 	"name": "文山區",
+				// 	"engName": "Wenshan"
+				// }
+			},
 			chart: null,
 		};
 	},
@@ -103,61 +160,57 @@ export default {
 		getTypeList(isInit = false, typeId = 0) {
 			this.loading = true;
 			this.typeMap = {};
-			getExpType()
-				.then((response) => {
-					if (response.data.list.length != 0) {
-						response.data.list.forEach((l) => {
-							this.$set(this.typeMap, l.id, l.type);
-							this.$set(this.headers, `type${l.id}`, {
-								name: l.type,
-								chartType: "bar",
-							});
-						});
-					}
-					this.loading = false;
-				})
-				.catch((err) => (this.loading = false));
+			getExpType().then((response) => {
+				if (response.data.list.length != 0) {
+					response.data.list.forEach((l) => {
+						this.$set(this.typeMap, l.id, l.type);
+						this.$set(this.headers, `type${l.id}`, { name: l.type, chartType: "bar" });
+					});
+				}
+				this.loading = false;
+			}).catch((err) => (this.loading = false));
 		},
 		getList() {
 			this.loading = true;
-			getExpCompare()
-				.then((response) => {
-					if (response.data.estList.length == 0 && response.data.execList.length == 9) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-					} else {
-						for (const lName in response.data) {
-							// this[lName] = response.data[lName].map(l => {
-							// 	l.month = this.formatTime(l.dataTime);
-							// 	l.type = this.typeMap[l.typeId];
-							// 	l[`type${l.typeId}`] = l.amount;
-							// 	return l;
-							// });
+			getExpCompare({
+				zipCode: this.listQuery.zipCode
+			}).then((response) => {
+				this.zipCodeNow = this.listQuery.zipCode;
+				if (response.data.estList.length == 0 && response.data.execList.length == 9) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					for (const lName in response.data) {
+						// this[lName] = response.data[lName].map(l => {
+						// 	l.month = this.formatTime(l.dataTime);
+						// 	l.type = this.typeMap[l.typeId];
+						// 	l[`type${l.typeId}`] = l.amount;
+						// 	return l;
+						// });
 
-							this[lName] = response.data[lName].reduce((acc, curr) => {
-								if (acc.length == 0 || !moment(curr.dataTime).isSame(acc[acc.length - 1].dataTime)) {
-									const temp = {
-										dataTime: curr.dataTime,
-										expType: this.expTypeMap[lName],
-										month: this.formatTime(curr.dataTime),
-									};
-									// for(const typeId in this.typeMap) {
-									// 	if(typeId == curr.typeId) temp[`type${curr.typeId}`] = curr.amount;
-									// 	else temp[`type${typeId}`] = 0;
-									// }
-									temp[`type${curr.typeId}`] = curr.amount;
-									acc.push(temp);
-								} else acc[acc.length - 1][`type${curr.typeId}`] = curr.amount;
-								return acc;
-							}, []);
-						}
+						this[lName] = response.data[lName].reduce((acc, curr) => {
+							if (acc.length == 0 || !moment(curr.dataTime).isSame(acc[acc.length - 1].dataTime)) {
+								const temp = {
+									dataTime: curr.dataTime,
+									expType: this.expTypeMap[lName],
+									month: this.formatTime(curr.dataTime),
+								};
+								// for(const typeId in this.typeMap) {
+								// 	if(typeId == curr.typeId) temp[`type${curr.typeId}`] = curr.amount;
+								// 	else temp[`type${typeId}`] = 0;
+								// }
+								temp[`type${curr.typeId}`] = curr.amount;
+								acc.push(temp);
+							} else acc[acc.length - 1][`type${curr.typeId}`] = curr.amount;
+							return acc;
+						}, []);
 					}
-					this.setChartOptions();
-					this.loading = false;
-				})
-				.catch((err) => (this.loading = false));
+				}
+				this.setChartOptions();
+				this.loading = false;
+			}).catch((err) => (this.loading = false));
 		},
 		setChartOptions() {
 			const monthList = Array.from(new Set(this.list.map((l) => l.month)));
@@ -197,7 +250,7 @@ export default {
 				}
 			}
 
-			console.log(series);
+			// console.log(series);
 
 			const options = {
 				xAxis: {

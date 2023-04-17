@@ -176,7 +176,7 @@ export default {
 		yearShortcuts() {
 			const startYear = moment(this.districtList[this.listQuery.zipCode].start).year();
 			let yearShortcuts = {};
-			yearShortcuts[startYear] = this.districtList[this.listQuery.zipCode].start;
+			yearShortcuts[startYear] = { dateStart: this.districtList[this.listQuery.zipCode].start };
 
 			const diff = moment().diff([ startYear ], 'years');
 			for(let i = 1; i <= diff; i++) yearShortcuts[startYear+i] = {};
@@ -192,22 +192,24 @@ export default {
 	},
 	methods: {
 		async dateWatcher() {
-			const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
-			let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
-			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().endOf("d").toDate();
-			this.dateRange = [ dateStart, dateEnd ];
+			return new Promise(resolve => {
+				const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
+				let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
+				if(moment(dateEnd).isAfter(moment())) dateEnd = moment().endOf("d").toDate();
+				this.dateRange = [ dateStart, dateEnd ];
 
-			return new Promise(resolve => resolve());
+				resolve();
+			})
 		},
 		async getList() {
 			this.loading = true;
+			this.list = [];
 			await this.dateWatcher();
 
 			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
-			this.list = [];
 			getPCIList({
 				zipCode: this.listQuery.zipCode,
 				pageCurrent: this.listQuery.pageCurrent,
@@ -215,6 +217,7 @@ export default {
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 			}).then(response => {
+				this.zipCodeNow = this.listQuery.zipCode;
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -222,7 +225,6 @@ export default {
 					});
 					this.total = 0;
 				} else {
-					this.zipCodeNow = this.listQuery.zipCode;
 					this.total = response.data.total;
 					this.list = response.data.list;
 					this.headers_PCI = {};

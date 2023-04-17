@@ -1,17 +1,20 @@
 <template>
 	<div class="app-container assign-case-ratio" v-loading="loading">
 		<h2>機關交辦金額統計</h2>
-		<!-- <div class="filter-container">
-			<time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+		<div class="filter-container">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1" style="width: 150px">
+				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/> -->
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			<el-button
+			<!-- <el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				:circle="screenWidth<567"
 				@click="handleDownload"
-			>輸出報表</el-button>
-		</div> -->
+			>輸出報表</el-button> -->
+		</div>
 		
 		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
@@ -110,6 +113,10 @@ export default {
 			// screenWidth: window.innerWidth,
 			// dateRange: [moment().startOf("d").toDate(), moment().endOf("d").toDate()],
 			// searchRange: "",
+			zipCodeNow: 104,
+			listQuery: {
+				zipCode: 104,
+			},
 			headers: {
 				month: {
 					name: "月份",
@@ -145,6 +152,56 @@ export default {
 				implement: 0,
 				assign: 1
 			},
+			districtList: {
+				// 100: {
+				// 	"name": "中正區",
+				// 	"engName": "Zhongzheng"
+				// },
+				103: {
+					name: "大同區",
+					start: "2023/2/1",
+				},
+				104: {
+					name: "中山區",
+					start: "2022/6/1",
+				},
+				// 105: {
+				// 	"name": "松山區",
+				// 	"engName": "Songshan"
+				// },
+				// 106: {
+				// 	"name": "大安區",
+				// 	"engName": "Da’an"
+				// },
+				// 108: {
+				// 	"name": "萬華區",
+				// 	"engName": "Wanhua",
+				// },
+				// 110: {
+				// 	"name": "信義區",
+				// 	"engName": "Xinyi"
+				// },
+				// 111: {
+				// 	"name": "士林區",
+				// 	"engName": "Shilin"
+				// },
+				// 112: {
+				// 	"name": "北投區",
+				// 	"engName": "Beitou"
+				// },
+				// 114: {
+				// 	"name": "內湖區",
+				// 	"engName": "Neihu"
+				// },
+				// 115: {
+				// 	"name": "南港區",
+				// 	"engName": "Nangang"
+				// },
+				// 116: {
+				// 	"name": "文山區",
+				// 	"engName": "Wenshan"
+				// }
+			},
 			chart: null
 		};
 	},
@@ -164,7 +221,10 @@ export default {
 		getList() {
 			this.loading = true;
 			this.list = [];
-			getAssignCaseAmt().then(response => {
+			getAssignCaseAmt({
+				zipCode: this.listQuery.zipCode
+			}).then(response => {
+				this.zipCodeNow = this.listQuery.zipCode;
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -188,6 +248,7 @@ export default {
 		},
 		addItem() {
 			setAssignCaseAmt({
+				zipCode: this.zipCodeNow,
 				month: this.newItem.month,
 				implement: this.newItem.implement,
 				assign: this.newItem.assign
@@ -217,6 +278,7 @@ export default {
 		},
 		editItem(row) {
 			setAssignCaseAmt({
+				zipCode: this.zipCodeNow,
 				month: row.month,
 				implement: row.implement,
 				assign: row.assign
