@@ -116,7 +116,7 @@
 								placeholder="請選擇日期"
 								value-format="yyyy/MM/dd"
 								:format="formattedDate(row)"
-								@input="finalCheckCvs($index, row)" 
+								@input="updateDatePicker($index, row)" 
 							/>
 						</span>
 						<span v-else>{{ formatter(row, column) }}</span>
@@ -263,15 +263,8 @@ export default {
 		},
 		createList() {
 			this.loading = true;
-			let arr = [];
-			this.tableSelect.map((val)=>{
-				arr.push(val.DateWarranty);
-			})
-			if(arr.includes("Invalid date")){
-				this.checkDateWarranty = false;
-			}else{
-				this.checkDateWarranty = true;
-			}
+			const arr = this.tableSelect.map((val)=>{val.DateWarranty});
+			this.checkDateWarranty=!arr.includes("Invalid date")
 			if(this.checkDateWarranty){
 				addCaseWarrantyList({
 					zipCode: this.listQuery.zipCode,
@@ -308,48 +301,6 @@ export default {
 				return moment(time).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
 			}
 		},
-		// formatDateCompleted() {
-		// 	for(const val in this.newlist){
-		// 		const date = new Date(Date.parse(this.newlist[val].DateCompleted));
-		// 		const year = date.getUTCFullYear() - 1911;
-		// 		const month = date.getUTCMonth() + 1;
-		// 		const day = date.getUTCDate();
-		// 		const hour = date.getUTCHours().toString().padStart(2, '0');
-		// 		const minute = date.getUTCMinutes().toString().padStart(2, '0');
-		// 		this.newlist[val].DateCompleted = `${year}/${month}/${day} ${hour}:${minute}`
-		// 	}
-		// },
-		// formatDateDeadline() {
-		// 	for(const val in this.newlist){
-		// 		const date = new Date(Date.parse(this.newlist[val].DateDeadline));
-		// 		const year = date.getUTCFullYear() - 1911;
-		// 		const month = date.getUTCMonth() + 1;
-		// 		const day = date.getUTCDate();
-		// 		const hour = date.getUTCHours().toString().padStart(2, '0');
-		// 		const minute = date.getUTCMinutes().toString().padStart(2, '0');
-		// 		this.newlist[val].DateDeadline = `${year}/${month}/${day} ${hour}:${minute}`
-		// 	}
-		// },
-		// computedDateWarranty() {
-		// 	for(const val in this.newlist){
-		// 		if(this.newlist[val].DistressType=="坑洞"||this.newlist[val].DistressType=="人孔高差"||this.newlist[val].DistressType=="人行道"){
-		// 			const date = new Date(Date.parse(this.newlist[val].DateCompleted));
-		// 			date.setUTnewlistCDate(date.getUTCDate() + 13);
-		// 			const year = date.getUTCFullYear();
-		// 			const month = date.getUTCMonth() + 1;
-		// 			const day = date.getUTCDate();
-		// 			this.newlist[val].DateWarranty = `${year}/${month}/${day}`
-		// 		}else {
-		// 			const date = new Date(Date.parse(this.newlist[val].DateCompleted));
-		// 			date.setUTCDate(date.getUTCDate() + 179);
-		// 			const year = date.getUTCFullYear();
-		// 			const month = date.getUTCMonth() + 1;
-		// 			const day = date.getUTCDate();
-		// 			this.newlist[val].DateWarranty = `${year}/${month}/${day}`
-		// 		}
-				
-		// 	}
-		// },
 		readCSV(file, fileList) {
 			if(fileList.length > 1) fileList.shift();
 			this.csvFileList = JSON.parse(JSON.stringify(fileList));
@@ -378,6 +329,7 @@ export default {
 					this.csvData = this.csvToArray(fileString);
 					// console.log(this.csvData);
 					this.checkCsv();
+					this.selectedRows();
 				}
 			}
 		},
@@ -443,34 +395,35 @@ export default {
 
 			return result
 		},
-		//案件上傳之日期選擇器相關方法
-		formattedDate(row){
-			const formattedDate = moment(row.DateCompleted).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
-			// console.log(formattedDate)
-			this.finalCheckCvs()
-			return formattedDate
-		},
-		finalCheckCvs(index, row){
+		selectedRows(){
 			const selectedRows = [];
 			this.csvData.forEach(data => {
-				if(['坑洞', '人孔高差'].includes(data.DistressType)) {
-					data.DateWarranty = moment(data.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
-				}else{
-					data.DateWarranty = moment(data.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
-				}
-				
 				if (data.DateWarranty !== "Invalid date") {
 					selectedRows.push(data);
 				}
 			});
-
 			//不勾選保固日期異常者
 			this.$nextTick(() => {
 				for (let i = 0; i < selectedRows.length; i++) {
-					this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
+				  this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
 				}
-			});
-			
+			});	
+		},
+		//案件上傳之日期選擇器相關方法
+		formattedDate(row){
+			const formattedDate = moment(row.DateCompleted).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
+			// console.log(formattedDate)
+			this.computedWarranty(row)
+			return formattedDate
+		},
+		computedWarranty(row){
+			if(['坑洞', '人孔高差'].includes(row.DistressType)) {
+				row.DateWarranty = moment(row.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
+			}else{
+				row.DateWarranty = moment(row.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
+			}
+		},
+		updateDatePicker(index, row){
 			this.$set(this.csvData, index, row);
 		},
 		handleRemove(file, fileList) {
@@ -552,14 +505,5 @@ export default {
 		padding:0 0 0 8px
 	.el-input__icon
 		display: none
-
-
-// .el-date-picker__editor-wrap .el-input__inner
-// 	font-size: 5px
-// .el-date-picker__editor-wrap .el-input__inner,
-// .el-date-picker__editor-wrap .el-input__inner::placeholder
-// 	color: #000
-// .el-date-picker__editor-wrap
-// 	font-size: 10px !important
 
 </style>
