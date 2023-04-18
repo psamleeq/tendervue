@@ -120,13 +120,13 @@
 			</el-table-column>
 			<el-table-column label="不合格原因(監造)" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="[21, 22].includes(row.SVCheck)">{{ options.reasonType[row.SVCheck % 10] }}</span>
+					<span v-if="row.State & 32">{{ row.StateNotes.SV }}</span>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
 			<el-table-column label="不合格原因(機關)" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="[21, 22].includes(row.OrganCheck)">{{ options.reasonType[row.OrganCheck % 10] }}</span>
+					<span v-if="row.State & 64">{{ row.StateNotes.Organ }}</span>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
@@ -290,8 +290,8 @@ export default {
 			let reasonTypeArr = { 1: 0, 2: 0 };
 			this.resultList.forEach(l => {
 				for(let type of Object.keys(this.options.reasonType)) {
-					if(l.SVCheck > 0 && String(l.SVCheck).split("")[1] == type) reasonTypeArr[type]++;
-					if(l.OrganCheck > 0 && String(l.OrganCheck).split("")[1] == type) reasonTypeArr[type]++;
+					if((l.State & 32) && l.StateNotes.SV == this.options.reasonType[type]) reasonTypeArr[type]++;
+					if((l.State & 64) && l.StateNotes.Organ == this.options.reasonType[type]) reasonTypeArr[type]++;
 				}
 			})
 			return reasonTypeArr
@@ -377,12 +377,10 @@ export default {
 				l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
 				l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
 
-				const checkRes = [21, 22].includes(l.SVCheck) ? l.SVCheck : [21, 22].includes(l.OrganCheck) ? l.OrganCheck : 0;
-				if(checkRes > 0) l.Note = this.options.reasonType[checkRes % 10];
-				else l.Note = "";
+				l.SVCheck = (l.State & 2) ? "V" : (l.State & 32) ? "X" : "";
+				l.OrganCheck = (l.State & 4) ? "V" : (l.State & 64) ? "X" : "";
 
-				l.SVCheck = l.SVCheck == 0 ? "" : l.SVCheck == 1 ? "V" : "X";
-				l.OrganCheck = l.OrganCheck == 0 ? "" : l.OrganCheck == 1 ? "V" : "X";
+				l.Note = (l.State & 32) ? l.StateNotes.SV : (l.State & 64) ? l.StateNotes.Organ : "";
 				return l
 			}) 
 			const data = this.formatJson(filterVal, dataList);

@@ -200,7 +200,7 @@
 			</el-table-column>
 			<el-table-column label="監造審核" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="(!(row.State & 2) && !(row.State & 32)) && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
+					<template v-if="(!(row.State & 2) && !(row.State & 32)) && checkPermission(['PIcase.inspector'])">
 						<el-button-group>
 							<!-- <el-button type="success" size="mini" @click="beforeSetResult(row, 2)">通過</el-button> -->
 							<el-button v-for="(name, type) in options.resultType.SV" :key="type" :type="type == 2 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
@@ -219,7 +219,7 @@
 			</el-table-column>
 			<el-table-column label="機關審核" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="(row.State & 2) && (!(row.State & 4) && !(row.State & 64)) && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
+					<template v-if="(row.State & 2) && (!(row.State & 4) && !(row.State & 64)) && checkPermission(['PIcase.supervisor'])">
 						<el-button-group>
 							<!-- <el-button type="success" size="mini" @click="beforeSetResult(row, 4)">通過</el-button> -->
 							<el-button v-for="(name, type) in options.resultType.Organ" :key="type" :type="type == 4 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
@@ -501,9 +501,7 @@ export default {
 						for(const key of ["Firm", "SV", "Organ"]) {
 							if(!l.StateNotes.hasOwnProperty(key)) this.$set(l.StateNotes, key, "");
 						}
-
-						this.$set(l, "showSVCheck", false);
-						this.$set(l, "showOrganCheck", false);
+						
 						this.$set(l, "edit", false);
 					})
 				}
