@@ -182,11 +182,11 @@
 								<i class="el-icon-error" />
 							</el-button>
 						</span>
-						<span v-else-if="[ 'State' ].includes(column.property)">
+						<!-- <span v-else-if="[ 'State' ].includes(column.property)">
 							<el-button v-if="!(row.State & 1)" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
 							<el-button v-else-if="row.State == 1" class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
 							<i v-else class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-						</span>
+						</span> -->
 						<span v-else>
 							<span>{{ formatter(row, column) }}</span>
 							<el-link @click="row.edit = true" style="margin-left: 5px">
@@ -194,15 +194,63 @@
 							</el-link>
 						</span>
 					</span>
-					<i v-else-if="[ 'State' ].includes(column.property)" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+					<!-- <i v-else-if="[ 'State' ].includes(column.property)" class="el-icon-check" style="color: #67C23A; font-weight: bold;" /> -->
 					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column label="是否優先於民眾查報" width="80px" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.DuplicateCase!==''">是</span>
+					<span v-else>否</span>
+				</template>
+			</el-table-column>
+			<el-table-column label="佐證案件" width="160px" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.DuplicateCase!==''">{{ row.DuplicateCase }}</span>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+			<el-table-column label="廠商審核" width="160px" align="center">
+				<template slot-scope="{ row }">
+					<template v-if="row.State & 1">
+						<span>合理</span>
+						<i class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+					</template>
+					<template v-else-if="row.State & 16">
+						<span>不合理</span>
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+					</template>
+					<template v-else>
+						<el-button-group>
+							<el-button v-for="(name, type) in options.resultType.MF" :key="type" :type="type == 1 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
+						</el-button-group>
+					</template>
 				</template>
 			</el-table-column>
 			<el-table-column label="監造審核" width="160px" align="center">
 				<template slot-scope="{ row }">
+					
+					<template v-if="(row.State & 2)">
+						<span>同意</span>
+						<i class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+					</template>
+					<template v-else-if="(row.State & 32)">
+						<span>反對</span>
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+					</template>
+					<!-- <template v-else-if>審核中</template> -->
+					<template v-else-if="(row.State & 16)">
+						<el-button-group>
+							<el-button v-for="(name, type) in options.resultType.SV" :key="type" :type="type == 2 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
+						</el-button-group>
+					</template>
+				</template>
+				
+				<!-- <template slot-scope="{ row }">
 					<template v-if="(!(row.State & 2) && !(row.State & 32)) && checkPermission(['PIcase.inspector']) && row.SVCheck == 0">
 						<el-button-group>
-							<!-- <el-button type="success" size="mini" @click="beforeSetResult(row, 2)">通過</el-button> -->
 							<el-button v-for="(name, type) in options.resultType.SV" :key="type" :type="type == 2 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
 						</el-button-group>
 					</template>
@@ -215,13 +263,28 @@
 						</span>
 						<span v-else> - </span>
 					</template>
-				</template>
+				</template> -->
 			</el-table-column>
 			<el-table-column label="機關審核" width="160px" align="center">
 				<template slot-scope="{ row }">
+					<template v-if="(row.State & 4)">
+						<span>同意</span>
+						<i class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+					</template>
+					<template v-else-if="(row.State & 64)">
+						<span>反對</span>
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+					</template>
+					<template v-else-if="(row.State & 16)&&(row.State &32)">
+						<el-button-group>
+							<el-button v-for="(name, type) in options.resultType.Organ" :key="type" :type="type == 4 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
+						</el-button-group>
+					</template>
+				</template>
+				<!-- <template slot-scope="{ row }">
 					<template v-if="(row.State & 2) && (!(row.State & 4) && !(row.State & 64)) && checkPermission(['PIcase.supervisor']) && row.OrganCheck == 0">
 						<el-button-group>
-							<!-- <el-button type="success" size="mini" @click="beforeSetResult(row, 4)">通過</el-button> -->
 							<el-button v-for="(name, type) in options.resultType.Organ" :key="type" :type="type == 4 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
 						</el-button-group>
 					</template>
@@ -234,6 +297,14 @@
 						</span>
 						<span v-else> - </span>
 					</template>
+				</template> -->
+			</el-table-column>
+			<el-table-column label="是否通過" width="80px" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="(row.State & 1)">是</span>
+					<span v-else-if="(row.State & 16)&&(row.State & 2 || row.State & 4)">是</span>
+					<span v-else-if="(row.State & 16)&&(row.State & 32)&&(row.State & 64)">否</span>
+					<span v-else> 審核中 </span>
 				</template>
 			</el-table-column>
 
@@ -380,10 +451,10 @@ export default {
 					name: "判定原因",
 					sortable: false
 				},
-				State: {
-					name: "廠商審核",
-					sortable: false
-				}
+				// State: {
+				// 	name: "廠商審核",
+				// 	sortable: false
+				// }
 			},
 			list: [],
 			resultList: [],
@@ -437,6 +508,10 @@ export default {
 					3: "立即改善", //重度
 				},
 				resultType: {
+					MF:{
+						1: "同意",
+						16: "反對"
+					},
 					SV: {
 						2: "同意",
 						32: "反對"
@@ -519,12 +594,15 @@ export default {
 			this.rowActive = JSON.parse(JSON.stringify(row));
 			this.rowActive.resultType = result;
 			if(result == -1) {
+				if(this.rowActive.State & 1) this.rowActive.State -= 1;
 				if(this.rowActive.State & 2) this.rowActive.State -= 2;
 				if(this.rowActive.State & 4) this.rowActive.State -= 4;
-				if(this.rowActive.State & 32) this.rowActive.State -= 32;
-				if(this.rowActive.State & 64) this.rowActive.State -= 64;
+				if(this.rowActive.State & 16) this.rowActive.State -= 16;
+				if((this.rowActive.State & 32)) this.rowActive.State -= 32;
+				if((this.rowActive.State & 64)) this.rowActive.State -= 64;
+				// this.rowActive.State -= 112;
 			} else this.rowActive.State += result;
-
+			// console.log(this.rowActive.State)
 			this.showResultConfirm = true;
 		},
 		setResult() {
