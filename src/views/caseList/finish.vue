@@ -1,9 +1,9 @@
 <template>
 	<div class="app-container fCase-list" v-loading="loading">
 		<h2>完工紀錄</h2>
-		<aside>資料初始為2022年6月</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為 {{ tenderStartDate }}</aside>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<el-select class="filter-item" v-model="listQuery.caseType" :disabled="Object.keys(options.caseType).length <= 1">
@@ -11,7 +11,7 @@
 			</el-select>
 			<span class="filter-item">
 				<div style="font-size: 12px; color: #909399">完工日期</div>
-				<time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+				<time-picker class="filter-item" :dateStart="districtList[listQuery.zipCode].start" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			<el-button
@@ -118,12 +118,13 @@ export default {
 			timeTabId: 4,
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate()],
+			dateRange: [moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate()],
 			searchRange: "",
+			zipCodeNow: 104,
 			caseTypeNow: 11,
 			listQuery: {
 				caseType: 11,
-				dist: 104
+				zipCode: 104
 			},
 			headers: {
 				CaseNo: {
@@ -201,13 +202,13 @@ export default {
 				// 	"name": "中正區",
 				// 	"engName": "Zhongzheng"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區",
+					"start": "2023/2/1"
+				},
 				104: {
 					"name": "中山區",
-					"engName": "Zhongshan"
+					"start": "2022/6/1"
 				},
 				// 105: {
 				// 	"name": "松山區",
@@ -300,6 +301,9 @@ export default {
 				else if(props.caseTypeFilter.includes(this.caseTypeNow)) headersFilter[key] = props;
 			})
 			return headersFilter
+		},
+		tenderStartDate() {
+			return moment(this.districtList[this.zipCodeNow].start).format("yyyy年MM月")
 		}
 	},
 	watch: {
@@ -315,15 +319,16 @@ export default {
 	methods: {
 		getList() {
 			this.loading = true;
-			dateWatcher(this.daterange);
+			dateWatcher(this.districtList[this.listQuery.zipCode].start, this.dateRange);
 
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 			this.caseTypeNow = this.listQuery.caseType;
 
 			this.list = [];
 			getCaseList({
+				zipCode: this.listQuery.zipCode,
 				reportType: 2,
 				caseType: this.listQuery.caseType,
 				timeStart: startDate,
@@ -335,6 +340,7 @@ export default {
 						type: "error",
 					});
 				} else {
+					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.list.forEach(l => {
 						// 計算保固日期

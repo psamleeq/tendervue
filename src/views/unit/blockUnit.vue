@@ -422,8 +422,8 @@ export default {
 		getList() {
 			this.loading = true;
 
-			// let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			// let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			// let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			// this.searchRange = startDate + " - " + endDate;
 
 			this.list = [];
@@ -495,8 +495,8 @@ export default {
 		async handleDownload() {
 			// await this.dateWatcher();
 
-			// const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			// const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			// const startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			// const endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
 			let query = {
 				splitType: this.splitTypeNow,

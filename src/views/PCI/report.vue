@@ -1,12 +1,12 @@
 <template>
 	<div class="app-container PCI-report" v-loading="loading">
 		<h2>單元報表</h2>
-		<aside>資料初始為2022年6月</aside>
+		<aside>「{{ districtList[zipCodeNow].name }}」資料初始為 {{ tenderStartDate }}</aside>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.dist" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/> -->
+			<!-- <time-picker class="filter-item" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/> -->
 			<el-button-group>
 				<el-button
 					v-for="(t, i) in yearShortcuts"
@@ -73,10 +73,11 @@ export default {
 			timeTabId: moment().year(),
 			dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			daterange: [ moment().month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
+			dateRange: [ moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
 			searchRange: "",
+			zipCodeNow: 104,
 			listQuery: {
-				dist: 104,
+				zipCode: 104,
 				pageCurrent: 1,
 				pageSize: 50,
 			},
@@ -93,10 +94,10 @@ export default {
 					name: "道路名稱",
 					sortable: false
 				},
-				roadId: {
-					name: "道路編號",
-					sortable: false
-				},
+				// roadId: {
+				// 	name: "道路編號",
+				// 	sortable: false
+				// },
 				roadArea: {
 					name: "道路面積",
 					sortable: false
@@ -124,13 +125,13 @@ export default {
 				// 	"name": "中正區",
 				// 	"engName": "Zhongzheng"
 				// },
-				// 103: {
-				// 	"name": "大同區",
-				// 	"engName": "Datong"
-				// },
+				103: {
+					"name": "大同區",
+					"start": "2023/2/1"
+				},
 				104: {
 					"name": "中山區",
-					"engName": "Zhongshan"
+					"start": "2022/6/1"
 				},
 				// 105: {
 				// 	"name": "松山區",
@@ -169,56 +170,54 @@ export default {
 				// 	"engName": "Wenshan"
 				// }
 			},
-			// yearShortcuts: {
-			// 	2022: {
-			// 		dateStart: "2022/6/1",
-			// 		// dateEnd: "2022/12/31"
-			// 	}
-			// }
 		};
 	},
 	computed: {
 		yearShortcuts() {
-			const startYear = 2022;
-			const diff = moment().diff(moment([startYear]), 'years');
-			let yearShortcuts = {
-				2022: {
-					dateStart: "2022/6/1",
-					// dateEnd: "2022/12/31"
-				}
-			};
+			const startYear = moment(this.districtList[this.listQuery.zipCode].start).year();
+			let yearShortcuts = {};
+			yearShortcuts[startYear] = { dateStart: this.districtList[this.listQuery.zipCode].start };
+
+			const diff = moment().diff([ startYear ], 'years');
 			for(let i = 1; i <= diff; i++) yearShortcuts[startYear+i] = {};
 
 			return yearShortcuts;
 		},
+		tenderStartDate() {
+			return moment(this.districtList[this.zipCodeNow].start).format("yyyy年MM月")
+		}
 	},
 	created() {
 		this.getList();
 	},
 	methods: {
 		async dateWatcher() {
-			const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
-			let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
-			if(moment(dateEnd).isAfter(moment())) dateEnd = moment().endOf("d").toDate();
-			this.daterange = [ dateStart, dateEnd ];
+			return new Promise(resolve => {
+				const dateStart = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateStart ? moment(this.yearShortcuts[this.timeTabId].dateStart).toDate() : moment().year(this.timeTabId).startOf("y");
+				let dateEnd = this.yearShortcuts[this.timeTabId] && this.yearShortcuts[this.timeTabId].dateEnd ? moment(this.yearShortcuts[this.timeTabId].dateEnd).toDate() : moment().year(this.timeTabId).endOf("y");
+				if(moment(dateEnd).isAfter(moment())) dateEnd = moment().endOf("d").toDate();
+				this.dateRange = [ dateStart, dateEnd ];
 
-			return new Promise(resolve => resolve());
+				resolve();
+			})
 		},
 		async getList() {
 			this.loading = true;
+			this.list = [];
 			await this.dateWatcher();
 
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
-			this.list = [];
 			getPCIList({
+				zipCode: this.listQuery.zipCode,
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 			}).then(response => {
+				this.zipCodeNow = this.listQuery.zipCode;
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -271,10 +270,11 @@ export default {
 		async handleDownload() {
 			await this.dateWatcher();
 
-			const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			const startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			const endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
 			getPCIList({
+				zipCode: this.listQuery.zipCode,
 				pageCurrent: 1,
 				pageSize: this.total,
 				timeStart: startDate,

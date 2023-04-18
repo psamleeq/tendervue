@@ -1,38 +1,41 @@
 <template>
-  <div class="app-container exp-estimate" v-loading="loading">
-    <h2>經費估算</h2>
-    <div class="filter-container">
+	<div class="app-container exp-estimate" v-loading="loading">
+		<h2>經費估算</h2>
+		<div class="filter-container">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1" style="width: 150px">
+				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
 			<el-date-picker class="filter-item" v-model="searchDate" type="month" placeholder="選擇月份" :picker-options="pickerOptions" align="center" :clearable="false" :editable="false" style="width: 150px" @change="getList" />
-      <!-- <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-      <el-button
-        class="filter-item"
-        type="info"
-        icon="el-icon-document"
-        :circle="screenWidth<567"
-        @click="handleDownload"
-      >輸出報表</el-button> -->
-    </div>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			<!-- <el-button
+				class="filter-item"
+				type="info"
+				icon="el-icon-document"
+				:circle="screenWidth<567"
+				@click="handleDownload"
+			>輸出報表</el-button> -->
+		</div>
 
 		<div class="chart" ref="chart" />
 
-    <el-table
-      empty-text="目前沒有資料"
-      :data="tempList"
-      border
-      fit
-      highlight-current-row
-      :header-cell-style="{'background-color': '#F2F6FC'}"
-      stripe
-      style="width: 100%"
-    >
-      <el-table-column
-        v-for="(value, key) in headers"
-        :key="key"
-        :prop="key"
-        :label="value.name"
-        align="center"
-        :sortable="value.sortable"
-      >
+		<el-table
+			empty-text="目前沒有資料"
+			:data="tempList"
+			border
+			fit
+			highlight-current-row
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			stripe
+			style="width: 100%"
+		>
+			<el-table-column
+				v-for="(value, key) in headers"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
+				:sortable="value.sortable"
+			>
 				<template slot-scope="{ row }">
 					<el-input
 						v-if="isEdit(row, value) && value.editType == 'string'"
@@ -68,39 +71,39 @@
 				</template>
 			</el-table-column>
 			<el-table-column label="動作" align="center">
-        <template slot-scope="{ row }">
-          <el-button
-            v-if="row.id == undefined"
-            type="success"
-            size="mini"
-            @click="addItem()"
-          >新增</el-button>
-          <span v-else-if="row.id != undefined">
-            <el-button
-              v-if="row.editValue"
-              type="success"
-              size="mini"
-              @click="editItem(row)"
-            >確定</el-button>
-            <span v-else>
-              <el-button
-                type="primary"
-                style="margin-left: 10px"
-                size="mini"
-                @click="row.editValue = true"
+				<template slot-scope="{ row }">
+					<el-button
+						v-if="row.id == undefined"
+						type="success"
+						size="mini"
+						@click="addItem()"
+					>新增</el-button>
+					<span v-else-if="row.id != undefined">
+						<el-button
+							v-if="row.editValue"
+							type="success"
+							size="mini"
+							@click="editItem(row)"
+						>確定</el-button>
+						<span v-else>
+							<el-button
+								type="primary"
+								style="margin-left: 10px"
+								size="mini"
+								@click="row.editValue = true"
 							>修改</el-button>
-              <el-button
-                type="danger"
-                size="mini"
-                @click="removeItem(row)"
-              >刪除</el-button>
-            </span>
-          </span>
-        </template>
-      </el-table-column>
-    </el-table>
+							<el-button
+								type="danger"
+								size="mini"
+								@click="removeItem(row)"
+							>刪除</el-button>
+						</span>
+					</span>
+				</template>
+			</el-table-column>
+		</el-table>
 
-  </div>
+	</div>
 </template>
 
 <script>
@@ -111,9 +114,9 @@ require('echarts/lib/chart/pie');
 import { getExpType, addExpType, delExpType, getExpEstimate, setExpEstimate, delExpEstimate } from "@/api/case";
 
 export default {
-  name: "expEstimate",
-  data() {
-    return {
+	name: "expEstimate",
+	data() {
+		return {
 			loading: false,
 			// screenWidth: window.innerWidth,
 			searchDate: moment().startOf("month").toDate(),
@@ -122,7 +125,11 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
-      headers: {
+			zipCodeNow: 104,
+			listQuery: {
+				zipCode: 104,
+			},
+			headers: {
 				typeId: {
 					name: "類別",
 					sortable: false,
@@ -143,9 +150,59 @@ export default {
 				typeId: 0,
 				amount: 1
 			},
-			chart: null
-    };
-  },
+			districtList: {
+				// 100: {
+				// 	"name": "中正區",
+				// 	"engName": "Zhongzheng"
+				// },
+				103: {
+					name: "大同區",
+					start: "2023/2/1",
+				},
+				104: {
+					name: "中山區",
+					start: "2022/6/1",
+				},
+				// 105: {
+				// 	"name": "松山區",
+				// 	"engName": "Songshan"
+				// },
+				// 106: {
+				// 	"name": "大安區",
+				// 	"engName": "Da’an"
+				// },
+				// 108: {
+				// 	"name": "萬華區",
+				// 	"engName": "Wanhua",
+				// },
+				// 110: {
+				// 	"name": "信義區",
+				// 	"engName": "Xinyi"
+				// },
+				// 111: {
+				// 	"name": "士林區",
+				// 	"engName": "Shilin"
+				// },
+				// 112: {
+				// 	"name": "北投區",
+				// 	"engName": "Beitou"
+				// },
+				// 114: {
+				// 	"name": "內湖區",
+				// 	"engName": "Neihu"
+				// },
+				// 115: {
+				// 	"name": "南港區",
+				// 	"engName": "Nangang"
+				// },
+				// 116: {
+				// 	"name": "文山區",
+				// 	"engName": "Wenshan"
+				// }
+			},
+			chart: null,
+		};
+	},
 	computed: {
 		tempList() {
 			return [ ...this.list, this.newItem ]
@@ -161,7 +218,7 @@ export default {
 		});
 		this.getList();
 	},
-  methods: {
+	methods: {
 		getTypeList(isInit = false, typeId = 0) {
 			this.loading = true;
 			this.typeMap = {};
@@ -193,29 +250,32 @@ export default {
 				this.getTypeList();
 			})
 		},
-    getList() {
-      this.loading = true;
-      this.list = [];
-      getExpEstimate({
+		getList() {
+			this.loading = true;
+			this.list = [];
+			getExpEstimate({
+				zipCode: this.listQuery.zipCode,
 				dataTime: moment(this.searchDate).format("YYYY-MM-DD")
 			}).then(response => {
-        if (response.data.list.length == 0) {
-          this.$message({
-            message: "查無資料",
-            type: "error",
-          });
-        } else {
-          this.list = response.data.list;
-        }
+				this.zipCodeNow = this.listQuery.zipCode;
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list;
+				}
 				this.setChartOptions();
-        this.loading = false;
-      }).catch(err => this.loading = false);
-    },
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
 		isEdit(row, value) {
 			return (row.id == undefined && value.editable) || ( row.id != undefined && row.editValue) 
 		},
 		addItem() {
 			setExpEstimate({
+				zipCode: this.zipCodeNow,
 				dataTime: moment(this.searchDate).format("YYYY-MM-DD"),
 				typeId: this.newItem.typeId,
 				amount: this.newItem.amount
@@ -244,6 +304,7 @@ export default {
 		},
 		editItem(row) {
 			setExpEstimate({
+				zipCode: this.zipCodeNow,
 				id: row.id,
 				dataTime: moment(this.searchDate).format("YYYY-MM-DD"),
 				typeId: row.typeId,
@@ -298,23 +359,23 @@ export default {
 
 			const options = {
 				title: {
-          // text: '成效式契約經費分析',
-          textStyle: {
-            color: 'black',
-            fontWeight: 'bold'
-          }
-        },
-        tooltip: {
-          trigger: 'item',
-          formatter: '{b} : {c} ({d}%)'
-        },
+					// text: '成效式契約經費分析',
+					textStyle: {
+						color: 'black',
+						fontWeight: 'bold'
+					}
+				},
+				tooltip: {
+					trigger: 'item',
+					formatter: '{b} : {c} ({d}%)'
+				},
 				grid: {
 					top: 55,
 					bottom: 20,
-          left: 30,
-          right: 100,
-          containLabel: true
-        },
+					left: 30,
+					right: 100,
+					containLabel: true
+				},
 				legend: { 
 					orient: 'vertical',
 					type: 'plain',
@@ -328,32 +389,32 @@ export default {
 
 			this.chart.setOption(options);
 		},
-    formatTime(time) {
-      return moment(time).utc().format("YYYY-MM-DD");
-    },
+		formatTime(time) {
+			return moment(time).utc().format("YYYY-MM-DD");
+		},
 		formatContent(row, key) {
 			if(key == "typeId") return this.typeMap[row[key]];
-      else if (row[key] == 0 || Number(row[key])) return Number(row[key]).toLocaleString();
-      else return "-";
-    },
-    handleDownload() {
-      let tHeader = Object.values(this.headers);
-      let filterVal = Object.keys(this.headers);
-      // tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-      // filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-      let data = this.formatJson(filterVal, this.list);
+			else if (row[key] == 0 || Number(row[key])) return Number(row[key]).toLocaleString();
+			else return "-";
+		},
+		handleDownload() {
+			let tHeader = Object.values(this.headers);
+			let filterVal = Object.keys(this.headers);
+			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
+			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
+			let data = this.formatJson(filterVal, this.list);
 
-      import("@/vendor/Export2Excel").then((excel) => {
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-        });
-      });
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) => filterVal.map((j) => v[j]));
-    },
-  },
+			import("@/vendor/Export2Excel").then((excel) => {
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
+				});
+			});
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => v[j]));
+		},
+	},
 };
 </script>
 

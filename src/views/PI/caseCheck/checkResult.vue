@@ -5,7 +5,7 @@
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 
 			<el-popover
@@ -158,7 +158,7 @@ export default {
 			timeTabId: 1,
 			showDlConfirm: false,
 			caseTotal: 0,
-			daterange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
+			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
 			searchRange: "",
 			zipCodeNow: 0,
 			listQuery: {
@@ -226,10 +226,12 @@ export default {
 				// 	"name": "中正區"
 				// },
 				103: {
-					"name": "大同區"
+					"name": "大同區",
+					"start": "2023/2/1"
 				},
 				104: {
-					"name": "中山區"
+					"name": "中山區",
+					"start": "2022/6/1"
 				},
 				// 105: {
 				// 	"name": "松山區"
@@ -305,9 +307,9 @@ export default {
 	methods: {
 		getList() {
 			this.loading = true;
-			dateWatcher(this.daterange);
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			dateWatcher(this.districtList[this.listQuery.zipCode].start, this.dateRange);
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 			this.resultList = [];
 			this.checkNum = {
@@ -395,8 +397,8 @@ export default {
 		downloadCaseList() {
 			this.showDlConfirm = false;
 			this.loading = true;
-			const startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			const endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			const startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			const endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
 			getCaseList({
 				zipCode: this.zipCodeNow,
