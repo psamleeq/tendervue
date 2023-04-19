@@ -64,11 +64,11 @@ const PIRouter = {
 			]
 		},
 		{
-			path: 'perfReport',
+			path: 'perfReportD',
 			component: {
 				render: (c) => c('router-view')
 			},
-			name: 'perfReport',
+			name: 'perfReportD',
 			redirect: 'noRedirect',
 			meta: { 
 				title: '日報表', 
@@ -133,6 +133,16 @@ const PIRouter = {
 			meta: { 
 				title: '缺失分析',
 				roles: ['PIcase.analyst']
+			}
+		},
+		{
+			path: 'caseWarrantyList',
+			component: () => import('@/views/PI/caseWarrantyList'),
+			name: 'caseWarrantyList',
+			meta: { 
+				title: '保固案件列表', 
+				roles: ['PIcase.analyst'],
+				vTag: 'Alpha'
 			}
 		},
 	]

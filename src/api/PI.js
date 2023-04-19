@@ -49,3 +49,20 @@ export function getCaseCount(query) {
 		params: query
 	})
 }
+
+// PI4.2: 保固案件列表
+export function getCaseWarrantyList(query) {
+	return request({
+		url: 'PI/caseWarrantyList',
+		method: 'get',
+		params: query
+	})
+}
+
+export function addCaseWarrantyList(data) {
+	return request({
+		url: 'PI/caseWarrantyList',
+		method: 'post',
+		data
+	})
+}

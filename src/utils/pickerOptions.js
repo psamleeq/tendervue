@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-export function pickerOptions(shortcutType = 'year', dateStart, hasWeek = true) {
+export function pickerOptions(shortcutType = 'year', hasWeek = true, disabledDate = true) {
 	const shortcutDetail = {
 		TODAY: {
 			key: "TODAY",
@@ -92,6 +92,8 @@ export function pickerOptions(shortcutType = 'year', dateStart, hasWeek = true) 
 			else return moment(date).valueOf() >= moment().endOf("d").valueOf();
 		},
 	}
+
+	if (!disabledDate) delete pickerOptions.disabledDate;
 
 	pickerOptions.shortcuts = pickerOptions.shortcuts.filter(s => !s.disabled);
 

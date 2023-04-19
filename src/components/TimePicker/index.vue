@@ -33,7 +33,6 @@
 </template>
 
 <script>
-import moment from 'moment'
 import { pickerOptions, dateShortcuts, dateWatcher } from "@/utils/pickerOptions";
 
 export default {
@@ -50,6 +49,10 @@ export default {
 		timeTabId: {
 			required: true,
 			type: Number
+		},
+		disabledDate: {
+			type: Boolean,
+			default: true
 		},
 		hasWeek: {
 			type: Boolean,
@@ -71,7 +74,7 @@ export default {
 	data() {
 		return {
 			dateTimePickerVisible: false,
-			pickerOptions: pickerOptions(this.shortcutType, this.dateStart, this.hasWeek),
+			pickerOptions: pickerOptions(this.shortcutType, this.dateStart, this.hasWeek, this.disabledDate),
 		}
 	},
 	computed: {

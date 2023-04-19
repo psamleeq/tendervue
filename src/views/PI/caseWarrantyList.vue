@@ -1,0 +1,509 @@
+<template>
+	<div class="app-container case-warranty-list" v-loading="loading">
+		<h2>保固案件</h2>
+		<div class="filter-container">
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
+				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			</el-select>
+			<span class="filter-item">
+				<div style="font-size: 12px; color: #909399">保固日期</div>
+				<time-picker class="filter-item" :disabledDate="false" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+			</span>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			<el-button
+				class="filter-item"
+				type="info"
+				icon="el-icon-document"
+				@click="handleDownload"
+			>
+			輸出報表</el-button>
+
+			<el-upload :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
+				<el-button type="success">上傳CSV</el-button>
+			</el-upload>
+			<transition name="el-fade-in">
+				<el-button v-if="csvFileList.length > 0" type="success" @click="showCsvList = true">建立列表</el-button>
+			</transition>
+		</div>
+		
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+		
+		<el-table
+			:data="list"
+			border
+			:header-cell-style="{'background-color': '#F2F6FC'}"
+			style="width: 100%"
+		>
+			<el-table-column
+				v-for="(value, key) in headers"
+				:key="key"
+				:prop="key"
+				:label="value.name"
+				align="center"
+				:sortable="value.sortable"
+				:width="value.width"
+			>
+				<template slot-scope="{ row, column }">
+					<span v-if="[ 'UploadCaseNo' ].includes(column.property)">
+						<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
+						<span v-else> - </span>
+					</span>
+					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
+			</el-table-column>
+		</el-table>
+
+		<el-dialog
+			:visible.sync="showCsvList"
+			width="1000px"
+			:close-on-click-modal="false"
+			:close-on-press-escape="false"
+			:show-close="false"
+			center
+		>	
+			<span slot="title">匯入案件</span>
+			<div class="filter-container">
+				<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
+					<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+				</el-select>
+				<el-upload :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
+					<!-- <i class="el-icon-upload" />
+					<div class="el-upload__text">將CSV拖曳至此處，或<em>點此上傳</em></div> -->
+					<el-button type="success">上傳CSV</el-button>
+				</el-upload>
+				<transition name="el-fade-in">
+					<el-button v-if="csvFileList.length > 0" type="success" @click="createList()">案件上傳</el-button>
+				</transition>
+				<el-button @click="showCsvList = false; handleRemove();">取消</el-button>
+			</div>
+
+			<h3>案件數: {{ tableSelect.length }} / {{ csvData.length }} 件</h3>
+			<el-table
+				ref="caseTable"
+				row-key="UploadCaseNo"
+				empty-text="目前沒有資料"
+				:data="csvData"
+				border
+				size="small"
+				fit
+				highlight-current-row
+				:header-cell-style="{'background-color': '#F2F6FC'}"
+				stripe
+				style="width: 100%"
+				@selection-change="(selection) => tableSelect = selection"
+			>
+				<el-table-column type="selection" width="55" align="center" />
+				<el-table-column
+					v-for="(value, key) in headers"
+					:key="key"
+					:prop="key"
+					:label="value.name"
+					align="center"
+					:formatter="formatter"
+					:sortable="value.sortable"
+					:show-overflow-tooltip="key == 'Place'"
+				>
+					<template slot-scope="{ row, column, $index }">
+						<span v-if="[ 'UploadCaseNo' ].includes(column.property)">
+							<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
+							<span v-else> - </span>
+						</span>
+						<span v-else-if="[ 'DateCompleted' ].includes(column.property)">
+							<el-date-picker 
+								class="datePicker" 
+								v-model="row[column.property]"
+								type="date" 
+								placeholder="請選擇日期"
+								value-format="yyyy/MM/dd"
+								:format="formattedDate(row)"
+								@input="updateDatePicker($index, row)" 
+							/>
+						</span>
+						<span v-else>{{ formatter(row, column) }}</span>
+					</template>
+				</el-table-column>
+			</el-table>
+		</el-dialog>
+	</div>
+</template>
+<script>
+import moment from "moment";
+import jschardet from "jschardet";
+import iconv from "iconv-lite";
+import { getCaseWarrantyList, addCaseWarrantyList } from "@/api/PI";
+import TimePicker from '@/components/TimePicker';
+
+export default {
+	name: "caseWarrantyList",
+	components: { TimePicker },
+	data() {
+		return {
+			loading: false,
+			timeTabId: 1,
+			showCsvList: true,
+			daterange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
+			searchRange: "",
+			listQuery: {
+				zipCode: 104
+			},
+			headers: {
+				UploadCaseNo: {
+					name: "案件編號",
+					sortable: false,
+					width: 150
+				},
+				DistressSrc: {
+					name: "查報來源",
+					sortable: false
+				},
+				CaseDate: {
+					name: "查報日期",
+					sortable: false,
+				},
+				Place: {
+					name: "查報地點",
+					sortable: false,
+					width: 400
+				},
+				DistressType: {
+					name: "損壞情形",
+					sortable: false
+				},
+				DistressLevel: {
+					name: "損壞狀況",
+					sortable: false
+				},
+				DateDeadline: {
+					name: "預計完工日期",
+					sortable: false
+				},
+				DateCompleted: {
+					name: "實際完工時間",
+					sortable: false
+				},
+				DateWarranty: {
+					name: "保固日期",
+					sortable: false
+				}
+			},
+			csvHeader: [ "案件編號", "查報日期", "查報地點", "預計完工日期", "實際完工時間", "損壞情形", "損壞狀況", "查報來源" ],
+			apiHeader: [ "UploadCaseNo", "CaseDate", "Place", "DateDeadline", "DateCompleted", "DateWarranty", "DistressType", "DistressLevel", "DistressSrc" ],
+			tableSelect: [],
+			list: [],
+			csvData: [],
+			csvFileList: [],
+			districtList: {
+				// 100: {
+				// 	"name": "中正區",
+				// },
+				103: {
+					"name": "大同區"
+				},
+				104: {
+					"name": "中山區"
+				},
+				// 105: {
+				// 	"name": "松山區"
+				// },
+				// 106: {
+				// 	"name": "大安區"
+				// },
+				// 108: {
+				// 	"name": "萬華區"
+				// },
+				// 110: {
+				// 	"name": "信義區"
+				// },
+				// 111: {
+				// 	"name": "士林區"
+				// },
+				// 112: {
+				// 	"name": "北投區"
+				// },
+				// 114: {
+				// 	"name": "內湖區"
+				// },
+				// 115: {
+				// 	"name": "南港區"
+				// },
+				// 116: {
+				// 	"name": "文山區"
+				// }
+			},
+			checkDateWarranty:true,
+		};
+	},
+	mounted() {
+		this.showCsvList = false;
+	},
+	methods: {
+		getList() {
+			this.loading = true;
+			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
+
+			this.list = [];
+			getCaseWarrantyList({
+				zipCode: this.listQuery.zipCode,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list;
+					// console.log(this.list)
+				}
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		},
+		createList() {
+			this.loading = true;
+			const arr = this.tableSelect.map((val)=>{val.DateWarranty});
+			this.checkDateWarranty=!arr.includes("Invalid date")
+			if(this.checkDateWarranty){
+				addCaseWarrantyList({
+					zipCode: this.listQuery.zipCode,
+					caseList: this.tableSelect
+				}).then(response =>{
+					console.log(response);
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: "建立成功",
+							type: "success",
+						});
+
+						this.handleRemove()
+						this.showCsvList = false
+					} 
+				}).catch(err=>{
+					console.log(err);
+				})
+			}else{
+				this.$message({
+						message: "保固日期異常",
+						type: "warning",
+				});
+			}
+		},
+		formatter(row, column) {
+			if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
+			else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
+		},
+		formatTime(time) {
+			if(time == "Invalid date"){
+				return
+			}else{
+				return moment(time).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
+			}
+		},
+		readCSV(file, fileList) {
+			if(fileList.length > 1) fileList.shift();
+			this.csvFileList = JSON.parse(JSON.stringify(fileList));
+			this.tableSelect = [];
+
+			if(file.raw.type != "text/csv") {
+				this.$message({
+					type: "warning",
+					message: "文件類型不符，請重新上傳正確csv"
+				});
+				this.handleRemove(); 
+			} else {
+				this.loading = true;
+				let reader = new FileReader();
+				// reader.readAsText(file.raw, "UTF-8");
+				reader.readAsArrayBuffer(file.raw);
+				reader.onload = (evt) => {
+					// 讀取CSV內容
+					// const fileString = evt.target.result;
+					const buffer = Buffer.from(evt.target.result);
+					const type = jschardet.detect(buffer);
+					// console.log(type);
+					const fileString = iconv.decode(buffer, type.encoding);
+
+					//轉成array
+					this.csvData = this.csvToArray(fileString);
+					// console.log(this.csvData);
+					this.checkCsv();
+					this.selectedRows();
+				}
+			}
+		},
+		checkCsv() {
+			const fileHeaders = Object.keys(this.csvData[0]);
+			let lackHeaderList = [];
+			for(const header of this.csvHeader) {
+				if(!fileHeaders.includes(header)) lackHeaderList.push(header);
+			}
+
+			if(lackHeaderList.length != 0) {
+				this.$message({
+					type: "warning",
+					message: `csv缺少欄位${lackHeaderList.map(l => `「${l}」`).join("、")}，請重新上傳正確csv`
+				});
+				this.handleRemove(); 
+			} else {
+				this.csvData.forEach(data => {
+					Object.keys(data).forEach(oldKey => {
+						const newKeyArr = Object.keys(this.headers).filter(key => this.headers[key].name == oldKey);
+						if(newKeyArr.length != 0) data[newKeyArr[0]] = data[oldKey];
+						delete data[oldKey];
+					});
+
+					if(['坑洞', '人孔高差'].includes(data.DistressType)) {
+						data.DateWarranty = moment(data.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
+					}else{
+						data.DateWarranty = moment(data.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
+					}
+					
+				});
+				// this.computedDateWarranty();
+				// this.$refs.caseTable.toggleAllSelection();
+				this.showCsvList = true;
+			}
+		},
+		csvToArray(str, delimiter = ",") {
+			str = str.replace(/\"(.*)[\r\n|\n](.*)\"/g, "$1$2");
+			const headers = str.slice(0, str.indexOf("\n")).split(delimiter).map(header => header.replace(/\r\n/g,'').trim());
+			const rows = str.slice(str.indexOf("\n") + 1).split("\n").filter(row => row.length != 0);
+			const regex = /("[^"]+"|[^,]+)*,/g;
+
+			const result = rows.map(row => {
+				const values = row.split(regex).filter(row => row == undefined || row.length != 0).map(row => {
+					if(row == undefined) return row = '';
+					else return row.replace(/\r\n|\"/g,'').trim();
+				});
+
+				return headers.reduce((object, header, index) => {
+					if([ "查報日期", "預計完工日期", "實際完工時間" ].includes(header)){
+						if(values[index]==""){
+							object[header] = ""
+						}else{
+							object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD");
+						}
+					} 
+					else{
+						object[header] = values[index]; 
+					} 
+					return object
+				}, {});
+			});	
+
+			return result
+		},
+		selectedRows(){
+			const selectedRows = [];
+			this.csvData.forEach(data => {
+				if (data.DateWarranty !== "Invalid date") {
+					selectedRows.push(data);
+				}
+			});
+			//不勾選保固日期異常者
+			this.$nextTick(() => {
+				for (let i = 0; i < selectedRows.length; i++) {
+				  this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
+				}
+			});	
+		},
+		//案件上傳之日期選擇器相關方法
+		formattedDate(row){
+			const formattedDate = moment(row.DateCompleted).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
+			// console.log(formattedDate)
+			this.computedWarranty(row)
+			return formattedDate
+		},
+		computedWarranty(row){
+			if(['坑洞', '人孔高差'].includes(row.DistressType)) {
+				row.DateWarranty = moment(row.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
+			}else{
+				row.DateWarranty = moment(row.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
+			}
+		},
+		updateDatePicker(index, row){
+			this.$set(this.csvData, index, row);
+		},
+		handleRemove(file, fileList) {
+			this.csvData = [];
+			if(fileList == undefined) this.csvFileList = [];
+			else this.csvFileList = JSON.parse(JSON.stringify(fileList));
+			this.$refs.uploadFile.clearFiles();
+			// this.getList();
+			this.loading = false;
+		},
+		handleDownload() {
+			let headersObj = Object.values(this.headers);
+			let tHeader = []
+			headersObj.forEach(element => {
+				tHeader.push(element.name)
+			});
+			// console.log(tHeader)
+			let filterVal = Object.keys(this.headers);
+			let data = this.formatJson(filterVal, this.list);
+
+			import("@/vendor/Export2Excel").then((excel) => {
+				excel.export_json_to_excel({
+					header: tHeader,
+					data,
+				});
+			});
+		},
+		formatJson(filterVal, jsonData) {
+			return jsonData.map((v) => filterVal.map((j) => {
+				if(j.indexOf('Date') != -1) return v[j] ? this.formatTime(v[j]) : "-";
+				else return v[j] && v[j] != '0' ? v[j] : "-";
+			}));
+			
+		},
+	},
+};
+</script>
+
+<style lang="sass">
+.case-warranty-list
+	.filter-container 
+		.el-select
+			width: 110px
+		.el-input__inner
+			padding-left: 5px
+			text-align: center
+		.upload-csv
+			display: inline-flex
+			// flex-direction: row-reverse
+			border: 1px solid rgba(#909399, 0.6)
+			border-radius: 5px
+			&.is-ready > .el-upload.el-upload--text
+				display: none
+			.el-upload-list__item
+				transition: none !important
+				margin-top: 0
+				.el-upload-list__item-name
+					line-height: 35px
+					margin: 0 25px 0 10px
+				.el-icon-close
+					display: block
+					top: 50%
+					transform: translateY(-50%)
+					color: #F56C6C
+					font-weight: bold
+					&:hover
+						color: white
+						background-color: #F56C6C
+						border-radius: 50%
+	.el-dialog
+		.el-dialog__body > div
+			margin-top: 10px
+		
+.datePicker
+	font-size: 5px
+	.el-input__inner
+		width: 80px
+		height: 30px
+		padding:0 0 0 8px
+	.el-input__icon
+		display: none
+
+</style>
