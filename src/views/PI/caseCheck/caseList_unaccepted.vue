@@ -215,16 +215,17 @@
 					<template v-if="row.State & 1">
 						<span>合理</span>
 						<i class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 					</template>
 					<template v-else-if="row.State & 16">
 						<span>不合理</span>
-						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 					</template>
 					<template v-else>
 						<el-button-group>
 							<el-button v-for="(name, type) in options.resultType.MF" :key="type" :type="type == 1 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
 						</el-button-group>
+					</template>
+					<template v-if="checkPermission(['PIcase.inspector']) && (!(row.State & 2) && !(row.State & 32))&&((row.State & 1)||(row.State & 16))">
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row,-1)">撤銷</el-button>
 					</template>
 				</template>
 			</el-table-column>
@@ -234,17 +235,17 @@
 					<template v-if="(row.State & 2)">
 						<span>同意</span>
 						<i class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 					</template>
 					<template v-else-if="(row.State & 32)">
 						<span>反對</span>
-						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
 					</template>
-					<!-- <template v-else-if>審核中</template> -->
 					<template v-else-if="(row.State & 16)">
 						<el-button-group>
 							<el-button v-for="(name, type) in options.resultType.SV" :key="type" :type="type == 2 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
 						</el-button-group>
+					</template>
+					<template v-if="checkPermission(['PIcase.inspector']) && (!(row.State & 4) && !(row.State & 64))&&((row.State & 2)||(row.State & 32))">
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row,-1)">撤銷</el-button>
 					</template>
 				</template>
 				
@@ -270,15 +271,15 @@
 					<template v-if="(row.State & 4)">
 						<span>同意</span>
 						<i class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+						<el-button v-if="checkPermission(['PIcase.supervisor'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row,-1)">撤銷</el-button>
 					</template>
 					<template v-else-if="(row.State & 64)">
 						<span>反對</span>
-						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
+						<el-button v-if="checkPermission(['PIcase.supervisor'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row,-1)">撤銷</el-button>
 					</template>
 					<template v-else-if="(row.State & 16)&&(row.State &32)">
 						<el-button-group>
-							<el-button v-for="(name, type) in options.resultType.Organ" :key="type" :type="type == 4 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
+							<el-button  v-for="(name, type) in options.resultType.Organ" :key="type" :type="type == 4 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
 						</el-button-group>
 					</template>
 				</template>
@@ -571,12 +572,10 @@ export default {
 					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.resultList = response.data.resultList;
-
 					this.list.forEach(l => {
 						for(const key of ["Firm", "SV", "Organ"]) {
 							if(!l.StateNotes.hasOwnProperty(key)) this.$set(l.StateNotes, key, "");
 						}
-
 						this.$set(l, "showSVCheck", false);
 						this.$set(l, "showOrganCheck", false);
 						this.$set(l, "edit", false);
@@ -594,15 +593,13 @@ export default {
 			this.rowActive = JSON.parse(JSON.stringify(row));
 			this.rowActive.resultType = result;
 			if(result == -1) {
-				if(this.rowActive.State & 1) this.rowActive.State -= 1;
-				if(this.rowActive.State & 2) this.rowActive.State -= 2;
-				if(this.rowActive.State & 4) this.rowActive.State -= 4;
-				if(this.rowActive.State & 16) this.rowActive.State -= 16;
-				if((this.rowActive.State & 32)) this.rowActive.State -= 32;
-				if((this.rowActive.State & 64)) this.rowActive.State -= 64;
-				// this.rowActive.State -= 112;
+				if(this.rowActive.State & 64) this.rowActive.State -= 64;
+				else if((this.rowActive.State & 16)&&(this.rowActive.State & 32)&&(this.rowActive.State & 4)) this.rowActive.State -= 4;
+				else if(this.rowActive.State & 32) this.rowActive.State -= 32;
+				else if((this.rowActive.State & 16)&&(this.rowActive.State & 2)) this.rowActive.State -= 2;
+				else if(this.rowActive.State & 16) this.rowActive.State -= 16;
+				else if((this.rowActive.State & 1)) this.rowActive.State -= 1;
 			} else this.rowActive.State += result;
-			// console.log(this.rowActive.State)
 			this.showResultConfirm = true;
 		},
 		setResult() {
