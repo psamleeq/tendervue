@@ -6,8 +6,12 @@
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">保固日期</div>
-				<time-picker class="filter-item" :disabledDate="false" :hasWeek="false" :timeTabId.sync="timeTabId" :daterange.sync="daterange" @search="getList"/>
+				<el-select v-model="listQuery.filterType" class="filter-select" popper-class="type-select">
+					<el-option label="保固日期(之後)" :value="1" />
+					<el-option label="預計完工日期" :value="2" />
+				</el-select>
+				<el-date-picker v-if="listQuery.filterType == 1" v-model="date" type="date" placeholder="請選擇日期" :clearable="false" style="width: 180px" />
+				<time-picker v-else-if="listQuery.filterType == 2" class="filter-item" :disabledDate="false" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			<el-button
@@ -15,8 +19,7 @@
 				type="info"
 				icon="el-icon-document"
 				@click="handleDownload"
-			>
-			輸出報表</el-button>
+			>輸出報表</el-button>
 
 			<el-upload :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
 				<el-button type="success">上傳CSV</el-button>
@@ -139,12 +142,14 @@ export default {
 	data() {
 		return {
 			loading: false,
-			timeTabId: 1,
+			timeTabId: 2,
 			showCsvList: true,
-			daterange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
+			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
+			date: moment().subtract(1, 'month').startOf("month").toDate(),
 			searchRange: "",
 			listQuery: {
-				zipCode: 104
+				zipCode: 104,
+				filterType: 1
 			},
 			headers: {
 				UploadCaseNo: {
@@ -239,15 +244,22 @@ export default {
 	methods: {
 		getList() {
 			this.loading = true;
-			let startDate = moment(this.daterange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.daterange[1]).format("YYYY-MM-DD");
+			let startDate = '';
+			let endDate = '';
+
+			if(this.listQuery.filterType == 1) startDate = moment(this.date).format("YYYY-MM-DD");
+			else if(this.listQuery.filterType == 2) {
+				startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+				endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+			}		
 			this.searchRange = startDate + " - " + endDate;
 
 			this.list = [];
 			getCaseWarrantyList({
 				zipCode: this.listQuery.zipCode,
+				filterType: this.listQuery.filterType,
 				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+				timeEnd: (this.listQuery.filterType == 1) ? '' : moment(endDate).add(1, "d").format("YYYY-MM-DD")
 			}).then((response) => {
 				if (response.data.list.length == 0) {
 					this.$message({
@@ -405,7 +417,7 @@ export default {
 			//不勾選保固日期異常者
 			this.$nextTick(() => {
 				for (let i = 0; i < selectedRows.length; i++) {
-				  this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
+					this.$refs.caseTable.toggleRowSelection(selectedRows[i], true);
 				}
 			});	
 		},
@@ -413,7 +425,6 @@ export default {
 		formattedDate(row){
 			const formattedDate = moment(row.DateCompleted).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
 			// console.log(formattedDate)
-			this.computedWarranty(row)
 			return formattedDate
 		},
 		computedWarranty(row){
@@ -424,6 +435,7 @@ export default {
 			}
 		},
 		updateDatePicker(index, row){
+			this.computedWarranty(row);
 			this.$set(this.csvData, index, row);
 		},
 		handleRemove(file, fileList) {
@@ -470,6 +482,16 @@ export default {
 		.el-input__inner
 			padding-left: 5px
 			text-align: center
+		.filter-select 
+			width: 130px
+			.el-input__inner
+				background-color: #F5F7FA
+				color: #909399
+				border-right: none
+				border-top-right-radius: 0
+				border-bottom-right-radius: 0
+				&:focus
+					border-color: #DCDFE6
 		.upload-csv
 			display: inline-flex
 			// flex-direction: row-reverse
