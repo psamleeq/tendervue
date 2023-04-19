@@ -245,8 +245,19 @@
 		</el-dialog>
 
 		<el-dialog :visible.sync="showDemo" width="1110px" center>
-			<span slot="title">220915.csv (<el-link href="/demo/220915.csv" target="_blank">下載<i class="el-icon-download" /></el-link>)</span>
-			<iframe width="100%" height="600" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSENg_DyEurfd0ZDBFugZTBSTNyCJrUe2xxliAhrXYO4AIeHBpNkTjiQAmQgthjCLGZPxplxfF-xSAH/pubhtml?gid=1382937779&single=true&widget=false&headers=false&chrome=false" />
+			<el-tabs>
+				<el-tab-pane label="自巡">
+					<div>查報案件清單_230411_bim.csv (<el-link href="/demo/查報案件清單_230411_bim.csv" target="_blank">下載<i class="el-icon-download" /></el-link>)</div>
+					<br>
+					<!-- <iframe width="100%" height="600" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSENg_DyEurfd0ZDBFugZTBSTNyCJrUe2xxliAhrXYO4AIeHBpNkTjiQAmQgthjCLGZPxplxfF-xSAH/pubhtml?gid=1382937779&single=true&widget=false&headers=false&chrome=false" /> -->
+					<iframe width="100%" height="600" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSautDGttiPQIBo1OpUTXz_Xyib6wQDK2RgwG3d5Smsk7tFwvbvtC42ReWaUvVQNOV5tu7oEU30YYpe/pubhtml?gid=1390536701&single=true&widget=false&headers=false&chrome=false" />
+				</el-tab-pane>
+				<el-tab-pane label="其他">
+					<div>查報案件清單_230411.csv (<el-link href="/demo/查報案件清單_230411.csv" target="_blank">下載<i class="el-icon-download" /></el-link>)</div>
+					<br>
+					<iframe width="100%" height="600" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vR2KhRtPU_XoNG9Vv-igGarxsTK6PrG4WNFBidGwA4R4oJWtb2VRTIrO1eua_l_K8-0dqMFHTyMckW5/pubhtml?gid=846518814&single=true&widget=false&headers=false&chrome=false" />
+				</el-tab-pane>
+			</el-tabs>
 		</el-dialog>
 
 	</div>

@@ -27,6 +27,7 @@
 			<transition name="el-fade-in">
 				<el-button v-if="csvFileList.length > 0" type="success" @click="showCsvList = true">建立列表</el-button>
 			</transition>
+			<el-button type="text" @click="showDemo = true">CSV範例</el-button>
 		</div>
 		
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -127,6 +128,13 @@
 				</el-table-column>
 			</el-table>
 		</el-dialog>
+
+		<el-dialog :visible.sync="showDemo" width="1110px" center>
+			<div>保固案件_2303.csv (<el-link href="/demo/保固案件_2303.csv" target="_blank">下載<i class="el-icon-download" /></el-link>)</div>
+			<br>
+			<!-- <iframe width="100%" height="600" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSENg_DyEurfd0ZDBFugZTBSTNyCJrUe2xxliAhrXYO4AIeHBpNkTjiQAmQgthjCLGZPxplxfF-xSAH/pubhtml?gid=1382937779&single=true&widget=false&headers=false&chrome=false" /> -->
+			<iframe width="100%" height="600" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQIR-S3txWFFxXWq1Tds8utwDSs7JsYXnKqc4FOypDaxJ8ND1GuSINRK5nx5-hbeRfyY_NoGXXiR-G7/pubhtml?gid=1232250669&single=true&widget=false&headers=false&chrome=false" />
+		</el-dialog>
 	</div>
 </template>
 <script>
@@ -144,6 +152,7 @@ export default {
 			loading: false,
 			timeTabId: 2,
 			showCsvList: true,
+			showDemo: false,
 			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
 			date: moment().subtract(1, 'month').startOf("month").toDate(),
 			searchRange: "",
