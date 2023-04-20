@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-export function pickerOptions(shortcutType = 'year', hasWeek = true, disabledDate = true) {
+export function pickerOptions(shortcutType = 'year', dateStart, hasWeek = true, disabledDate = true) {
 	const shortcutDetail = {
 		TODAY: {
 			key: "TODAY",
