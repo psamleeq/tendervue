@@ -29,8 +29,11 @@
 						<svg-icon icon-class="form" class-name="card-panel-icon" />
 					</div>
 					<div class="card-panel-description">
-						<div class="card-panel-text">不合理案件數</div>
-						<div class="card-panel-num">{{ list.length }}</div>
+						<div class="card-panel-text">廠商審核</div>
+						<div class="card-panel-num">
+							{{ checkNum.MF.check }} <span class="check-num">({{ checkNum.MF.fail }})</span>  / {{ checkNum.MF.total }}
+							<el-tooltip class="item" effect="dark" content="不合理案件數 (合理案件數) / 總案件數" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
+						</div>
 					</div>
 				</div>
 			</el-col>
@@ -42,7 +45,8 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">監造審核</div>
 						<div class="card-panel-num"> 
-							{{ checkNum.SV.check }} <span class="fail-num">({{ checkNum.SV.fail }})</span>
+							{{ checkNum.SV.check }} <span class="fail-num">({{ checkNum.SV.fail }})</span> / {{ checkNum.SV.total }}
+							<el-tooltip class="item" effect="dark" content="通過案件數 (反對案件數) / 需審核案件數" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
 						</div>
 					</div>
 				</div>
@@ -55,7 +59,8 @@
 					<div class="card-panel-description">
 						<div class="card-panel-text">機關審核</div>
 						<div class="card-panel-num">
-							{{ checkNum.Organ.check }} <span class="fail-num">({{ checkNum.Organ.fail }})</span>
+							{{ checkNum.Organ.check }} <span class="fail-num">({{ checkNum.Organ.fail }})</span> / {{ checkNum.Organ.total }}
+							<el-tooltip class="item" effect="dark" content="通過案件數 (反對案件數) / 需審核案件數" placement="bottom"><i class="icon-tooltip el-icon-warning" /></el-tooltip>
 						</div>
 					</div>
 				</div>
@@ -105,13 +110,13 @@
 			</el-table-column>
 			<el-table-column label="不通過原因(監造)" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.State & 32">{{ row.StateNotes.SV }}</span>
+					<span v-if="row.State & 2">{{ row.StateNotes.SV || "-" }}</span>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
 			<el-table-column label="不通過原因(機關)" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.State & 64">{{ row.StateNotes.Organ }}</span>
+					<span v-if="row.State & 4">{{ row.StateNotes.Organ || "-" }}</span>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
@@ -137,103 +142,100 @@
 			style="width: 100%"
 		>
 			<el-table-column label="序號" type="index" width="40" align="center" />
-			<!-- <el-table-column label="案件編號" prop="UploadCaseNo" align="center">
-				<template slot-scope="{ row }">
-					<template v-if="row.edit">
-						<el-input
-							v-model="row.UploadCaseNo"
-							size="mini"
-							style="width: 100px"
-						/>
-						<el-button type="text" @click="row.edit = false;">
-							<i class="el-icon-success" />
-						</el-button>
-						<el-button type="text" @click="row.edit = false; getList()">
-							<i class="el-icon-error" />
-						</el-button>
-					</template>
-					<template v-else>
-						<span>{{ row.UploadCaseNo || "-" }}</span>
-						<el-link v-if="!row.UploadCaseNo" @click="row.edit = true" style="margin-left: 5px">
-							<i class="el-icon-edit" />
-						</el-link>
-					</template>
-				</template>
-			</el-table-column> -->
 			<el-table-column
 				v-for="(value, key) in headers"
 				:key="key"
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['StateNotes'].includes(key) ? 250 : ['organAssign'].includes(key) ? 60 : ['CaseDate', 'DeviceType', 'BType', 'BrokeStatus'].includes(key) ? 115 : null"
+				:width="['StateNotes', 'CaseName'].includes(key) ? 150 : ['CaseDate', 'DeviceType', 'BType', 'BrokeStatus', 'DuplicateCase'].includes(key) ? 100 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
-					<span v-else-if="checkPermission(['PIcase.editor']) && [ 'State', 'StateNotes' ].includes(column.property)">
-						<span v-if="[ 'StateNotes' ].includes(column.property) && row.edit">
-							<input v-if="[ 'StateNotes' ].includes(column.property)" v-model="row.StateNotes.Firm" />
-							<el-button type="text" @click="rowActive = row; setResult();">
+					<span v-else-if="[ 'priorDuplicateCase' ].includes(column.property)">
+						<span v-if="row.DuplicateCase!==''">是</span>
+						<span v-else>否</span>
+					</span>
+					<span v-else-if="checkPermission(['PIcase.editor']) && [ 'StateNotes', 'DuplicateCase' ].includes(column.property)">
+						<template v-if="row.edit">
+							<el-input v-if="column.property == 'StateNotes'" v-model="row.StateNotes.Firm" size="mini" style="width: 100px" />
+							<el-input v-else v-model="row[column.property]" size="mini" style="width: 100px" />
+							<el-button type="text" @click="row.edit = false; rowActive = row; setResult()">
 								<i class="el-icon-success" />
 							</el-button>
 							<el-button type="text" @click="row.edit = false; getList()">
 								<i class="el-icon-error" />
 							</el-button>
-						</span>
-						<span v-else-if="[ 'State' ].includes(column.property)">
-							<el-button v-if="!(row.State & 1)" class="btn-revoke" type="danger" size="mini" plain round @click="beforeReply(row, 1)">申覆</el-button>
-							<el-button v-else-if="row.State == 1" class="btn-revoke" size="mini" plain round @click="beforeReply(row, 0)">撤銷</el-button>
-							<i v-else class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-						</span>
-						<span v-else>
+						</template>
+						<template v-else>
 							<span>{{ formatter(row, column) }}</span>
 							<el-link @click="row.edit = true" style="margin-left: 5px">
 								<i class="el-icon-edit" />
 							</el-link>
-						</span>
+						</template>
 					</span>
-					<i v-else-if="[ 'State' ].includes(column.property)" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
 					<span v-else>{{ formatter(row, column) }}</span>
+				</template>
+			</el-table-column>
+			
+			<el-table-column label="廠商審核" width="160px" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.State & 1">合理</span>
+					<span v-else-if="row.State & 16" style="color: #67C23A">不合理</span>
+					<template v-else-if="checkPermission(['PIcase.editor']) && row.State == 0">
+						<el-button-group>
+							<el-button v-for="(name, type) in options.resultType.MF" :key="type" :type="type == 1 ? '' : 'success'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
+						</el-button-group>
+					</template>
+					<template v-else> - </template>
+
+					<template v-if="checkPermission(['PIcase.editor']) && !(row.State & 2) && !(row.State & 32) && ((row.State & 1) || (row.State & 16))">
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row,-1)">撤銷</el-button>
+					</template>
 				</template>
 			</el-table-column>
 			<el-table-column label="監造審核" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="(!(row.State & 2) && !(row.State & 32)) && checkPermission(['PIcase.inspector'])">
+					<span v-if="row.State & 32" style="color: #67C23A">同意</span>
+					<span v-else-if="row.State & 2" style="color: #F56C6C">反對</span>
+					<template v-else-if="checkPermission(['PIcase.inspector']) && (row.State & 16)">
 						<el-button-group>
-							<!-- <el-button type="success" size="mini" @click="beforeSetResult(row, 2)">通過</el-button> -->
-							<el-button v-for="(name, type) in options.resultType.SV" :key="type" :type="type == 2 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
-						</el-button-group>
+							<el-button  :type="'success'" size="mini" @click="beforeSetResult(row, Number(32))">同意</el-button>
+							<el-button  :type="'danger'" size="mini" @click="beforeSetResult(row, Number(2))">反對</el-button>
+						</el-button-group> 
 					</template>
-					<template v-else>
-						<span v-if="row.State & 1">
-							<i v-if="row.State & 2" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-							<i v-else-if="row.State & 32" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
-							<span v-else>監造審核中</span>
-							<el-button v-if="checkPermission(['PIcase.inspector']) && (!(row.State & 4) && !(row.State & 64))" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
-						</span>
-						<span v-else> - </span>
+					<template v-else> - </template>
+
+					<template v-if="checkPermission(['PIcase.inspector']) && (!(row.State & 4) && !(row.State & 64)) && ((row.State & 2)||(row.State & 32))">
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row,-1)">撤銷</el-button>
 					</template>
 				</template>
 			</el-table-column>
 			<el-table-column label="機關審核" width="160px" align="center">
 				<template slot-scope="{ row }">
-					<template v-if="(row.State & 2) && (!(row.State & 4) && !(row.State & 64)) && checkPermission(['PIcase.supervisor'])">
+					<span v-if="(row.State & 64)" style="color: #67C23A">同意</span>
+					<span v-else-if="(row.State & 4)" style="color: #F56C6C">反對</span>
+					<template v-else-if="checkPermission(['PIcase.supervisor']) && (row.State & 16) && (row.State & 32)">
 						<el-button-group>
-							<!-- <el-button type="success" size="mini" @click="beforeSetResult(row, 4)">通過</el-button> -->
-							<el-button v-for="(name, type) in options.resultType.Organ" :key="type" :type="type == 4 ? 'success' : 'danger'" size="mini" @click="beforeSetResult(row, Number(type))">{{ name }}</el-button>
-						</el-button-group>
+							<el-button  :type="'success'" size="mini" @click="beforeSetResult(row, Number(64))">同意</el-button>
+							<el-button  :type="'danger'" size="mini" @click="beforeSetResult(row, Number(4))">反對</el-button>
+						</el-button-group> 
 					</template>
-					<template v-else>
-						<span v-if="row.State & 2">
-							<i v-if="row.State & 4" class="el-icon-check" style="color: #67C23A; font-weight: bold;" />
-							<i v-else-if="row.State & 64" class="el-icon-close" style="color: #F56C6C; font-weight: bold;" />
-							<span v-else>機關審核中</span>
-							<el-button v-if="checkPermission(['PIcase.supervisor'])" class="btn-revoke" size="mini" plain round @click="beforeSetResult(row, -1)">撤銷</el-button>
-						</span>
-						<span v-else> - </span>
+					<template v-else> - </template>
+
+					<template v-if="checkPermission(['PIcase.supervisor']) && (row.State & 4) || (row.State & 64)">
+						<el-button class="btn-revoke" size="mini" plain round @click="beforeSetResult(row,-1)">撤銷</el-button>
 					</template>
+				</template>
+			</el-table-column>
+			<el-table-column label="是否通過" width="80px" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="(row.State & 16)&&((row.State & 2)||(row.State & 4))">否</span>
+					<span v-else-if="(row.State & 16)&&(row.State & 32) && (row.State & 64)">是</span>
+					<span v-else-if="(row.State & 1)"> - </span>
+					<span v-else>審核中</span>
 				</template>
 			</el-table-column>
 
@@ -244,30 +246,6 @@
 				</template>
 			</el-table-column>
 		</el-table>
-
-		<!-- 不合理案件Dialog -->
-		<el-dialog
-			:visible.sync="showUnacceptedConfirm"
-			width="300px"
-			:show-close="false"
-			:close-on-click-modal="false"
-			:close-on-press-escape="false"
-			center
-		>	
-			<span slot="title">確認{{ rowActive.State > 0 ? "標記" : "撤銷" }} {{ rowActive.UploadCaseNo }}為「不合理案件」？</span>
-			<div>來源案號: {{ rowActive.CaseNo }}</div>
-			<span v-if="rowActive.State > 0">
-				<div style="color: #F56C6C">(將會清除抽查結果。)</div>
-				<br>
-				<div>原因: 
-					<el-input v-model="rowActive.StateNotes" />
-				</div>
-			</span>
-			<span slot="footer" class="footer-btns">
-				<el-button @click="showUnacceptedConfirm = false; getList();">取消</el-button>
-				<el-button type="primary" @click="setResult()">確定</el-button>
-			</span>
-		</el-dialog>
 
 		<!-- 抽查結果Dialog -->
 		<el-dialog
@@ -280,15 +258,20 @@
 		>	
 			<span slot="title">確認提交 {{ rowActive.UploadCaseNo }}的審核結果？</span>
 			<div>來源案號: {{ rowActive.CaseNo }}</div>
-			<div v-if="rowActive.StateNotes">廠商判定原因: {{ rowActive.StateNotes.Firm || "-" }}</div>
-			<div v-if="rowActive.resultType < 0" style="color: #F56C6C" >撤銷審核</div>
-			<div v-else>審核結果: 
-				<span v-if="rowActive.State & 2 || rowActive.State & 4" style="color: #67C23A">通過</span>
-				<span v-else-if="rowActive.State & 32 || rowActive.State & 64" style="color: #F56C6C">不通過</span>
+			<div v-if="rowActive.resultType < 0" style="color: #F56C6C">撤銷審核</div>
+			<div v-if="(rowActive.resultType != 16) && (rowActive.State & 16)">廠商判定原因: {{ rowActive.StateNotes.Firm || "-" }}</div>
+			<div v-if="rowActive.resultType == 1">審核狀態: 合理</div>
+			<div v-if="rowActive.resultType == 16">審核狀態: 不合理</div>
+			<div v-if="rowActive.resultType == 32 || rowActive.resultType == 64">審核狀態: 同意</div>
+			<div v-if="rowActive.resultType == 2 || rowActive.resultType == 4">審核狀態: 反對</div>
+			<div v-if="(rowActive.State & 16) && (rowActive.resultType == 16)">原因:
+				<el-input v-model="rowActive.StateNotes.Firm" />
 			</div>
-			<div v-if="rowActive.State & 32 || rowActive.State & 64">原因: 
-				<el-input v-if="rowActive.State & 64" v-model="rowActive.StateNotes.Organ" />
-				<el-input v-else-if="rowActive.State & 32" v-model="rowActive.StateNotes.SV" />
+			<div v-else-if="(rowActive.State & 2)">原因:
+				<el-input v-model="rowActive.StateNotes.SV" />
+			</div>
+			<div v-else-if="(rowActive.State & 4)">原因:
+				<el-input v-model="rowActive.StateNotes.Organ" />
 			</div>
 			<span slot="footer" class="footer-btns">
 				<el-button @click="showResultConfirm = false; getList();">取消</el-button>
@@ -336,6 +319,10 @@ export default {
 					name: "案件編號",
 					sortable: true
 				},
+					DistressSrc: {
+					name: "查報來源",
+					sortable: false
+				},
 				CaseDate: {
 					name: "成案日期",
 					sortable: false,
@@ -344,10 +331,10 @@ export default {
 					name: "設施類型",
 					sortable: true
 				},
-				organAssign: {
-					name: "機關交辦",
-					sortable: false
-				},
+				// organAssign: {
+				// 	name: "機關交辦",
+				// 	sortable: false
+				// },
 				CaseName: {
 					name: "地址",
 					sortable: false
@@ -376,14 +363,22 @@ export default {
 				// 	name: "PCI",
 				// 	sortable: false
 				// },
+				priorDuplicateCase:{
+					name: "優先於民眾查報",
+					sortable: false
+				},
+				DuplicateCase:{
+					name: "佐證案件",
+					sortable: false
+				},
 				StateNotes: {
 					name: "判定原因",
 					sortable: false
 				},
-				State: {
-					name: "廠商審核",
-					sortable: false
-				}
+				// State: {
+				// 	name: "廠商審核",
+				// 	sortable: false
+				// }
 			},
 			list: [],
 			resultList: [],
@@ -437,13 +432,17 @@ export default {
 					3: "立即改善", //重度
 				},
 				resultType: {
+					MF:{
+						1: "合理",
+						16: "不合理"
+					},
 					SV: {
-						2: "同意",
-						32: "反對"
+						32: "同意",
+						2: "反對"
 					},
 					Organ: {
-						4: "同意",
-						64: "反對"
+						64: "同意",
+						4: "反對"
 					}
 				},
 			}
@@ -452,15 +451,24 @@ export default {
 	computed: { 
 		checkNum() {
 			return { 
+				MF: {
+					check: this.list.filter(l => l.State & 16).length, 
+					fail: this.list.filter(l => l.State & 1).length,
+					total: this.list.length
+				},
 				SV: { 
-					check: this.list.filter(l => l.State & 2).length, 
-					fail: this.list.filter(l => l.State & 32).length
+					check: this.list.filter(l => l.State & 32).length, 
+					fail: this.list.filter(l => l.State & 2).length,
+					total: this.list.filter(l => l.State & 16).length
 				}, 
 				Organ: { 
-					check: this.list.filter(l =>  l.State & 4).length, 
-					fail: this.list.filter(l => l.State & 64).length
+					check: this.list.filter(l =>  l.State & 64).length, 
+					fail: this.list.filter(l => l.State & 4).length,
+					total: this.list.filter(l => (l.State & 16) && (l.State & 32)).length
 				},
-				pass: this.list.filter(l =>  (l.State & 2) && (l.State & 4)).length
+				// pass: this.list.filter(l =>  (l.State & 2) && (l.State & 4)).length
+				pass: this.list.filter(l => (l.State & 16) && (l.State & 32) && (l.State & 64)).length
+			
 			};
 		}
 	},
@@ -496,8 +504,8 @@ export default {
 					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.resultList = response.data.resultList;
-
 					this.list.forEach(l => {
+						// if(l.StateNotes.length==0)l.StateNotes={}
 						for(const key of ["Firm", "SV", "Organ"]) {
 							if(!l.StateNotes.hasOwnProperty(key)) this.$set(l.StateNotes, key, "");
 						}
@@ -508,21 +516,28 @@ export default {
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
-		beforeReply(row, result) {
-			this.rowActive = JSON.parse(JSON.stringify(row));
-			this.rowActive.State = result;
-			this.showUnacceptedConfirm = true;
-		},
 		beforeSetResult(row, result) {
 			this.rowActive = JSON.parse(JSON.stringify(row));
 			this.rowActive.resultType = result;
 			if(result == -1) {
-				if(this.rowActive.State & 2) this.rowActive.State -= 2;
-				if(this.rowActive.State & 4) this.rowActive.State -= 4;
-				if(this.rowActive.State & 32) this.rowActive.State -= 32;
-				if(this.rowActive.State & 64) this.rowActive.State -= 64;
+				if(this.rowActive.State & 64){
+					this.rowActive.State -= 64;
+				} 
+				else if((this.rowActive.State & 16) && (this.rowActive.State & 32) && (this.rowActive.State & 4)){
+					this.rowActive.State -= 4;
+					this.rowActive.StateNotes.Organ = '';
+				} 
+				else if(this.rowActive.State & 32){
+					this.rowActive.State -= 32;
+				}
+				else if((this.rowActive.State & 16)&&(this.rowActive.State & 2)){
+					this.rowActive.State -= 2;
+					this.rowActive.StateNotes.SV = '';
+				}
+				else if(this.rowActive.State & 16) this.rowActive.State -= 16;
+				else if((this.rowActive.State & 1)) this.rowActive.State -= 1;
+				// row.State == 0
 			} else this.rowActive.State += result;
-
 			this.showResultConfirm = true;
 		},
 		setResult() {
@@ -530,7 +545,7 @@ export default {
 			this.showUnacceptedConfirm = false;
 			this.showResultConfirm = false;
 
-			if(this.rowActive.State == 0) this.rowActive.StateNotes = '';
+			if(this.rowActive.State == 0) this.rowActive.StateNotes.Firm = '';
 
 			setCaseList( this.rowActive.id, {
 				zipCode: this.zipCodeNow,
@@ -539,7 +554,8 @@ export default {
 				BrokeType: this.rowActive.BrokeType,
 				PCIValue: this.rowActive.PCIValue,
 				State: this.rowActive.State,
-				StateNotes: JSON.stringify(this.rowActive.StateNotes)
+				StateNotes: JSON.stringify(this.rowActive.StateNotes),
+				DuplicateCase: this.rowActive.DuplicateCase
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -568,9 +584,8 @@ export default {
 			return moment(time).format("YYYY/MM/DD");
 		},
 		handleDownload() {
-			console.log("handleDownload");
-			const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造審核", "機關審核", "通過"]);
-			const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Pass"]);
+			const tHeader = Object.values(this.headers).map(value => value.name).concat(["廠商審核","監造審核", "機關審核", "通過"]);
+			const filterVal = Object.keys(this.headers).concat(["MFCheck", "SVCheck", "OrganCheck", "Pass"]);
 			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
 			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
 			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
@@ -579,10 +594,11 @@ export default {
 				l.organAssign =  l.organAssign == 1 ? "是" : "";
 				l.BType = this.options.BType[l.BType];
 				l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
-				l.SVCheck = (l.State & 2) ? "V" : (l.State & 32) ? "X" : "-";
-				l.OrganCheck = (l.State & 4) ? "V" : (l.State & 64) ? "X" :  "-";
-				l.Pass = (l.State & 2) && (l.State & 4) ? "V" :  (l.State & 32) || (l.State & 64) ? "X" : "-";
-				l.State = (l.State & 1) ? "V" : "-";
+				l.priorDuplicateCase = l.DuplicateCase?"是":"否"
+				l.MFCheck = (l.State & 16) ? "V" : (l.State & 1) ? "X" : "-";
+				l.SVCheck = (l.State & 2) ? "X" : (l.State & 32) ? "V" : "-";
+				l.OrganCheck = (l.State & 4) ? "X" : (l.State & 64) ? "V" :  "-";
+				l.Pass = (l.State & 32) && (l.State & 64) ? "V" : (l.State & 2) || (l.State & 4) ? "X" : "-";
 				l.StateNotes = l.StateNotes.Firm;
 				return l
 			}) 
@@ -695,9 +711,11 @@ export default {
 					margin-bottom: 12px
 				.card-panel-num 
 					font-size: 18px
+					.check-num
+						color: #67C23A
+						vertical-align: text-top
 					.fail-num
 						color: #F56C6C
-						// font-size: 20px
 						vertical-align: text-top
 
 	.el-icon-edit
