@@ -51,7 +51,7 @@
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="即時運算" align="center" width='120'>
+			<el-table-column v-if="checkPermission(['admin'])" label="即時運算" align="center" width='120'>
 				<template slot-scope="{ row }">
 					<el-button class="btn-action" type="primary" plain @click="calPCI(row.roundStart, row.roundEnd)">重新計算</el-button>
 				</template>
@@ -106,6 +106,7 @@
 import moment from "moment";
 import { getTenderMap, getTenderRound, setTenderRound } from "@/api/type";
 import { resetPCI, updatePCI, updatePCIByName } from "@/api/tool";
+import checkPermission from '@/utils/permission';
 
 export default {
 	name: "PCIManager",
@@ -155,6 +156,7 @@ export default {
 		this.dialogMapVisible = false;
 	},
 	methods: {
+		checkPermission,
 		getList() {
 			this.loading = true;
 			this.list = [];

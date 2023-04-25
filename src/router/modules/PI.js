@@ -109,6 +109,16 @@ const PIRouter = {
 			]
 		},
 		{
+			path: 'caseWarrantyList',
+			component: () => import('@/views/PI/caseWarrantyList'),
+			name: 'caseWarrantyList',
+			meta: {
+				title: '保固案件列表',
+				roles: ['PIcase.editor'],
+				vTag: 'Alpha'
+			}
+		},
+		{
 			path: 'mCaseStatics',
 			component: () => import('@/views/PI/mCaseStatics'),
 			name: 'mCaseStatics',
@@ -133,16 +143,6 @@ const PIRouter = {
 			meta: { 
 				title: '缺失分析',
 				roles: ['PIcase.analyst']
-			}
-		},
-		{
-			path: 'caseWarrantyList',
-			component: () => import('@/views/PI/caseWarrantyList'),
-			name: 'caseWarrantyList',
-			meta: { 
-				title: '保固案件列表', 
-				roles: ['PIcase.editor'],
-				vTag: 'Alpha'
 			}
 		},
 	]
