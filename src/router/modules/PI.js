@@ -141,7 +141,7 @@ const PIRouter = {
 			name: 'caseWarrantyList',
 			meta: { 
 				title: '保固案件列表', 
-				roles: ['PIcase.analyst'],
+				roles: ['PIcase.editor'],
 				vTag: 'Alpha'
 			}
 		},
