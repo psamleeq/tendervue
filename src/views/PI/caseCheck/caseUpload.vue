@@ -16,11 +16,12 @@
 			<el-select class="filter-item" v-model.number="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<span class="time-picker">
+			<span class="filter-item time-picker">
+				<div style="font-size: 12px; color: #909399">成案日期</div>
 				<el-button-group v-if="!dateTimePickerVisible">
 					<el-button
 						v-for="(t, i) in pickerOptions.shortcuts"
-						:key="i"
+						:key="`shortcuts_${i}`"
 						type="primary"
 						:plain="i != timeTabId"
 						size="mini"
@@ -212,13 +213,26 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
+				:width="['DistressSrc', 'organAssign'].includes(key) ? 75 : ['CaseDate', 'ReportDate'].includes(key) ? 150 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>
-				<template slot-scope="{ row, column }">
+				<template slot-scope="{ row, column, $index }">
 					<span v-if="[ 'UploadCaseNo' ].includes(column.property)">
 						<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
 						<span v-else> - </span>
+					</span>
+					<span v-else-if="!alreadyCreate && [ 'ReportDate' ].includes(column.property)">
+						<el-date-picker 
+							class="date-picker"
+							v-model="row[column.property]"
+							type="date" 
+							placeholder="請選擇日期"
+							size="mini"
+							:clearable="false"
+							value-format="yyyy/MM/dd"
+							@input="() => $set(list, $index, row)"
+						/>
 					</span>
 					<span v-else-if="[ 'organAssign' ].includes(column.property)">
 						<!-- <i v-if="row[column.property] == 1" class="el-icon-check" style="color: #67C23A" /> -->
@@ -326,7 +340,11 @@ export default {
 					sortable: false
 				},
 				CaseDate: {
-					name: "查報日期",
+					name: "成案日期",
+					sortable: false,
+				},
+				ReportDate: {
+					name: "通報日期",
 					sortable: false,
 				},
 				DeviceType: {
@@ -363,7 +381,7 @@ export default {
 				}
 			},
 			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情形", "查報來源" ],
-			apiHeader: [ "UploadCaseNo", "DistressSrc", "CaseSN", "CaseDate", "DeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
+			apiHeader: [ "UploadCaseNo", "DistressSrc", "CaseSN", "CaseDate", "ReportDate", "DeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
 			tableSelect: [],
 			list: [],
 			listRepeat: [],
@@ -530,6 +548,7 @@ export default {
 					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.list.forEach(l => {
+						if(l.ReportDate == undefined) l.ReportDate = l.CaseDate;
 						l.DeviceType = Number(l.DeviceType);
 						l.BType = Number(l.BType);
 						l.BrokeType = Number(l.BrokeType);
@@ -826,6 +845,11 @@ export default {
 		color: #F56C6C
 	.el-table .cell
 		white-space: pre-line
+		.date-picker
+			font-size: 5px
+			.el-input__inner
+				width: 120px
+				padding: 0 0 0 28px
 	.el-dialog
 		.el-dialog__body > div
 			margin-top: 10px

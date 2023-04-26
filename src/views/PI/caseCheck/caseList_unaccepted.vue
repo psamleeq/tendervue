@@ -5,7 +5,10 @@
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+			<span class="filter-item">
+				<div style="font-size: 12px; color: #909399">通報日期</div>
+				<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+			</span>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			<el-button
@@ -323,8 +326,12 @@ export default {
 					name: "查報來源",
 					sortable: false
 				},
-				CaseDate: {
-					name: "成案日期",
+				// CaseDate: {
+				// 	name: "成案日期",
+				// 	sortable: false,
+				// },
+				ReportDate: {
+					name: "通報日期",
 					sortable: false,
 				},
 				DeviceType: {
@@ -490,6 +497,7 @@ export default {
 			this.list = [];
 
 			getCaseList({
+				filterType: 2,
 				caseType: 2,
 				zipCode: this.listQuery.zipCode,
 				timeStart: startDate,
@@ -590,6 +598,7 @@ export default {
 			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
 			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
 				l.CaseDate = this.formatTime(l.CaseDate);
+				l.ReportDate = this.formatTime(l.ReportDate);
 				l.DeviceType = this.options.DeviceType[l.DeviceType];
 				l.organAssign =  l.organAssign == 1 ? "是" : "";
 				l.BType = this.options.BType[l.BType];

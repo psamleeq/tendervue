@@ -5,7 +5,8 @@
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
-			<span class="time-picker">
+			<span class="filter-item time-picker">
+				<div style="font-size: 12px; color: #909399">通報日期</div>
 				<el-button-group v-if="!dateTimePickerVisible">
 					<el-button
 						v-for="(t, i) in pickerOptions.shortcuts"
@@ -384,8 +385,12 @@ export default {
 					name: "案件編號",
 					sortable: true
 				},
-				CaseDate: {
-					name: "成案日期",
+				// CaseDate: {
+				// 	name: "成案日期",
+				// 	sortable: false,
+				// },
+				ReportDate: {
+					name: "通報日期",
 					sortable: false,
 				},
 				DeviceType: {
@@ -576,6 +581,7 @@ export default {
 			this.resultList = [];
 
 			getCaseList({
+				filterType: 2,
 				caseType: 1,
 				zipCode: this.listQuery.zipCode,
 				timeStart: date,
@@ -675,6 +681,7 @@ export default {
 				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
 				const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
 					l.CaseDate = this.formatTime(l.CaseDate);
+					l.ReportDate = this.formatTime(l.ReportDate);
 					l.DeviceType = this.options.DeviceType[l.DeviceType];
 					l.organAssign =  l.organAssign == 1 ? "是" : "";
 					l.BType = this.options.BType[l.BType];
