@@ -122,6 +122,7 @@
 						:prop="key"
 						:label="value.name"
 						align="center"
+						:width="['DistressSrc', 'organAssign'].includes(key) ? 75 : ['CaseDate', 'ReportDate'].includes(key) ? 150 : null"
 						:formatter="formatter"
 						:sortable="value.sortable"
 					>
@@ -130,6 +131,18 @@
 								<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
 								<span v-else> - </span>
 							</span>
+							<span v-else-if="!alreadyCreate && [ 'ReportDate' ].includes(column.property)">
+							<el-date-picker 
+								class="date-picker"
+								v-model="row[column.property]"
+								type="date" 
+								placeholder="請選擇日期"
+								size="mini"
+								:clearable="false"
+								value-format="yyyy/MM/dd"
+								@input="() => $set(list, $index, row)"
+							/>
+						</span>
 							<span v-else-if="[ 'CaseNo' ].includes(column.property)">
 								<template v-if="row.edit">
 									<el-input
@@ -464,7 +477,11 @@ export default {
 				const caseFilter = this.csvData.filter(d => d["來源編號"] == caseNo || d["案件編號"] == caseNo)[0];
 				// let caseItem = { UploadCaseNo: caseFilter["案件編號"] };
 				let caseItem = {};
-				Object.keys(this.headers).forEach(key => caseItem[key] = caseFilter[this.headers[key].name]);
+				Object.keys(this.headers).forEach(key => {
+					if(['CaseDate', 'ReportDate'].includes(key)) caseItem[key] = caseFilter['查報日期'];
+					else if (['UploadCaseNo', 'CaseNo'].includes(key)) caseItem[key] = caseFilter['案件編號'];
+					else caseItem[key] = caseFilter[this.headers[key].name];
+				});
 				// if(caseItem.CaseNo.length == 0) caseItem.CaseNo = caseItem.UploadCaseNo;
 				caseErrList.push({ ...caseItem, note: "無法匹配(csv)", edit: false });
 			}
