@@ -457,13 +457,13 @@ export default {
 				});
 
 				this.map.data.setStyle(feature => { 
-						// console.log(feature.j.caseName);
+						// console.log(feature.h.caseName);
 						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-						if(feature.j.caseName) {
+						if(feature.h.caseName) {
 							const colorFilter = this.options.colorMap.filter(color => {
 								let caseFlag = false;
 								for(const name of color.name) {
-									caseFlag = (feature.j.caseName.indexOf(name) != -1);
+									caseFlag = (feature.h.caseName.indexOf(name) != -1);
 									// console.log(name, caseFlag);
 									if(caseFlag) break;
 								}
@@ -477,23 +477,23 @@ export default {
 
 						// console.log(color);
 
-						if(feature.j.isPoint) {
+						if(feature.h.isPoint) {
 							const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
 							return { 
 								icon: { 
-									url: `/assets/icon/icon_case_${caseLevelMap[feature.j.caseLevel]}.png`,
+									url: `/assets/icon/icon_case_${caseLevelMap[feature.h.caseLevel]}.png`,
 									anchor: new google.maps.Point(5, 5),
 									scaledSize: new google.maps.Size(25, 25),
 								},
-								zIndex: feature.j.isLine ? 1000 - feature.j.length : 1000 - feature.j.area
+								zIndex: feature.h.isLine ? 1000 - feature.h.length : 1000 - feature.h.area
 							};
-						} else if(feature.j.isLine) {
+						} else if(feature.h.isLine) {
 							return { 
 								strokeColor: color,
 								strokeWeight: 3,
 								strokeOpacity: 1,
 								fillOpacity: 0,
-								zIndex: 1000 - feature.j.length
+								zIndex: 1000 - feature.h.length
 							};
 						} else {
 							return { 
@@ -502,7 +502,7 @@ export default {
 								strokeOpacity: 1,
 								fillColor: color,
 								fillOpacity: 0.8,
-								zIndex: 1000 - feature.j.area
+								zIndex: 1000 - feature.h.area
 							};
 						}
 					});
@@ -510,7 +510,7 @@ export default {
 					this.map.data.addListener('click', (event) => {
 						// console.log("click: ", event);
 						// console.log(this.currCaseId);
-						this.showCaseContent(event.feature.j, event.latLng);
+						this.showCaseContent(event.feature.h, event.latLng);
 					});
 
 			})
@@ -520,7 +520,7 @@ export default {
 
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.j.TOWNNAME);
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.h.TOWNNAME);
 
 				return {
 					strokeColor: "#827717",
@@ -832,7 +832,7 @@ export default {
 					contentText += `</div>`;
 				}
 			}
-			// for(const img of event.feature.j.img) {
+			// for(const img of event.feature.h.img) {
 			// 	contentText += `<img src="https://img.bellsgis.com/images/casepic_o/${img}" style="object-fit: scale-down;">`
 			// }
 			contentText += `<button type="button" id="info-del-btn" class="info-btn del el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">刪除</span></button>`;

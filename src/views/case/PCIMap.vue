@@ -551,7 +551,7 @@ export default {
 				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
 				this.dataLayer.PCIBlock.setStyle(feature => {
 					// console.log(feature);
-					const PCISpec = feature.j.PCIValue;
+					const PCISpec = feature.h.PCIValue;
 					let  filterLevel = [];
 					if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
 					else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
@@ -572,14 +572,14 @@ export default {
 				});
 
 				this.dataLayer.PCIBlock.addListener('click', (event) => {
-					this.showContent(event.feature.j, event.latLng);
+					this.showContent(event.feature.h, event.latLng);
 				});
 
 				// TODO: 右鍵顯示「正射」 (測試)
 				// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
-				// 	// console.log(event.feature.j);
+				// 	// console.log(event.feature.h);
 				// 	// this.loading = true;
-				// 	const blockId = event.feature.j.blockId;
+				// 	const blockId = event.feature.h.blockId;
 				// 	const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
 				// 	const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${blockId}.tif`;
 
@@ -602,13 +602,13 @@ export default {
 
 				this.dataLayer.case = new google.maps.Data();
 				this.dataLayer.case.setStyle(feature => { 
-					// console.log(feature.j.caseName);
+					// console.log(feature.h.caseName);
 					let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-					if(feature.j.caseName) {
+					if(feature.h.caseName) {
 						const colorFilter = this.options.colorMap.filter(color => {
 							let caseFlag = false;
 							for(const name of color.name) {
-								caseFlag = (feature.j.caseName.indexOf(name) != -1);
+								caseFlag = (feature.h.caseName.indexOf(name) != -1);
 								// console.log(name, caseFlag);
 								if(caseFlag) break;
 							}
@@ -622,23 +622,23 @@ export default {
 
 					// console.log(color);
 
-					if(feature.j.isPoint) {
+					if(feature.h.isPoint) {
 						const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
 						return { 
 							icon: { 
-								url: `/assets/icon/icon_case_${caseLevelMap[feature.j.caseLevel]}.png`,
+								url: `/assets/icon/icon_case_${caseLevelMap[feature.h.caseLevel]}.png`,
 								anchor: new google.maps.Point(5, 5),
 								scaledSize: new google.maps.Size(25, 25),
 							},
-							zIndex: feature.j.isLine ? 1000 - feature.j.length : 1000 - feature.j.area
+							zIndex: feature.h.isLine ? 1000 - feature.h.length : 1000 - feature.h.area
 						};
-					} else if(feature.j.isLine) {
+					} else if(feature.h.isLine) {
 						return { 
 							strokeColor: color,
 							strokeWeight: 3,
 							strokeOpacity: 1,
 							fillOpacity: 0,
-							zIndex: 1000 - feature.j.length
+							zIndex: 1000 - feature.h.length
 						};
 					} else {
 						return { 
@@ -647,13 +647,13 @@ export default {
 							strokeOpacity: 1,
 							fillColor: color,
 							fillOpacity: 1,
-							zIndex: 1000 - feature.j.area
+							zIndex: 1000 - feature.h.area
 						};
 					}
 				});
 
 				this.dataLayer.case.addListener('click', (event) => {
-					this.showContent(event.feature.j, event.latLng);
+					this.showContent(event.feature.h, event.latLng);
 				});
 
 				// NOTE: 測試正射圖
@@ -679,7 +679,7 @@ export default {
 
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.j.TOWNNAME);
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.h.TOWNNAME);
 
 				return {
 					strokeColor: "#827717",
@@ -856,7 +856,7 @@ export default {
 
 					let featureList = [];
 					this.dataLayer.PCIBlock.forEach(feature =>{ 
-						if(feature.j[key] == this.listQuery.filterId) featureList.push(feature);
+						if(feature.h[key] == this.listQuery.filterId) featureList.push(feature);
 					});
 
 					if(featureList.length == 0) {

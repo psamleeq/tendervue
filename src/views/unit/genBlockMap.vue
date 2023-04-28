@@ -546,7 +546,7 @@ export default {
 
 			this.dataLayer.addListener('mouseover', (event) => {
 				// console.log(event);
-				this.infoWindow.setContent(`道路編碼: ${event.feature.j.roadCode}`);
+				this.infoWindow.setContent(`道路編碼: ${event.feature.h.roadCode}`);
 				const bounds = new google.maps.LatLngBounds();
 				let geometry = event.feature.getGeometry().h[0].h;
 				if(geometry.length < 3) geometry = geometry[0].h;
@@ -835,24 +835,24 @@ export default {
 			this.map.data.setStyle(feature => {
 				// console.log(feature);
 				return {
-					strokeWeight: feature.j["stroke-width"],
-					strokeColor: feature.j.stroke,
-					strokeOpacity: feature.j["stroke-opacity"],
-					fillOpacity: feature.j["fill-opacity"],
-					fillColor: feature.j.fill
+					strokeWeight: feature.h["stroke-width"],
+					strokeColor: feature.h.stroke,
+					strokeOpacity: feature.h["stroke-opacity"],
+					fillOpacity: feature.h["fill-opacity"],
+					fillColor: feature.h.fill
 				}
 			});
 
-			// this.map.data.forEach(feature => console.log(feature.j.blockId));
+			// this.map.data.forEach(feature => console.log(feature.h.blockId));
 
 			// NOTE: test
 			this.map.data.addListener("click", (event) => {
-				console.log(`${event.feature.j.area.toLocaleString()} ㎡`,);
+				console.log(`${event.feature.h.area.toLocaleString()} ㎡`,);
 			});
 
 			const _this = this;
 			this.map.data.addListener('mouseover', (event) => {
-				const row = _this.geoInfo.blocks.filter((block) => block.blockId == event.feature.j.blockId)[0];
+				const row = _this.geoInfo.blocks.filter((block) => block.blockId == event.feature.h.blockId)[0];
 				if(_this.$refs.blockTable) _this.$refs.blockTable.setCurrentRow(row);
 				_this.map.data.revertStyle();
 				_this.map.data.overrideStyle(event.feature, { fillColor: "#FFF176" });
@@ -1084,7 +1084,7 @@ export default {
 			
 			this.map.data.revertStyle();
 			this.map.data.forEach(feature => {
-				if(feature.j.blockId == row.blockId) this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
+				if(feature.h.blockId == row.blockId) this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
 			});
 		},
 		handleMouseLeave(row, column, cell, event) {
