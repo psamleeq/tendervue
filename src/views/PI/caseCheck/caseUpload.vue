@@ -338,7 +338,6 @@ export default {
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
 			searchRange: "",
-			zipCodeNow: 0,
 			listQuery: {
 				caseType: 1,
 				zipCode: 104
@@ -541,6 +540,7 @@ export default {
 			let date = moment(this.searchDate).format("YYYY-MM-DD");
 			this.searchRange = date;
 
+			// this.alreadyCreate = false;
 			this.list = [];
 			this.listRepeat = [];
 			this.csvRepeatObj = {};
@@ -557,12 +557,12 @@ export default {
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
 			}).then(response => {
 				if (response.data.list.length == 0) {
+					this.alreadyCreate = false;
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
 				} else {
-					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
 					this.list.forEach(l => {
 						if(l.ReportDate == undefined) l.ReportDate = l.CaseDate;
@@ -596,7 +596,7 @@ export default {
 			this.loading = true;
 
 			addCaseList({
-				zipCode: this.zipCodeNow,
+				zipCode: this.listQuery.zipCode,
 				caseList: this.caseFilterList([...this.caseList, ...this.tableSelect ])
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
@@ -734,7 +734,7 @@ export default {
 			this.caseMinus.list = listCSNArr.filter(l => csvCSNArr.indexOf(l) == -1);
 			this.caseMinus.csv = csvCSNArr.filter(l => listCSNArr.indexOf(l) == -1);
 
-			if(this.caseMinus.list.length == this.list.length) {
+			if(this.list.length != 0 && this.caseMinus.list.length == this.list.length) {
 				this.$message({
 					type: "warning",
 					message: "行政區域或日期不符，請重新上傳正確csv"
