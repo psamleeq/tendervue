@@ -397,6 +397,10 @@ export default {
 					name: "設施類型",
 					sortable: true
 				},
+				// rDeviceType: {
+				// 	name: "認列類型",
+				// 	sortable: true
+				// },
 				organAssign: {
 					name: "機關交辦",
 					sortable: false
@@ -655,7 +659,7 @@ export default {
 		},
 		formatter(row, column) {
 			if([ 'organAssign' ].includes(column.property)) return row[column.property] == 1 ? '是' : '-';
-			else if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
+			else if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
 			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
 			else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];

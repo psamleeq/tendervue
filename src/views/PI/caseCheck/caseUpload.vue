@@ -164,9 +164,9 @@
 									</el-link>
 								</template>
 							</span>
-							<span v-else-if="[ 'DeviceType', 'BType', 'BrokeType', 'BrokeStatus' ].includes(column.property)">
+							<span v-else-if="[ 'DeviceType', 'rDeviceType', 'BType', 'BrokeType', 'BrokeStatus' ].includes(column.property)">
 								<el-select v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]">
-									<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+									<el-option v-for="(name, type) in options[column.property == 'rDeviceType' ? 'DeviceType' : column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 								</el-select>
 							</span>
 							<span v-else-if="[ 'organAssign' ].includes(column.property)">
@@ -246,6 +246,11 @@
 							value-format="yyyy/MM/dd"
 							@input="() => $set(list, $index, row)"
 						/>
+					</span>
+					<span v-else-if="!alreadyCreate && [ 'rDeviceType' ].includes(column.property)">
+						<el-select v-model.number="row[column.property]" @input="() => $set(list, $index, row)">
+							<el-option v-for="(name, type) in options.DeviceType" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+						</el-select>
 					</span>
 					<span v-else-if="[ 'organAssign' ].includes(column.property)">
 						<!-- <i v-if="row[column.property] == 1" class="el-icon-check" style="color: #67C23A" /> -->
@@ -363,6 +368,10 @@ export default {
 					name: "設施類型",
 					sortable: false
 				},
+				rDeviceType: {
+					name: "認列類型",
+					sortable: false
+				},
 				organAssign: {
 					name: "機關交辦",
 					sortable: false
@@ -393,7 +402,7 @@ export default {
 				}
 			},
 			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情形", "查報來源" ],
-			apiHeader: [ "UploadCaseNo", "DistressSrc", "CaseSN", "CaseDate", "ReportDate", "DeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
+			apiHeader: [ "UploadCaseNo", "DistressSrc", "CaseSN", "CaseDate", "ReportDate", "DeviceType", "rDeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
 			tableSelect: [],
 			list: [],
 			listRepeat: [],
@@ -567,6 +576,7 @@ export default {
 					this.list.forEach(l => {
 						if(l.ReportDate == undefined) l.ReportDate = l.CaseDate;
 						l.DeviceType = Number(l.DeviceType);
+						if(l.rDeviceType == undefined) l.rDeviceType = l.DeviceType;
 						l.BType = Number(l.BType);
 						l.BrokeType = Number(l.BrokeType);
 						l.lat = Number(l.lat);
@@ -636,7 +646,7 @@ export default {
 			this.tableSelect = value;
 		},
 		formatter(row, column) {
-			if(column.property == 'DeviceType') return this.options.DeviceType[row[column.property]];
+			if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
 			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
 			else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];
