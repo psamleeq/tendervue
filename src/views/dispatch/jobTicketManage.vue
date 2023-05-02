@@ -40,7 +40,7 @@
 						<span>合約</span>
 					</div>
 					<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender">
-						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
+						<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="id" :label="obj.tenderName" />
 					</el-select>
 				</div>
 			</div> -->
