@@ -808,85 +808,34 @@ export default {
 		async focusMap() {
 			return new Promise(resolve => {
 				// console.log("focusMap");
-				for(const block of Object.values(this.dataLayer.PCIBlock)) block.revertStyle();
+				this.dataLayer.PCIBlock.revertStyle();
 
 				if(!this.listQuery.filterId || this.listQuery.filterId.length == 0) resolve();
-				else if(this.listQuery.filterId.length != 0 && !Number(this.listQuery.filterId)) {
-					this.$message({
-						message: "請輸入正確編號",
-						type: "error",
+				else {
+					let featureList = [];
+					this.dataLayer.PCIBlock.forEach(feature =>{ 
+						if(feature.h.roadName == this.listQuery.filterId) featureList.push(feature);
 					});
-					resolve();
-				} else if(this.listQuery.filterType == 1) {
-					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound }});
-					const caseSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.caseId == this.listQuery.filterId))[0];
-					if(caseSpec == undefined ) {
+
+					if(featureList.length == 0) {
+					// if(blockSpec == undefined ) {
 						this.$message({
 							message: "查無資料",
 							type: "error",
 						});
 						resolve();
-					} else if(caseSpec.properties.isPoint) {
-						this.map.setCenter({ lat: caseSpec.geometry.coordinates[1], lng: caseSpec.geometry.coordinates[0] });
-						const zoom = this.map.getZoom();
-						this.map.setZoom(zoom < 21 ? 21 : zoom);
-						this.showCaseContent(caseSpec.properties, { lat: caseSpec.geometry.coordinates[1], lng: caseSpec.geometry.coordinates[0] });
-						resolve();
 					} else {
-						const depth = caseSpec.properties.isLine ? 1 : 2;
-						// console.log(caseSpec.properties.isLine, depth);
-						const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
-						// console.log(paths);
-
-						const bounds = new google.maps.LatLngBounds();
-						paths.forEach(position => bounds.extend(position));
-						this.map.fitBounds(bounds);
-						this.showCaseContent(caseSpec.properties, paths[Math.floor(paths.length / 2)]);
-						resolve();
-					}
-				} else if(this.listQuery.filterType == 2) {
-					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound }});
-
-					let blockSpec;
-					for(const[ key, block ] of Object.entries(this.dataLayer.PCIBlock)) {
-						// console.log(key, block);
-						block.forEach(features =>{ 
-							// let blockType = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
-							if(features.j.blockId == this.listQuery.filterId) blockSpec = features;
-						});
+						this.$router.push({ query: { tenderId: this.listQuery.tenderId, roadName: this.listQuery.filterId }});
 						
-						if(blockSpec != undefined ) {
-							if(key == 'bell') this.listQuery.blockType = [ 1 ];
-							else if(key == 'nco') this.listQuery.blockType = [ 2 ];
-
-							block.overrideStyle(blockSpec, { strokeColor: "#FF6F00", zIndex: 3 });
-							break;
-						}
-					}
-
-					// for(const block of ['block_nco', 'block_104']) {
-					// 	blockSpec = this.geoJSON[block].features.filter(feature => (feature.properties.blockId == this.listQuery.filterId))[0];
-					// 	if(blockSpec != undefined ) break;
-					// }
-					// console.log(blockSpec);
-					if(blockSpec == undefined ) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-
-						resolve();
-					} else {
-						// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
-						const paths = blockSpec.getGeometry();
-						// console.log(paths);
-
 						const bounds = new google.maps.LatLngBounds();
-						// paths.forEach(position => bounds.extend(position));
-						paths.forEachLatLng(position => bounds.extend(position));
+						for(const feature of featureList) {
+							this.dataLayer.PCIBlock.overrideStyle(feature, { strokeColor: "#FF6F00", zIndex: 3 });
+							const paths = feature.getGeometry();
+							// console.log(paths);
+							paths.forEachLatLng(position => bounds.extend(position));
+						}
 						this.map.fitBounds(bounds);
-
-						resolve();
+						resolve();	
 					}
 				}
 			})
