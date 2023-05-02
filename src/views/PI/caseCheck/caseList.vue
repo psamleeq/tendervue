@@ -638,6 +638,7 @@ export default {
 
 			setCaseList( this.rowActive.id, {
 				zipCode: this.zipCodeNow,
+				rDeviceType: this.rowActive.rDeviceType,
 				organAssign: this.rowActive.organAssign,
 				BType: this.rowActive.BType,
 				BrokeType: this.rowActive.BrokeType,

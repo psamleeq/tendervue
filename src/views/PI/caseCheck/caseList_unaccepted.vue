@@ -151,7 +151,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['StateNotes', 'CaseName'].includes(key) ? 150 : ['CaseDate', 'DeviceType', 'BType', 'BrokeStatus', 'DuplicateCase'].includes(key) ? 100 : null"
+				:width="['StateNotes', 'CaseName'].includes(key) ? 150 : ['CaseDate', 'DeviceType', 'rDeviceType', 'BType', 'BrokeStatus', 'DuplicateCase'].includes(key) ? 100 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>
@@ -161,9 +161,12 @@
 						<span v-if="row.DuplicateCase!==''">是</span>
 						<span v-else>否</span>
 					</span>
-					<span v-else-if="checkPermission(['PIcase.editor']) && [ 'StateNotes', 'DuplicateCase' ].includes(column.property)">
+					<span v-else-if="checkPermission(['PIcase.editor']) && [ 'StateNotes', 'DuplicateCase', 'rDeviceType' ].includes(column.property)">
 						<template v-if="row.edit">
 							<el-input v-if="column.property == 'StateNotes'" v-model="row.StateNotes.Firm" size="mini" style="width: 100px" />
+							<el-select v-else-if="column.property == 'rDeviceType'" v-model.number="row[column.property]" @input="() => $set(list, $index, row)">
+								<el-option v-for="(name, type) in options.DeviceType" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+							</el-select>
 							<el-input v-else v-model="row[column.property]" size="mini" style="width: 100px" />
 							<el-button type="text" @click="row.edit = false; rowActive = row; setResult()">
 								<i class="el-icon-success" />
@@ -561,6 +564,7 @@ export default {
 
 			setCaseList( this.rowActive.id, {
 				zipCode: this.zipCodeNow,
+				rDeviceType: this.rowActive.rDeviceType,
 				organAssign: this.rowActive.organAssign,
 				BType: this.rowActive.BType,
 				BrokeType: this.rowActive.BrokeType,
