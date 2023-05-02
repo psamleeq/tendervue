@@ -82,6 +82,14 @@ export function getRoadCaseType(query) {
 	})
 }
 
+export function uploadRoadCase(data) {
+	return request({
+		url: '/road/caseUpload',
+		method: 'post',
+		data
+	})
+}
+
 export function getRoadCaseList(query) {
 	return request({
 		url: '/road/caseList',

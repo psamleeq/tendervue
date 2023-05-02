@@ -14,6 +14,16 @@ const caseRouter = {
 	},
 	children: [
 		{
+			path: 'caseUpload',
+			component: () => import('@/views/case/caseUpload'),
+			name: 'caseUpload',
+			meta: {
+				title: '缺失上傳',
+				roles: ['distress.inspectorMaster'],
+				isNew: true
+			}
+		},
+		{
 			path: 'caseList',
 			component: () => import('@/views/case/list'),
 			name: 'caseList',
