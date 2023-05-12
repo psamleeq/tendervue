@@ -494,13 +494,13 @@ export default {
 				});
 
 				this.map.data.setStyle(feature => { 
-					// console.log(feature.h.caseName);
+					// console.log(feature.getProperty("caseName"));
 					let color = this.options.caseColorMap.filter(color => color.name == '其他')[0].color;
-					if(feature.h.caseName) {
+					if(feature.getProperty("caseName")) {
 						const colorFilter = this.options.caseColorMap.filter(color => {
 							let caseFlag = false;
 							for(const name of color.name) {
-								caseFlag = (feature.h.caseName.indexOf(name) != -1);
+								caseFlag = (feature.getProperty("caseName").indexOf(name) != -1);
 								// console.log(name, caseFlag);
 								if(caseFlag) break;
 							}
@@ -514,23 +514,23 @@ export default {
 
 					// console.log(color);
 
-					if(feature.h.isPoint) {
+					if(feature.getProperty("isPoint")) {
 						const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
 						return { 
 							icon: { 
-								url: `/assets/icon/icon_case_${caseLevelMap[feature.h.caseLevel]}.png`,
+								url: `/assets/icon/icon_case_${caseLevelMap[feature.getProperty("caseLevel")]}.png`,
 								anchor: new google.maps.Point(5, 5),
 								scaledSize: new google.maps.Size(25, 25),
 							},
-							zIndex: feature.h.isLine ? 1000 - feature.h.length : 1000 - feature.h.area
+							zIndex: feature.getProperty("isLine") ? 1000 - feature.getProperty("length") : 1000 - feature.getProperty("area")
 						};
-					} else if(feature.h.isLine) {
+					} else if(feature.getProperty("isLine")) {
 						return { 
 							strokeColor: color,
 							strokeWeight: 3,
 							strokeOpacity: 1,
 							fillOpacity: 0,
-							zIndex: 1000 - feature.h.length
+							zIndex: 1000 - feature.getProperty("length")
 						};
 					} else {
 						return { 
@@ -539,16 +539,10 @@ export default {
 							strokeOpacity: 1,
 							fillColor: color,
 							fillOpacity: 0.8,
-							zIndex: 1000 - feature.h.area
+							zIndex: 1000 - feature.getProperty("area")
 						};
 					}
 				});
-
-				this.map.data.addListener('click', (event) => {
-					// console.log("click: ", event);
-					this.showCaseContent(event.feature.h, event.latLng);
-				});
-
 			})
 		},
 		async changeTender() {
@@ -556,7 +550,7 @@ export default {
 
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.h.TOWNNAME);
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.getProperty("TOWNNAME"));
 
 				return {
 					strokeColor: "#827717",
@@ -715,7 +709,7 @@ export default {
 
 			// this.map.data.revertStyle();
 			// this.map.data.forEach(feature => {
-			// 	if(feature.h.blockId == row.blockId) this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
+			// 	if(feature.getProperty("blockId") == row.blockId) this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
 			// });
 		},
 		handleMouseLeave(row, column, cell, event) {
@@ -814,7 +808,7 @@ export default {
 				else {
 					let featureList = [];
 					this.dataLayer.PCIBlock.forEach(feature =>{ 
-						if(feature.h.roadName == this.listQuery.filterId) featureList.push(feature);
+						if(feature.getProperty("roadName") == this.listQuery.filterId) featureList.push(feature);
 					});
 
 					if(featureList.length == 0) {

@@ -495,12 +495,11 @@ export default {
 
 						this.dataLayer.addListener('mouseover', (event) => {
 							// console.log(event);
-							this.infoWindow.setContent(`車道編碼: ${event.feature.h.laneCode}`);
+							this.infoWindow.setContent(`車道編碼: ${feature.getProperty("laneCode")}`);
 
 							const bounds = new google.maps.LatLngBounds();
-							let geometry = event.feature.getGeometry().h[0].h;
-							if(geometry.length < 3) geometry = geometry[0].h;
-							geometry.forEach(position => bounds.extend(position));
+							const geometry = event.feature.getGeometry();
+							geometry.forEachLatLng(position => bounds.extend(position));
 							this.infoWindow.setPosition(bounds.getCenter());
 
 							this.infoWindow.open(this.map);
@@ -802,24 +801,24 @@ export default {
 			this.map.data.setStyle(feature => {
 				// console.log(feature);
 				return {
-					strokeWeight: feature.h["stroke-width"],
-					strokeColor: feature.h.stroke,
-					strokeOpacity: feature.h["stroke-opacity"],
-					fillOpacity: feature.h["fill-opacity"],
-					fillColor: feature.h.fill
+					strokeWeight: feature.getProperty("stroke-width"),
+					strokeColor: feature.getProperty("stroke"),
+					strokeOpacity: feature.getProperty("stroke-opacity"),
+					fillOpacity: feature.getProperty("fill-opacity"),
+					fillColor: feature.getProperty("fill")
 				}
 			});
 
-			// this.map.data.forEach(feature => console.log(feature.h.blockId));
+			// this.map.data.forEach(feature => console.log(feature.getProperty("blockId")));
 
 			// NOTE: test
 			this.map.data.addListener("click", (event) => {
-				console.log(`${event.feature.h.area.toLocaleString()} ㎡`,);
+				console.log(`${event.feature.getProperty("area").toLocaleString()} ㎡`,);
 			});
 
 			const _this = this;
 			this.map.data.addListener('mouseover', (event) => {
-				const row = _this.geoInfo.blocks.filter((block) => block.blockId == event.feature.h.blockId)[0];
+				const row = _this.geoInfo.blocks.filter((block) => block.blockId == event.feature.getProperty("blockId"))[0];
 				if(_this.$refs.blockTable) _this.$refs.blockTable.setCurrentRow(row);
 				_this.map.data.revertStyle();
 				_this.map.data.overrideStyle(event.feature, { fillColor: "#FFF176" });
@@ -1003,7 +1002,7 @@ export default {
 			
 			this.map.data.revertStyle();
 			this.map.data.forEach(feature => {
-				if(feature.h.blockId == row.blockId) this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
+				if(feature.getProperty("blockId") == row.blockId) this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
 			});
 		},
 		handleMouseLeave(row, column, cell, event) {

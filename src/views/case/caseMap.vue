@@ -457,13 +457,13 @@ export default {
 				});
 
 				this.map.data.setStyle(feature => { 
-						// console.log(feature.h.caseName);
+						// console.log(feature.getProperty("caseName"));
 						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-						if(feature.h.caseName) {
+						if(feature.getProperty("caseName")) {
 							const colorFilter = this.options.colorMap.filter(color => {
 								let caseFlag = false;
 								for(const name of color.name) {
-									caseFlag = (feature.h.caseName.indexOf(name) != -1);
+									caseFlag = (feature.getProperty("caseName").indexOf(name) != -1);
 									// console.log(name, caseFlag);
 									if(caseFlag) break;
 								}
@@ -477,23 +477,23 @@ export default {
 
 						// console.log(color);
 
-						if(feature.h.isPoint) {
+						if(feature.getProperty("isPoint")) {
 							const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
 							return { 
 								icon: { 
-									url: `/assets/icon/icon_case_${caseLevelMap[feature.h.caseLevel]}.png`,
+									url: `/assets/icon/icon_case_${caseLevelMap[feature.getProperty("caseLevel")]}.png`,
 									anchor: new google.maps.Point(5, 5),
 									scaledSize: new google.maps.Size(25, 25),
 								},
-								zIndex: feature.h.isLine ? 1000 - feature.h.length : 1000 - feature.h.area
+								zIndex: feature.getProperty("isLine") ? 1000 - feature.getProperty("length") : 1000 - feature.getProperty("area")
 							};
-						} else if(feature.h.isLine) {
+						} else if(feature.getProperty("isLine")) {
 							return { 
 								strokeColor: color,
 								strokeWeight: 3,
 								strokeOpacity: 1,
 								fillOpacity: 0,
-								zIndex: 1000 - feature.h.length
+								zIndex: 1000 - feature.getProperty("length")
 							};
 						} else {
 							return { 
@@ -502,7 +502,7 @@ export default {
 								strokeOpacity: 1,
 								fillColor: color,
 								fillOpacity: 0.8,
-								zIndex: 1000 - feature.h.area
+								zIndex: 1000 - feature.getProperty("area")
 							};
 						}
 					});
@@ -510,7 +510,7 @@ export default {
 					this.map.data.addListener('click', (event) => {
 						// console.log("click: ", event);
 						// console.log(this.currCaseId);
-						this.showCaseContent(event.feature.h, event.latLng);
+						this.showCaseContent(event.feature, event.latLng);
 					});
 
 			})
@@ -520,7 +520,7 @@ export default {
 
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.h.TOWNNAME);
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.getProperty("TOWNNAME"));
 
 				return {
 					strokeColor: "#827717",
@@ -780,7 +780,7 @@ export default {
 						// console.log(key, block);
 						block.forEach(features =>{ 
 							// let blockType = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
-							if(features.j.blockId == this.listQuery.filterId) blockSpec = features;
+							if(features.getProperty("blockId") == this.listQuery.filterId) blockSpec = features;
 						});
 						
 						if(blockSpec != undefined ) {
@@ -821,22 +821,24 @@ export default {
 			})
 		},
 		showCaseContent(props, position) {
-			this.currCaseId = props.caseId;
-			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg` ];
+			const isFeature = google.maps.Data.Feature.prototype.isPrototypeOf(props);
+			this.currCaseId = isFeature ? props.getProperty("caseId") : props.caseId;
+			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${this.currCaseId}.jpg` ];
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.caseInfo) {
-				if(props[key]) {
+				if(props[key] || (isFeature && props.getProperty(key))) {
+					const prop = isFeature ? props.getProperty(key) : props[key];
 					contentText += `<div class="el-row" style="margin-bottom: 4px">`;
 					contentText += `<div class="el-col el-col-8" style="padding-left: 5px; font-size: 18px; line-height: 18px;">${this.headers.caseInfo[key]}</div>`;
-					contentText += `<div class="el-col el-col-16" style="font-size: 18px; line-height: 18px;">${props[key]}</div>`;
+					contentText += `<div class="el-col el-col-16" style="font-size: 18px; line-height: 18px;">${prop}</div>`;
 					contentText += `</div>`;
 				}
 			}
-			// for(const img of event.feature.h.img) {
+			// for(const img of event.feature.getProperty("img")) {
 			// 	contentText += `<img src="https://img.bellsgis.com/images/casepic_o/${img}" style="object-fit: scale-down;">`
 			// }
 			contentText += `<button type="button" id="info-del-btn" class="info-btn del el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">刪除</span></button>`;
-			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg" class="img" onerror="this.className='img hide-img'">`;
+			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${this.currCaseId}.jpg" class="img" onerror="this.className='img hide-img'">`;
 			contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
 			contentText += `</div>`;
 			// console.log(contentText);

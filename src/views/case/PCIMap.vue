@@ -550,8 +550,7 @@ export default {
 
 				this.dataLayer.PCIBlock = new google.maps.Data({ map: this.map });
 				this.dataLayer.PCIBlock.setStyle(feature => {
-					// console.log(feature);
-					const PCISpec = feature.h.PCIValue;
+					const PCISpec = feature.getProperty("PCIValue");
 					let  filterLevel = [];
 					if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
 					else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
@@ -572,14 +571,14 @@ export default {
 				});
 
 				this.dataLayer.PCIBlock.addListener('click', (event) => {
-					this.showContent(event.feature.h, event.latLng);
+					this.showContent(event.feature, event.latLng);
 				});
 
 				// TODO: 右鍵顯示「正射」 (測試)
 				// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
-				// 	// console.log(event.feature.h);
+				// 	// console.log(event.feature);
 				// 	// this.loading = true;
-				// 	const blockId = event.feature.h.blockId;
+				// 	const blockId = event.feature.getProperty("blockId");
 				// 	const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
 				// 	const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${blockId}.tif`;
 
@@ -602,13 +601,13 @@ export default {
 
 				this.dataLayer.case = new google.maps.Data();
 				this.dataLayer.case.setStyle(feature => { 
-					// console.log(feature.h.caseName);
+					// console.log(feature.getProperty("caseName"));
 					let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-					if(feature.h.caseName) {
+					if(feature.getProperty("caseName")) {
 						const colorFilter = this.options.colorMap.filter(color => {
 							let caseFlag = false;
 							for(const name of color.name) {
-								caseFlag = (feature.h.caseName.indexOf(name) != -1);
+								caseFlag = (feature.getProperty("caseName").indexOf(name) != -1);
 								// console.log(name, caseFlag);
 								if(caseFlag) break;
 							}
@@ -622,23 +621,23 @@ export default {
 
 					// console.log(color);
 
-					if(feature.h.isPoint) {
+					if(feature.getProperty("isPoint")) {
 						const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
 						return { 
 							icon: { 
-								url: `/assets/icon/icon_case_${caseLevelMap[feature.h.caseLevel]}.png`,
+								url: `/assets/icon/icon_case_${caseLevelMap[feature.getProperty("caseLevel")]}.png`,
 								anchor: new google.maps.Point(5, 5),
 								scaledSize: new google.maps.Size(25, 25),
 							},
-							zIndex: feature.h.isLine ? 1000 - feature.h.length : 1000 - feature.h.area
+							zIndex: feature.getProperty("isLine") ? 1000 - feature.getProperty("length") : 1000 - feature.getProperty("area")
 						};
-					} else if(feature.h.isLine) {
+					} else if(feature.getProperty("isLine")) {
 						return { 
 							strokeColor: color,
 							strokeWeight: 3,
 							strokeOpacity: 1,
 							fillOpacity: 0,
-							zIndex: 1000 - feature.h.length
+							zIndex: 1000 - feature.getProperty("length")
 						};
 					} else {
 						return { 
@@ -647,13 +646,13 @@ export default {
 							strokeOpacity: 1,
 							fillColor: color,
 							fillOpacity: 1,
-							zIndex: 1000 - feature.h.area
+							zIndex: 1000 - feature.getProperty("area")
 						};
 					}
 				});
 
 				this.dataLayer.case.addListener('click', (event) => {
-					this.showContent(event.feature.h, event.latLng);
+					this.showContent(event.feature, event.latLng);
 				});
 
 				// NOTE: 測試正射圖
@@ -679,7 +678,7 @@ export default {
 
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.h.TOWNNAME);
+				const condition = zipCode == 1001 || this.options.districtMap[zipCode].district.includes(feature.getProperty("TOWNNAME"));
 
 				return {
 					strokeColor: "#827717",
@@ -851,12 +850,12 @@ export default {
 					query[key] = this.listQuery.filterId;
 					// let blockSpec;
 					// this.dataLayer.PCIBlock.forEach(features =>{ 
-					// 	if(features.j[key] == this.listQuery.filterId) blockSpec = features;
+					// 	if(feature.getProperty(key) == this.listQuery.filterId) blockSpec = features;
 					// });
 
 					let featureList = [];
 					this.dataLayer.PCIBlock.forEach(feature =>{ 
-						if(feature.h[key] == this.listQuery.filterId) featureList.push(feature);
+						if(feature.getProperty(key) == this.listQuery.filterId) featureList.push(feature);
 					});
 
 					if(featureList.length == 0) {
@@ -918,17 +917,17 @@ export default {
 				resolve(canvas.toDataURL('image/png'));
 			});
 		},
-		async showContent(props, position) {
+		async showContent(feature, position) {
 			this.blockId = 0;
 			this.pciId = 0;
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.content) {
 				// console.log(key);
-				// console.log(props[key]);
+				// console.log(feature.getProperty(key));
 				this.imgUrls = [];
-				if(props[key]) {
-					let prop = props[key];
-					if(["updateTime"].includes(key)) prop = this.formatTime(props[key]);
+				if(feature.getProperty(key)) {
+					let prop = feature.getProperty(key);
+					if(["updateTime"].includes(key)) prop = this.formatTime(prop);
 
 					contentText += `<div class="el-row" style="margin-bottom: 4px">`;
 					contentText += `<div class="el-col el-col-8" style="padding-left: 5px; font-size: 18px; line-height: 18px;">${this.headers.content[key]}</div>`;
@@ -937,14 +936,14 @@ export default {
 				}
 			}
 
-			if(props.caseId) {
-				this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg` ];
-				contentText += `<img src="https://img.bellsgis.com/images/online_pic/${props.caseId}.jpg" class="img" onerror="this.className='img hide-img'; document.getElementById('info-scrn-full-btn').style.opacity='0'">`;
+			if(feature.getProperty("caseId")) {
+				this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${feature.getProperty("caseId")}.jpg` ];
+				contentText += `<img src="https://img.bellsgis.com/images/online_pic/${feature.getProperty("caseId")}.jpg" class="img" onerror="this.className='img hide-img'; document.getElementById('info-scrn-full-btn').style.opacity='0'">`;
 				contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; opacity: 1"><i class="el-icon-full-screen btn-text"></i></button>`;
 				contentText += `</div>`;
-			} else if(props.blockId) {
-				this.blockId = props.blockId;
-				this.pciId = props.pciId;
+			} else if(feature.getProperty("blockId")) {
+				this.blockId = feature.getProperty("blockId");
+				this.pciId = feature.getProperty("pciId");
 				const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
 				const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${this.blockId}.tif`;
 				// fromUrl(url).then( async(geoTiffFile) => {
