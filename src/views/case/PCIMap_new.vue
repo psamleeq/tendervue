@@ -138,7 +138,7 @@ export default {
 			// map: null,
 			imgUrls: [],
 			// dataLayer: {},
-			// overlayLayer: {},
+			overlayLayer: {},
 			infoWindow: null,
 			// geoJSON: {},
 			caseInfo: [],
@@ -295,7 +295,6 @@ export default {
 	watch: { },
 	created() {
 		this.dataLayer = { PCIBlock: {} };
-		this.overlayLayer = {};
 		this.geoJSON = {};
 		this.geoTiffPool = new Pool();
 	},
@@ -591,7 +590,7 @@ export default {
 
 							const overlay = new MapImgOverlay(bounds, imgSrc, this.map);
 							if(this.overlayLayer[this.blockInfo.id] != undefined) return; 
-							this.overlayLayer[this.blockInfo.id] = overlay;
+							this.$set(this.overlayLayer, this.blockInfo.id, overlay);
 
 							google.maps.event.addListenerOnce(this.map, 'idle', () => {
 								if(overlay.checkImg()) {
@@ -1140,7 +1139,7 @@ export default {
 
 			for(const blockId in this.overlayLayer) {
 				this.overlayLayer[blockId].setMap(null);
-				delete this.overlayLayer[blockId];
+				this.$delete(this.overlayLayer, blockId);
 			}
 		},
 		clearAll() {
