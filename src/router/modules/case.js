@@ -67,6 +67,16 @@ const caseRouter = {
 				title: '查核地圖', 
 				roles: ['distress.inspectorMAP']
 			}
+		},
+		{
+			path: 'PCIMap_new',
+			component: () => import('@/views/case/PCIMap_new'),
+			name: 'PCIMap_new',
+			meta: { 
+				title: '查核地圖(測試)', 
+				roles: ['distress.inspectorOrtho'],
+				vTag: 'Alpha'
+			}
 		}
 	]
 }
