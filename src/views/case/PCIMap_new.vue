@@ -583,13 +583,14 @@ export default {
 					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
 					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { 
 						if(this.blockInfo.id != 0) {
+							if(this.overlayLayer[this.blockInfo.id] != undefined) return; 
+
 							const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
 							const imgSrc = `https://storage.googleapis.com/adm_orthographic_jpg/${tenderId}/${this.blockInfo.id}.jpeg`;
 							const bounds = new google.maps.LatLngBounds();
 							this.blockInfo.feature.getGeometry().forEachLatLng(point => bounds.extend(point));
 
 							const overlay = new MapImgOverlay(bounds, imgSrc, this.map);
-							if(this.overlayLayer[this.blockInfo.id] != undefined) return; 
 							this.$set(this.overlayLayer, this.blockInfo.id, overlay);
 
 							google.maps.event.addListenerOnce(this.map, 'idle', () => {
@@ -617,7 +618,7 @@ export default {
 										});
 								} else {
 									overlay.setMap(null);
-									delete this.overlayLayer[this.blockInfo.id];
+									this.$delete(this.overlayLayer, this.blockInfo.id);
 
 									this.$el.querySelector("#map #info-scrn-full-btn").style.display = "none";
 									this.$el.querySelector("#map #info-download-btn").style.display = "none";
@@ -881,7 +882,10 @@ export default {
 				const list = response.data.list;
 				this.geoJSON.block.features.forEach(block => {
 					const PCIData = list.filter(l => l.pciId == block.properties.pciId);
-					if(PCIData.length > 0) block.properties.PCIValue = PCIData[0].PCI_real;
+					if(PCIData.length > 0) {
+						block.properties.PCIValue = PCIData[0].PCI_real;
+						block.properties.updateTime = PCIData[0].updateTime;
+					}
 				});
 				this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
 

@@ -728,7 +728,10 @@ export default {
 				const list = response.data.list;
 				this.geoJSON.block.features.forEach(block => {
 					const PCIData = list.filter(l => l.pciId == block.properties.pciId);
-					if(PCIData.length > 0) block.properties.PCIValue = PCIData[0].PCI_real;
+					if(PCIData.length > 0) {
+						block.properties.PCIValue = PCIData[0].PCI_real;
+						block.properties.updateTime = PCIData[0].updateTime;
+					}
 				});
 				this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
 
