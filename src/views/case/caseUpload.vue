@@ -32,10 +32,10 @@
 		</div>
 
 		<el-card v-if="caseList.length > 0" class="info-box right">
-			<el-button v-if="allCorrect" type="success" style="width: 100%" @click="uploadCase()">全部上傳({{ caseList.length }})</el-button>
+			<el-button v-if="allCorrect" type="success" style="width: 100%" :disabled="isUpload" @click="uploadCase()">全部上傳({{ caseList.length }})</el-button>
 			<el-button-group v-else style="width: 100%; margin-bottom: 5px;">
 				<el-button style="width: 50%" @click="handleDownload()">下載KML({{ caseErrListLen }})</el-button>
-				<el-button type="success" style="width: 50%" @click="uploadCase()">部分上傳({{ caseList.length - caseErrListLen }})</el-button>
+				<el-button type="success" style="width: 50%" :disabled="isUpload" @click="uploadCase()">部分上傳({{ caseList.length - caseErrListLen }})</el-button>
 			</el-button-group>
 			<!-- <div class="color-box" v-for="(color, index) in options.caseColorMap" :key="`color_${index}`"  :style="`background-color: ${color.color}; width: 100%; height: 30px;`">{{ color.name.join("、") }}</div> -->
 			<el-collapse v-if="!allCorrect" v-model="listQuery.labelCur" accordion>
@@ -109,6 +109,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			isUpload: false,
 			screenWidth: window.innerWidth,
 			// map: null,
 			// dataLayer: {},
@@ -698,6 +699,7 @@ export default {
 			this.caseList = [];
 			this.polygons = [];
 			this.$refs.uploadFile.clearFiles();
+			this.isUpload = false;
 		},
 		handleMouseEnter(row, column, cell, event) {
 			// console.log(row);
@@ -758,6 +760,7 @@ export default {
 				showClose: false,
 			}).then(() => {
 				this.loading = true;
+				this.isUpload = true;
 				const caseErrIdList = this.caseErrList.map(caseErrSpec => caseErrSpec.list.map(caseSpec => caseSpec.id)).flat();
 				const caseListFilter = this.caseList.filter(caseSpec => !caseErrIdList.includes(caseSpec.id));
 
@@ -787,6 +790,7 @@ export default {
 				}).catch(err => {
 					console.log(err);
 					this.loading = false;
+					this.isUpload = false;
 				})
 
 			}).catch(err => {
