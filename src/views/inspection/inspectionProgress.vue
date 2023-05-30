@@ -71,7 +71,17 @@
 				<el-button type="success" size="mini" @click="setComplete(row)" style="margin-left:20px">完成</el-button>
 			</span>
 			<span v-else-if="['Note'].includes(column.property)">
-			<el-input type="text" size="mini"> </el-input>
+				<span v-if="row.isEdit">
+					<el-input v-model="row[column.property]" size="mini" style="width: 150px">
+						<el-button slot="append" v-if="row.isEdit" style="padding: 5px 5px" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
+					</el-input>
+				</span>
+				<span v-else>
+					<span>{{ row[column.property] }}</span>
+					<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+						<i class="el-icon-edit" />
+					</el-button>
+				</span>
 			</span>
 			<span v-else>
 			<span>{{ row[column.property] || "-" }}</span>
@@ -105,7 +115,8 @@ export default {
 				Administrative:'中山區',
 				ReceiveDate:'1120530',
 				CompleteDate:'1120530',
-				Note:''
+				Note:'',
+				isEdit:false
 			}
 		],
 		headers:{
