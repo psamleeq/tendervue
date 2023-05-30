@@ -1,0 +1,29 @@
+/** When your routing table is too long, you can split it into small modules **/
+
+import Layout from '@/layout'
+
+const inspectionRouter = {
+	path: '/inspection',
+	component: Layout,
+	redirect: '/car/route',
+	name: 'car',
+	meta: {
+		title: '巡查管理',
+		icon: 'map-marker-path',
+		roles: ['inspection'],
+		isNew: true 
+	},
+	children: [
+		{
+			path: 'caseMark',
+			component: () => import('@/views/inspection/caseMark'),
+			name: 'caseMark',
+			meta: {
+				title: '缺失標記',
+				roles: ['inspection.marker'],
+				vTag: 'alpha'
+			}
+		}
+	]
+}
+export default inspectionRouter

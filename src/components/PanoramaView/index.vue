@@ -1,0 +1,648 @@
+<template>
+	<div ref="panoramaView" class="panorama-view">
+		<div id="panorama">
+			<div v-if="localEnv && panorama" style="position: absolute; top: 0; left: 0; z-index:99; background-color: rgba(255, 255, 255, 0.6); padding: 5px 10px">
+				<el-input
+					class="searchBox"
+					v-model="testQuery.sceneId"
+					placeholder="sceneId"
+					style="display: inline-block; width: 180px"
+					@change="showPanoramaLayer(testQuery.sceneId)"
+				/>
+				<div> {{ panorama.getScene() }}</div>
+				<div>{{ panoramaTestInfo }} </div>
+				<div v-if="panorama">{{ Object.values(panoramaInfoProps.data).flat().filter(l => l.fileName == panorama.getScene())[0].position }}</div>
+			</div>
+
+			<el-card v-if="hotSpotIdList.length > 1" class="info-box right">
+				<el-form :model="caseInfo" label-width="70px" size="small">
+					<el-form-item prop="date" label="通報時間">
+						<el-date-picker
+							v-model="caseInfo.dateReport"
+							type="date"
+							placeholder="日期"
+							:clearable="false"
+							size="mini"
+						/>
+					</el-form-item>
+					<el-form-item prop="type" label="缺失類型">
+						<el-select v-model="caseInfo.distressType" size="mini">
+							<el-option v-for="(name, key) in options.caseTypeMap" :key="key" :label="name" :value="key" />
+						</el-select>
+					</el-form-item>
+					<el-form-item prop="level" label="缺失程度">
+						<el-select v-model="caseInfo.distressLevel" size="mini">
+							<el-option v-for="(name, level) in options.caseLevelMap" :key="level" :label="name" :value="level" />
+						</el-select>
+					</el-form-item>
+					<el-form-item prop="millingLength" label="預估長">
+						<el-input v-model="caseInfo.millingLength" size="mini" style="width: 130px" />
+					</el-form-item>
+					<el-form-item prop="millingWidth" label="預估寬">
+						<el-input v-model="caseInfo.millingWidth" size="mini" style="width: 130px" />
+					</el-form-item>
+					<el-form-item prop="address" label="地址">
+						<el-input v-model="caseInfo.place" type="textarea" autosize />
+					</el-form-item>
+					<el-form-item prop="roadDir" label="車道">
+						<el-input class="road-dir" v-model="caseInfo.lane" size="mini">
+							<el-select slot="prepend" v-model="caseInfo.direction" popper-class="type-select" size="mini">
+								<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
+							</el-select>
+						</el-input>
+					</el-form-item>
+					<el-form-item v-for="(imgName, imgType) in options.imgTypeMap" :key="imgType" :prop="imgType" :label="imgName">
+						<el-row :gutter="15" style="position: relative">
+							<el-col :span="10">
+								<el-popover v-if="caseInfo[imgType].length > 0" popper-class="imgHover" placement="left" trigger="hover">
+									<el-image style="width: 100%; height: 100%" :src="caseInfo[imgType]" fit="contain" />
+									<el-image slot="reference" style="width: 100px; height: 100px" :src="caseInfo[imgType]" fit="contain" />
+								</el-popover>
+							</el-col>
+							<el-col class="btn-img-action" :span="8">
+								<el-button type="success" size="mini" @click="screenshot(imgType)">截圖</el-button>
+								<el-button v-if="caseInfo[imgType].length > 0" type="danger" size="mini" @click="caseInfo[imgType] = ''">刪除</el-button>
+							</el-col>
+						</el-row>
+					</el-form-item>
+					<!-- <el-form-item prop="ImgZoomOut" label="遠照">
+						<el-row :gutter="15">
+							<el-col :span="10">
+								<el-popover v-if="caseInfo.imgZoomOut.length > 0" popper-class="imgHover" placement="left" trigger="hover">
+									<el-image style="width: 100%; height: 100%" :src="caseInfo.imgZoomOut" fit="contain" />
+									<el-image slot="reference" style="width: 100px; height: 100px" :src="caseInfo.imgZoomOut" fit="contain" />
+								</el-popover>
+							</el-col>
+							<el-col :span="8">
+								<el-button type="success" @click="screenshot('imgZoomOut')">截圖</el-button>
+							</el-col>
+						</el-row>
+					</el-form-item> -->
+				</el-form>
+				<el-button-group class="btn-action-group">
+					<el-button type="success" @click="uploadCase()">新增</el-button>
+					<el-button type="danger" @click="clearHotSpot()">清除</el-button>
+				</el-button-group>
+			</el-card>
+		</div>
+		<canvas ref="sketchpad" />
+	</div>
+</template>
+
+<script>
+import moment from "moment";
+import html2canvas from 'html2canvas';
+const { calcDistance, calArea } = require('@/utils/geo-tools');
+const cameraHeight = 2.5; // 攝影機高度
+
+export default {
+	name: "panoramaView",
+	props: {
+		listQuery: {
+			type: Object,
+			required: true
+		},
+		panoramaInfo: {
+			type: Object,
+			required: true
+		}
+	},
+	data() {
+		return {
+			localEnv: process.env.NODE_ENV == 'development',
+			panorama: null,
+			prevSceneId: [],
+			hotSpotId: 0,
+			hotSpotIdList: [],
+			imageSize: {
+				width: 7689,
+				height: 3840
+			},
+			testQuery: {
+				sceneId: ""
+			},
+			panoramaTestInfo: {
+				Pitch: 0,
+				Yaw: 0,
+				Hfov: 0
+			},
+			caseInfo: {
+				dateReport: moment().startOf("d"),
+				distressType: "",
+				distressLevel: "",
+				millingLength: 0,
+				millingWidth: 0,
+				place: "",
+				direction: 0,
+				lane: 1,
+				imgZoomIn: "",
+				imgZoomOut: ""
+			},
+			options: {
+				imgTypeMap: {
+					"imgZoomIn": "近照",
+					"imgZoomOut": "遠照"
+				},
+				caseColorMap: [
+					{
+						index: 0,
+						name: ["龜裂"],
+						color: "#B71C1C"
+					},
+					{
+						index: 1,
+						name: ["裂縫", "縱橫裂縫", "塊狀裂縫"],
+						color: "#009688"
+					},
+					{
+						index: 2,
+						name: ["坑洞", "人孔高差", "薄層剝離"],
+						color: "#FF9800"
+					},
+					{
+						index: 3,
+						name: ["車轍"],
+						color: "#00BCD4"
+					},
+					{
+						index: 4,
+						name: ["補綻", "管線回填"],
+						color: "#673AB7"
+					},
+					{
+						index: 5,
+						name: ["隆起與凹陷"],
+						color: "#8BC34A"
+					},
+					{	
+						index: 6,
+						name: ["其他"],
+						color: "#607D8B"
+					}
+				],
+				caseTypeMap: {
+					29: "縱橫裂縫",
+					50: "塊狀裂縫",
+					15: "坑洞",
+					65: "補綻及管線回填",
+					58: "人孔高差",
+					32: "車轍"
+					// "OIL": "冒油",
+					// "WAP": "波浪狀鋪面",
+					// "LSS": "車道與路肩分離",
+					// "SLC": "滑溜裂縫",
+					// "AGS": "骨材剝落",
+					// "HLA": "坑洞",
+					// "HLB": "人孔高差",
+					// "HLC": "薄層剝離"
+				},
+				caseLevelMap: {
+					1: "輕",
+					2: "中",
+					3: "重"
+				},
+				roadDir: {
+					0: "無",
+					1: "順向",
+					2: "逆向"
+				}
+			}
+		}
+	},
+	computed: {
+		panoramaInfoProps: {
+			get() {
+				return this.panoramaInfo
+			},
+			set(val) {
+				this.$emit('update:panoramaInfo', val)
+			}
+		}
+	},
+	created() { },
+	mounted() {
+		// init panorama
+		// console.log("panorama_mounted");
+		this.panorama = pannellum.viewer("panorama", { scenes: {}, keyboardZoom: false, hotSpotDebug: false });
+		this.panorama.on("load", () => this.panorama.resize() );
+		this.panorama.on('mousedown', (evt) => {
+			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
+			if(!evt.shiftKey) return;
+
+			// coords[0] is pitch, coords[1] is yaw
+			const [ pitch , yaw ] = this.panorama.mouseEventToCoords(evt);
+			this.addHotSpot({ pitch, yaw }, 1);
+
+			// convert to image coordinates
+			const x = (yaw / 360 + 0.5) * this.imageSize.width;
+			const y = (0.5 - pitch / 180) * this.imageSize.height;
+			console.log(x, y);
+
+			// NOTE: 預估缺失位置(ME)
+			// const distance = this.getDistance(pitch);
+			// console.log("distance: ", distance);
+			// const position = this.getPosition(distance, yaw);
+			// this.addHotSpot(this.getCoords(position), 2);
+
+			// NOTE: 預估缺失位置(詹博)
+			this.transformMatrix(pitch, yaw);
+		});
+		this.panorama.on('mouseup', (evt) => {
+			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
+		});
+		this.panorama.on('animatefinished', () => {
+			this.panoramaTestInfo = { Pitch: this.panorama.getPitch(), Yaw: this.panorama.getYaw(), Hfov: this.panorama.getHfov() };
+			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
+		});
+
+		this.$el.querySelector("#panorama .pnlm-compass").addEventListener("click", (evt) => {
+			const northOffset = this.panorama.getNorthOffset();
+			this.panorama.setYaw(-northOffset);
+			// this.$emit('setHeading', 0);
+
+			evt.stopPropagation();
+		});
+	},
+	methods: {
+		setStreetViewList() {
+			// console.log("setStreetViewList");
+			// console.log(JSON.parse(JSON.stringify(this.panoramaInfo)));
+			this.panoramaInfoProps.streetViewList = {};
+			// console.log(JSON.parse(JSON.stringify(this.panoramaInfoProps)));
+
+			const lineInfoList = this.panoramaInfoProps.data;
+			const panoramaUrl = this.panoramaInfoProps.sceneSetting.assetsUrl;
+
+			for (const lineInfo of lineInfoList) {
+				lineInfo.forEach((info, index) => {
+					const panoramaPhotoUrl = `${panoramaUrl}/${info.fileName}`;
+
+					this.panoramaInfoProps.streetViewList[info.fileName] = {
+						type: "equirectangular",
+						panorama: panoramaPhotoUrl,
+						hfov: this.panoramaInfoProps.sceneSetting.hfov,
+						yaw: this.panoramaInfoProps.sceneSetting.yaw,
+						horizonRoll: this.panoramaInfoProps.sceneSetting.horizonRoll,
+						compass: true,
+						northOffset: info.azimuth,
+						autoLoad: true,
+					};
+
+					let hotSpots = [];
+						const clickHandlerFunc = (evt, clickHandlerArgs) => {
+							if(clickHandlerArgs) {
+								for(const hotSpotId of this.hotSpotIdList) {
+									this.panorama.removeHotSpot(hotSpotId, clickHandlerArgs.sceneIdNow);
+								}
+								this.hotSpotIdList = [];
+								this.$emit('setMarkerPosition', clickHandlerArgs.sceneIdNow);
+							}
+						};
+
+						if (index >= 0 && index < lineInfo.length - 1) {
+							hotSpots.push({
+								pitch: this.panoramaInfoProps.sceneSetting.pitch,
+								yaw: this.panoramaInfoProps.sceneSetting.yaw,
+								type: "scene",
+								text: lineInfo[index + 1].fileName,
+								sceneId: lineInfo[index + 1].fileName,
+								clickHandlerArgs: {
+									sceneIdNow: lineInfo[index].fileName
+								},
+								clickHandlerFunc
+							});
+						}
+
+						if (index > 0 && index < lineInfo.length) {
+							hotSpots.push({
+								pitch: this.panoramaInfoProps.sceneSetting.pitch,
+								yaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
+								type: "scene",
+								text: lineInfo[index - 1].fileName,
+								sceneId: lineInfo[index - 1].fileName,
+								targetYaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
+								clickHandlerArgs: {
+									sceneIdNow: lineInfo[index].fileName
+								},
+								clickHandlerFunc
+							});
+						}
+
+					this.panoramaInfoProps.streetViewList[info.fileName]["hotSpots"] = hotSpots;
+					this.$emit('update:panoramaInfo',this.panoramaInfoProps);
+				});
+			}	
+		},
+		setPanoramaScene() {
+			// 掛載panorama scene
+			for (const sceneId of this.prevSceneId) this.panorama.removeScene(sceneId);
+			this.prevSceneId = [];
+			for (const sceneId in this.panoramaInfoProps.streetViewList) {
+				const panoramaInfo = this.panoramaInfoProps.streetViewList[sceneId];
+				this.panorama.addScene(sceneId, panoramaInfo);
+				this.prevSceneId.push(sceneId);
+			}
+		},
+		showPanoramaLayer(sceneId) {
+			// console.log("showPanoramaLayer");
+			this.$emit("showPanoramaLayer", sceneId);
+		},
+		uploadCase() {
+			this.$confirm(`確定上傳缺失?`, "確認", { showClose: false }).then(() => {
+				this.loading = true;
+				this.isUpload = true;
+
+				let coordinates = this.hotSpotIdList.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat]));
+				coordinates.push(coordinates[0]);
+				// console.log(coordinates);
+				this.caseInfo.geoJson = {
+					"type": 'MultiPolygon',
+					"coordinates": [[ coordinates ]]
+				};
+				console.log(this.caseInfo);
+
+				this.$emit("uploadCase", this.caseInfo);
+			}).catch(err => console.log(err));
+		},
+		screenshot(imgType="imgZoomIn", hfov) {
+			// for(const hfov of [50, 120]) {
+			// 	console.log(hfov);
+			hfov = (hfov != undefined) ? hfov : this.panorama.getHfov();
+				this.panorama.setHfov(hfov, 100, () => {
+					const imgUrl = this.panorama.getRenderer().render(
+						this.panorama.getPitch() / 180 * Math.PI,
+						this.panorama.getYaw() / 180 * Math.PI,
+						this.panorama.getHfov() / 180 * Math.PI,
+						{ 'returnImage': true }
+					)
+
+					const img = new Image();
+					img.addEventListener("load", async () => {
+						const canvas = document.createElement('canvas');
+						canvas.width = img.width;
+						canvas.height = img.height;
+						canvas.getContext('2d').drawImage(img, 0, 0);
+						this.$el.querySelector("#panorama canvas").setAttribute("data-html2canvas-ignore", true);
+						this.$el.querySelector("#panorama .pnlm-hotspot-base.pnlm-hotspot").setAttribute("data-html2canvas-ignore", true);
+						html2canvas(document.querySelector(".pnlm-render-container"), { canvas: canvas, backgroundColor: 'rgba(0, 0, 0, 0)' }).then(canvas => {
+							this.caseInfo[imgType] = canvas.toDataURL("image/jpeg");
+
+							if(imgType == "imgZoomIn" && this.caseInfo.imgZoomOut.length == 0) this.screenshot("imgZoomOut", this.panorama.getHfov()+30);
+							// NOTE: test download
+							// const link = document.createElement('a');
+							// link.href = canvas.toDataURL("image/jpeg");
+							// link.download = 'test.png';
+							// document.body.appendChild(link);
+							// link.click();
+							// document.body.removeChild(link);
+						});
+					})
+					img.src = imgUrl;
+				})
+			// }
+		},
+		getDistance(pitch) {
+			return Math.abs(cameraHeight / Math.tan(pitch * Math.PI / 180));
+		},
+		getPosition(dist, yaw) {
+			const r = 0.00000900900901;
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			// console.log("x: ", dist * Math.sin((yaw + panoramaInfo.azimuth) * Math.PI / 180));
+			// console.log("y: ", dist * Math.cos((yaw + panoramaInfo.azimuth)  * Math.PI / 180));
+			const position = { 
+				lat: panoramaInfo.position.lat + dist * r * Math.cos((yaw + panoramaInfo.azimuth)  * Math.PI / 180), 
+				lng: panoramaInfo.position.lng + dist * r * Math.sin((yaw + panoramaInfo.azimuth)  * Math.PI / 180) 
+			};
+
+			this.$emit("addMarker", { position, type: 2 });
+
+			return position
+		},
+		getYaw(start, end) {
+			const dLng = (end.lng - start.lng) * Math.PI / 180;
+			const sLat = start.lat * Math.PI / 180;
+			const eLat = end.lat * Math.PI / 180;
+
+			const diff_x = Math.cos(sLat) * Math.sin(eLat) - Math.sin(sLat) * Math.cos(eLat) * Math.cos(dLng); //x
+			const diff_y = Math.sin(dLng) * Math.cos(eLat);  // y
+
+			// 返回角度,不是弧度
+			const angle = Math.atan2(diff_y, diff_x) * 180 / Math.PI;
+
+			return angle
+		},
+		getPitch(start, end, height = 0) {
+			const diff_x = calcDistance(start, end);
+			const diff_y = -cameraHeight + height / 2;
+
+			// 返回角度,不是弧度
+			// 以Ｘ軸為起點，逆時針為正的角度
+			const angle = 360 * Math.atan2(diff_y, diff_x) / (2 * Math.PI);
+
+			return angle;
+		},
+		getCoords(position) {
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			// console.log(panoramaInfo);
+			const yaw = this.getYaw(panoramaInfo.position, position) - panoramaInfo.azimuth;
+			const pitch = this.getPitch(panoramaInfo.position, position, 0);
+			return { pitch, yaw }
+		},
+		addHotSpot({ pitch, yaw }, type) {
+			const cssClass = type == 1 ? "hotSpotIcon redDot" : type == 2 ? "hotSpotIcon greenDot" : "hotSpotIcon blueDot";
+
+			const hotSpot = {
+				id: this.hotSpotId,
+				type: "info",
+				pitch,
+				yaw,
+				text: `(Pitch: ${pitch}, Yaw: ${yaw})`,
+				cssClass,
+				// coordinates: this.transformMatrix(pitch, yaw),
+				clickHandlerArgs: {
+					id: this.hotSpotId++
+				},
+				clickHandlerFunc: (evt, clickHandlerArgs) => {
+					// console.log("evt: ", evt);
+					console.log(`(Pitch: ${pitch}}, Yaw: ${yaw})`);
+
+					if(clickHandlerArgs && evt.shiftKey) {
+						console.log("id: ", clickHandlerArgs.id);
+						this.panorama.removeHotSpot(clickHandlerArgs.id, this.panorama.getScene());
+						this.hotSpotIdList = this.hotSpotIdList.filter(hotSpot => hotSpot.id != clickHandlerArgs.id);
+					}
+				}
+			};
+
+			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
+			this.hotSpotIdList.push(hotSpot);
+		},
+		clearHotSpot() {
+			for(const hotSpot of this.hotSpotIdList) this.panorama.removeHotSpot(hotSpot.id, this.panorama.getScene());
+			this.hotSpotIdList = [];
+			this.$emit("clearMarker");
+		},
+
+		// NOTE: 預估缺失位置(詹博)
+		transformMatrix(pitch, yaw) {
+			// NOTE: test Transform - Omega(roll): X軸旋轉; Phi(yaw): Y軸旋轉; Kappa(pitch): Z軸旋轉
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			const [ Omega, Phi, Kappa ] = [ 0, panoramaInfo.azimuth * Math.PI / 180, 0 ];
+			// const [ Omega, Phi, Kappa ] = [ 0, 0, 0 ];
+
+			// Step1: 旋轉矩陣
+			const matrix = [
+				[ Math.cos(Phi) * Math.cos(Kappa), Math.cos(Omega) * Math.sin(Kappa) + Math.sin(Omega) * Math.sin(Phi) * Math.cos(Kappa), Math.sin(Omega) * Math.sin(Kappa) - Math.cos(Omega) * Math.sin(Phi) * Math.cos(Kappa) ],
+				[ -Math.cos(Phi) * Math.sin(Kappa), Math.cos(Omega) * Math.cos(Kappa) - Math.sin(Omega) * Math.sin(Phi) * Math.sin(Kappa), Math.sin(Omega) * Math.cos(Kappa) + Math.cos(Omega) * Math.sin(Phi) * Math.sin(Kappa) ],
+				[ Math.sin(Phi), -Math.sin(Omega) * Math.cos(Phi), Math.cos(Omega) * Math.cos(Phi) ]
+			];
+			// console.log("matrix: ", matrix);
+
+			// Step2: 像素(x, y) 轉成球面座標角度(yaw -> theta; pitch -> phi)
+			const [ Theta_sphere, Phi_sphere ] = [ yaw * Math.PI / 180, pitch * Math.PI / 180 ];
+			// const Theta_sphere = (x - this.imageSize.width/2) * (360 / this.imageSize.width) * Math.PI / 180;
+			// const Phi_sphere = -(y - this.imageSize.height/2) * (360 / this.imageSize.width) * Math.PI / 180;
+			// console.log("Theta: ", Theta_sphere * 180 / Math.PI);
+			// console.log("Phi: ", Phi_sphere * 180 / Math.PI);
+			
+			// Step3: 環景影像座標轉換成(X: lng, Y, Z: lat)
+			const coordinates = { 
+				x: Math.cos(Phi_sphere) * Math.sin(Theta_sphere),
+				y: Math.sin(Phi_sphere),
+				z: Math.cos(Phi_sphere) * Math.cos(Theta_sphere)
+			}
+			// console.log("coordinates: ", coordinates);
+
+			// Step4: 修正球型旋轉，並計算 (X,Y,Z) 旋轉後不帶尺度S的向量(P, Q, R)
+			const vectorUnit = {
+				p: matrix[0][0] * coordinates.x + matrix[1][0] * coordinates.y + matrix[2][0] * coordinates.z,
+				q: matrix[0][1] * coordinates.x + matrix[1][1] * coordinates.y + matrix[2][1] * coordinates.z,
+				r: matrix[0][2] * coordinates.x + matrix[1][2] * coordinates.y + matrix[2][2] * coordinates.z
+			}
+			// console.log("vectorUnit: ", vectorUnit);
+
+			// Step5: 假設量測點的相對高度已知，如2.5公尺
+			const r = 0.00000900900901  //(度/公尺);
+			const S = cameraHeight * r / vectorUnit.q;
+			// console.log(S);
+
+			// Step6: 求量測點的三維座標
+			const geoCoordinates = {
+				lng: panoramaInfo.position.lng - vectorUnit.p * S,
+				// z: -cameraHeight - vectorUnit.q * S,
+				lat: panoramaInfo.position.lat - vectorUnit.r * S
+			}
+			console.log("geoCoordinates: ", geoCoordinates);
+			this.hotSpotIdList[this.hotSpotIdList.length-1].coordinates = geoCoordinates;
+
+			// NOTE: 在「地圖」 & 「環景」上顯示
+			this.$emit("addMarker", { position: geoCoordinates, type: 3 });
+			// this.addHotSpot(this.getCoords(geoCoordinates), 3);
+		},
+	}
+}
+</script>
+
+<style lang="sass">
+.imgHover
+	max-width: 600px
+	height: 300px
+
+.panorama-view
+	#panorama
+		height: calc(100vh - 50px)
+		.pnlm-controls
+			background-color: rgba(white, 0.5)
+			position: absolute
+			transform: translateZ(9999px) scale(1.2)
+			filter: invert(1)
+		.pnlm-controls-container
+			height: 100%
+			right: 50px
+			left: auto
+			.pnlm-zoom-controls
+				bottom: 20px
+			.pnlm-fullscreen-toggle-button
+				top: 5px
+		.pnlm-compass
+			cursor: pointer
+			right: 10px
+			bottom: 104px
+		.hotSpotIcon
+			cursor: pointer
+			width: 26px
+			height: 26px
+			background-position: center 
+			background-size: contain 
+			background-repeat: no-repeat 
+			&.redDot
+				background-image: url('../../../public/assets/icon/icon_redDot.png')
+				background-size: 20% 
+			&.greenDot
+				background-image: url('../../../public/assets/icon/icon_greenDot.png')
+				background-size: 40% 
+			&.blueDot
+				background-image: url('../../../public/assets/icon/icon_blueDot.png')
+				background-size: 20% 
+		.pnlm-hotspot.pnlm-scene
+			z-index: 10
+			opacity: 0.8
+		.info-box
+			position: absolute
+			width: 280px
+			background-color: rgba(white, 0.6)
+			z-index: 11
+			&.right
+				top: 115px
+				right: 15px
+			.el-card__body
+				position: relative
+				padding: 5px
+				max-height: 630px
+				overflow-x: hidden
+				overflow-y: auto
+				.el-form-item
+					margin-bottom: 10px
+					.el-form-item__label
+						line-height: 40px
+					.el-select, .road-dir, .el-textarea, .el-date-editor
+						width: 160px
+						.el-input__inner, .el-textarea__inner
+							padding: 5px 0
+						.el-input__inner
+							text-align: center
+					.btn-img-action
+						display: flex
+						flex-direction: column
+						justify-content: space-evenly
+						align-items: center
+						height: 100px
+						& > .el-button
+							margin-left: 0
+				.btn-action-group
+					display: flex
+					width: 100%
+					padding: 0
+					.el-button
+						flex: 1
+						padding: 10px 0
+				.road-dir > .el-input-group__prepend .el-select
+						width: 100px
+	.btn_panorama
+		position: absolute
+		bottom: 40px
+		left: 40px
+		height: 80px
+		background-color: white
+		background-color: #E1F5FE
+		overflow: hidden
+		padding: 5px
+		z-index: 15
+		.v-btn__content
+			display: flex
+			flex-direction: column
+		.name
+			white-space: pre-wrap
+			text-align: center
+			font-size: 14px
+</style>

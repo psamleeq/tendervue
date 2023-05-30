@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 
+// 車巡管理
 export function getInspectionList(query) {
 	return request({
 		url: '/inspections',

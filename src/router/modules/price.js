@@ -9,7 +9,7 @@ const dispatchRouter = {
 	name: 'price',
 	meta: {
 		title: '計價管理',
-		icon: 'clipboard-account-outline',
+		icon: 'el-icon-money',
 		roles: ['Pricing'],
 		isNew: true
 	},

@@ -8,7 +8,7 @@ const carRouter = {
 	redirect: '/car/route',
 	name: 'car',
 	meta: {
-		title: '車管系統',
+		title: '車輛管理',
 		icon: 'el-icon-truck',
 		roles: ['car'],
 		isNew: true 

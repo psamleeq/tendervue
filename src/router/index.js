@@ -8,6 +8,7 @@ import Layout from '@/layout';
 
 /* Router Modules */
 import unitRouter from './modules/unit';
+import inspectionRouter from './modules/inspection';
 import caseRouter from './modules/case';
 import caseListRouter from './modules/caseList';
 import dispatchV0Router from './modules/dispatchV0';
@@ -101,6 +102,7 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
 	unitRouter,
+	inspectionRouter,
 	caseRouter,
 	caseListRouter,
 	dispatchV0Router,

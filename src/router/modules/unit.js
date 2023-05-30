@@ -10,8 +10,7 @@ const unitRouter = {
 	meta: {
 		title: '單元管理',
 		icon: 'road', 
-		roles: ['uRoad', 'uBlock'],
-		isNew: true
+		roles: ['uRoad', 'uBlock']
 	},
 	children: [
 		{
@@ -20,8 +19,7 @@ const unitRouter = {
 			name: 'roadUnit',
 			meta: { 
 				title: '道路單元',
-				roles: ['uRoad.viewer', 'uBlock.manager'],
-				isNew: true
+				roles: ['uRoad.viewer', 'uBlock.manager']
 			}
 		},
 		{
@@ -30,8 +28,7 @@ const unitRouter = {
 			name: 'genLaneMap',
 			meta: {
 				title: '車道單元產生',
-				roles: ['uBlock.manager'],
-				isNew: true
+				roles: ['uBlock.manager']
 			}
 		},
 		{
@@ -40,8 +37,7 @@ const unitRouter = {
 			name: 'laneUnit',
 			meta: {
 				title: '車道單元',
-				roles: ['uRoad.viewer', 'uBlock.manager'],
-				isNew: true
+				roles: ['uRoad.viewer', 'uBlock.manager']
 			}
 		},
 		{
@@ -50,8 +46,7 @@ const unitRouter = {
 			name: 'genBlockMap',
 			meta: { 
 				title: '維護單元產生', 
-				roles: ['uBlock.manager'],
-				isNew: true
+				roles: ['uBlock.manager']
 			}
 		},
 		{
@@ -60,8 +55,7 @@ const unitRouter = {
 			name: 'blockUnit',
 			meta: {
 				title: '維護單元',
-				roles: ['uRoad.viewer', 'uBlock.manager'],
-				isNew: true
+				roles: ['uRoad.viewer', 'uBlock.manager']
 			}
 		}
 	]
