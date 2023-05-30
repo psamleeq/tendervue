@@ -67,10 +67,11 @@
 		>
 		<template slot-scope="{ row, column }">
 			<span v-if="['CompleteDate'].includes(column.property)">
-			<el-button>完成</el-button>
+				<span>{{ row[column.property]}}</span>
+				<el-button type="success" size="mini" @click="setComplete(row)" style="margin-left:20px">完成</el-button>
 			</span>
 			<span v-else-if="['Note'].includes(column.property)">
-			<el-input type="text"> </el-input>
+			<el-input type="text" size="mini"> </el-input>
 			</span>
 			<span v-else>
 			<span>{{ row[column.property] || "-" }}</span>
@@ -98,7 +99,15 @@ export default {
 			1:"大同區",
 			2:"中山區"
 		},
-		list:[],
+		list:[
+			{
+				Id:'1',
+				Administrative:'中山區',
+				ReceiveDate:'1120530',
+				CompleteDate:'1120530',
+				Note:''
+			}
+		],
 		headers:{
 		Id:{
 			name:'編號',
@@ -132,6 +141,9 @@ export default {
 		getList(){
 			console.log('getList');
 		},
+		setComplete(){
+
+		}
 	},
 };
 </script>
