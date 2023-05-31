@@ -6,7 +6,7 @@ const inspectionRouter = {
 	path: '/inspection',
 	component: Layout,
 	redirect: '/car/route',
-	name: 'car',
+	name: 'inspection',
 	meta: {
 		title: '巡查管理',
 		icon: 'map-marker-path',

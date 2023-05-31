@@ -301,7 +301,7 @@ export default {
 	data() {
 		return {
 			loading: false,
-			timeTabId: 0,
+			timeTabId: 1,
 			showResultConfirm: false,
 			showUnacceptedConfirm: false,
 			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],

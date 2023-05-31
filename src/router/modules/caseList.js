@@ -6,7 +6,7 @@ const caseListRouter = {
 	path: '/caseList',
 	component: Layout,
 	redirect: '/PI/precipitation',
-	name: 'PIIndex',
+	name: 'caseList',
 	meta: {
 		title: '案件紀錄',
 		icon: 'el-icon-suitcase',

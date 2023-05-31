@@ -7,54 +7,30 @@
 					<div class="el-input-group__prepend">
 						<span>查報來源</span>
 					</div>
-					<el-select v-model.number="listQuery.caseType" popper-class="type-select">
+					<el-select v-model.number="listQuery.caseType" popper-class="type-select" :disabled="csvFileList.length > 0">
 						<el-option label="自巡" :value="1" />
 						<el-option label="其他" :value="2" />
 					</el-select>
 				</div>
 			</div>
-			<el-select class="filter-item" v-model.number="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
+			<el-select class="filter-item" v-model.number="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1 || csvFileList.length > 0">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<span class="filter-item time-picker">
 				<div style="font-size: 12px; color: #909399">成案日期</div>
-				<el-button-group v-if="!dateTimePickerVisible">
-					<el-button
-						v-for="(t, i) in pickerOptions.shortcuts"
-						:key="`shortcuts_${i}`"
-						type="primary"
-						:plain="i != timeTabId"
-						size="mini"
-						@click="dateShortcuts(i)"
-					>{{ t.text }}</el-button>
-				</el-button-group>
 				<el-date-picker
-					v-else
 					class="filter-item"
 					v-model="searchDate"
 					type="date"
 					placeholder="日期"
 					:picker-options="pickerOptions"
 					:clearable="false"
+					:disabled="csvFileList.length > 0"
 					@change="timeTabId = -1"
 				/>
-				<el-button
-					:type="dateTimePickerVisible ? 'info' : 'primary'"
-					plain
-					size="mini"
-					@click="dateTimePickerVisible = !dateTimePickerVisible"
-				>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
-				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			</span>
-			<!-- <el-button
-				class="filter-item"
-				type="info"
-				icon="el-icon-document"
-				:circle="screenWidth<567"
-				@click="handleDownload"
-			>輸出報表</el-button> -->
 
-			<el-upload v-if="!alreadyCreate" :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
+			<el-upload :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
 				<!-- <i class="el-icon-upload" />
 				<div class="el-upload__text">將CSV拖曳至此處，或<em>點此上傳</em></div> -->
 				<el-button type="info">上傳CSV</el-button>
@@ -65,7 +41,7 @@
 			<el-button type="text" @click="showDemo = true">CSV範例</el-button>
 		</div>
 		
-		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
 
 		<aside>
 			<span v-if="this.caseList.length != 0"> 案件數: {{ this.caseList.length }} </span>
@@ -73,7 +49,7 @@
 		</aside>
 
 		<!-- 有問題案件列表 -->
-		<el-collapse v-if="!alreadyCreate && caseErrList.length != 0">
+		<el-collapse v-if="caseErrList.length != 0">
 			<el-collapse-item class="listLabel" title="待處理案件" name="1">
 				<template slot="title">
 					<span>待處理案件  (</span>
@@ -131,7 +107,7 @@
 								<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
 								<span v-else> - </span>
 							</span>
-							<span v-else-if="!alreadyCreate && [ 'ReportDate' ].includes(column.property)">
+							<span v-else-if="[ 'ReportDate' ].includes(column.property)">
 							<el-date-picker 
 								class="date-picker"
 								v-model="row[column.property]"
@@ -235,7 +211,7 @@
 						<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
 						<span v-else> - </span>
 					</span>
-					<span v-else-if="!alreadyCreate && [ 'ReportDate' ].includes(column.property)">
+					<span v-else-if="[ 'ReportDate' ].includes(column.property)">
 						<el-date-picker 
 							class="date-picker"
 							v-model="row[column.property]"
@@ -247,7 +223,7 @@
 							@input="() => $set(list, $index, row)"
 						/>
 					</span>
-					<span v-else-if="!alreadyCreate && [ 'rDeviceType' ].includes(column.property)">
+					<span v-else-if="[ 'rDeviceType' ].includes(column.property)">
 						<el-select v-model.number="row[column.property]" @input="() => $set(list, $index, row)">
 							<el-option v-for="(name, type) in options.DeviceType" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 						</el-select>
@@ -308,10 +284,8 @@ export default {
 		return {
 			loading: false,
 			timeTabId: 1,
-			dateTimePickerVisible: false,
 			showConfirm: false,
 			showDemo: false,
-			alreadyCreate: false,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -405,6 +379,7 @@ export default {
 			apiHeader: [ "UploadCaseNo", "DistressSrc", "CaseSN", "CaseDate", "ReportDate", "DeviceType", "rDeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
 			tableSelect: [],
 			list: [],
+			uploadedIdList: [],
 			listRepeat: [],
 			csvData: [],
 			csvFileList: [],
@@ -521,73 +496,44 @@ export default {
 		// this.getList();
 	},
 	methods: {
-		dateShortcuts(index) {
-			this.timeTabId = index;
+		async getList() {
+			return new Promise(resolve => {
+				this.loading = true;
 
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
-			};
+				let date = moment(this.searchDate).format("YYYY-MM-DD");
+				this.searchRange = date;
 
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
-					break;
-			}
-			this.getList();
-		},
-		getList() {
-			this.loading = true;
-
-			let date = moment(this.searchDate).format("YYYY-MM-DD");
-			this.searchRange = date;
-
-			// this.alreadyCreate = false;
-			this.list = [];
-			this.listRepeat = [];
-			this.csvRepeatObj = {};
-			this.caseMinus = { 
-				list: [],
-				csv: []
-			};
-			this.tableSelect = [];
-			getCaseList({
-				isList: false,
-				caseType: this.listQuery.caseType,
-				zipCode: this.listQuery.zipCode,
-				timeStart: date,
-				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
-			}).then(response => {
-				if (response.data.list.length == 0) {
-					this.alreadyCreate = false;
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.list = response.data.list;
-					this.list.forEach(l => {
-						if(l.ReportDate == undefined) l.ReportDate = l.CaseDate;
-						l.DeviceType = Number(l.DeviceType);
-						if(l.rDeviceType == undefined) l.rDeviceType = l.DeviceType;
-						l.BType = Number(l.BType);
-						l.BrokeType = Number(l.BrokeType);
-						l.lat = Number(l.lat);
-						l.lng = Number(l.lng);
-					})
-					this.alreadyCreate = !response.data.isRMDB;
-					if(this.alreadyCreate) this.handleRemove();
-				}
-				if(this.csvFileList.length > 0) this.checkCsv();
-				this.loading = false;
-			}).catch(err => { this.loading = false; });
+				this.clearAll();
+				getCaseList({
+					isList: false,
+					caseType: this.listQuery.caseType,
+					zipCode: this.listQuery.zipCode,
+					timeStart: date,
+					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
+				}).then(response => {
+					// if (response.data.list.length == 0) {
+					// 	this.$message({
+					// 		message: "查無資料",
+					// 		type: "error",
+					// 	});
+					// } else {
+						this.list = response.data.list;
+						this.uploadedIdList = response.data.uploadedIdList;
+						this.list.forEach(l => {
+							if(l.ReportDate == undefined) l.ReportDate = l.CaseDate;
+							l.DeviceType = Number(l.DeviceType);
+							if(l.rDeviceType == undefined) l.rDeviceType = l.DeviceType;
+							l.BType = Number(l.BType);
+							l.BrokeType = Number(l.BrokeType);
+							l.lat = Number(l.lat);
+							l.lng = Number(l.lng);
+						})
+					// }
+					resolve();
+					// if(this.csvFileList.length > 0) this.checkCsv();
+					this.loading = false;
+				}).catch(err => { this.loading = false;  resolve();});
+			});
 		},
 		caseFilterList(list) {
 			// console.log(list);
@@ -615,11 +561,14 @@ export default {
 						type: "success",
 					});
 
-					this.getList();
+					// this.getList();
+					this.handleRemove();
+					this.loading = false;
 				} 
 			}).catch(err => {
 				console.log(err);
-				this.getList();
+				// this.getList();
+				this.loading = false;
 			})
 		},
 		async handleSelectionChange(value) {
@@ -657,7 +606,7 @@ export default {
 		formatTime(time) {
 			return moment(time).format("YYYY/MM/DD");
 		},
-		readCSV(file, fileList) {
+		async readCSV(file, fileList) {
 			if(fileList.length > 1) fileList.shift();
 			this.csvFileList = JSON.parse(JSON.stringify(fileList));
 
@@ -668,7 +617,7 @@ export default {
 				});
 				this.handleRemove(); 
 			} else {
-				this.loading = true;
+				await this.getList();
 				let reader = new FileReader();
 				// reader.readAsText(file.raw, "UTF-8");
 				reader.readAsArrayBuffer(file.raw);
@@ -687,6 +636,20 @@ export default {
 			}
 		},
 		checkCsv() {
+			// 檢查是否上傳
+			console.log(this.csvData);
+			console.log(this.uploadedIdList);
+			this.csvData = this.csvData.filter(caseSpec => !this.uploadedIdList.includes(Number(caseSpec["案件編號"])));
+			if(this.csvData.length == 0) {
+				this.$message({
+					type: "warning",
+					message: `查無可上傳案件`
+				});
+				this.handleRemove(); 
+				return;
+			} 
+
+			// 檢查欄位名稱
 			const fileHeaders = Object.keys(this.csvData[0]);
 			let lackHeaderList = [];
 			for(const header of this.csvHeader) {
@@ -699,9 +662,7 @@ export default {
 					message: `csv缺少欄位${lackHeaderList.map(l => `「${l}」`).join("、")}，請重新上傳正確csv`
 				});
 				this.handleRemove(); 
-			} else {
-				this.replaceCaseList();
-			}
+			} else this.replaceCaseList();
 		},
 		csvToArray(str, delimiter = ",") {
 			str = str.replace(/\"(.*)[\r\n|\n](.*)\"/g, "$1$2");
@@ -782,7 +743,20 @@ export default {
 			if(fileList == undefined) this.csvFileList = [];
 			else this.csvFileList = JSON.parse(JSON.stringify(fileList));
 			this.$refs.uploadFile.clearFiles();
-			this.getList();
+			this.loading = false;
+			this.clearAll();
+			// this.getList();
+		},
+		clearAll() {
+			this.list = [];
+			this.uploadedIdList = [];
+			this.listRepeat = [];
+			this.csvRepeatObj = {};
+			this.caseMinus = { 
+				list: [],
+				csv: []
+			};
+			this.tableSelect = [];
 		},
 		handleDownload() {
 			let tHeader = Object.values(this.headers);
