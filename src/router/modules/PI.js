@@ -61,6 +61,16 @@ const PIRouter = {
 						roles: ['PIcase.editor']
 					}
 				},
+				{
+					path: 'caseUploadList',
+					component: () => import('@/views/PI/caseCheck/caseUploadList'),
+					name: 'PICaseUploadList',
+					meta: {
+						title: '案件上傳結果',
+						roles: ['PIcase.editor'],
+						isNew: true
+					}
+				},
 			]
 		},
 		{
