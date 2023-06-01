@@ -627,7 +627,7 @@ export default {
 						return { lat: Number(point[1]), lng: Number(point[0]) };
 					});
 
-					const caseName = caseInfo.name != null && this.options.caseTypeMap[caseInfo.name.toUpperCase()] != undefined ? this.options.caseTypeMap[caseInfo.name.toUpperCase()] : caseInfo.name;
+					const caseName = caseInfo.name != null && this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] != undefined ? this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] : caseInfo.name;
 					const caseLevel = caseInfo.description != null && this.options.caseLevelMap[caseInfo.description.toUpperCase()] != undefined ? this.options.caseLevelMap[caseInfo.description.toUpperCase()] : caseInfo.description;
 
 					this.caseList.push({ 
