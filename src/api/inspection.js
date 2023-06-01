@@ -1,5 +1,21 @@
 import request from '@/utils/request'
 
+// 巡查歷程
+export function getInspectionList(query) {
+	return request({
+		url: '/inspection/list',
+		method: 'get',
+		params: query
+	})
+}
+export function setInspectionList(id, data) {
+	return request({
+		url: `/inspection/list/${id}`,
+		method: 'put',
+		data
+	})
+}
+
 // 缺失標記
 export function uploadInspectionCase(data) {
 	return request({

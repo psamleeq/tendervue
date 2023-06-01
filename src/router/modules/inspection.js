@@ -15,6 +15,16 @@ const inspectionRouter = {
 	},
 	children: [
 		{
+			path: 'inspectionProgress',
+			component: () => import('@/views/inspection/inspectionProgress'),
+			name: 'inspectionProgress',
+			meta: {
+				title: '巡查歷程',
+				roles: ['inspection.viewer'],
+				vTag: 'alpha'
+			}
+		},
+		{
 			path: 'caseMark',
 			component: () => import('@/views/inspection/caseMark'),
 			name: 'caseMark',
@@ -24,16 +34,6 @@ const inspectionRouter = {
 				vTag: 'alpha'
 			}
 		},
-		{
-			path: 'inspectionProgress',
-			component: () => import('@/views/inspection/inspectionProgress'),
-			name: 'inspectionProgress',
-			meta: {
-				title: '巡查歷程',
-				roles: ['inspection.viewer'],
-				vTag: 'alpha'
-			}
-		}
 	]
 }
 export default inspectionRouter
