@@ -362,7 +362,7 @@ export default {
 					imgUrl;
 					constructor(bounds, imgUrl, map) {
 						super();
-						this.img = document.createElement("img");
+						// this.img = document.createElement("img");
 						this.bounds = bounds;
 						this.imgUrl = imgUrl;
 						this.map = map;
@@ -380,7 +380,7 @@ export default {
 						// this.div.style.zIndex = 100;
 
 						// Create the img element and attach it to the div.
-						// this.img = document.createElement("img");
+						this.img = document.createElement("img");
 						this.img.onload = () => {
 							// console.log(this.img.naturalWidth, this.img.naturalHeight);
 							if(this.map != undefined) {
@@ -441,7 +441,12 @@ export default {
 					 */
 					onRemove() {
 						if (this.div) {
-							this.div.parentNode.removeChild(this.div);
+							// this.div.parentNode.removeChild(this.img);
+							this.img.remove();
+							delete this.img;
+
+							// this.div.parentNode.removeChild(this.div);
+							this.div.remove();
 							delete this.div;
 						}
 					}
@@ -577,83 +582,86 @@ export default {
 
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 				this.infoWindow.addListener('domready', () => {
-					const infoDelBtn = this.$el.querySelector("#map #info-del-btn");
-					if(infoDelBtn) infoDelBtn.addEventListener("click", this.removeCaseStatus);
-
 					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
-					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { 
-						if(this.blockInfo.id != 0) {
-							if(this.overlayLayer[this.blockInfo.id] != undefined) return; 
+					if(infoScrnFullBtn) {
+						const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
+							if(this.blockInfo.id != 0) {
+								if(this.overlayLayer[this.blockInfo.id] != undefined) return; 
 
-							const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
-							const imgSrc = `https://storage.googleapis.com/adm_orthographic_jpg/${tenderId}/${this.blockInfo.id}.jpeg`;
-							const bounds = new google.maps.LatLngBounds();
-							this.blockInfo.feature.getGeometry().forEachLatLng(point => bounds.extend(point));
+								const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
+								const imgSrc = `https://storage.googleapis.com/adm_orthographic_jpg/${tenderId}/${this.blockInfo.id}.jpeg?t=${Date.now()}`;
+								const bounds = new google.maps.LatLngBounds();
+								this.blockInfo.feature.getGeometry().forEachLatLng(point => bounds.extend(point));
 
-							const overlay = new MapImgOverlay(bounds, imgSrc, this.map);
-							this.$set(this.overlayLayer, this.blockInfo.id, overlay);
+								const overlay = new MapImgOverlay(bounds, imgSrc, this.map);
+								this.$set(this.overlayLayer, this.blockInfo.id, overlay);
 
-							google.maps.event.addListenerOnce(this.map, 'idle', () => {
-								if(overlay.checkImg()) {
-									this.$el.querySelector("#map #info-scrn-full-btn").style.opacity = "1";
-									this.$el.querySelector("#map #info-download-btn").style.opacity = "1";
-									this.infoWindow.close();
-									
-									const PCISpec = this.blockInfo.feature.getProperty("PCIValue");
-									let filterLevel = [];
-									if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
-									else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
-									else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
-										return PCISpec >= level.range[0] && PCISpec < level.range[1]
-									});
-
-									this.dataLayer.PCIBlock.overrideStyle(
-										this.blockInfo.feature, 
-										{ 
-											fillOpacity: 0, 
-											strokeColor: filterLevel[0][1].color, 
-											strokeOpacity: 0.4,
-											strokeWeight: 2,
-											zIndex: 3 
+								google.maps.event.addListenerOnce(this.map, 'idle', () => {
+									if(overlay.checkImg()) {
+										this.$el.querySelector("#map #info-scrn-full-btn").style.opacity = "1";
+										this.$el.querySelector("#map #info-download-btn").style.opacity = "1";
+										this.infoWindow.close();
+										
+										const PCISpec = this.blockInfo.feature.getProperty("PCIValue");
+										let filterLevel = [];
+										if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
+										else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
+										else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
+											return PCISpec >= level.range[0] && PCISpec < level.range[1]
 										});
-								} else {
-									overlay.setMap(null);
-									this.$delete(this.overlayLayer, this.blockInfo.id);
 
-									this.$el.querySelector("#map #info-scrn-full-btn").style.display = "none";
-									this.$el.querySelector("#map #info-download-btn").style.display = "none";
+										this.dataLayer.PCIBlock.overrideStyle(
+											this.blockInfo.feature, 
+											{ 
+												fillOpacity: 0, 
+												strokeColor: filterLevel[0][1].color, 
+												strokeOpacity: 0.4,
+												strokeWeight: 2,
+												zIndex: 3 
+											});
+									} else {
+										overlay.setMap(null);
+										this.$delete(this.overlayLayer, this.blockInfo.id);
 
-									this.$message({
-										message: "尚無正射圖",
-										type: "error",
-									});
-								}
-								// this.loading = false;
-							});
-						} else this.showImgViewer = true;
-					});
+										this.$el.querySelector("#map #info-scrn-full-btn").style.display = "none";
+										this.$el.querySelector("#map #info-download-btn").style.display = "none";
+
+										this.$message({
+											message: "尚無正射圖",
+											type: "error",
+										});
+									}
+									// this.loading = false;
+									infoScrnFullBtn.removeEventListener("click", clickHandle);
+								});
+							}
+						});
+					}
 
 					const caseListBtn = this.$el.querySelector("#map #case-list-btn");
-					if(caseListBtn) caseListBtn.addEventListener("click", () => { 
-						this.caseList = [];
-						if(this.blockInfo.id != 0) {
-							this.loading = true;
-							const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-							const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
-							const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
-							
-							getBlockCase({
-								tenderId: tenderRound.tenderId,
-								blockId: this.pciId,
-								timeStart: startDate,
-								timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-							}).then(response => {
-								this.caseList = response.data.list;
-								this.showCaseList = true;
-								this.loading = false;
-							}).catch(err => this.loading = false);
-						} else this.showCaseList = true;
-					});
+					if(caseListBtn) {
+						const clickHandle = caseListBtn.addEventListener("click", () => { 
+							this.caseList = [];
+							if(this.blockInfo.id != 0) {
+								this.loading = true;
+								const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+								const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
+								const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
+								
+								getBlockCase({
+									tenderId: tenderRound.tenderId,
+									blockId: this.pciId,
+									timeStart: startDate,
+									timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+								}).then(response => {
+									this.caseList = response.data.list;
+									this.showCaseList = true;
+									this.loading = false;
+								}).catch(err => this.loading = false);
+							} else this.showCaseList = true;
+							caseListBtn.removeEventListener("click", clickHandle);
+						});
+					}
 				});
 				resolve();
 
