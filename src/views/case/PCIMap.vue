@@ -471,64 +471,69 @@ export default {
 
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 				this.infoWindow.addListener('domready', () => {
-					const infoDelBtn = this.$el.querySelector("#map #info-del-btn");
-					if(infoDelBtn) infoDelBtn.addEventListener("click", this.removeCaseStatus);
-
 					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
-					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { 
-						if(this.blockId != 0) {
-							this.loading = true;
-							const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
-							const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${this.blockId}.tif`;
-							fromUrl(url).then( async(geoTiffFile) => {
-								const imageSpec = await geoTiffFile.getImage(0);
-								// console.log(imageSpec);
-								const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
-								this.imgUrls = [ imgSrc ];
-								// this.$el.querySelector("#map #info-btn").style.opacity = "1";
-								this.$el.querySelector("#map #info-scrn-full-btn").style.opacity = "1";
-								this.$el.querySelector("#map #info-download-btn").style.opacity = "1";
-								this.loading = false;
-								this.showImgViewer = true;
+					if(infoScrnFullBtn) {
+						const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
+							if(this.blockId != 0) {
+								this.loading = true;
+								const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
+								const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${this.blockId}.tif`;
+								fromUrl(url).then( async(geoTiffFile) => {
+									const imageSpec = await geoTiffFile.getImage(0);
+									// console.log(imageSpec);
+									const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
+									this.imgUrls = [ imgSrc ];
+									// this.$el.querySelector("#map #info-btn").style.opacity = "1";
+									this.$el.querySelector("#map #info-scrn-full-btn").style.opacity = "1";
+									this.$el.querySelector("#map #info-download-btn").style.opacity = "1";
+									this.loading = false;
+									this.showImgViewer = true;
 
-								// contentText += `<img src="${imgSrc}" class="img" onerror="this.className='img hide-img'">`;
-								// contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
-								// contentText += `</div>`;
-							}).catch(err => {
-								console.log(err);
-								// this.$el.querySelector("#map #info-btn").style.opacity = "0";
-								this.$el.querySelector("#map #info-scrn-full-btn").style.display = "none";
-								this.$el.querySelector("#map #info-download-btn").style.display = "none";
-								this.$message({
-									message: "尚無正射圖",
-									type: "error",
+									// contentText += `<img src="${imgSrc}" class="img" onerror="this.className='img hide-img'">`;
+									// contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
+									// contentText += `</div>`;
+								}).catch(err => {
+									console.log(err);
+									// this.$el.querySelector("#map #info-btn").style.opacity = "0";
+									this.$el.querySelector("#map #info-scrn-full-btn").style.display = "none";
+									this.$el.querySelector("#map #info-download-btn").style.display = "none";
+									this.$message({
+										message: "尚無正射圖",
+										type: "error",
+									});
+									this.loading = false;
 								});
-								this.loading = false;
-							});
-						} else this.showImgViewer = true;
-					});
+							} else this.showImgViewer = true;
+
+							infoScrnFullBtn.removeEventListener("click", clickHandle);
+						});
+					}
 
 					const caseListBtn = this.$el.querySelector("#map #case-list-btn");
-					if(caseListBtn) caseListBtn.addEventListener("click", () => { 
-						this.caseList = [];
-						if(this.blockId != 0) {
-							this.loading = true;
-							const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-							const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
-							const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
-							
-							getBlockCase({
-								tenderId: tenderRound.tenderId,
-								blockId: this.pciId,
-								timeStart: startDate,
-								timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-							}).then(response => {
-								this.caseList = response.data.list;
-								this.showCaseList = true;
-								this.loading = false;
-							}).catch(err => this.loading = false);
-						} else this.showCaseList = true;
-					});
+					if(caseListBtn) {
+						const clickHandle = caseListBtn.addEventListener("click", () => { 
+							this.caseList = [];
+							if(this.blockId != 0) {
+								this.loading = true;
+								const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+								const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
+								const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
+								
+								getBlockCase({
+									tenderId: tenderRound.tenderId,
+									blockId: this.pciId,
+									timeStart: startDate,
+									timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+								}).then(response => {
+									this.caseList = response.data.list;
+									this.showCaseList = true;
+									this.loading = false;
+								}).catch(err => this.loading = false);
+							} else this.showCaseList = true;
+
+							caseListBtn.removeEventListener("click", clickHandle);
+						});
+					}
 				});
 				resolve();
 

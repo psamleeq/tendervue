@@ -456,13 +456,6 @@ export default {
 				}
 
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
-				this.infoWindow.addListener('domready', () => {
-					const infoDelBtn = this.$el.querySelector("#map #info-del-btn");
-					if(infoDelBtn) infoDelBtn.addEventListener("click", this.removeCaseStatus);
-
-					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
-					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { this.showImgViewer = true });
-				});
 				resolve();
 
 				// 載入區域GeoJson

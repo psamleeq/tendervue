@@ -405,10 +405,20 @@ export default {
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 				this.infoWindow.addListener('domready', () => {
 					const infoDelBtn = this.$el.querySelector("#map #info-del-btn");
-					if(infoDelBtn) infoDelBtn.addEventListener("click", this.removeCaseStatus);
+					if(infoDelBtn) {
+						const clickHandle = infoDelBtn.addEventListener("click", () => { 
+							this.removeCaseStatus();
+							infoDelBtn.removeEventListener("click", clickHandle);
+						});
+					}
 
 					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
-					if(infoScrnFullBtn) infoScrnFullBtn.addEventListener("click", () => { this.showImgViewer = true });
+					if(infoScrnFullBtn) {
+						const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
+							this.showImgViewer = true;
+							infoScrnFullBtn.removeEventListener("click", clickHandle);
+						});
+					}
 				});
 				resolve();
 
