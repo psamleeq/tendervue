@@ -2,11 +2,11 @@
 
 import Layout from '@/layout'
 
-const caseListRouter = {
-	path: '/caseList',
+const caseHistRouter = {
+	path: '/caseHist',
 	component: Layout,
-	redirect: '/PI/precipitation',
-	name: 'caseList',
+	redirect: '/caseHist/',
+	name: 'caseHist',
 	meta: {
 		title: '案件紀錄',
 		icon: 'el-icon-suitcase',
@@ -14,18 +14,18 @@ const caseListRouter = {
 	},
 	children: [
 		{
-			path: 'inspection',
-			component: () => import('@/views/caseList/inspection'),
-			name: 'inspection',
+			path: 'inspectionHist',
+			component: () => import('@/views/caseHist/inspection'),
+			name: 'inspectionHist',
 			meta: { 
 				title: '分派紀錄', 
 				roles: ['case.viewer'],
 			}
 		},
 		{
-			path: 'finish',
-			component: () => import('@/views/caseList/finish'),
-			name: 'finish',
+			path: 'finishHist',
+			component: () => import('@/views/caseHist/finish'),
+			name: 'finishHist',
 			meta: { 
 				title: '完工紀錄', 
 				roles: ['case.viewer']
@@ -33,4 +33,4 @@ const caseListRouter = {
 		},
 	]
 }
-export default caseListRouter
+export default caseHistRouter
