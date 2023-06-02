@@ -467,62 +467,61 @@ export default {
 				});
 
 				this.map.data.setStyle(feature => { 
-						// console.log(feature.getProperty("caseName"));
-						let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
-						if(feature.getProperty("caseName")) {
-							const colorFilter = this.options.colorMap.filter(color => {
-								let caseFlag = false;
-								for(const name of color.name) {
-									caseFlag = (feature.getProperty("caseName").indexOf(name) != -1);
-									// console.log(name, caseFlag);
-									if(caseFlag) break;
-								}
+					// console.log(feature.getProperty("caseName"));
+					let color = this.options.colorMap.filter(color => color.name == '其他')[0].color;
+					if(feature.getProperty("caseName")) {
+						const colorFilter = this.options.colorMap.filter(color => {
+							let caseFlag = false;
+							for(const name of color.name) {
+								caseFlag = (feature.getProperty("caseName").indexOf(name) != -1);
+								// console.log(name, caseFlag);
+								if(caseFlag) break;
+							}
 
-								return caseFlag; 
-							})
-							// console.log(colorFilter);
-							
-							if(colorFilter.length > 0) color = colorFilter[0].color;
-						}
+							return caseFlag; 
+						})
+						// console.log(colorFilter);
+						
+						if(colorFilter.length > 0) color = colorFilter[0].color;
+					}
 
-						// console.log(color);
+					// console.log(color);
 
-						if(feature.getProperty("isPoint")) {
-							const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
-							return { 
-								icon: { 
-									url: `/assets/icon/icon_case_${caseLevelMap[feature.getProperty("caseLevel")]}.png`,
-									anchor: new google.maps.Point(5, 5),
-									scaledSize: new google.maps.Size(25, 25),
-								},
-								zIndex: feature.getProperty("isLine") ? 1000 - feature.getProperty("length") : 1000 - feature.getProperty("area")
-							};
-						} else if(feature.getProperty("isLine")) {
-							return { 
-								strokeColor: color,
-								strokeWeight: 3,
-								strokeOpacity: 1,
-								fillOpacity: 0,
-								zIndex: 1000 - feature.getProperty("length")
-							};
-						} else {
-							return { 
-								strokeColor: color,
-								strokeWeight: 1,
-								strokeOpacity: 1,
-								fillColor: color,
-								fillOpacity: 0.8,
-								zIndex: 1000 - feature.getProperty("area")
-							};
-						}
-					});
+					if(feature.getProperty("isPoint")) {
+						const caseLevelMap = { "重": "H", "中": "M", "輕": "L"  };
+						return { 
+							icon: { 
+								url: `/assets/icon/icon_case_${caseLevelMap[feature.getProperty("caseLevel")]}.png`,
+								anchor: new google.maps.Point(5, 5),
+								scaledSize: new google.maps.Size(25, 25),
+							},
+							zIndex: feature.getProperty("isLine") ? 1000 - feature.getProperty("length") : 1000 - feature.getProperty("area")
+						};
+					} else if(feature.getProperty("isLine")) {
+						return { 
+							strokeColor: color,
+							strokeWeight: 3,
+							strokeOpacity: 1,
+							fillOpacity: 0,
+							zIndex: 1000 - feature.getProperty("length")
+						};
+					} else {
+						return { 
+							strokeColor: color,
+							strokeWeight: 1,
+							strokeOpacity: 1,
+							fillColor: color,
+							fillOpacity: 0.8,
+							zIndex: 1000 - feature.getProperty("area")
+						};
+					}
+				});
 
-					this.map.data.addListener('click', (event) => {
-						// console.log("click: ", event);
-						// console.log(this.currCaseId);
-						this.showCaseContent(event.feature, event.latLng);
-					});
-
+				this.map.data.addListener('click', (event) => {
+					// console.log("click: ", event);
+					// console.log(this.currCaseId);
+					this.showCaseContent(event.feature, event.latLng);
+				});
 			})
 		},
 		changeTender() {

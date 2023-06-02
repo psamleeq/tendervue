@@ -14,7 +14,7 @@
 				<div v-if="panorama">{{ Object.values(panoramaInfoProps.data).flat().filter(l => l.fileName == panorama.getScene())[0].position }}</div>
 			</div>
 
-			<el-card v-if="hotSpotIdList.length > 1" class="info-box right">
+			<el-card v-if="hotSpotIdList.dot.length > 1" class="info-box right">
 				<el-form :model="caseInfo" label-width="70px" size="small">
 					<el-form-item prop="date" label="通報時間">
 						<el-date-picker
@@ -105,6 +105,14 @@ export default {
 		panoramaInfo: {
 			type: Object,
 			required: true
+		},
+		options: {
+			type: Object,
+			required: true
+		},
+		caseGeoJson: {
+			type: Object,
+			required: true
 		}
 	},
 	data() {
@@ -113,7 +121,10 @@ export default {
 			panorama: null,
 			prevSceneId: [],
 			hotSpotId: 0,
-			hotSpotIdList: [],
+			hotSpotIdList: {
+				dot: [],
+				case: []
+			},
 			imageSize: {
 				width: 7689,
 				height: 3840
@@ -137,75 +148,6 @@ export default {
 				lane: 1,
 				imgZoomIn: "",
 				imgZoomOut: ""
-			},
-			options: {
-				imgTypeMap: {
-					"imgZoomIn": "近照",
-					"imgZoomOut": "遠照"
-				},
-				caseColorMap: [
-					{
-						index: 0,
-						name: ["龜裂"],
-						color: "#B71C1C"
-					},
-					{
-						index: 1,
-						name: ["裂縫", "縱橫裂縫", "塊狀裂縫"],
-						color: "#009688"
-					},
-					{
-						index: 2,
-						name: ["坑洞", "人孔高差", "薄層剝離"],
-						color: "#FF9800"
-					},
-					{
-						index: 3,
-						name: ["車轍"],
-						color: "#00BCD4"
-					},
-					{
-						index: 4,
-						name: ["補綻", "管線回填"],
-						color: "#673AB7"
-					},
-					{
-						index: 5,
-						name: ["隆起與凹陷"],
-						color: "#8BC34A"
-					},
-					{	
-						index: 6,
-						name: ["其他"],
-						color: "#607D8B"
-					}
-				],
-				caseTypeMap: {
-					29: "縱橫裂縫",
-					50: "塊狀裂縫",
-					15: "坑洞",
-					65: "補綻及管線回填",
-					58: "人孔高差",
-					32: "車轍"
-					// "OIL": "冒油",
-					// "WAP": "波浪狀鋪面",
-					// "LSS": "車道與路肩分離",
-					// "SLC": "滑溜裂縫",
-					// "AGS": "骨材剝落",
-					// "HLA": "坑洞",
-					// "HLB": "人孔高差",
-					// "HLC": "薄層剝離"
-				},
-				caseLevelMap: {
-					1: "輕",
-					2: "中",
-					3: "重"
-				},
-				roadDir: {
-					0: "無",
-					1: "順向",
-					2: "逆向"
-				}
 			}
 		}
 	},
@@ -217,7 +159,8 @@ export default {
 			set(val) {
 				this.$emit('update:panoramaInfo', val)
 			}
-		}
+		},
+
 	},
 	created() { },
 	mounted() {
@@ -225,13 +168,24 @@ export default {
 		// console.log("panorama_mounted");
 		this.panorama = pannellum.viewer("panorama", { scenes: {}, keyboardZoom: false, hotSpotDebug: false });
 		this.panorama.on("load", () => this.panorama.resize() );
+		this.panorama.on("scenechange", () => {
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+
+			for(const caseSpec of this.caseGeoJson.features) {
+				const geoCoordinates = caseSpec.properties.centerPt;
+				if(calcDistance(panoramaInfo.position, geoCoordinates) <= 15) {
+					const hoverText = `${this.options.caseTypeMap[caseSpec.properties.DistressType]} (${this.options.caseLevelMap[caseSpec.properties.DistressLevel]})`;
+					this.addCaseHotSpot(this.getCoords(geoCoordinates), hoverText);
+				}
+			}
+		});
 		this.panorama.on('mousedown', (evt) => {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 			if(!evt.shiftKey) return;
 
 			// coords[0] is pitch, coords[1] is yaw
 			const [ pitch , yaw ] = this.panorama.mouseEventToCoords(evt);
-			this.addHotSpot({ pitch, yaw }, 1);
+			this.addDotHotSpot({ pitch, yaw }, 1);
 
 			// convert to image coordinates
 			const x = (yaw / 360 + 0.5) * this.imageSize.width;
@@ -242,7 +196,7 @@ export default {
 			// const distance = this.getDistance(pitch);
 			// console.log("distance: ", distance);
 			// const position = this.getPosition(distance, yaw);
-			// this.addHotSpot(this.getCoords(position), 2);
+			// this.addDotHotSpot(this.getCoords(position), 2);
 
 			// NOTE: 預估缺失位置(詹博)
 			this.transformMatrix(pitch, yaw);
@@ -291,10 +245,7 @@ export default {
 					let hotSpots = [];
 						const clickHandlerFunc = (evt, clickHandlerArgs) => {
 							if(clickHandlerArgs) {
-								for(const hotSpotId of this.hotSpotIdList) {
-									this.panorama.removeHotSpot(hotSpotId, clickHandlerArgs.sceneIdNow);
-								}
-								this.hotSpotIdList = [];
+								this.clearHotSpot(clickHandlerArgs.sceneIdNow);
 								this.$emit('setMarkerPosition', clickHandlerArgs.sceneIdNow);
 							}
 						};
@@ -352,7 +303,7 @@ export default {
 				this.loading = true;
 				this.isUpload = true;
 
-				let coordinates = this.hotSpotIdList.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat]));
+				let coordinates = this.hotSpotIdList.dot.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat]));
 				coordinates.push(coordinates[0]);
 				// console.log(coordinates);
 				this.caseInfo.geoJson = {
@@ -382,8 +333,14 @@ export default {
 						canvas.width = img.width;
 						canvas.height = img.height;
 						canvas.getContext('2d').drawImage(img, 0, 0);
+
 						this.$el.querySelector("#panorama canvas").setAttribute("data-html2canvas-ignore", true);
-						this.$el.querySelector("#panorama .pnlm-hotspot-base.pnlm-hotspot").setAttribute("data-html2canvas-ignore", true);
+						const ignoreDomList = [
+							...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.pnlm-hotspot"),
+							...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.alert")
+						];
+						for(const dom of ignoreDomList) dom.setAttribute("data-html2canvas-ignore", true);
+
 						html2canvas(document.querySelector(".pnlm-render-container"), { canvas: canvas, backgroundColor: 'rgba(0, 0, 0, 0)' }).then(canvas => {
 							this.caseInfo[imgType] = canvas.toDataURL("image/jpeg");
 
@@ -448,7 +405,7 @@ export default {
 			const pitch = this.getPitch(panoramaInfo.position, position, 0);
 			return { pitch, yaw }
 		},
-		addHotSpot({ pitch, yaw }, type) {
+		addDotHotSpot({ pitch, yaw }, type) {
 			const cssClass = type == 1 ? "hotSpotIcon redDot" : type == 2 ? "hotSpotIcon greenDot" : "hotSpotIcon blueDot";
 
 			const hotSpot = {
@@ -469,17 +426,51 @@ export default {
 					if(clickHandlerArgs && evt.shiftKey) {
 						console.log("id: ", clickHandlerArgs.id);
 						this.panorama.removeHotSpot(clickHandlerArgs.id, this.panorama.getScene());
-						this.hotSpotIdList = this.hotSpotIdList.filter(hotSpot => hotSpot.id != clickHandlerArgs.id);
+						this.hotSpotIdList.dot = this.hotSpotIdList.dot.filter(hotSpot => hotSpot.id != clickHandlerArgs.id);
 					}
 				}
 			};
 
 			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
-			this.hotSpotIdList.push(hotSpot);
+			this.hotSpotIdList.dot.push(hotSpot);
 		},
-		clearHotSpot() {
-			for(const hotSpot of this.hotSpotIdList) this.panorama.removeHotSpot(hotSpot.id, this.panorama.getScene());
-			this.hotSpotIdList = [];
+		addCaseHotSpot({ pitch, yaw }, hoverText = "") {
+			const hotSpot = {
+				id: this.hotSpotId,
+				type: "info",
+				pitch,
+				yaw,
+				text: hoverText,
+				cssClass: "hotSpotIcon alert",
+				// coordinates: this.transformMatrix(pitch, yaw),
+				clickHandlerArgs: {
+					id: this.hotSpotId++
+				},
+				clickHandlerFunc: (evt, clickHandlerArgs) => {
+					// console.log("evt: ", evt);
+					console.log(`(Pitch: ${pitch}}, Yaw: ${yaw})`);
+
+					if(clickHandlerArgs && evt.shiftKey) {
+						console.log("id: ", clickHandlerArgs.id);
+						this.panorama.removeHotSpot(clickHandlerArgs.id, this.panorama.getScene());
+						this.hotSpotIdList.case = this.hotSpotIdList.case.filter(hotSpot => hotSpot.id != clickHandlerArgs.id);
+					}
+				}
+			};
+
+			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
+			this.hotSpotIdList.case.push(hotSpot);
+		},
+		clearHotSpot(sceneId= this.panorama.getScene()) {
+			for(const type in this.hotSpotIdList) {
+				for(const hotSpot of this.hotSpotIdList[type]) {
+					this.panorama.removeHotSpot(hotSpot.id, sceneId);
+				}
+			}
+			this.hotSpotIdList = {
+				dot: [],
+				case: []
+			};
 			this.$emit("clearMarker");
 		},
 
@@ -533,11 +524,13 @@ export default {
 				lat: panoramaInfo.position.lat - vectorUnit.r * S
 			}
 			console.log("geoCoordinates: ", geoCoordinates);
-			this.hotSpotIdList[this.hotSpotIdList.length-1].coordinates = geoCoordinates;
+			this.hotSpotIdList.dot[this.hotSpotIdList.dot.length-1].coordinates = geoCoordinates;
 
-			// NOTE: 在「地圖」 & 「環景」上顯示
+			// NOTE: 在「地圖」上顯示
 			this.$emit("addMarker", { position: geoCoordinates, type: 3 });
-			// this.addHotSpot(this.getCoords(geoCoordinates), 3);
+
+			//NOTE: 在「環景」上顯示
+			// this.addDotHotSpot(this.getCoords(geoCoordinates), 3);
 		},
 	}
 }
@@ -575,6 +568,8 @@ export default {
 			background-position: center 
 			background-size: contain 
 			background-repeat: no-repeat 
+			&.pnlm-hotspot-base:hover
+				z-index: 10
 			&.redDot
 				background-image: url('../../../public/assets/icon/icon_redDot.png')
 				background-size: 20% 
@@ -584,6 +579,10 @@ export default {
 			&.blueDot
 				background-image: url('../../../public/assets/icon/icon_blueDot.png')
 				background-size: 20% 
+			&.alert
+				background-image: url('../../../public/assets/icon/icon_alert.png')
+				background-size: 100% 
+				filter: drop-shadow(0px 0px 3px red)
 		.pnlm-hotspot.pnlm-scene
 			z-index: 10
 			opacity: 0.8

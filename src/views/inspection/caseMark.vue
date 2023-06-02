@@ -8,20 +8,19 @@
 						<span slot="prepend">巡查Id</span>
 					</el-input>
 				</span>
-				<el-button class="filter-item" type="success" icon="el-icon-download" @click="getCarList()">載入</el-button>
+				<!-- <el-button class="filter-item" type="success" icon="el-icon-download" @click="getList()">載入</el-button> -->
 				<br>
 
 				<span class="filter-item">
-					<el-input v-model="listQuery.inspectId" placeholder="請輸入">
+					<el-input v-model="listQuery.caseInspectId" placeholder="請輸入">
 						<span slot="prepend">缺失Id</span>
 					</el-input>
 				</span>
-				<el-button class="filter-item" type="success" icon="el-icon-download" @click="getCarList()">載入</el-button>
-				
+				<el-button class="filter-item" type="success" icon="el-icon-download" @click="getList()">載入</el-button>
 			</div>
 		</div>
 		<el-row>
-			<el-col ref="leftPanel" :span="6" style="position: relative; width: 25%;">
+			<el-col ref="leftPanel" :span="8" style="position: relative; width: 100%;">
 				<div id="map" ref="map" />
 				<div class="btn-map">
 					<!-- <div ref="compass" class="btn-action btn-compass" style="transform: rotate(0deg)" @click="setHeading(0)" /> -->
@@ -32,8 +31,8 @@
 					<span />
 				</div>
 			</el-col>
-			<el-col ref="rightPanel" class="info-panel" :span="18" style="position: relative; width: 75%;" >
-				<panorama-view ref="panoramaView" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
+			<el-col ref="rightPanel" :span="16" class="info-panel" style="position: relative; width: 0%;" >
+				<panorama-view ref="panoramaView" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
 	</div>
@@ -42,7 +41,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment'
-import { uploadInspectionCase } from "@/api/inspection";
+import { getPanoramaJson, getInspectGeoJson, uploadInspectionCase } from "@/api/inspection";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
 
@@ -66,9 +65,9 @@ export default {
 		return {
 			loading: false,
 			map: null,
-			sceneId: null,
+			inspectIdNow: null,
 			clientStartX: 0,
-			geoCoder: {},
+			caseGeoJson: {},
 			polyLine: [],
 			markers: [],
 			markersTemp: [],
@@ -104,8 +103,10 @@ export default {
 			},
 			searchDate: moment().startOf("d"),
 			searchRange: "",
+			screenWidth: 0,
 			listQuery: {
 				inspectId: "",
+				caseInspectId: "",
 				carId: 1
 			},
 			panoramaInfo: {
@@ -113,82 +114,60 @@ export default {
 				sceneSetting: {}
 			},
 			options: {
-				// districtList: {
-				// 	// 100: {
-				// 	// 	"name": "中正區",
-				// 	// 	"engName": "Zhongzheng"
-				// 	// },
-				// 	103: {
-				// 		"name": "大同區",
-				// 		"start": "2023/2/1"
-				// 	},
-				// 	104: {
-				// 		"name": "中山區",
-				// 		"start": "2022/6/1"
-				// 	},
-				// 	// 105: {
-				// 	// 	"name": "松山區",
-				// 	// 	"engName": "Songshan"
-				// 	// },
-				// 	// 106: {
-				// 	// 	"name": "大安區",
-				// 	// 	"engName": "Da’an"
-				// 	// },
-				// 	// 108: {
-				// 	// 	"name": "萬華區",
-				// 	// 	"engName": "Wanhua",
-				// 	// },
-				// 	// 110: {
-				// 	// 	"name": "信義區",
-				// 	// 	"engName": "Xinyi"
-				// 	// },
-				// 	// 111: {
-				// 	// 	"name": "士林區",
-				// 	// 	"engName": "Shilin"
-				// 	// },
-				// 	// 112: {
-				// 	// 	"name": "北投區",
-				// 	// 	"engName": "Beitou"
-				// 	// },
-				// 	// 114: {
-				// 	// 	"name": "內湖區",
-				// 	// 	"engName": "Neihu"
-				// 	// },
-				// 	// 115: {
-				// 	// 	"name": "南港區",
-				// 	// 	"engName": "Nangang"
-				// 	// },
-				// 	// 116: {
-				// 	// 	"name": "文山區",
-				// 	// 	"engName": "Wenshan"
-				// 	// }
-				// },
-				carId: {
-					1: {
-						// 1: "ATE-5102",
-						1: "RDX-6883",
-						2: "RDQ-6279",
-						// 3: "ATE-3192",
-						3: "RDX-6881",
-					},
-					2: {
-						1: "ATE-3236",
-						2: "BFX-7552",
-					},
-					3: {
-						1: "ALV-3038",
-						2: "APD-3308",
-						3: "AAA-0000",
-					},
-					4: {
-						1: "ATE-3287",
-						2: "ATE-3192",
-					},
-					5: {
-						1: "BPG-0891",
-						2: "BFX-7551",
-					}
+				imgTypeMap: {
+					"imgZoomIn": "近照",
+					"imgZoomOut": "遠照"
 				},
+				caseColorMap: [
+					{
+						index: 0,
+						name: ["龜裂"],
+						color: "#B71C1C"
+					},
+					{
+						index: 1,
+						name: ["裂縫", "縱橫裂縫", "塊狀裂縫"],
+						color: "#009688"
+					},
+					{
+						index: 2,
+						name: ["坑洞", "人孔高差", "薄層剝離"],
+						color: "#FF9800"
+					},
+					{
+						index: 3,
+						name: ["車轍"],
+						color: "#00BCD4"
+					},
+					{
+						index: 4,
+						name: ["補綻", "管線回填"],
+						color: "#673AB7"
+					},
+					{
+						index: 5,
+						name: ["隆起與凹陷"],
+						color: "#8BC34A"
+					},
+					{	
+						index: 6,
+						name: ["其他"],
+						color: "#607D8B"
+					}
+				],
+				caseTypeMap: {
+					29: "縱橫裂縫",
+					50: "塊狀裂縫",
+					15: "坑洞",
+					65: "補綻及管線回填",
+					58: "人孔高差",
+					32: "車轍"
+				},
+				caseLevelMap: {
+					1: "輕",
+					2: "中",
+					3: "重"
+				}
 			},
 		};
 	},
@@ -210,6 +189,7 @@ export default {
 		this.leftPanel = this.$refs.leftPanel.$el;
 		this.rightPanel = this.$refs.rightPanel.$el;
 		this.screenWidth = this.leftPanel.offsetWidth + this.rightPanel.offsetWidth;
+		this.clientStartX = this.screenWidth;
 		const splitLine = this.$refs.splitLine;
 
 		splitLine.onmousedown = e => {
@@ -227,36 +207,6 @@ export default {
 		};
 	},
 	methods: {
-		//NOTE: test
-		addMarker({ position, type }) {
-			console.log(type, position);
-
-			let icon;
-			if(type == 2) {
-				icon = { 
-					url: `/assets/icon/icon_greenDot.png`,
-					scaledSize: new google.maps.Size(6, 6) 
-				};
-			} else if (type == 3) {
-				icon = { 
-					url: `/assets/icon/icon_blueDot.png`,
-					scaledSize: new google.maps.Size(4, 4) 
-				};
-			}
-			this.markersTemp.push(
-				new google.maps.Marker({ 
-					position, 
-					icon,
-					map: this.map
-				})
-			);
-
-			this.map.setCenter(position);
-		},
-		clearMarker() {
-			for(const marker of this.markersTemp) marker.setMap(null);
-			this.markersTemp = [];
-		},
 		// init google map
 		initMap() {
 			// 預設顯示的地點：台北市政府親子劇場
@@ -328,6 +278,59 @@ export default {
 				this.map.overlayMapTypes.push(labelsMapType);
 			}
 
+			this.map.data.setStyle(feature => { 
+				// console.log(feature.getProperty("caseName"));
+				let color = this.options.caseColorMap.filter(color => color.name == '其他')[0].color;
+				if(feature.getProperty("DistressType")) {
+					const colorFilter = this.options.caseColorMap.filter(color => {
+						let caseFlag = false;
+						const distressType = this.options.caseTypeMap[feature.getProperty("DistressType")];
+						for(const name of color.name) {
+							caseFlag = (distressType.indexOf(name) != -1);
+							// console.log(name, caseFlag);
+							if(caseFlag) break;
+						}
+
+						return caseFlag; 
+					})
+					// console.log(colorFilter);
+					
+					if(colorFilter.length > 0) color = colorFilter[0].color;
+				}
+
+				// console.log(color);
+
+				if(feature.getProperty("isPoint")) {
+					return { 
+						icon: { 
+							url: `/assets/icon/icon_case_${this.options.caseLevelMap[feature.getProperty("DistressLevel")]}.png`,
+							anchor: new google.maps.Point(5, 5),
+							scaledSize: new google.maps.Size(25, 25),
+						}
+					};
+				} else if(feature.getProperty("isLine")) {
+					return { 
+						strokeColor: color,
+						strokeWeight: 3,
+						strokeOpacity: 0.8,
+						fillOpacity: 0
+					};
+				} else {
+					return { 
+						strokeColor: color,
+						strokeWeight: 1,
+						strokeOpacity: 1,
+						fillColor: color,
+						fillOpacity: 0.7
+					};
+				}
+			});
+
+			this.map.data.addListener('mouseover', (event) => { 
+				this.showCaseContent(event.feature, event.latLng);
+			});
+			this.map.data.addListener('mouseout', (event) => { this.infoWindow.close() });
+			
 			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 
 			// 建立marker
@@ -340,17 +343,42 @@ export default {
 				}
 			});
 
-			this.getList();
+			// this.getList();
 		},
 		getList() {
-			fetch('/test/streetView.json').then(response => response.json()).then(json => {
-				// this.panoramaInfo = json;
-				// this.panoramaInfo = Object.assign({}, this.panoramaInfo, json);
-				this.$set(this.panoramaInfo, "data", json.data);
-				this.$set(this.panoramaInfo, "sceneSetting", json.sceneSetting);
-				// console.log(this.panoramaInfo);
-				this.setPanoramaLayer();
-			});
+			this.loading = true;
+			this.caseGeoJson = {};
+
+			getPanoramaJson({
+				inspectId: this.listQuery.inspectId
+			}).then(response => {
+				this.inspectIdNow = this.listQuery.inspectId;
+				const jsonUrl = response.data.inspection.url;
+
+				fetch(jsonUrl).then(response => response.json()).then(json => {
+					// this.panoramaInfo = json;
+					// this.panoramaInfo = Object.assign({}, this.panoramaInfo, json);
+					this.$set(this.panoramaInfo, "data", json.data);
+					this.$set(this.panoramaInfo, "sceneSetting", json.sceneSetting);
+					// console.log(this.panoramaInfo);
+					this.setPanoramaLayer()
+
+					this.loading = false;
+					this.$nextTick(() => this.moveHandle(this.screenWidth*0.25))
+				});
+			}).catch(err => this.loading = false);
+
+			this.getCaseList();
+		},
+		getCaseList() {
+			this.map.data.forEach(feature => this.map.data.remove(feature));
+
+			getInspectGeoJson({
+				caseInspectId: this.listQuery.caseInspectId
+			}).then(response => {
+				this.caseGeoJson = response.data.caseGeoJson;
+				this.map.data.addGeoJson(this.caseGeoJson);
+			}).catch(err => this.loading = false);
 		},
 		uploadCase(caseInfo) {
 			let uploadForm = new FormData();
@@ -367,7 +395,7 @@ export default {
 			uploadForm.append('imgZoomIn', data2blob(caseInfo.imgZoomIn, 'image/jpeg'), 'imgZoomIn.jpg');
 			uploadForm.append('imgZoomOut', data2blob(caseInfo.imgZoomOut, 'image/jpeg'), 'imgZoomOut.jpg');
 
-			console.log(uploadForm);
+			// console.log(uploadForm);
 
 			uploadInspectionCase(uploadForm).then(response => {
 				if ( response.statusCode == 20000 ) {
@@ -376,6 +404,8 @@ export default {
 						type: "success",
 					});
 				} 
+
+				this.getCaseList();
 				this.loading = false;
 			}).catch(err => {
 				console.log(err);
@@ -391,7 +421,7 @@ export default {
 		},
 		async setPanoramaLayer() {
 			// console.log("setPanoramaLayer");
-			for(const polyline of Object.values(this.flattenObj(this.polyLine)).flat()) polyline.setMap(null);
+			for(const polyline of this.polyLine) polyline.setMap(null);
 			this.$refs.panoramaView.setStreetViewList();
 			await this.createPolyLine();
 			// await this.createMarker();
@@ -414,6 +444,7 @@ export default {
 						strokeOpacity: 1,
 						strokeWeight: 3,
 						map: this.map,
+						zIndex: 10
 					})
 				);
 
@@ -494,6 +525,35 @@ export default {
 			// this.$refs.panoramaView.panorama.setUpdate(false);
 			this.showPanorama = this.$refs.panoramaView.showPanorama = true;
 		},
+		addMarker({ position, type }) {
+			// console.log(type, position);
+
+			let icon;
+			if(type == 2) {
+				icon = { 
+					url: `/assets/icon/icon_greenDot.png`,
+					scaledSize: new google.maps.Size(6, 6) 
+				};
+			} else if (type == 3) {
+				icon = { 
+					url: `/assets/icon/icon_blueDot.png`,
+					scaledSize: new google.maps.Size(4, 4) 
+				};
+			}
+			this.markersTemp.push(
+				new google.maps.Marker({ 
+					position, 
+					icon,
+					map: this.map
+				})
+			);
+
+			this.map.setCenter(position);
+		},
+		clearMarker() {
+			for(const marker of this.markersTemp) marker.setMap(null);
+			this.markersTemp = [];
+		},
 		setMarkerPosition(sceneId) {
 			// console.log("setMarkerPosition: ", sceneId);
 			this.sceneId = sceneId ? sceneId : this.sceneId;
@@ -502,6 +562,14 @@ export default {
 			// this.setHeading(pointInfo.azimuth);
 			this.map.setCenter(pointInfo.position);
 			this.map.setZoom(20);
+		},
+		showCaseContent(feature, position) {
+			const description = `${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
+			this.infoWindow.setContent(description);
+			this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
+			this.infoWindow.setPosition(position);
+
+			this.infoWindow.open(this.map);
 		},
 		moveHandle(nowClientX) {
 			const computedPercent = (nowClientX - this.clientStartX) / this.screenWidth * 100;
@@ -518,44 +586,12 @@ export default {
 			this.clientStartX = nowClientX;
 			this.$refs.panoramaView.panorama.resize();
 		},
-		dateShortcuts(index) {
-			this.timeTabId = index;
-
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
-			};
-
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
-					break;
-			}
-			this.getCarList();
-		},
 		formatter(row, column) {
 			if(Number(row[column.property])) return row[column.property].toLocaleString();
 			else return row[column.property];
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:mm:ss");
-		},
-		flattenObj(obj) {
-			let result = {};
-			for(const i in obj) {
-				if((typeof obj[i]) === 'object' && !Array.isArray(obj[i])) {
-					const temp = this.flattenObj(obj[i]);
-					for(const j in temp) result[`${i}.${j}`] = temp[j];
-				} else result[i] = obj[i];
-			}
-			return result;
 		}
 	},
 };
