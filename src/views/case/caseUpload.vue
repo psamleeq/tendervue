@@ -617,6 +617,7 @@ export default {
 				const bounds = new google.maps.LatLngBounds();
 				this.caseList = [];
 				
+				if(!Array.isArray(json.kml.Document.Folder.Placemark)) json.kml.Document.Folder.Placemark = [ json.kml.Document.Folder.Placemark ];
 				for(const [index, caseInfo] of json.kml.Document.Folder.Placemark.entries()) {
 					// console.log(caseInfo);
 					const isLine = caseInfo.hasOwnProperty("LineString");
