@@ -11,7 +11,7 @@
 				/>
 				<div> {{ panorama.getScene() }}</div>
 				<div>{{ panoramaTestInfo }} </div>
-				<div v-if="panorama">{{ Object.values(panoramaInfoProps.data).flat().filter(l => l.fileName == panorama.getScene())[0].position }}</div>
+				<div>{{ panoramaTestInfo.position }}</div>
 			</div>
 
 			<el-card v-if="hotSpotIdList.dot.length > 1" class="info-box right">
@@ -35,13 +35,16 @@
 							<el-option v-for="(name, level) in options.caseLevelMap" :key="level" :label="name" :value="level" />
 						</el-select>
 					</el-form-item>
-					<el-form-item prop="millingLength" label="預估長">
+					<el-form-item prop="millingLength" label="預估長" style="margin-bottom: 0">
 						<el-input v-model="caseInfo.millingLength" size="mini" style="width: 130px" />
 					</el-form-item>
-					<el-form-item prop="millingWidth" label="預估寬">
+					<el-form-item prop="millingWidth" label="預估寬" style="margin-bottom: 0">
 						<el-input v-model="caseInfo.millingWidth" size="mini" style="width: 130px" />
 					</el-form-item>
-					<el-form-item prop="address" label="地址">
+					<el-form-item prop="millingArea" label="預估面積">
+						<el-input v-model="caseInfo.millingArea" size="mini" style="width: 130px" />
+					</el-form-item>
+					<el-form-item prop="address" label="地址" style="margin-bottom: 0">
 						<el-input v-model="caseInfo.place" type="textarea" autosize />
 					</el-form-item>
 					<el-form-item prop="roadDir" label="車道">
@@ -65,19 +68,6 @@
 							</el-col>
 						</el-row>
 					</el-form-item>
-					<!-- <el-form-item prop="ImgZoomOut" label="遠照">
-						<el-row :gutter="15">
-							<el-col :span="10">
-								<el-popover v-if="caseInfo.imgZoomOut.length > 0" popper-class="imgHover" placement="left" trigger="hover">
-									<el-image style="width: 100%; height: 100%" :src="caseInfo.imgZoomOut" fit="contain" />
-									<el-image slot="reference" style="width: 100px; height: 100px" :src="caseInfo.imgZoomOut" fit="contain" />
-								</el-popover>
-							</el-col>
-							<el-col :span="8">
-								<el-button type="success" @click="screenshot('imgZoomOut')">截圖</el-button>
-							</el-col>
-						</el-row>
-					</el-form-item> -->
 				</el-form>
 				<el-button-group class="btn-action-group">
 					<el-button type="success" @click="uploadCase()">新增</el-button>
@@ -135,7 +125,8 @@ export default {
 			panoramaTestInfo: {
 				Pitch: 0,
 				Yaw: 0,
-				Hfov: 0
+				Hfov: 0,
+				position: {}
 			},
 			caseInfo: {
 				dateReport: moment().startOf("d"),
@@ -143,6 +134,7 @@ export default {
 				distressLevel: "",
 				millingLength: 0,
 				millingWidth: 0,
+				millingArea: 0,
 				place: "",
 				direction: 0,
 				lane: 1,
@@ -168,29 +160,20 @@ export default {
 		// console.log("panorama_mounted");
 		this.panorama = pannellum.viewer("panorama", { scenes: {}, keyboardZoom: false, hotSpotDebug: false });
 		this.panorama.on("load", () => this.panorama.resize() );
-		this.panorama.on("scenechange", () => {
-			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+		this.panorama.on("scenechange", () => this.resetCaseHotSpot() );
 
-			for(const caseSpec of this.caseGeoJson.features) {
-				const geoCoordinates = caseSpec.properties.centerPt;
-				if(calcDistance(panoramaInfo.position, geoCoordinates) <= 15) {
-					const hoverText = `${this.options.caseTypeMap[caseSpec.properties.DistressType]} (${this.options.caseLevelMap[caseSpec.properties.DistressLevel]})`;
-					this.addCaseHotSpot(this.getCoords(geoCoordinates), hoverText);
-				}
-			}
-		});
 		this.panorama.on('mousedown', (evt) => {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 			if(!evt.shiftKey) return;
 
 			// coords[0] is pitch, coords[1] is yaw
 			const [ pitch , yaw ] = this.panorama.mouseEventToCoords(evt);
-			this.addDotHotSpot({ pitch, yaw }, 1);
+			const hotSpot = this.addDotHotSpot({ pitch, yaw }, 1);
 
-			// convert to image coordinates
-			const x = (yaw / 360 + 0.5) * this.imageSize.width;
-			const y = (0.5 - pitch / 180) * this.imageSize.height;
-			console.log(x, y);
+			// NOTE: convert to image coordinates
+			// const x = (yaw / 360 + 0.5) * this.imageSize.width;
+			// const y = (0.5 - pitch / 180) * this.imageSize.height;
+			// console.log(x, y);
 
 			// NOTE: 預估缺失位置(ME)
 			// const distance = this.getDistance(pitch);
@@ -199,13 +182,49 @@ export default {
 			// this.addDotHotSpot(this.getCoords(position), 2);
 
 			// NOTE: 預估缺失位置(詹博)
-			this.transformMatrix(pitch, yaw);
+			hotSpot.coordinates = this.transformMatrix(pitch, yaw);
+
+			// NOTE: 在「地圖」上顯示
+			this.$emit("addMarker", { id: hotSpot.id, position: hotSpot.coordinates, type: 3 });
+
+			//NOTE: 在「環景」上顯示
+			// this.addDotHotSpot(this.getCoords(hotSpot.coordinates), 3);
+
+			// TODO: 排序點(目前非矩形not work)
+			// let hotSpotIdOrder = [ this.hotSpotIdList.dot[0] ];
+			// for(let i = 1; i < this.hotSpotIdList.dot.length; i++) {
+			// 	const hotSpotPos = hotSpotIdOrder[hotSpotIdOrder .length - 1].coordinates;
+			// 	const distanceList = this.hotSpotIdList.dot.filter(hotSpot => !hotSpotIdOrder.includes(hotSpot)).map((hotSpot) => {
+			// 		return { id: hotSpot.id, distance: calcDistance(hotSpotPos, hotSpot.coordinates)  }
+			// 	}).sort((a, b) => (a.distance - b.distance));
+
+			// 	console.log(i, distanceList);
+			// 	const hotSpotFilter = this.hotSpotIdList.dot.filter(hotSpot => hotSpot.id == distanceList[0].id)[0];
+			// 	hotSpotIdOrder.push(hotSpotFilter);
+			// }
+			// this.hotSpotIdList.dot = hotSpotIdOrder;
+
+			// 估算長度 & 面積
+			if(this.hotSpotIdList.dot.length == 4) {
+				const distanceList = this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
+					const nextIndex = (index + 1) % array.length;
+					const distance = calcDistance(cur.coordinates, array[nextIndex].coordinates);
+					acc.push(distance);
+
+					return acc
+				}, []).sort();
+
+				this.caseInfo.millingLength = Math.round(Math.max(...distanceList) * 100) / 100;
+				this.caseInfo.millingWidth = Math.round(Math.min(...distanceList) * 100) / 100;
+				this.caseInfo.millingArea = Math.round(calArea(this.hotSpotIdList.dot.map(hotSpot => ([ hotSpot.coordinates.lng, hotSpot.coordinates.lat ]))) * 100) / 100;
+			}
 		});
 		this.panorama.on('mouseup', (evt) => {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		});
 		this.panorama.on('animatefinished', () => {
-			this.panoramaTestInfo = { Pitch: this.panorama.getPitch(), Yaw: this.panorama.getYaw(), Hfov: this.panorama.getHfov() };
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			this.panoramaTestInfo = { Pitch: this.panorama.getPitch(), Yaw: this.panorama.getYaw(), Hfov: this.panorama.getHfov(), position: panoramaInfo.position };
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		});
 
@@ -320,6 +339,8 @@ export default {
 			// 	console.log(hfov);
 			hfov = (hfov != undefined) ? hfov : this.panorama.getHfov();
 				this.panorama.setHfov(hfov, 100, () => {
+
+					// 街景截圖
 					const imgUrl = this.panorama.getRenderer().render(
 						this.panorama.getPitch() / 180 * Math.PI,
 						this.panorama.getYaw() / 180 * Math.PI,
@@ -327,21 +348,55 @@ export default {
 						{ 'returnImage': true }
 					)
 
+					// 載入街景截圖
 					const img = new Image();
 					img.addEventListener("load", async () => {
 						const canvas = document.createElement('canvas');
 						canvas.width = img.width;
 						canvas.height = img.height;
-						canvas.getContext('2d').drawImage(img, 0, 0);
+						// console.log("canvas: ", canvas.width, canvas.height);
+						const canvasContext = canvas.getContext('2d');
+						canvasContext.drawImage(img, 0, 0);
 
+						// 隱藏DOM
 						this.$el.querySelector("#panorama canvas").setAttribute("data-html2canvas-ignore", true);
 						const ignoreDomList = [
+							// 切換場景圖示
 							...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.pnlm-hotspot"),
+							// 缺失標記圖示
 							...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.alert")
 						];
 						for(const dom of ignoreDomList) dom.setAttribute("data-html2canvas-ignore", true);
 
-						html2canvas(document.querySelector(".pnlm-render-container"), { canvas: canvas, backgroundColor: 'rgba(0, 0, 0, 0)' }).then(canvas => {
+						// 畫線
+						const containerDom = this.$el.querySelector(".pnlm-render-container");
+						const dotDomList = this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.redDot");
+						const hotSpotIdOrder = this.hotSpotIdList.dot.map(hotSpot => hotSpot.id);
+						const { x: x_bg, y: y_bg } = containerDom.getBoundingClientRect();
+						// console.log("containerDom: ", containerDom.getBoundingClientRect());
+						let begin;
+						canvasContext.beginPath();
+						canvasContext.lineWidth = 3;
+						canvasContext.strokeStyle = 'red';
+						// for(const [ index, dom ] of dotDomList.entries()) {
+						for(const [index, hotSpotId] of hotSpotIdOrder.entries()) {
+							const dom = [...dotDomList].filter(dom => dom.classList.contains(`id_${hotSpotId}`))[0];
+							// console.log(index, dom.getBoundingClientRect());
+							const { x: x_el, y: y_el, width: width_el, height: height_el } = dom.getBoundingClientRect();
+							const [ x, y ] = [ x_el - x_bg + width_el/2, y_el - y_bg + height_el/2 ];
+							// console.log(x, y);
+							if(index == 0) {
+								begin = { x, y }
+								canvasContext.moveTo(x, y);
+							} else canvasContext.lineTo(x, y);
+					
+							if(index == hotSpotIdOrder.length - 1) canvasContext.lineTo(begin.x, begin.y);
+						}
+						canvasContext.closePath();
+						canvasContext.stroke();
+						
+						// 產出jpg
+						html2canvas(containerDom, { canvas, backgroundColor: 'rgba(0, 0, 0, 0)' }).then(canvas => {
 							this.caseInfo[imgType] = canvas.toDataURL("image/jpeg");
 
 							if(imgType == "imgZoomIn" && this.caseInfo.imgZoomOut.length == 0) this.screenshot("imgZoomOut", this.panorama.getHfov()+30);
@@ -406,14 +461,14 @@ export default {
 			return { pitch, yaw }
 		},
 		addDotHotSpot({ pitch, yaw }, type) {
-			const cssClass = type == 1 ? "hotSpotIcon redDot" : type == 2 ? "hotSpotIcon greenDot" : "hotSpotIcon blueDot";
+			const cssClass = type == 1 ? `hotSpotIcon redDot id_${this.hotSpotId}` : type == 2 ? "hotSpotIcon greenDot" : "hotSpotIcon blueDot";
 
 			const hotSpot = {
 				id: this.hotSpotId,
 				type: "info",
 				pitch,
 				yaw,
-				text: `(Pitch: ${pitch}, Yaw: ${yaw})`,
+				text: `${this.hotSpotId}: (Pitch: ${pitch}, Yaw: ${yaw})`,
 				cssClass,
 				// coordinates: this.transformMatrix(pitch, yaw),
 				clickHandlerArgs: {
@@ -427,12 +482,28 @@ export default {
 						console.log("id: ", clickHandlerArgs.id);
 						this.panorama.removeHotSpot(clickHandlerArgs.id, this.panorama.getScene());
 						this.hotSpotIdList.dot = this.hotSpotIdList.dot.filter(hotSpot => hotSpot.id != clickHandlerArgs.id);
+
+						this.$emit("clearMarker", clickHandlerArgs.id);
 					}
 				}
 			};
 
 			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
 			this.hotSpotIdList.dot.push(hotSpot);
+
+			return hotSpot;
+		},
+		resetCaseHotSpot() {
+			this.clearHotSpot();
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+
+			for(const caseSpec of this.caseGeoJson.features) {
+				const geoCoordinates = caseSpec.properties.centerPt;
+				if(calcDistance(panoramaInfo.position, geoCoordinates) <= 15) {
+					const hoverText = `${this.options.caseTypeMap[caseSpec.properties.DistressType]} (${this.options.caseLevelMap[caseSpec.properties.DistressLevel]})`;
+					this.addCaseHotSpot(this.getCoords(geoCoordinates), hoverText);
+				}
+			}
 		},
 		addCaseHotSpot({ pitch, yaw }, hoverText = "") {
 			const hotSpot = {
@@ -523,14 +594,8 @@ export default {
 				// z: -cameraHeight - vectorUnit.q * S,
 				lat: panoramaInfo.position.lat - vectorUnit.r * S
 			}
-			console.log("geoCoordinates: ", geoCoordinates);
-			this.hotSpotIdList.dot[this.hotSpotIdList.dot.length-1].coordinates = geoCoordinates;
-
-			// NOTE: 在「地圖」上顯示
-			this.$emit("addMarker", { position: geoCoordinates, type: 3 });
-
-			//NOTE: 在「環景」上顯示
-			// this.addDotHotSpot(this.getCoords(geoCoordinates), 3);
+			// console.log("geoCoordinates: ", geoCoordinates);
+			return geoCoordinates;
 		},
 	}
 }
@@ -592,12 +657,12 @@ export default {
 			background-color: rgba(white, 0.6)
 			z-index: 11
 			&.right
-				top: 115px
+				top: 100px
 				right: 15px
 			.el-card__body
 				position: relative
 				padding: 5px
-				max-height: 630px
+				max-height: 650px
 				overflow-x: hidden
 				overflow-y: auto
 				.el-form-item

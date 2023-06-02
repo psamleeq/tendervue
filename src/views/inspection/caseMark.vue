@@ -70,7 +70,7 @@ export default {
 			caseGeoJson: {},
 			polyLine: [],
 			markers: [],
-			markersTemp: [],
+			markersTemp: {},
 			pointCurr: null,
 			pickerOptions: {
 				firstDayOfWeek: 1,
@@ -167,6 +167,11 @@ export default {
 					1: "輕",
 					2: "中",
 					3: "重"
+				},
+				roadDir: {
+					0: "無",
+					1: "順向",
+					2: "逆向"
 				}
 			},
 		};
@@ -361,10 +366,10 @@ export default {
 					this.$set(this.panoramaInfo, "data", json.data);
 					this.$set(this.panoramaInfo, "sceneSetting", json.sceneSetting);
 					// console.log(this.panoramaInfo);
-					this.setPanoramaLayer()
+					this.setPanoramaLayer();
 
 					this.loading = false;
-					this.$nextTick(() => this.moveHandle(this.screenWidth*0.25))
+					this.$nextTick(() => this.moveHandle(this.screenWidth*0.25));
 				});
 			}).catch(err => this.loading = false);
 
@@ -376,8 +381,14 @@ export default {
 			getInspectGeoJson({
 				caseInspectId: this.listQuery.caseInspectId
 			}).then(response => {
-				this.caseGeoJson = response.data.caseGeoJson;
+				// this.caseGeoJson = response.data.caseGeoJson;
+				this.caseGeoJson = Object.assign({}, this.caseGeoJson, response.data.caseGeoJson);
 				this.map.data.addGeoJson(this.caseGeoJson);
+
+				this.$nextTick(() => {
+					this.$refs.panoramaView.resetCaseHotSpot();
+					this.moveHandle(this.screenWidth*0.25);
+				});
 			}).catch(err => this.loading = false);
 		},
 		uploadCase(caseInfo) {
@@ -388,13 +399,13 @@ export default {
 			uploadForm.append('distressLevel', caseInfo.distressLevel);
 			uploadForm.append('millingLength', caseInfo.millingLength);
 			uploadForm.append('millingWidth', caseInfo.millingWidth);
+			uploadForm.append('millingArea', caseInfo.millingArea);
 			uploadForm.append('place', caseInfo.place);
 			uploadForm.append('direction', caseInfo.direction);
 			uploadForm.append('lane', caseInfo.lane);
 			uploadForm.append('geoJson', JSON.stringify(caseInfo.geoJson));
 			uploadForm.append('imgZoomIn', data2blob(caseInfo.imgZoomIn, 'image/jpeg'), 'imgZoomIn.jpg');
 			uploadForm.append('imgZoomOut', data2blob(caseInfo.imgZoomOut, 'image/jpeg'), 'imgZoomOut.jpg');
-
 			// console.log(uploadForm);
 
 			uploadInspectionCase(uploadForm).then(response => {
@@ -404,7 +415,6 @@ export default {
 						type: "success",
 					});
 				} 
-
 				this.getCaseList();
 				this.loading = false;
 			}).catch(err => {
@@ -525,7 +535,7 @@ export default {
 			// this.$refs.panoramaView.panorama.setUpdate(false);
 			this.showPanorama = this.$refs.panoramaView.showPanorama = true;
 		},
-		addMarker({ position, type }) {
+		addMarker({ id, position, type }) {
 			// console.log(type, position);
 
 			let icon;
@@ -540,19 +550,17 @@ export default {
 					scaledSize: new google.maps.Size(4, 4) 
 				};
 			}
-			this.markersTemp.push(
-				new google.maps.Marker({ 
-					position, 
-					icon,
-					map: this.map
-				})
-			);
-
+			this.markersTemp[id] = new google.maps.Marker({ position, icon, map: this.map });
 			this.map.setCenter(position);
 		},
-		clearMarker() {
-			for(const marker of this.markersTemp) marker.setMap(null);
-			this.markersTemp = [];
+		clearMarker(id) {
+			if(id != undefined) {
+				this.markersTemp[id].setMap(null);
+				this.$delete(this.markersTemp, id);
+			} else {
+				for(const marker of Object.values(this.markersTemp)) marker.setMap(null);
+				this.markersTemp = [];
+			}
 		},
 		setMarkerPosition(sceneId) {
 			// console.log("setMarkerPosition: ", sceneId);
@@ -639,9 +647,10 @@ export default {
 		align-items: center
 		cursor: col-resize
 		z-index: 20
+		// background-color: rgba(#F2F6FC, 0.6)
 		span 
 			width: 2px
-			background: #eee
+			background: #aaa
 			margin: 0 2px
 			height: 15px
 	#map
