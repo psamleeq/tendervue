@@ -75,7 +75,6 @@
 				</el-button-group>
 			</el-card>
 		</div>
-		<canvas ref="sketchpad" />
 	</div>
 </template>
 
@@ -205,7 +204,7 @@ export default {
 			// this.hotSpotIdList.dot = hotSpotIdOrder;
 
 			// 估算長度 & 面積
-			if(this.hotSpotIdList.dot.length == 4) {
+			if(this.hotSpotIdList.dot.length >= 4) {
 				const distanceList = this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
 					const nextIndex = (index + 1) % array.length;
 					const distance = calcDistance(cur.coordinates, array[nextIndex].coordinates);
@@ -354,7 +353,7 @@ export default {
 						const canvas = document.createElement('canvas');
 						canvas.width = img.width;
 						canvas.height = img.height;
-						// console.log("canvas: ", canvas.width, canvas.height);
+						console.log("canvas: ", canvas.width, canvas.height);
 						const canvasContext = canvas.getContext('2d');
 						canvasContext.drawImage(img, 0, 0);
 
@@ -372,7 +371,8 @@ export default {
 						const containerDom = this.$el.querySelector(".pnlm-render-container");
 						const dotDomList = this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.redDot");
 						const hotSpotIdOrder = this.hotSpotIdList.dot.map(hotSpot => hotSpot.id);
-						const { x: x_bg, y: y_bg } = containerDom.getBoundingClientRect();
+						const { x: x_bg, y: y_bg, width: width_bg, height: height_bg } = containerDom.getBoundingClientRect();
+						const [ ratio_width, ratio_height ] = [ canvas.width / width_bg , canvas.height / height_bg ];
 						// console.log("containerDom: ", containerDom.getBoundingClientRect());
 						let begin;
 						canvasContext.beginPath();
@@ -383,7 +383,7 @@ export default {
 							const dom = [...dotDomList].filter(dom => dom.classList.contains(`id_${hotSpotId}`))[0];
 							// console.log(index, dom.getBoundingClientRect());
 							const { x: x_el, y: y_el, width: width_el, height: height_el } = dom.getBoundingClientRect();
-							const [ x, y ] = [ x_el - x_bg + width_el/2, y_el - y_bg + height_el/2 ];
+							const [ x, y ] = [ (x_el - x_bg + width_el/2) * ratio_width, (y_el - y_bg + height_el/2) * ratio_height ];
 							// console.log(x, y);
 							if(index == 0) {
 								begin = { x, y }
@@ -493,6 +493,19 @@ export default {
 
 			return hotSpot;
 		},
+		addCaseHotSpot({ pitch, yaw }, hoverText = "") {
+			const hotSpot = {
+				id: this.hotSpotId,
+				type: "info",
+				pitch,
+				yaw,
+				text: hoverText,
+				cssClass: "hotSpotIcon alert"
+			};
+
+			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
+			this.hotSpotIdList.case.push(hotSpot);
+		},
 		resetCaseHotSpot() {
 			this.clearHotSpot();
 			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
@@ -504,33 +517,6 @@ export default {
 					this.addCaseHotSpot(this.getCoords(geoCoordinates), hoverText);
 				}
 			}
-		},
-		addCaseHotSpot({ pitch, yaw }, hoverText = "") {
-			const hotSpot = {
-				id: this.hotSpotId,
-				type: "info",
-				pitch,
-				yaw,
-				text: hoverText,
-				cssClass: "hotSpotIcon alert",
-				// coordinates: this.transformMatrix(pitch, yaw),
-				clickHandlerArgs: {
-					id: this.hotSpotId++
-				},
-				clickHandlerFunc: (evt, clickHandlerArgs) => {
-					// console.log("evt: ", evt);
-					console.log(`(Pitch: ${pitch}}, Yaw: ${yaw})`);
-
-					if(clickHandlerArgs && evt.shiftKey) {
-						console.log("id: ", clickHandlerArgs.id);
-						this.panorama.removeHotSpot(clickHandlerArgs.id, this.panorama.getScene());
-						this.hotSpotIdList.case = this.hotSpotIdList.case.filter(hotSpot => hotSpot.id != clickHandlerArgs.id);
-					}
-				}
-			};
-
-			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
-			this.hotSpotIdList.case.push(hotSpot);
 		},
 		clearHotSpot(sceneId= this.panorama.getScene()) {
 			for(const type in this.hotSpotIdList) {

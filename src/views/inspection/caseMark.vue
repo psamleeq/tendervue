@@ -31,7 +31,7 @@
 					<span />
 				</div>
 			</el-col>
-			<el-col ref="rightPanel" :span="16" class="info-panel" style="position: relative; width: 0%;" >
+			<el-col ref="rightPanel" class="right-panel" :span="16" style="position: relative; width: 0%;" >
 				<panorama-view ref="panoramaView" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
@@ -696,7 +696,6 @@ export default {
 				background-repeat: no-repeat
 				background-position: center
 				transition: 0.1s
-	.info-panel
+	.right-panel
 		height: calc(100vh - 50px)
-		background-color: #F0F8FF
 </style>
