@@ -32,7 +32,7 @@
 				</div>
 			</el-col>
 			<el-col ref="rightPanel" class="right-panel" :span="16" style="position: relative; width: 0%;" >
-				<panorama-view ref="panoramaView" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
+				<panorama-view ref="panoramaView" :loading.sync="loading" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
 	</div>

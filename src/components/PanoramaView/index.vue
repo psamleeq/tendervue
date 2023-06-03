@@ -26,7 +26,7 @@
 						/>
 					</el-form-item>
 					<el-form-item prop="type" label="缺失類型">
-						<el-select v-model="caseInfo.distressType" size="mini">
+						<el-select v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
 							<el-option v-for="(name, key) in options.caseTypeMap" :key="key" :label="name" :value="key" />
 						</el-select>
 					</el-form-item>
@@ -70,8 +70,8 @@
 					</el-form-item>
 				</el-form>
 				<el-button-group class="btn-action-group">
-					<el-button type="success" @click="uploadCase()">新增</el-button>
-					<el-button type="danger" @click="clearHotSpot()">清除</el-button>
+					<el-button type="success" @click="uploadCase()" @disabled="isUpload">新增</el-button>
+					<el-button type="danger" @click="clearHotSpot()" @disabled="isUpload">清除</el-button>
 				</el-button-group>
 			</el-card>
 		</div>
@@ -87,6 +87,10 @@ const cameraHeight = 2.5; // 攝影機高度
 export default {
 	name: "panoramaView",
 	props: {
+		loading: {
+			required: true,
+			type: Boolean
+		},
 		listQuery: {
 			type: Object,
 			required: true
@@ -204,19 +208,7 @@ export default {
 			// this.hotSpotIdList.dot = hotSpotIdOrder;
 
 			// 估算長度 & 面積
-			if(this.hotSpotIdList.dot.length >= 4) {
-				const distanceList = this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
-					const nextIndex = (index + 1) % array.length;
-					const distance = calcDistance(cur.coordinates, array[nextIndex].coordinates);
-					acc.push(distance);
-
-					return acc
-				}, []).sort();
-
-				this.caseInfo.millingLength = Math.round(Math.max(...distanceList) * 100) / 100;
-				this.caseInfo.millingWidth = Math.round(Math.min(...distanceList) * 100) / 100;
-				this.caseInfo.millingArea = Math.round(calArea(this.hotSpotIdList.dot.map(hotSpot => ([ hotSpot.coordinates.lng, hotSpot.coordinates.lat ]))) * 100) / 100;
-			}
+			this.calcCaseInfo();
 		});
 		this.panorama.on('mouseup', (evt) => {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
@@ -318,100 +310,120 @@ export default {
 		},
 		uploadCase() {
 			this.$confirm(`確定上傳缺失?`, "確認", { showClose: false }).then(() => {
-				this.loading = true;
+				this.$emit('update:loading', true);
 				this.isUpload = true;
 
 				let coordinates = this.hotSpotIdList.dot.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat]));
 				coordinates.push(coordinates[0]);
 				// console.log(coordinates);
 				this.caseInfo.geoJson = {
-					"type": 'MultiPolygon',
-					"coordinates": [[ coordinates ]]
+					"type": this.caseInfo.distressType == 29 ? "MultiLineString" : 'MultiPolygon',
+					"coordinates": this.caseInfo.distressType == 29 ? [ coordinates ] : [[ coordinates ]]
 				};
 				console.log(this.caseInfo);
 
 				this.$emit("uploadCase", this.caseInfo);
 			}).catch(err => console.log(err));
 		},
+		// 估算長度 & 面積
+		calcCaseInfo() {
+			if(this.caseInfo.distressType == 29 && this.hotSpotIdList.dot.length >= 2) {
+				this.caseInfo.millingLength =  this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
+					console.log("index: ", index);
+					if(array[index + 1] == undefined) return Math.round(acc * 100) / 100;
+					return acc += calcDistance(cur.coordinates, array[index + 1].coordinates);
+				}, 0)
+			}
+			if(this.caseInfo.distressType != 29 && this.hotSpotIdList.dot.length >= 4) {
+				const distanceList = this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
+					const nextIndex = (index + 1) % array.length;
+					const distance = calcDistance(cur.coordinates, array[nextIndex].coordinates);
+					acc.push(distance);
+
+					return acc
+				}, []).sort();
+
+				this.caseInfo.millingLength = Math.round(Math.max(...distanceList) * 100) / 100;
+				this.caseInfo.millingWidth = Math.round(Math.min(...distanceList) * 100) / 100;
+				this.caseInfo.millingArea = Math.round(calArea(this.hotSpotIdList.dot.map(hotSpot => ([ hotSpot.coordinates.lng, hotSpot.coordinates.lat ]))) * 100) / 100;
+			}
+		},
 		screenshot(imgType="imgZoomIn", hfov) {
-			// for(const hfov of [50, 120]) {
-			// 	console.log(hfov);
 			hfov = (hfov != undefined) ? hfov : this.panorama.getHfov();
-				this.panorama.setHfov(hfov, 100, () => {
+			this.panorama.setHfov(hfov, 100, () => {
 
-					// 街景截圖
-					const imgUrl = this.panorama.getRenderer().render(
-						this.panorama.getPitch() / 180 * Math.PI,
-						this.panorama.getYaw() / 180 * Math.PI,
-						this.panorama.getHfov() / 180 * Math.PI,
-						{ 'returnImage': true }
-					)
+				// 街景截圖
+				const imgUrl = this.panorama.getRenderer().render(
+					this.panorama.getPitch() / 180 * Math.PI,
+					this.panorama.getYaw() / 180 * Math.PI,
+					this.panorama.getHfov() / 180 * Math.PI,
+					{ 'returnImage': true }
+				)
 
-					// 載入街景截圖
-					const img = new Image();
-					img.addEventListener("load", async () => {
-						const canvas = document.createElement('canvas');
-						canvas.width = img.width;
-						canvas.height = img.height;
-						console.log("canvas: ", canvas.width, canvas.height);
-						const canvasContext = canvas.getContext('2d');
-						canvasContext.drawImage(img, 0, 0);
+				// 載入街景截圖
+				const img = new Image();
+				img.addEventListener("load", async () => {
+					const canvas = document.createElement('canvas');
+					canvas.width = img.width;
+					canvas.height = img.height;
+					// console.log("canvas: ", canvas.width, canvas.height);
+					const canvasContext = canvas.getContext('2d');
+					canvasContext.drawImage(img, 0, 0);
 
-						// 隱藏DOM
-						this.$el.querySelector("#panorama canvas").setAttribute("data-html2canvas-ignore", true);
-						const ignoreDomList = [
-							// 切換場景圖示
-							...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.pnlm-hotspot"),
-							// 缺失標記圖示
-							...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.alert")
-						];
-						for(const dom of ignoreDomList) dom.setAttribute("data-html2canvas-ignore", true);
+					// 隱藏DOM
+					this.$el.querySelector("#panorama canvas").setAttribute("data-html2canvas-ignore", true);
+					const ignoreDomList = [
+						// 切換場景圖示
+						...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.pnlm-hotspot"),
+						// 缺失標記圖示
+						...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.alert")
+					];
+					for(const dom of ignoreDomList) dom.setAttribute("data-html2canvas-ignore", true);
 
-						// 畫線
-						const containerDom = this.$el.querySelector(".pnlm-render-container");
-						const dotDomList = this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.redDot");
-						const hotSpotIdOrder = this.hotSpotIdList.dot.map(hotSpot => hotSpot.id);
-						const { x: x_bg, y: y_bg, width: width_bg, height: height_bg } = containerDom.getBoundingClientRect();
-						const [ ratio_width, ratio_height ] = [ canvas.width / width_bg , canvas.height / height_bg ];
-						// console.log("containerDom: ", containerDom.getBoundingClientRect());
-						let begin;
-						canvasContext.beginPath();
-						canvasContext.lineWidth = 3;
-						canvasContext.strokeStyle = 'red';
-						// for(const [ index, dom ] of dotDomList.entries()) {
-						for(const [index, hotSpotId] of hotSpotIdOrder.entries()) {
-							const dom = [...dotDomList].filter(dom => dom.classList.contains(`id_${hotSpotId}`))[0];
-							// console.log(index, dom.getBoundingClientRect());
-							const { x: x_el, y: y_el, width: width_el, height: height_el } = dom.getBoundingClientRect();
-							const [ x, y ] = [ (x_el - x_bg + width_el/2) * ratio_width, (y_el - y_bg + height_el/2) * ratio_height ];
-							// console.log(x, y);
-							if(index == 0) {
-								begin = { x, y }
-								canvasContext.moveTo(x, y);
-							} else canvasContext.lineTo(x, y);
+					// 畫線
+					const containerDom = this.$el.querySelector(".pnlm-render-container");
+					const dotDomList = this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.redDot");
+					const hotSpotIdOrder = this.hotSpotIdList.dot.map(hotSpot => hotSpot.id);
+					const { x: x_bg, y: y_bg, width: width_bg, height: height_bg } = containerDom.getBoundingClientRect();
+					const [ ratio_width, ratio_height ] = [ canvas.width / width_bg , canvas.height / height_bg ];
+					// console.log("containerDom: ", containerDom.getBoundingClientRect());
+					let begin;
+					canvasContext.beginPath();
+					canvasContext.lineWidth = 3;
+					canvasContext.strokeStyle = 'red';
+					// for(const [ index, dom ] of dotDomList.entries()) {
+					for(const [index, hotSpotId] of hotSpotIdOrder.entries()) {
+						const dom = [...dotDomList].filter(dom => dom.classList.contains(`id_${hotSpotId}`))[0];
+						// console.log(index, dom.getBoundingClientRect());
+						const { x: x_el, y: y_el, width: width_el, height: height_el } = dom.getBoundingClientRect();
+						const [ x, y ] = [ (x_el - x_bg + width_el/2) * ratio_width, (y_el - y_bg + height_el/2) * ratio_height ];
+						// console.log(x, y);
+						if(index == 0) {
+							begin = { x, y }
+							canvasContext.moveTo(x, y);
+						} else canvasContext.lineTo(x, y);
+				
+						if(this.caseInfo.distressType != 29 && index == hotSpotIdOrder.length - 1) canvasContext.lineTo(begin.x, begin.y);
+					}
+					canvasContext.closePath();
+					canvasContext.stroke();
 					
-							if(index == hotSpotIdOrder.length - 1) canvasContext.lineTo(begin.x, begin.y);
-						}
-						canvasContext.closePath();
-						canvasContext.stroke();
-						
-						// 產出jpg
-						html2canvas(containerDom, { canvas, backgroundColor: 'rgba(0, 0, 0, 0)' }).then(canvas => {
-							this.caseInfo[imgType] = canvas.toDataURL("image/jpeg");
+					// 產出jpg
+					html2canvas(containerDom, { canvas, backgroundColor: 'rgba(0, 0, 0, 0)' }).then(canvas => {
+						this.caseInfo[imgType] = canvas.toDataURL("image/jpeg");
 
-							if(imgType == "imgZoomIn" && this.caseInfo.imgZoomOut.length == 0) this.screenshot("imgZoomOut", this.panorama.getHfov()+30);
-							// NOTE: test download
-							// const link = document.createElement('a');
-							// link.href = canvas.toDataURL("image/jpeg");
-							// link.download = 'test.png';
-							// document.body.appendChild(link);
-							// link.click();
-							// document.body.removeChild(link);
-						});
-					})
-					img.src = imgUrl;
+						if(imgType == "imgZoomIn" && this.caseInfo.imgZoomOut.length == 0) this.screenshot("imgZoomOut", this.panorama.getHfov()+30);
+						// NOTE: test download
+						// const link = document.createElement('a');
+						// link.href = canvas.toDataURL("image/jpeg");
+						// link.download = 'test.png';
+						// document.body.appendChild(link);
+						// link.click();
+						// document.body.removeChild(link);
+					});
 				})
-			// }
+				img.src = imgUrl;
+			})
 		},
 		getDistance(pitch) {
 			return Math.abs(cameraHeight / Math.tan(pitch * Math.PI / 180));
