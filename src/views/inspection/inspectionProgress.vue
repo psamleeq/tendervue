@@ -1,6 +1,7 @@
 <template>
 	<div class="app-container" v-loading="loading">
 		<h2>巡查歷程</h2>
+		<!-- 搜尋 -->
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -40,6 +41,7 @@
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 		</div>
 
+		<!-- 資料列表 -->
 		<el-table ref="multipleTable" empty-text="目前沒有資料" :data="list" border fit :header-cell-style="{ 'background-color': '#F2F6FC' }" style="width: 100%">
 			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" align="center" :sortable="value.sortable">
 				<template slot-scope="{ row, column }">
@@ -130,6 +132,10 @@ export default {
 	computed: {},
 	watch: { },
 	created() {
+		// 設置收取日的默認值為昨日
+		const yesterday = new Date();
+		yesterday.setDate(yesterday.getDate() - 1);
+		this.listQuery.searchDate = [yesterday, yesterday]; 
 	},
 	mounted() {
 	},
@@ -152,10 +158,14 @@ export default {
 				this.loading = true;
 				this.list = [];
 
+				const date = new Date(this.listQuery.searchDate[1])
+				date.setDate(date.getDate() + 1)
+				const newDate = date.toString();
+
 				getInspectionList({
 					zipCode: this.listQuery.ZipCode,
 					timeStart: this.formatTime(this.listQuery.searchDate[0]),
-					timeEnd: this.formatTime(this.listQuery.searchDate[1])
+					timeEnd: this.formatTime(newDate)
 				}).then(response => {
 					if (response.data.list.length == 0) {
 						this.$message({
