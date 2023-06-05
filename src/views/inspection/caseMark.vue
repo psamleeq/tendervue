@@ -194,7 +194,14 @@ export default {
 		};
 
 		// 初始化Google Map
-		loader.load().then(() => this.initMap()).catch(err => console.log("err: ", err));
+		loader.load().then(async () => {
+			await this.initMap();
+			if (this.$route.query.inspectId && this.$route.query.caseInspectId) {
+				this.listQuery.inspectId = this.$route.query.inspectId;
+				this.listQuery.caseInspectId = this.$route.query.caseInspectId;
+				this.getList();
+			}
+		}).catch(err => console.log("err: ", err));
 	},
 	mounted() { 
 		this.leftPanel = this.$refs.leftPanel.$el;
@@ -219,146 +226,149 @@ export default {
 	},
 	methods: {
 		// init google map
-		initMap() {
-			// 預設顯示的地點：台北市政府親子劇場
-			const location = {
-				lat: 25.0374865, // 經度
-				lng: 121.5647688, // 緯度
-			};
+		async initMap() {
+			return new Promise(resolve => {
+				// 預設顯示的地點：台北市政府親子劇場
+				const location = {
+					lat: 25.0374865, // 經度
+					lng: 121.5647688, // 緯度
+				};
 
-			// 建立地圖
-			this.map = new google.maps.Map(this.$refs.map, {
-				center: location, // 中心點座標
-				zoom: 13, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
-				minZoom: 13,
-				// maxZoom: 19,
-				/*
-					roadmap 顯示默認道路地圖視圖。
-					satellite 顯示 Google 地球衛星圖像。
-					hybrid 顯示正常和衛星視圖的混合。
-					terrain 顯示基於地形信息的物理地圖。
-				*/
-				// mapTypeId: "satellite",
-				fullscreenControl: false,
-				mapTypeControl: false,
-				streetViewControl: false,
-				rotateControl: false,
-				heading: 0,
-				tilt: 0,
-				mapId: process.env.VUE_APP_MAP_ID,
-				styles: [
-					{
-						stylers: [{ visibility: "on" }],
-					},
-					{
-						featureType: "poi",
-						elementType: "all",
-						stylers: [{ visibility: "off" }],
-					},
-					{
-						featureType: "transit",
-						elementType: "all",
-						stylers: [{ visibility: "off" }],
-					},
-					{
-						featureType: "road",
-						elementType: "labels",
-						stylers: [{ visibility: "off" }]
-					}
-				],
-			});
-
-			// NOTE: 設定路名在KML之上，只有在非開發模式才能載入多圖層
-			if(loaderOpt.apiKey.length != 0) {
-				// NOTE: 疊上StyledMapType
-				const labelsMapType = new google.maps.StyledMapType(
-					[
+				// 建立地圖
+				this.map = new google.maps.Map(this.$refs.map, {
+					center: location, // 中心點座標
+					zoom: 13, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
+					minZoom: 13,
+					// maxZoom: 19,
+					/*
+						roadmap 顯示默認道路地圖視圖。
+						satellite 顯示 Google 地球衛星圖像。
+						hybrid 顯示正常和衛星視圖的混合。
+						terrain 顯示基於地形信息的物理地圖。
+					*/
+					// mapTypeId: "satellite",
+					fullscreenControl: false,
+					mapTypeControl: false,
+					streetViewControl: false,
+					rotateControl: false,
+					heading: 0,
+					tilt: 0,
+					mapId: process.env.VUE_APP_MAP_ID,
+					styles: [
 						{
-							stylers: [{ visibility: 'off'}]
-						}, 
+							stylers: [{ visibility: "on" }],
+						},
+						{
+							featureType: "poi",
+							elementType: "all",
+							stylers: [{ visibility: "off" }],
+						},
+						{
+							featureType: "transit",
+							elementType: "all",
+							stylers: [{ visibility: "off" }],
+						},
 						{
 							featureType: "road",
-							elementType: 'labels',
-							stylers: [{ visibility: 'on' }]
+							elementType: "labels",
+							stylers: [{ visibility: "off" }]
 						}
-					], 
-					{
-						name: 'Labels'
+					],
+				});
+
+				// NOTE: 設定路名在KML之上，只有在非開發模式才能載入多圖層
+				if(loaderOpt.apiKey.length != 0) {
+					// NOTE: 疊上StyledMapType
+					const labelsMapType = new google.maps.StyledMapType(
+						[
+							{
+								stylers: [{ visibility: 'off'}]
+							}, 
+							{
+								featureType: "road",
+								elementType: 'labels',
+								stylers: [{ visibility: 'on' }]
+							}
+						], 
+						{
+							name: 'Labels'
+						}
+					);
+					this.map.overlayMapTypes.push(labelsMapType);
+				}
+
+				this.map.data.setStyle(feature => { 
+					// console.log(feature.getProperty("caseName"));
+					let color = this.options.caseColorMap.filter(color => color.name == '其他')[0].color;
+					if(feature.getProperty("DistressType")) {
+						const colorFilter = this.options.caseColorMap.filter(color => {
+							let caseFlag = false;
+							const distressType = this.options.caseTypeMap[feature.getProperty("DistressType")];
+							for(const name of color.name) {
+								caseFlag = (distressType.indexOf(name) != -1);
+								// console.log(name, caseFlag);
+								if(caseFlag) break;
+							}
+
+							return caseFlag; 
+						})
+						// console.log(colorFilter);
+						
+						if(colorFilter.length > 0) color = colorFilter[0].color;
 					}
-				);
-				this.map.overlayMapTypes.push(labelsMapType);
-			}
 
-			this.map.data.setStyle(feature => { 
-				// console.log(feature.getProperty("caseName"));
-				let color = this.options.caseColorMap.filter(color => color.name == '其他')[0].color;
-				if(feature.getProperty("DistressType")) {
-					const colorFilter = this.options.caseColorMap.filter(color => {
-						let caseFlag = false;
-						const distressType = this.options.caseTypeMap[feature.getProperty("DistressType")];
-						for(const name of color.name) {
-							caseFlag = (distressType.indexOf(name) != -1);
-							// console.log(name, caseFlag);
-							if(caseFlag) break;
-						}
+					// console.log(color);
 
-						return caseFlag; 
-					})
-					// console.log(colorFilter);
-					
-					if(colorFilter.length > 0) color = colorFilter[0].color;
-				}
+					if(feature.getProperty("isPoint")) {
+						return { 
+							icon: { 
+								url: `/assets/icon/icon_case_${this.options.caseLevelMap[feature.getProperty("DistressLevel")]}.png`,
+								anchor: new google.maps.Point(5, 5),
+								scaledSize: new google.maps.Size(25, 25),
+							}
+						};
+					} else if(feature.getProperty("isLine")) {
+						return { 
+							strokeColor: color,
+							strokeWeight: 3,
+							strokeOpacity: 0.8,
+							fillOpacity: 0
+						};
+					} else {
+						return { 
+							strokeColor: color,
+							strokeWeight: 1,
+							strokeOpacity: 1,
+							fillColor: color,
+							fillOpacity: 0.7
+						};
+					}
+				});
 
-				// console.log(color);
+				this.map.data.addListener('mouseover', (event) => { 
+					this.showCaseContent(event.feature, event.latLng);
+				});
+				this.map.data.addListener('mouseout', (event) => { this.infoWindow.close() });
+				
+				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 
-				if(feature.getProperty("isPoint")) {
-					return { 
-						icon: { 
-							url: `/assets/icon/icon_case_${this.options.caseLevelMap[feature.getProperty("DistressLevel")]}.png`,
-							anchor: new google.maps.Point(5, 5),
-							scaledSize: new google.maps.Size(25, 25),
-						}
-					};
-				} else if(feature.getProperty("isLine")) {
-					return { 
-						strokeColor: color,
-						strokeWeight: 3,
-						strokeOpacity: 0.8,
-						fillOpacity: 0
-					};
-				} else {
-					return { 
-						strokeColor: color,
-						strokeWeight: 1,
-						strokeOpacity: 1,
-						fillColor: color,
-						fillOpacity: 0.7
-					};
-				}
-			});
+				// 建立marker
+				this.pointCurr = new google.maps.Marker({
+					// map: this.map,
+					icon: {
+						url: "/assets/icon/truck.png",
+						anchor: new google.maps.Point(12, 12),
+						scaledSize: new google.maps.Size(24, 24)
+					}
+				});
 
-			this.map.data.addListener('mouseover', (event) => { 
-				this.showCaseContent(event.feature, event.latLng);
-			});
-			this.map.data.addListener('mouseout', (event) => { this.infoWindow.close() });
-			
-			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
-
-			// 建立marker
-			this.pointCurr = new google.maps.Marker({
-				map: this.map,
-				icon: {
-					url: "/assets/icon/truck.png",
-					anchor: new google.maps.Point(12, 12),
-					scaledSize: new google.maps.Size(24, 24)
-				}
-			});
-
-			// this.getList();
+				resolve();
+			})
 		},
 		getList() {
 			this.loading = true;
 			this.clearAll();
+			this.$router.push({ query: { inspectId: this.listQuery.inspectId, caseInspectId: this.listQuery.caseInspectId }});
 
 			getPanoramaJson({
 				inspectId: this.listQuery.inspectId

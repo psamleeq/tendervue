@@ -70,6 +70,11 @@
 					</span>
 				</template>
 			</el-table-column>
+			<el-table-column label="操作" align="center">
+				<template slot-scope="{ row }">
+					<el-button class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">標記</el-button>
+				</template>
+			</el-table-column>
 		</el-table>
 
 		<!-- 完成 對話框 -->
@@ -93,6 +98,7 @@ export default {
 	data() {
 	return {
 		loading: false,
+		dialogMapVisible: true,
 		listQuery: {
 			ZipCode:null,
 			searchDate:[],
@@ -140,6 +146,12 @@ export default {
 	mounted() {
 	},
 	methods: {
+		showMap(row) {
+			this.$router.push({
+				path: "/inspection/caseMark",
+				query: { inspectId: row.InspectId, caseInspectId: row.InspectId },
+			});
+		},
 		formatTime(time) {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
 		},
