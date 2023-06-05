@@ -20,7 +20,7 @@
 			</div>
 		</div>
 		<el-row>
-			<el-col ref="leftPanel" :span="8" style="position: relative; width: 100%;">
+			<el-col ref="leftPanel" :span="8" :style="panelStyle.leftPanel">
 				<div id="map" ref="map" />
 				<div class="btn-map">
 					<!-- <div ref="compass" class="btn-action btn-compass" style="transform: rotate(0deg)" @click="setHeading(0)" /> -->
@@ -31,7 +31,7 @@
 					<span />
 				</div>
 			</el-col>
-			<el-col ref="rightPanel" class="right-panel" :span="16" style="position: relative; width: 0%;" >
+			<el-col ref="rightPanel" class="right-panel" :span="16" :style="panelStyle.rightPanel" >
 				<panorama-view ref="panoramaView" :loading.sync="loading" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
@@ -69,7 +69,6 @@ export default {
 			clientStartX: 0,
 			caseGeoJson: {},
 			polyLine: [],
-			markers: [],
 			markersTemp: {},
 			pointCurr: null,
 			pickerOptions: {
@@ -106,12 +105,12 @@ export default {
 			screenWidth: 0,
 			listQuery: {
 				inspectId: "",
-				caseInspectId: "",
-				carId: 1
+				caseInspectId: ""
 			},
 			panoramaInfo: {
 				data: [],
-				sceneSetting: {}
+				sceneSetting: {}, 
+				streetViewList: {}
 			},
 			options: {
 				imgTypeMap: {
@@ -176,7 +175,14 @@ export default {
 			},
 		};
 	},
-	computed: {	},
+	computed: {	
+		panelStyle() {
+			return {
+				leftPanel: (this.panoramaInfo.streetViewList.length >= 0) ? "position: relative; width: 25%;" : "position: relative; width: 100%;",
+				rightPanel: (this.panoramaInfo.streetViewList.length >= 0) ?"position: relative; width: 75%;" : "position: relative; width: 0%;"
+			}
+		}
+	},
 	created() {
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
@@ -352,25 +358,34 @@ export default {
 		},
 		getList() {
 			this.loading = true;
-			this.caseGeoJson = {};
+			this.clearAll();
 
 			getPanoramaJson({
 				inspectId: this.listQuery.inspectId
 			}).then(response => {
-				this.inspectIdNow = this.listQuery.inspectId;
-				const jsonUrl = response.data.inspection.url;
-
-				fetch(jsonUrl).then(response => response.json()).then(json => {
-					// this.panoramaInfo = json;
-					// this.panoramaInfo = Object.assign({}, this.panoramaInfo, json);
-					this.$set(this.panoramaInfo, "data", json.data);
-					this.$set(this.panoramaInfo, "sceneSetting", json.sceneSetting);
-					// console.log(this.panoramaInfo);
-					this.setPanoramaLayer();
-
+				if(Object.keys(response.data).length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+					// this.$nextTick(() => this.moveHandle(this.screenWidth));
 					this.loading = false;
-					this.$nextTick(() => this.moveHandle(this.screenWidth*0.25));
-				});
+				} else {
+					this.inspectIdNow = this.listQuery.inspectId;
+					const jsonUrl = response.data.inspection.url;
+
+					fetch(jsonUrl).then(response => response.json()).then(json => {
+						// this.panoramaInfo = json;
+						// this.panoramaInfo = Object.assign({}, this.panoramaInfo, json);
+						this.$set(this.panoramaInfo, "data", json.data);
+						this.$set(this.panoramaInfo, "sceneSetting", json.sceneSetting);
+						// console.log(this.panoramaInfo);
+						this.setPanoramaLayer();
+
+						this.loading = false;
+						this.$nextTick(() => this.moveHandle(this.screenWidth*0.25));
+					});
+				}
 			}).catch(err => this.loading = false);
 
 			this.getCaseList();
@@ -387,7 +402,7 @@ export default {
 
 				this.$nextTick(() => {
 					this.$refs.panoramaView.resetCaseHotSpot();
-					this.moveHandle(this.screenWidth*0.25);
+					// this.moveHandle(this.screenWidth*0.25);
 				});
 			}).catch(err => this.loading = false);
 		},
@@ -431,13 +446,11 @@ export default {
 		},
 		async setPanoramaLayer() {
 			// console.log("setPanoramaLayer");
-			for(const polyline of this.polyLine) polyline.setMap(null);
 			this.$refs.panoramaView.setStreetViewList();
 			await this.createPolyLine();
-			// await this.createMarker();
+			this.pointCurr.setMap(this.map);
 		},
 		async createPolyLine() {
-			this.polyLine = [];
 			const lineInfo = this.panoramaInfo.data;
 			if (!lineInfo) return;
 
@@ -480,50 +493,6 @@ export default {
 			})
 			this.showPanoramaLayer(this.panoramaInfo.data[0][0].fileName);
 		},
-		async createMarker() {
-			this.markers = [];
-			const markerInfos = this.panoramaInfo.data;
-			if (!markerInfos) return;
-
-			this.$refs.panoramaView.setPanoramaScene();
-
-			// 掛載 marker (street view)
-
-			const icon = { 
-				url: `/assets/icon/icon_orangeDot.png`,
-				scaledSize: new google.maps.Size(4, 4) 
-			} 
-
-			markerInfos.forEach((markerInfo, index) => {
-				markerInfo.forEach((info, index) => {
-					const marker = new google.maps.Marker({ 
-						title: info.fileName,
-						position: info.position, 
-						icon: icon,
-						map: this.map
-					})
-					this.markers.push(marker);
-
-					marker.addListener("click", (event) => {
-						const sceneId = marker.getTitle();
-						console.log(sceneId);
-						this.showPanoramaLayer(sceneId);
-					});
-
-					marker.addListener("mouseover", (event) => {
-						this.infoWindow.setContent(event.latLng.toString());
-						this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
-						this.infoWindow.setPosition(event.latLng);
-
-						this.infoWindow.open(this.map);
-					});
-
-					marker.addListener("mouseout", (event) => {
-						this.infoWindow.close();
-					});
-				})
-			});
-		},
 		showPanoramaLayer(sceneId) {
 			// console.log("showPanoramaLayer");
 			console.log(sceneId);
@@ -531,9 +500,6 @@ export default {
 			this.setMarkerPosition() 
 
 			this.$refs.panoramaView.panorama.loadScene(sceneId);
-			// this.$refs.panoramaView.panorama.setUpdate(true);
-			// this.$refs.panoramaView.panorama.setUpdate(false);
-			this.showPanorama = this.$refs.panoramaView.showPanorama = true;
 		},
 		addMarker({ id, position, type }) {
 			// console.log(type, position);
@@ -578,6 +544,20 @@ export default {
 			this.infoWindow.setPosition(position);
 
 			this.infoWindow.open(this.map);
+		},
+		clearAll() {
+			// console.log("clearAll");
+			this.caseGeoJson = {};
+
+			this.pointCurr.setMap(null);
+
+			for(const polyline of this.polyLine) polyline.setMap(null);
+			this.polyLine = [];
+
+			this.clearMarker();
+
+			this.panoramaInfo = Object.assign({}, this.panoramaInfo, { data: [], sceneSetting: {}, streetViewList: {} });
+			this.$refs.panoramaView.removeAllScene();
 		},
 		moveHandle(nowClientX) {
 			const computedPercent = (nowClientX - this.clientStartX) / this.screenWidth * 100;

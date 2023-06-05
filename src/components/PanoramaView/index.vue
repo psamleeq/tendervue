@@ -231,7 +231,7 @@ export default {
 		setStreetViewList() {
 			// console.log("setStreetViewList");
 			// console.log(JSON.parse(JSON.stringify(this.panoramaInfo)));
-			this.panoramaInfoProps.streetViewList = {};
+			// this.panoramaInfoProps.streetViewList = {};
 			// console.log(JSON.parse(JSON.stringify(this.panoramaInfoProps)));
 
 			const lineInfoList = this.panoramaInfoProps.data;
@@ -294,10 +294,14 @@ export default {
 				});
 			}	
 		},
-		setPanoramaScene() {
-			// 掛載panorama scene
+		removeAllScene() {
 			for (const sceneId of this.prevSceneId) this.panorama.removeScene(sceneId);
 			this.prevSceneId = [];
+		},
+		setPanoramaScene() {
+			this.removeAllScene();
+
+			// 掛載panorama scene
 			for (const sceneId in this.panoramaInfoProps.streetViewList) {
 				const panoramaInfo = this.panoramaInfoProps.streetViewList[sceneId];
 				this.panorama.addScene(sceneId, panoramaInfo);
@@ -521,6 +525,7 @@ export default {
 		resetCaseHotSpot() {
 			this.clearHotSpot();
 			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			if(!panoramaInfo) return;
 
 			for(const caseSpec of this.caseGeoJson.features) {
 				const geoCoordinates = caseSpec.properties.centerPt;
