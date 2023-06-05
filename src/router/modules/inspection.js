@@ -34,6 +34,26 @@ const inspectionRouter = {
 				vTag: 'alpha'
 			}
 		},
+		{
+			path: 'list',
+			component: () => import('@/views/inspection/list'),
+			name: 'list',
+			meta: {
+				title: '缺失列表',
+				roles: ['inspection.viewer'],
+				vTag: 'alpha'
+			}
+		},
+		{
+			path: 'listEdit',
+			component: () => import('@/views/inspection/listEdit'),
+			name: 'listEdit',
+			meta: {
+				title: '編輯缺失列表',
+				roles: ['inspection.viewer'],
+				vTag: 'alpha'
+			}
+		},
 	]
 }
 export default inspectionRouter
