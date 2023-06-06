@@ -524,8 +524,9 @@ export default {
 		},
 		resetCaseHotSpot() {
 			this.clearHotSpot();
+			if(this.panoramaInfoProps.data.length == 0) return;
 			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
-			if(!panoramaInfo) return;
+			// if(!panoramaInfo) return;
 
 			for(const caseSpec of this.caseGeoJson.features) {
 				const geoCoordinates = caseSpec.properties.centerPt;

@@ -68,7 +68,9 @@ export default {
 			map: null,
 			inspectIdNow: null,
 			clientStartX: 0,
-			caseGeoJson: {},
+			caseGeoJson: {
+				features: []
+			},
 			polyLine: [],
 			markersTemp: {},
 			pointCurr: null,
@@ -566,7 +568,7 @@ export default {
 		},
 		clearAll() {
 			// console.log("clearAll");
-			this.caseGeoJson = {};
+			this.caseGeoJson = Object.assign({}, this.caseGeoJson, { features: [] });
 
 			this.pointCurr.setMap(null);
 
