@@ -34,6 +34,16 @@ const inspectionRouter = {
 				vTag: 'alpha'
 			}
 		},
+		{
+			path: 'caseMarkList',
+			component: () => import('@/views/inspection/caseMarkList'),
+			name: 'caseMarkList',
+			meta: {
+				title: '標記列表',
+				roles: ['inspection.marker'],
+				vTag: 'alpha'
+			}
+		}
 	]
 }
 export default inspectionRouter

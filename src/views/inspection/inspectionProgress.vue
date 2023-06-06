@@ -70,9 +70,12 @@
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="操作" align="center">
+			<el-table-column v-if="checkPermission(['inspection.marker'])" label="操作" align="center">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">標記</el-button>
+					<el-button-group>
+						<el-button class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">標記</el-button>
+						<el-button class="btn-action" type="info" plain size="mini" round @click="showList(row)">列表</el-button>
+					</el-button-group>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -91,7 +94,7 @@
 <script>
 import moment from "moment";
 import { getInspectionList, setInspectionList } from "@/api/inspection";
-
+import checkPermission from '@/utils/permission';
 
 export default {
 	name: "inspectionProgress",
@@ -147,10 +150,17 @@ export default {
 	mounted() {
 	},
 	methods: {
+		checkPermission,
 		showMap(row) {
 			this.$router.push({
 				path: "/inspection/caseMark",
 				query: { inspectId: row.InspectId, caseInspectId: row.InspectId },
+			});
+		},
+		showList(row) {
+			this.$router.push({
+				path: "/inspection/caseMarkList",
+				query: { caseInspectId: row.InspectId },
 			});
 		},
 		formatTime(time) {

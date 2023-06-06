@@ -40,3 +40,20 @@ export function uploadInspectionCase(data) {
 		data
 	})
 }
+
+// 標記列表
+export function getInspectionCaseList(query) {
+	return request({
+		url: '/inspection/caseList',
+		method: 'get',
+		params: query
+	})
+}
+
+export function importInspectionCase(data) {
+	return request({
+		url: '/inspection/caseImport',
+		method: 'post',
+		data
+	})
+}
