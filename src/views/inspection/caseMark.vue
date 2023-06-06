@@ -548,8 +548,12 @@ export default {
 			this.map.setZoom(20);
 		},
 		showCaseContent(feature, position) {
-			const description = `${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
-			this.infoWindow.setContent(description);
+			let contentText = `<div style="width: 200px;">`;
+			contentText += `<div>${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})</div>`;
+			contentText += `<img src="${feature.getProperty("ImgZoomOut")}" class="img" onerror="this.className='img hide-img'">`;
+			contentText += `</div>`;
+
+			this.infoWindow.setContent(contentText);
 			this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
 			this.infoWindow.setPosition(position);
 
@@ -657,6 +661,11 @@ export default {
 				border-collapse: collapse !important
 				border: none !important
 				padding: 5px
+			.img
+				width: 100%
+				object-fit: scale-down
+				&.hide-img
+					display: none
 	.btn-map
 		display: flex
 		flex-direction: column
