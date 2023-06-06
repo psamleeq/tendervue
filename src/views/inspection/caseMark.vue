@@ -26,13 +26,12 @@
 					<!-- <div ref="compass" class="btn-action btn-compass" style="transform: rotate(0deg)" @click="setHeading(0)" /> -->
 					<el-button class="btn-action btn-target" plain icon="el-icon-aim" @click="setMarkerPosition()" />
 				</div>
-				<div class="touch-div" ref="splitLine">
+			</el-col>
+			<el-col ref="rightPanel" class="right-panel" :span="16" :style="panelStyle.rightPanel" >
+				<div class="touch-div" ref="splitLine" @click="openPanorama()">
 					<span />
 					<span />
 				</div>
-			</el-col>
-			<el-col ref="rightPanel" class="right-panel" :span="16" :style="panelStyle.rightPanel" >
-				<el-button class="touch-btn" type="warning" plain @click="openPanorama()">街景</el-button>
 				<panorama-view ref="panoramaView" :loading.sync="loading" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
@@ -42,7 +41,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment'
-import { getPanoramaJson, getInspectGeoJson, uploadInspectionCase } from "@/api/inspection";
+import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase } from "@/api/inspection";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
 
@@ -406,7 +405,7 @@ export default {
 		getCaseList() {
 			this.map.data.forEach(feature => this.map.data.remove(feature));
 
-			getInspectGeoJson({
+			getInspectionCaseGeoJson({
 				caseInspectId: this.listQuery.caseInspectId
 			}).then(response => {
 				// this.caseGeoJson = response.data.caseGeoJson;
@@ -641,33 +640,19 @@ export default {
 		position: absolute
 		top: 0
 		height: 100%
-		left: 100%
-		width: 20px
+		right: 100%
+		width: 14px
 		display: flex
 		justify-content: center
 		align-items: center
 		cursor: col-resize
 		z-index: 20
-		// background-color: rgba(#F2F6FC, 0.6)
+		background-color: rgba(#F2F6FC, 0.4)
 		span 
 			width: 2px
 			background: #aaa
 			margin: 0 2px
 			height: 15px
-	.touch-btn
-		position: absolute
-		top: 50%
-		height: 50px
-		right: 100%
-		width: 10px
-		transform: translateY(-50%)
-		padding: 2px 18px 2px 5px 
-		z-index: 20
-		// background-color: rgba(#F2F6FC, 0.6)
-		span
-			width: 10px
-			writing-mode: vertical-lr
-			margin-right: 20px
 	#map
 		overflow: hidden
 		background: none !important

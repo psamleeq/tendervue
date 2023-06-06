@@ -87,7 +87,7 @@ import { mapGetters } from "vuex";
 import { Loader } from "@googlemaps/js-api-loader";
 import { parseXml, xml2json } from '../../utils/xml2json';
 import { json2xml } from '../../utils/json2xml';
-import { uploadRoadCase } from '@/api/road'
+import { uploadRoadCase } from '@/api/road';
 import { getDistMap, getTenderMap, getBlockGeo } from "@/api/type";
 
 // 載入 Google Map API
@@ -781,6 +781,7 @@ export default {
 						});
 					} 
 					this.loading = false;
+					this.isUpload = false;
 				}).catch(err => {
 					console.log(err);
 					this.loading = false;

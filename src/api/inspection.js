@@ -25,7 +25,7 @@ export function getPanoramaJson(query) {
 	})
 }
 
-export function getInspectGeoJson(query) {
+export function getInspectionCaseGeoJson(query) {
 	return request({
 		url: '/inspection/caseGeoJson',
 		method: 'get',
