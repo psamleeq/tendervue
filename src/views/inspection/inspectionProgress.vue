@@ -100,10 +100,11 @@ export default {
 		loading: false,
 		dialogMapVisible: true,
 		listQuery: {
-			ZipCode:null,
+			ZipCode:0,
 			searchDate:[],
 		},
 		area:{
+			0: "全部",
 			103:"大同區",
 			104:"中山區"
 		},
@@ -156,7 +157,7 @@ export default {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
 		},
 		getList(){
-			if (!Number(this.listQuery.ZipCode)||this.listQuery.searchDate==[]) {
+			if ((this.listQuery.ZipCode != 0 && !Number(this.listQuery.ZipCode)) || this.listQuery.searchDate==[]) {
 				this.$message({
 					message: "請選擇行政區",
 					type: "error",
