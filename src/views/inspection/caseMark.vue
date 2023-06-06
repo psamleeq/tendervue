@@ -32,6 +32,7 @@
 				</div>
 			</el-col>
 			<el-col ref="rightPanel" class="right-panel" :span="16" :style="panelStyle.rightPanel" >
+				<el-button class="touch-btn" type="warning" plain @click="openPanorama()">街景</el-button>
 				<panorama-view ref="panoramaView" :loading.sync="loading" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
@@ -391,9 +392,9 @@ export default {
 						this.$set(this.panoramaInfo, "sceneSetting", json.sceneSetting);
 						// console.log(this.panoramaInfo);
 						this.setPanoramaLayer();
-
+						this.openPanorama(true);
 						this.loading = false;
-						this.$nextTick(() => this.moveHandle(this.screenWidth*0.25));
+						
 					});
 				}
 			}).catch(err => this.loading = false);
@@ -447,6 +448,10 @@ export default {
 				this.loading = false;
 				this.isUpload = false;
 			})
+		},
+		openPanorama(force = false) {
+			const ratio = (force || this.clientStartX == this.screenWidth * 0.5) ? 0.25 : 0.5;
+			this.$nextTick(() => this.moveHandle(this.screenWidth*ratio));
 		},
 		setHeading(azimuth) {
 			azimuth = Math.abs(azimuth) > 360 ? azimuth % 360 : azimuth;
@@ -647,6 +652,20 @@ export default {
 			background: #aaa
 			margin: 0 2px
 			height: 15px
+	.touch-btn
+		position: absolute
+		top: 50%
+		height: 50px
+		right: 100%
+		width: 10px
+		transform: translateY(-50%)
+		padding: 2px 18px 2px 5px 
+		z-index: 20
+		// background-color: rgba(#F2F6FC, 0.6)
+		span
+			width: 10px
+			writing-mode: vertical-lr
+			margin-right: 20px
 	#map
 		overflow: hidden
 		background: none !important
