@@ -594,7 +594,8 @@ export default {
 								this.blockInfo.feature.getGeometry().forEachLatLng(point => bounds.extend(point));
 
 								const overlay = new MapImgOverlay(bounds, imgSrc, this.map);
-								this.$set(this.overlayLayer, this.blockInfo.id, overlay);
+								// this.$set(this.overlayLayer, this.blockInfo.id, overlay);
+								this.overlayLayer[this.blockInfo.id] = overlay;
 
 								google.maps.event.addListenerOnce(this.map, 'idle', () => {
 									if(overlay.checkImg()) {
