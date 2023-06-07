@@ -26,7 +26,7 @@
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
 				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">重整</el-button>
-				<el-button v-if="Object.keys(overlayLayer).length > 0" class="filter-item" type="danger" size="small" icon="el-icon-delete" @click="clearOverlay()">清除正射</el-button>
+				<el-button v-if="hasClearOverlay" class="filter-item" type="danger" size="small" icon="el-icon-delete" @click="clearOverlay()">清除正射</el-button>
 			</div>
 		</div>
 
@@ -127,6 +127,7 @@ export default {
 			loading: false,
 			showCaseList: false,
 			showImgViewer: false,
+			hasClearOverlay: false,
 			blockSwitch: true,
 			caseSwitch: false,
 			screenWidth: window.innerWidth,
@@ -138,7 +139,7 @@ export default {
 			// map: null,
 			imgUrls: [],
 			// dataLayer: {},
-			overlayLayer: {},
+			// overlayLayer: {},
 			infoWindow: null,
 			// geoJSON: {},
 			caseInfo: [],
@@ -295,6 +296,7 @@ export default {
 	watch: { },
 	created() {
 		this.dataLayer = { PCIBlock: {} };
+		this.overlayLayer = {};
 		this.geoJSON = {};
 		this.geoTiffPool = new Pool();
 	},
@@ -599,6 +601,7 @@ export default {
 
 								google.maps.event.addListenerOnce(this.map, 'idle', () => {
 									if(overlay.checkImg()) {
+										this.hasClearOverlay = true;
 										this.$el.querySelector("#map #info-scrn-full-btn").style.opacity = "1";
 										this.$el.querySelector("#map #info-download-btn").style.opacity = "1";
 										this.infoWindow.close();
@@ -1154,6 +1157,8 @@ export default {
 				this.overlayLayer[blockId].setMap(null);
 				this.$delete(this.overlayLayer, blockId);
 			}
+
+			this.hasClearOverlay = false;
 		},
 		clearAll() {
 			this.infoWindow.close();
