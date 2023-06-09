@@ -205,7 +205,7 @@ export default {
 			})
 		},
 		calPCI(timeStart, timeEnd) {
-			resetPCI({ tenderId: this.listQuery.tenderId, timeStart, timeEnd }).then(response => {
+			resetPCI({ tenderId: this.listQuery.tenderId, timeStart, timeEnd: moment(timeEnd).add(1, "d").format("YYYY-MM-DD") }).then(response => {
 				if (response.statusCode == 20000 ) {
 					this.$message({
 						message: "重置成功",
@@ -222,7 +222,7 @@ export default {
 				});
 				blockId = "";
 			} else {
-				updatePCI({ tenderId: this.listQuery.tenderId, pciValue, blockId, timeStart, timeEnd }).then(response => {
+				updatePCI({ tenderId: this.listQuery.tenderId, pciValue, blockId, timeStart, timeEnd: moment(timeEnd).add(1, "d").format("YYYY-MM-DD") }).then(response => {
 					if (response.statusCode == 20000 ) {
 						const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '滿值';
 						this.$message({
@@ -240,7 +240,7 @@ export default {
 					type: "error",
 				});
 			} else {
-				updatePCIByName({ tenderId: this.listQuery.tenderId, pciValue, roadName, timeStart, timeEnd }).then(response => {
+				updatePCIByName({ tenderId: this.listQuery.tenderId, pciValue, roadName, timeStart, timeEnd: moment(timeEnd).add(1, "d").format("YYYY-MM-DD") }).then(response => {
 					if (response.statusCode == 20000 ) {
 						const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '填滿';
 						this.$message({
