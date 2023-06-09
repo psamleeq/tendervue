@@ -555,8 +555,10 @@ export default {
 			this.map.setZoom(20);
 		},
 		showCaseContent(feature, position) {
+			const caseTypeStr = `${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
+			const caseSizeStr = `${Math.round(feature.getProperty("MillingLength") * 100) / 100} x ${Math.round(feature.getProperty("MillingWidth") * 100) / 100} = ${Math.round(feature.getProperty("MillingArea") * 100) / 100}`
 			let contentText = `<div style="width: 200px;">`;
-			contentText += `<div>${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})</div>`;
+			contentText += `<div> ${caseTypeStr} - ${caseSizeStr}</div>`;
 			contentText += `<img src="${feature.getProperty("ImgZoomOut")}" class="img" onerror="this.className='img hide-img'">`;
 			contentText += `</div>`;
 
