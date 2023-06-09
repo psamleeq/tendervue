@@ -32,7 +32,7 @@
 					<span />
 					<span />
 				</div>
-				<panorama-view ref="panoramaView" :loading.sync="loading" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
+				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
 	</div>
@@ -64,6 +64,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			isUpload: true,
 			map: null,
 			inspectIdNow: null,
 			clientStartX: 0,
@@ -414,7 +415,7 @@ export default {
 
 				this.$nextTick(() => {
 					this.$refs.panoramaView.resetCaseHotSpot();
-					// this.moveHandle(this.screenWidth*0.25);
+					this.moveHandle(this.screenWidth*0.25);
 				});
 			}).catch(err => this.loading = false);
 		},

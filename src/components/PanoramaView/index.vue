@@ -71,7 +71,7 @@
 				</el-form>
 				<el-button-group class="btn-action-group">
 					<el-button type="success" @click="uploadCase()" @disabled="isUpload">新增</el-button>
-					<el-button type="danger" @click="clearHotSpot()" @disabled="isUpload">清除</el-button>
+					<el-button type="danger" @click="clearAll()" @disabled="isUpload">清除</el-button>
 				</el-button-group>
 			</el-card>
 		</div>
@@ -88,6 +88,10 @@ export default {
 	name: "panoramaView",
 	props: {
 		loading: {
+			required: true,
+			type: Boolean
+		},
+		isUpload: {
 			required: true,
 			type: Boolean
 		},
@@ -154,8 +158,7 @@ export default {
 			set(val) {
 				this.$emit('update:panoramaInfo', val)
 			}
-		},
-
+		}
 	},
 	created() { },
 	mounted() {
@@ -177,12 +180,6 @@ export default {
 			// const x = (yaw / 360 + 0.5) * this.imageSize.width;
 			// const y = (0.5 - pitch / 180) * this.imageSize.height;
 			// console.log(x, y);
-
-			// NOTE: 預估缺失位置(ME)
-			// const distance = this.getDistance(pitch);
-			// console.log("distance: ", distance);
-			// const position = this.getPosition(distance, yaw);
-			// this.addDotHotSpot(this.getCoords(position), 2);
 
 			// NOTE: 預估缺失位置(詹博)
 			hotSpot.coordinates = this.transformMatrix(pitch, yaw);
@@ -315,7 +312,7 @@ export default {
 		uploadCase() {
 			this.$confirm(`確定上傳缺失?`, "確認", { showClose: false }).then(() => {
 				this.$emit('update:loading', true);
-				this.isUpload = true;
+				this.$emit('update:isUpload', true);
 
 				let coordinates = this.hotSpotIdList.dot.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat]));
 				coordinates.push(coordinates[0]);
@@ -429,23 +426,6 @@ export default {
 				img.src = imgUrl;
 			})
 		},
-		getDistance(pitch) {
-			return Math.abs(cameraHeight / Math.tan(pitch * Math.PI / 180));
-		},
-		getPosition(dist, yaw) {
-			const r = 0.00000900900901;
-			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
-			// console.log("x: ", dist * Math.sin((yaw + panoramaInfo.azimuth) * Math.PI / 180));
-			// console.log("y: ", dist * Math.cos((yaw + panoramaInfo.azimuth)  * Math.PI / 180));
-			const position = { 
-				lat: panoramaInfo.position.lat + dist * r * Math.cos((yaw + panoramaInfo.azimuth)  * Math.PI / 180), 
-				lng: panoramaInfo.position.lng + dist * r * Math.sin((yaw + panoramaInfo.azimuth)  * Math.PI / 180) 
-			};
-
-			this.$emit("addMarker", { position, type: 2 });
-
-			return position
-		},
 		getYaw(start, end) {
 			const dLng = (end.lng - start.lng) * Math.PI / 180;
 			const sLat = start.lat * Math.PI / 180;
@@ -523,7 +503,8 @@ export default {
 			this.hotSpotIdList.case.push(hotSpot);
 		},
 		resetCaseHotSpot() {
-			this.clearHotSpot();
+			this.clearAll();
+
 			if(this.panoramaInfoProps.data.length == 0) return;
 			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
 			// if(!panoramaInfo) return;
@@ -547,6 +528,22 @@ export default {
 				case: []
 			};
 			this.$emit("clearMarker");
+		},
+		clearAll() {
+			this.clearHotSpot();
+			this.caseInfo = {
+				dateReport: moment().startOf("d"),
+				distressType: "",
+				distressLevel: "",
+				millingLength: 0,
+				millingWidth: 0,
+				millingArea: 0,
+				place: "",
+				direction: 0,
+				lane: 1,
+				imgZoomIn: "",
+				imgZoomOut: ""
+			};
 		},
 
 		// NOTE: 預估缺失位置(詹博)
