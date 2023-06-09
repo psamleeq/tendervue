@@ -24,3 +24,12 @@ export function updatePCIByName(data) {
 		data
 	})
 }
+
+// TGOS 坐標回傳門牌服務
+export function getAddress(query) {
+	return request({
+		url: '/tgosTool/pointQueryAddr',
+		method: 'get',
+		params: query
+	})
+}

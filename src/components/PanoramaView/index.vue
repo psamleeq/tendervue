@@ -85,6 +85,7 @@
 import moment from "moment";
 import html2canvas from 'html2canvas';
 import { parseXml, xml2json } from '../../utils/xml2json';
+import { getAddress } from "@/api/tool";
 const { calcDistance, calArea } = require('@/utils/geo-tools');
 const cameraHeight = 2.5; // 攝影機高度
 
@@ -360,34 +361,21 @@ export default {
 			this.hotSpotIdList.dot.forEach(hotSpot => bounds.extend(hotSpot.coordinates));
 			const point = bounds.getCenter().toJSON();
 
-			const postData = {
-				'oAPPId': process.env.VUE_APP_TGOS_APPID,
-				'oAPIKey': process.env.VUE_APP_TGOS_APPKEY,
-				'oPX': point.lng,
-				'oPY': point.lat,
-				'oBuffer': 50,
-				'oSRS': 'EPSG:4326',
-				'oResultDataType': 'JSON',
-				'oIsShowCodeBase': false
-			};
-			const formBody = Object.keys(postData).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(postData[key])).join('&');
+			getAddress(point).then(res => {
+				const resJson = JSON.parse(xml2json(parseXml(res.data), ''));
+				const addressJson = JSON.parse(resJson.string['#text']);
+				// console.log(addressJson);
 
-			fetch('https://addr.tgos.tw/addrws/v40/GeoQueryAddr.asmx/PointQueryAddr?', { method: 'POST', body: formBody, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
-				.then(res => res.text()).then(text => {
-					const resJson = JSON.parse(xml2json(parseXml(text), ''));
-					const addressJson = JSON.parse(resJson.string['#text']);
-					// console.log(addressJson);
-
-					if(addressJson.AddressList.length > 0) {
-						this.caseInfo.place = addressJson.AddressList[0].FULL_ADDR;
-					} else {
-						this.$message({
-							message: "查無地址",
-							type: "error",
-						});
-					}
-					this.isGetAddress = false;
-				});
+				if(addressJson.AddressList.length > 0) {
+					this.caseInfo.place = addressJson.AddressList[0].FULL_ADDR;
+				} else {
+					this.$message({
+						message: "查無地址",
+						type: "error",
+					});
+				}
+				this.isGetAddress = false;
+			}).catch(err => console.log(err));
 		},
 		screenshot(imgType="imgZoomIn", hfov) {
 			hfov = (hfov != undefined) ? hfov : this.panorama.getHfov();
