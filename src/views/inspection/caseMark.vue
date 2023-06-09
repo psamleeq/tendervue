@@ -64,7 +64,7 @@ export default {
 	data() {
 		return {
 			loading: false,
-			isUpload: true,
+			isUpload: false,
 			map: null,
 			inspectIdNow: null,
 			clientStartX: 0,

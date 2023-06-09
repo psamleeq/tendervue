@@ -25,7 +25,7 @@
 							size="mini"
 						/>
 					</el-form-item>
-					<el-form-item prop="type" label="缺失類型">
+					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 5px">
 						<el-select v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
 							<el-option v-for="(name, key) in options.caseTypeMap" :key="key" :label="name" :value="key" />
 						</el-select>
@@ -44,8 +44,11 @@
 					<el-form-item prop="millingArea" label="預估面積">
 						<el-input v-model="caseInfo.millingArea" size="mini" style="width: 130px" />
 					</el-form-item>
-					<el-form-item prop="address" label="地址" style="margin-bottom: 0">
+					<el-form-item prop="address" label="地址" style="margin-bottom: 5px">
 						<el-input v-model="caseInfo.place" type="textarea" autosize />
+						<div slot="label">地址
+							<el-button type="success" size="mini" style="padding: 5px" :loading="isGetAddress" @click="getAddress()">填入</el-button>
+						</div>
 					</el-form-item>
 					<el-form-item prop="roadDir" label="車道">
 						<el-input class="road-dir" v-model="caseInfo.lane" size="mini">
@@ -70,8 +73,8 @@
 					</el-form-item>
 				</el-form>
 				<el-button-group class="btn-action-group">
-					<el-button type="success" @click="uploadCase()" @disabled="isUpload">新增</el-button>
-					<el-button type="danger" @click="clearAll()" @disabled="isUpload">清除</el-button>
+					<el-button type="success" @click="uploadCase()" :loading="isUpload">新增</el-button>
+					<el-button type="danger" @click="clearAll()" :disabled="isUpload">清除</el-button>
 				</el-button-group>
 			</el-card>
 		</div>
@@ -81,6 +84,7 @@
 <script>
 import moment from "moment";
 import html2canvas from 'html2canvas';
+import { parseXml, xml2json } from '../../utils/xml2json';
 const { calcDistance, calArea } = require('@/utils/geo-tools');
 const cameraHeight = 2.5; // 攝影機高度
 
@@ -115,6 +119,7 @@ export default {
 	data() {
 		return {
 			localEnv: process.env.NODE_ENV == 'development',
+			isGetAddress: false,
 			panorama: null,
 			prevSceneId: [],
 			hotSpotId: 0,
@@ -321,7 +326,7 @@ export default {
 					"type": this.caseInfo.distressType == 29 ? "MultiLineString" : 'MultiPolygon',
 					"coordinates": this.caseInfo.distressType == 29 ? [ coordinates ] : [[ coordinates ]]
 				};
-				console.log(this.caseInfo);
+				// console.log(this.caseInfo);
 
 				this.$emit("uploadCase", this.caseInfo);
 			}).catch(err => console.log(err));
@@ -348,6 +353,41 @@ export default {
 				this.caseInfo.millingWidth = Math.round(Math.min(...distanceList) * 100) / 100;
 				this.caseInfo.millingArea = Math.round(calArea(this.hotSpotIdList.dot.map(hotSpot => ([ hotSpot.coordinates.lng, hotSpot.coordinates.lat ]))) * 100) / 100;
 			}
+		},
+		getAddress() {
+			this.isGetAddress = true;
+			const bounds = new google.maps.LatLngBounds();
+			this.hotSpotIdList.dot.forEach(hotSpot => bounds.extend(hotSpot.coordinates));
+			const point = bounds.getCenter().toJSON();
+
+			const postData = {
+				'oAPPId': process.env.VUE_APP_TGOS_APPID,
+				'oAPIKey': process.env.VUE_APP_TGOS_APPKEY,
+				'oPX': point.lng,
+				'oPY': point.lat,
+				'oBuffer': 50,
+				'oSRS': 'EPSG:4326',
+				'oResultDataType': 'JSON',
+				'oIsShowCodeBase': false
+			};
+			const formBody = Object.keys(postData).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(postData[key])).join('&');
+
+			fetch('https://addr.tgos.tw/addrws/v40/GeoQueryAddr.asmx/PointQueryAddr?', { method: 'POST', body: formBody, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+				.then(res => res.text()).then(text => {
+					const resJson = JSON.parse(xml2json(parseXml(text), ''));
+					const addressJson = JSON.parse(resJson.string['#text']);
+					// console.log(addressJson);
+
+					if(addressJson.AddressList.length > 0) {
+						this.caseInfo.place = addressJson.AddressList[0].FULL_ADDR;
+					} else {
+						this.$message({
+							message: "查無地址",
+							type: "error",
+						});
+					}
+					this.isGetAddress = false;
+				});
 		},
 		screenshot(imgType="imgZoomIn", hfov) {
 			hfov = (hfov != undefined) ? hfov : this.panorama.getHfov();
