@@ -45,8 +45,9 @@
 						<el-input v-model="caseInfo.millingArea" size="mini" style="width: 130px" />
 					</el-form-item>
 					<el-form-item prop="address" label="地址" style="margin-bottom: 5px">
-						<el-input v-model="caseInfo.place" type="textarea" autosize />
-						<div slot="label">地址
+						<el-input v-model="caseInfo.place" type="textarea" :rows="2" />
+						<div slot="label">
+							<div style="height: 24px; line-height: 24px; margin: -3px 2px -5px 0">地址</div>
 							<el-button type="success" size="mini" style="padding: 5px" :loading="isGetAddress" @click="getAddress()">填入</el-button>
 						</div>
 					</el-form-item>
