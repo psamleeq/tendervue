@@ -44,14 +44,13 @@
 				:sortable="value.sortable"
 			>
 				<template slot-scope="{ row, column }">
-					<span>{{ formatter(row, column) }}</span>
-					<span v-if="column.property == 'DistressType'">
+					<span v-if="column.property.includes('Img')">
 						<el-popover popper-class="imgHover" placement="top" trigger="hover" :close-delay="0">
-							<el-image style="width: 100%; height: 100%" :src="row.ImgZoomOut" fit="scale-down" />
-							<el-button slot="reference" class="btn-action" type="primary" plain size="mini" round @click="showImg(row)">檢視</el-button>
-							<!-- <i  class="el-icon-picture" style="color: #409EFF; margin-left: 5px" /> -->
+							<el-image style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" />
+							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
 						</el-popover>
 					</span>
+					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
 			<el-table-column label="地圖" align="center">
@@ -137,14 +136,14 @@ export default {
 					name: "面積(㎡)",
 					sortable: true,
 				},
-				// depth: {
-				// 	name: "深度(cm)",
-				// 	sortable: true,
-				// },
-				// reccontrol: {
-				// 	name: "狀態",
-				// 	sortable: false
-				// }
+				ImgZoomIn: {
+					name: "近照",
+					sortable: false,
+				},
+				ImgZoomOut: {
+					name: "遠照",
+					sortable: false,
+				}
 			},
 			// total: 0,
 			list: [],
@@ -194,8 +193,9 @@ export default {
 		handleCheckedChange(val) {
 			this.tableSelect = val;
 		},
-		showImg(row) {
-			this.imgUrls = [ row.ImgZoomOut ];
+		showImg(row, prop) {
+			const otherProp = ['ImgZoomIn', 'ImgZoomOut'].filter(imgType => imgType != prop)[0];
+			this.imgUrls = [ row[prop], row[otherProp] ];
 			this.showImgViewer = true;
 		},
 		showMapViewer(row) {
