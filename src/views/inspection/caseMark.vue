@@ -445,6 +445,7 @@ export default {
 				} 
 				this.getCaseList();
 				this.loading = false;
+				this.isUpload = false;
 			}).catch(err => {
 				console.log(err);
 				this.loading = false;

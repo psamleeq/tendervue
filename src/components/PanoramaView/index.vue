@@ -393,11 +393,13 @@ export default {
 				const img = new Image();
 				img.addEventListener("load", async () => {
 					const canvas = document.createElement('canvas');
-					canvas.width = img.width;
-					canvas.height = img.height;
+					// console.log("image: ", img.width, img.height);
+					const scale = Math.max(img.width, img.height) >= 1024 ? 1024/Math.max(img.width, img.height) : 1;
+					canvas.width = img.width * scale;
+					canvas.height = img.height * scale;
 					// console.log("canvas: ", canvas.width, canvas.height);
 					const canvasContext = canvas.getContext('2d');
-					canvasContext.drawImage(img, 0, 0);
+					canvasContext.drawImage(img, 0, 0, canvas.width, canvas.height);
 
 					// 隱藏DOM
 					this.$el.querySelector("#panorama canvas").setAttribute("data-html2canvas-ignore", true);
@@ -438,8 +440,8 @@ export default {
 					canvasContext.stroke();
 					
 					// 產出jpg
-					html2canvas(containerDom, { canvas, backgroundColor: 'rgba(0, 0, 0, 0)' }).then(canvas => {
-						this.caseInfo[imgType] = canvas.toDataURL("image/jpeg");
+					html2canvas(containerDom, { canvas, backgroundColor: 'rgba(0, 0, 0, 0)', width: canvas.width, height: canvas.height, scale  }).then(canvas => {
+						this.caseInfo[imgType] = canvas.toDataURL("image/jpeg", 0.8);
 
 						if(imgType == "imgZoomIn" && this.caseInfo.imgZoomOut.length == 0) this.screenshot("imgZoomOut", this.panorama.getHfov()+30);
 						// NOTE: test download
