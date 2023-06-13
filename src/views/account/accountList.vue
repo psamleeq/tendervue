@@ -262,10 +262,4 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.addAcountContainer
-	height: 150px
-	display:flex
-	flex-direction:column
-	align-items: stretch
-	align-content:space-around
 </style>
