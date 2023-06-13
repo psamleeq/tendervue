@@ -15,6 +15,16 @@ const carRouter = {
 	},
 	children: [
 		{
+			path: 'monitor',
+			component: () => import('@/views/car/monitor'),
+			name: 'carMonitor',
+			meta: {
+				title: '即時影像',
+				roles: ['car.viewer'],
+				vTag: 'alpha'
+			}
+		},
+		{
 			path: 'route',
 			component: () => import('@/views/car/route'),
 			name: 'carRoute',

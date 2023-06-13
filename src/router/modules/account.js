@@ -8,7 +8,7 @@ const dispatchRouter = {
 	meta: {
 		title: '帳號管理',
 		icon: 'clipboard-account-outline',
-		roles: ['beta'],
+		roles: ['rAdm'],
 		isNew: true
 	},
 	children: [
@@ -19,7 +19,7 @@ const dispatchRouter = {
 			name: 'accountList',
 			meta: {
 				title: '帳號列表',
-				roles: ['beta'],
+				roles: ['rAdm'],
 				isNew: true
 			}
 		},

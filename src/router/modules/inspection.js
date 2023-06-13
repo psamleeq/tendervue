@@ -21,7 +21,7 @@ const inspectionRouter = {
 			meta: {
 				title: '巡查歷程',
 				roles: ['inspection.viewer'],
-				vTag: 'alpha'
+				isNew: true
 			}
 		},
 		{
@@ -31,7 +31,7 @@ const inspectionRouter = {
 			meta: {
 				title: '缺失標記',
 				roles: ['inspection.marker'],
-				vTag: 'alpha'
+				isNew: true
 			}
 		},
 		{
@@ -41,7 +41,7 @@ const inspectionRouter = {
 			meta: {
 				title: '標記列表',
 				roles: ['inspection.marker'],
-				vTag: 'alpha'
+				isNew: true
 			}
 		}
 	]

@@ -122,7 +122,7 @@
 
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
-import moment from 'moment'
+import moment from 'moment';
 import { getInspectionList, getSpecInspection, getSpecInspectionTracks } from "@/api/car";
 import elDragDialog from '@/directive/el-drag-dialog';
 
