@@ -103,15 +103,16 @@ export default {
 		this.showJobTicket = false;
 	},
 	methods: {
-		// imgPreload(data) {
-		// 	//img preload
-		// 	this.imgDOMObj = {};
-		// 	data.forEach(l => { 
-		// 		let image = new Image();
-		// 		image.src = l.ImgZoomOut;
-		// 		this.imgDOMObj [l.CaseNo] = image;
-		// 	});
-		// },
+		imgPreload(data) {
+			//img preload
+			this.imgDOMObj = {};
+			data.forEach(l => { 
+				let image = new Image();
+				image.src = "https://storage.googleapis.com/adm_distress_image/tbl_case_image/5477785_ImgZoomOut_1.jpg"
+				this.imgDOMObj [l.id] = image;
+			});
+			
+		},
 		async createPdf() {
 			return new Promise((resolve, reject) => {
 				const splitTable = this.tableSelect.reduce((acc, cur) => {
@@ -154,48 +155,61 @@ export default {
 					this.pdfDoc.text(`預 定　數 量:`, width - 100, height-227, { align: 'left' });
 					this.pdfDoc.text(`RRRRRRRRRRRR`, width - 65, height-227, { align: 'left' });
 
-					//圖片
-					this.pdfDoc.autoTable({ 
-						head: [['修復地點相片']],
-						// body: [ imgTable.map(l => l.ImgZoomOut) ],
-						body: ['img'],
-						theme: 'plain',
-						styles: { font: "edukai", lineWidth: 0.5, lineColor: 10},
-						headStyles: { halign: 'center',fontSize:14 },
-						bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 130, minCellHeight: 75, halign: 'center', valign: 'middle' }, 
-						// didDrawCell: (data) => {
-						// 	if(data.cell.section === 'body') {
-						// 		// console.log(data);
-						// 		this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
-						// 	}
-						// },
-						margin: 40,
-						startY: height-222,
-						pageBreak: 'avoid'
-					});
-					this.pdfDoc.autoTable({ 
-						head: [['臨時修補相片']],
-						// body: [ imgTable.map(l => l.ImgZoomOut) ],
-						body: ['img'],
-						theme: 'plain',
-						styles: { font: "edukai", lineWidth: 0.5, lineColor: 10 },
-						headStyles: { halign: 'center',fontSize:14},
-						bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 130, minCellHeight: 75, halign: 'center', valign: 'middle' }, 
-						// didDrawCell: (data) => {
-						// 	if(data.cell.section === 'body') {
-						// 		// console.log(data);
-						// 		this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 45, 45);
-						// 	}
-						// },
-						margin: 40,
-						startY: height-134,
-						pageBreak: 'avoid'
-					});
+
+					const splitImgTable = table.reduce((acc, cur) => {
+						if(acc[acc.length-1].length < 1) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
+					for(const [imgIndex, imgTable] of splitImgTable.entries()){
+						//圖片
+						this.pdfDoc.autoTable({ 
+							head: [['修復地點相片']],
+							// body: [ imgTable.map(l => l.ImgZoomOut) ],
+							body: [imgTable.map(l=>l.id)],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.5, lineColor: 10},
+							headStyles: { halign: 'center',fontSize:14 },
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 130, minCellHeight: 75, halign: 'center', valign: 'middle' }, 
+							didDrawCell: (data) => {
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 130, 75);
+								}
+							},
+							margin: 40,
+							startY: height-222,
+							pageBreak: 'avoid'
+						});
+						this.pdfDoc.autoTable({ 
+							head: [['臨時修補相片']],
+							// body: [ imgTable.map(l => l.ImgZoomOut) ],
+							body: [imgTable.map(l=>l.id)],
+							theme: 'plain',
+							styles: { font: "edukai", lineWidth: 0.5, lineColor: 10 },
+							headStyles: { halign: 'center',fontSize:14},
+							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 130, minCellHeight: 75, halign: 'center', valign: 'middle' }, 
+							didDrawCell: (data) => {
+								console.log(data);
+								if(data.cell.section === 'body') {
+									// console.log(data);
+									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 130, 75);
+								}
+							},
+							margin: 40,
+							startY: height-134,
+							pageBreak: 'avoid'
+						});
+
+					}
+					
 
 					this.pdfDoc.text(`工程師`, width - 185, height-38, { align: 'left' });
 					this.pdfDoc.text(`專案組長`, width - 125, height-38, { align: 'left' });
 					this.pdfDoc.text(`專案組任`, width - 55, height-38, { align: 'left' });
 				}
+				
+				
 
 				
 

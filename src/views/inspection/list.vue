@@ -368,8 +368,7 @@ export default {
 		getRoadCaseType().then(response => {
 			// this.listQuery.caseType = JSON.parse(JSON.stringify(response.data.list));
 			this.options.caseType = JSON.parse(JSON.stringify(response.data.list.filter(l => l && l.length != 0)));
-			for(const type of this.options.caseType) if(type && type.length != 0) this.listQuery.caseType.push({ name: type, checked: false, level: 0 });
-		});
+			for(const type of this.options.caseType) if(type && type.length != 0) this.listQuery.caseType.push({ name: type, checked: false, level: 0 });		});
 
 		getTenderRound().then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
@@ -519,6 +518,7 @@ export default {
 					this.list.forEach(l => {
 						if(l.wkb_geometry) l.wkb_geometry = JSON.parse(l.wkb_geometry);
 					});
+                    this.$refs.inspectionListPdf.imgPreload(this.list);
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
