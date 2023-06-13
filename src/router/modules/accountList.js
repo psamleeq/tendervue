@@ -4,9 +4,9 @@ const dispatchRouter = {
 	path: '/accountList',
 	component: Layout,
 	// redirect: '/dispatch/assign',
-	name: 'accountList',
+	name: 'accountManager',
 	meta: {
-		title: '帳號列表',
+		title: '帳號管理',
 		icon: 'clipboard-account-outline',
 		roles: ['beta'],
 		isNew: true
