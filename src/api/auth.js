@@ -42,7 +42,7 @@ export function getAccountList(query) {
 }
 
 //帳號新增
-export function addAcount(data) {
+export function addAccount(data) {
 	return request({
 		url: '/auth/account',
 		method: 'post',

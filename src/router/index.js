@@ -7,6 +7,7 @@ Vue.use(Router);
 import Layout from '@/layout';
 
 /* Router Modules */
+import accountList from './modules/account';
 import unitRouter from './modules/unit';
 import inspectionRouter from './modules/inspection';
 import caseRouter from './modules/case';
@@ -19,7 +20,6 @@ import PIRouter from './modules/PI';
 import otherRouter from './modules/other';
 import carRouter from './modules/car';
 import priceRouter from './modules/price';
-import accountList from './modules/accountList';
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -102,6 +102,7 @@ export const constantRoutes = [
  * the routes that need to be dynamically loaded based on user roles
  */
 export const asyncRoutes = [
+	accountList,
 	unitRouter,
 	inspectionRouter,
 	caseRouter,
@@ -114,7 +115,6 @@ export const asyncRoutes = [
 	expAnalysisRouter,
 	otherRouter,
 	carRouter,
-  accountList,
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]

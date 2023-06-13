@@ -1,7 +1,7 @@
 import Layout from '@/layout'
 
 const dispatchRouter = {
-	path: '/accountList',
+	path: '/account',
 	component: Layout,
 	// redirect: '/dispatch/assign',
 	name: 'accountManager',
@@ -15,7 +15,7 @@ const dispatchRouter = {
 		
 		{
 			path: 'accountList',
-			component: () => import('@/views/accountList/accountList'),
+			component: () => import('@/views/account/accountList'),
 			name: 'accountList',
 			meta: {
 				title: '帳號列表',

@@ -85,7 +85,7 @@
 
 <script>
 import moment from "moment";
-import { getAccountList,addAcount,changeActive,updatePassword } from "@/api/auth";
+import { getAccountList,addAccount,changeActive,updatePassword } from "@/api/auth";
 
 
 export default {
@@ -170,14 +170,29 @@ export default {
 		//新增帳號
 		addAccount(){
 			this.showAddDialog = false;
-			addAcount({
-				account: this.form.account,
-				password: this.form.password,
-				nickname: this.form.nickname
+			addAccount({
+				account: this.newAccountForm.account,
+				password: this.newAccountForm.password,
+				nickname: this.newAccountForm.nickname
 			}).then(response => {
-					this.getList()
+					this.getList();
+					this.newAccountForm = {
+						account: "",
+						password: "",
+						nickname: ""
+					};
 					this.loading = false;
-			}).catch(err => {this.loading = false});
+					this.$message({
+						type: 'success',
+						message: `建立成功`
+					})
+			}).catch(err => {
+				this.loading = false;
+				this.$message({
+					type: 'warning',
+					message: '建立失敗'
+				})
+			});
 		},
 		//狀態切換
 		updateActive(row,value){
