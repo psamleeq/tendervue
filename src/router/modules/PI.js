@@ -97,6 +97,16 @@ const PIRouter = {
 				// 	}
 				// },
 				{
+					path: 'PI2_1',
+					component: () => import('@/views/PI/perfReport/PI2_1'),
+					name: 'PI2_1',
+					meta: { 
+						title: 'PI2.1', 
+						roles: ['PIreport.21'],
+						vTag: 'Alpha' 
+					}
+				},
+				{
 					path: 'PI2_1_Att',
 					component: () => import('@/views/PI/perfReport/PI2_1_Att'),
 					name: 'PI2_1_Att',
@@ -104,6 +114,16 @@ const PIRouter = {
 						title: 'PI2.1附件', 
 						roles: ['PIreport.21'],
 						vTag: 'Alpha' 
+					}
+				},
+				{
+					path: 'PI3_1',
+					component: () => import('@/views/PI/perfReport/PI3_1'),
+					name: 'PI3_1',
+					meta: {
+						title: 'PI3.1',
+						roles: ['PIreport.31'],
+						vTag: 'Alpha'
 					}
 				},
 				{
