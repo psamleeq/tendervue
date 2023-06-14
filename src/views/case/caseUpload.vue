@@ -616,70 +616,73 @@ export default {
 				// console.log(json);
 				const bounds = new google.maps.LatLngBounds();
 				this.caseList = [];
-				
-				if(!Array.isArray(json.kml.Document.Folder.Placemark)) json.kml.Document.Folder.Placemark = [ json.kml.Document.Folder.Placemark ];
-				for(const [index, caseInfo] of json.kml.Document.Folder.Placemark.entries()) {
-					// console.log(caseInfo);
-					const isLine = caseInfo.hasOwnProperty("LineString");
-					const coordinatesStr = isLine ?  caseInfo.LineString.coordinates : caseInfo.Polygon.outerBoundaryIs.LinearRing.coordinates;
-					const path = coordinatesStr.split(" ").map(pointStr => {
-						const point = pointStr.split(",");
-						bounds.extend({ lat: Number(point[1]), lng: Number(point[0]) })
-						return { lat: Number(point[1]), lng: Number(point[0]) };
-					});
 
-					const caseName = caseInfo.name != null && this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] != undefined ? this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] : caseInfo.name;
-					const caseLevel = caseInfo.description != null && this.options.caseLevelMap[caseInfo.description.toUpperCase()] != undefined ? this.options.caseLevelMap[caseInfo.description.toUpperCase()] : caseInfo.description;
-
-					this.caseList.push({ 
-						id: index,
-						caseName,
-						caseLevel,
-						geoType: caseInfo.hasOwnProperty("LineString") ? 'LineString' : caseInfo.hasOwnProperty("Polygon") ? 'Polygon' : '',
-						coordinates: path,
-						oriJSON: caseInfo
-					});
-
-					// console.log(path);
-					const caseColorFilter = this.options.caseColorMap.filter(caseColorSpec => {
-						const caseNameFilter = caseColorSpec.engName.filter(caseName => caseInfo.name.includes(caseName)); 
-						return caseNameFilter.length > 0
-					});
-					const color = (caseColorFilter.length > 0) ? caseColorFilter[0].color : this.options.caseColorMap.filter(caseColorSpec => caseColorSpec.name.includes('其他'))[0].color;
-
-					if (isLine) {
-						const polyline = new google.maps.Polyline({ 
-							map: this.map,
-							path,
-							description: `${index} - ${caseName}(${caseLevel})`,
-							strokeColor: color,
-							strokeWeight: 3,
-							strokeOpacity: 1,
-							fillOpacity: 0,
-							zIndex: 5
+				if(!Array.isArray(json.kml.Document.Folder)) json.kml.Document.Folder = [ json.kml.Document.Folder ];
+				for(const folder of json.kml.Document.Folder) {
+					if(!Array.isArray(folder.Placemark)) folder.Placemark = [ folder.Placemark ];
+					for(const [index, caseInfo] of folder.Placemark.entries()) {
+						// console.log(caseInfo);
+						const isLine = caseInfo.hasOwnProperty("LineString");
+						const coordinatesStr = isLine ?  caseInfo.LineString.coordinates : caseInfo.Polygon.outerBoundaryIs.LinearRing.coordinates;
+						const path = coordinatesStr.split(" ").map(pointStr => {
+							const point = pointStr.split(",");
+							bounds.extend({ lat: Number(point[1]), lng: Number(point[0]) })
+							return { lat: Number(point[1]), lng: Number(point[0]) };
 						});
 
-						polyline.addListener('mouseover', (event) => { this.showCaseContent(polyline.description, event.latLng) });
-						polyline.addListener('mouseout', (event) => { this.infoWindow.close() });
+						const caseName = caseInfo.name != null && this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] != undefined ? this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] : caseInfo.name;
+						const caseLevel = caseInfo.description != null && this.options.caseLevelMap[caseInfo.description.toUpperCase()] != undefined ? this.options.caseLevelMap[caseInfo.description.toUpperCase()] : caseInfo.description;
 
-						this.polygons.push(polyline);
-					} else {
-						const polygon = new google.maps.Polygon({ 
-							map: this.map,
-							path,
-							description: `${index} - ${caseName}(${caseLevel})`,
-							strokeColor: color,
-							strokeWeight: 1,
-							strokeOpacity: 1,
-							fillColor: color,
-							fillOpacity: 0.8,
-							zIndex: 5
+						this.caseList.push({ 
+							id: index,
+							caseName,
+							caseLevel,
+							geoType: caseInfo.hasOwnProperty("LineString") ? 'LineString' : caseInfo.hasOwnProperty("Polygon") ? 'Polygon' : '',
+							coordinates: path,
+							oriJSON: caseInfo
 						});
 
-						polygon.addListener('mouseover', (event) => { this.showCaseContent(polygon.description, event.latLng) });
-						polygon.addListener('mouseout', (event) => { this.infoWindow.close() });
+						// console.log(path);
+						const caseColorFilter = this.options.caseColorMap.filter(caseColorSpec => {
+							const caseNameFilter = caseColorSpec.engName.filter(caseName => caseInfo.name.includes(caseName)); 
+							return caseNameFilter.length > 0
+						});
+						const color = (caseColorFilter.length > 0) ? caseColorFilter[0].color : this.options.caseColorMap.filter(caseColorSpec => caseColorSpec.name.includes('其他'))[0].color;
 
-						this.polygons.push(polygon);
+						if (isLine) {
+							const polyline = new google.maps.Polyline({ 
+								map: this.map,
+								path,
+								description: `${index} - ${caseName}(${caseLevel})`,
+								strokeColor: color,
+								strokeWeight: 3,
+								strokeOpacity: 1,
+								fillOpacity: 0,
+								zIndex: 5
+							});
+
+							polyline.addListener('mouseover', (event) => { this.showCaseContent(polyline.description, event.latLng) });
+							polyline.addListener('mouseout', (event) => { this.infoWindow.close() });
+
+							this.polygons.push(polyline);
+						} else {
+							const polygon = new google.maps.Polygon({ 
+								map: this.map,
+								path,
+								description: `${index} - ${caseName}(${caseLevel})`,
+								strokeColor: color,
+								strokeWeight: 1,
+								strokeOpacity: 1,
+								fillColor: color,
+								fillOpacity: 0.8,
+								zIndex: 5
+							});
+
+							polygon.addListener('mouseover', (event) => { this.showCaseContent(polygon.description, event.latLng) });
+							polygon.addListener('mouseout', (event) => { this.infoWindow.close() });
+
+							this.polygons.push(polygon);
+						}
 					}
 				}
 
