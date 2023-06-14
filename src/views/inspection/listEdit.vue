@@ -1,13 +1,21 @@
 <template>
 	<div class="app-container">
-		<h3>編輯缺失列表</h3>
+		<h3>缺失通報</h3>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
-					<span>輸入道管編號</span>
+						<span>道管編號</span>
 					</div>
-					<el-input type="text"></el-input>
+					<el-input type="text" placeholder="請輸入"></el-input>
+				</div>
+			</div>
+			<div class="filter-item">
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>案件編號</span>
+					</div>
+					<el-input type="text" placeholder="請輸入"></el-input>
 				</div>
 			</div>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -23,6 +31,12 @@
 					<div style="margin-left:10px"><el-checkbox label="機關交辦"></el-checkbox></div>
 				</div>
 			</el-form-item>
+			<el-form-item label="申請單類別" prop="region">
+				<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
+					<el-option label="区域一" value="shanghai"></el-option>
+					<el-option label="区域二" value="beijing"></el-option>
+				</el-select>
+			</el-form-item>
 			<el-form-item label="查報案號" prop="region">
 				<div style="display:flex">
 					<el-input v-model="ruleForm.region" size="small" style="width:300px"></el-input>
@@ -35,6 +49,9 @@
 					<div style="margin-left:10px;">請輸入新工處道管系統編號，非新工處道管系統案件不能印申請單、申請回報單</div>
 				</div>
 			</el-form-item>
+			<el-form-item label="案件內容" prop="region">
+				<el-input type="textarea" v-model="ruleForm.region" size="small"></el-input>
+			</el-form-item>
 			<el-form-item label="案件里別" prop="region">
 				<el-input v-model="ruleForm.region" style="width:300px;margin-right:10px" size="small"></el-input>
 				<el-select v-model="ruleForm.region" placeholder="請選擇里別" size="small">
@@ -45,8 +62,14 @@
 			<el-form-item label="案件地點" prop="region">
 				<el-input v-model="ruleForm.region" size="small"></el-input>
 			</el-form-item>
-			<el-form-item label="案件內容" prop="region">
-				<el-input type="textarea" v-model="ruleForm.region" size="small"></el-input>
+			<el-form-item label="車道方向及車道數" prop="region">
+				<div style="display:flex">
+					<el-select v-model="ruleForm.region" placeholder="請選擇" size="small" style="width:300px">
+						<el-option label="AC路面" value="shanghai"></el-option>
+						<el-option label="区域二" value="beijing"></el-option>
+					</el-select>
+					<div style="margin-left:10px;">車行一段到二段或門牌小到大為順向，否則為逆向，車道數由內向外數</div>
+				</div>
 			</el-form-item>
 			<el-form-item label="成案日期" prop="region" required>
 				<el-date-picker type="date" placeholder="選擇日期" v-model="ruleForm.region" size="small"></el-date-picker>
@@ -54,20 +77,16 @@
 			<el-form-item label="預計成案日期" prop="region" required>
 				<el-date-picker type="date" placeholder="選擇日期" v-model="ruleForm.region" size="small"></el-date-picker>
 			</el-form-item>
-			<el-form-item label="報案日期" prop="region" required>
-				<el-date-picker type="date" placeholder="選擇日期" v-model="ruleForm.region" size="small"></el-date-picker>
-			</el-form-item>
 
 			<el-divider>*以上為必要欄位</el-divider>
 
-			<el-form-item label="臨補、標線、送件" prop="type">
-				<el-checkbox label="熱再生修復" name="type" size="small"></el-checkbox>
-			</el-form-item>
 			<el-form-item label="道路類型" prop="type" size="small">
-				<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
-					<el-option label="道路" value="shanghai"></el-option>
-					<el-option label="区域二" value="beijing"></el-option>
-				</el-select>
+				<el-radio-group v-model="ruleForm.resource">
+					<el-radio label="道路"></el-radio>
+					<el-radio label="熱再生"></el-radio>
+					<el-radio label="設施"></el-radio>
+					<el-radio label="標線"></el-radio>
+				</el-radio-group>
 			</el-form-item>
 			<el-form-item label="設施類型(大分類)" prop="type">
 				<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
@@ -81,12 +100,7 @@
 					<el-option label="区域二" value="beijing"></el-option>
 				</el-select>
 			</el-form-item>
-			<el-form-item label="車道方向及車道數" prop="type">
-				<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
-					<el-option label="AC路面" value="shanghai"></el-option>
-					<el-option label="区域二" value="beijing"></el-option>
-				</el-select>
-			</el-form-item>
+			
 			<el-form-item label="損壞類別" prop="type">
 				<div style="display:flex">
 					<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
@@ -96,7 +110,13 @@
 					<div style="margin-left:10px">若為其他請輸入：<el-input type="text" style="width:500px" size="small"></el-input></div>
 				</div>
 			</el-form-item>
-			<el-form-item label="維修處數" prop="type">
+			<el-form-item label="損壞狀況" prop="type">
+				<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
+					<el-option label="AC路面" value="shanghai"></el-option>
+					<el-option label="区域二" value="beijing"></el-option>
+				</el-select>
+			</el-form-item>
+			<!-- <el-form-item label="維修處數" prop="type">
 				<div style="display:flex">
 					<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
 						<el-option label="1" value="shanghai"></el-option>
@@ -104,7 +124,7 @@
 					</el-select>
 					<div style="margin-left:10px">若為0可選其他說明：<el-input type="text" style="width:500px" size="small"></el-input></div>
 				</div>
-			</el-form-item>
+			</el-form-item> -->
 			<el-form-item label="粒料規格" prop="type">
 				<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
 					<el-option label="1" value="shanghai"></el-option>
@@ -129,32 +149,9 @@
 			<el-form-item label="銑鋪複雜算式" prop="desc">
 				<el-input v-model="ruleForm.region" size="small"></el-input>
 			</el-form-item>
-			<el-form-item label="塗佈複雜算式" prop="desc">
-				<el-input v-model="ruleForm.region" size="small"></el-input>
-			</el-form-item>
-			<el-form-item label="維修處數" prop="type">
-				<div style="display:flex">
-					<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
-						<el-option label="1" value="shanghai"></el-option>
-						<el-option label="2" value="beijing"></el-option>
-					</el-select>
-					<div style="margin-left:10px">若為0可選其他說明:<el-input type="text" style="width:500px" size="small"></el-input></div>
-				</div>
-			</el-form-item>
-			<el-form-item label="損壞狀況" prop="type">
-				<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
-					<el-option label="AC路面" value="shanghai"></el-option>
-					<el-option label="区域二" value="beijing"></el-option>
-				</el-select>
-			</el-form-item>
+			
 			<el-form-item label="是否需派工" prop="type">
 				<el-checkbox label="不須派工" name="type" size="small"></el-checkbox>
-			</el-form-item>
-			<el-form-item label="管線單位(管線)" prop="type">
-				<el-select v-model="ruleForm.region" placeholder="請選擇" size="small">
-					<el-option label="台灣電力公司" value="shanghai"></el-option>
-					<el-option label="区域二" value="beijing"></el-option>
-				</el-select>
 			</el-form-item>
 			<el-form-item label="備註(質線)" prop="type">
 				<div style="display:flex">

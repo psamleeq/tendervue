@@ -49,7 +49,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspection/listEdit'),
 			name: 'listEdit',
 			meta: {
-				title: '編輯缺失列表',
+				title: '缺失通報',
 				roles: ['inspection.viewer'],
 				vTag: 'alpha'
 			}
