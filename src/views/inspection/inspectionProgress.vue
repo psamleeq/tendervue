@@ -60,6 +60,9 @@
 							</el-button>
 						</span>
 					</span>
+					<span v-else-if="['ZipCode'].includes(column.property)">
+						<span>{{ getAreaName(row.ZipCode) }}</span>
+					</span>
 					<span v-else>
 					<span>{{ row[column.property] || "-" }}</span>
 					</span>
@@ -210,6 +213,13 @@ export default {
 					this.loading = false;
 				}).catch(err => {this.loading = false});
 			}
+		},
+		getAreaName(zipcode){
+			const areaMap = {
+				103: '大同區',
+				104: '中山區',
+			};
+			return areaMap[zipcode] || "-"
 		},
 		showDialog(row, state){
 			this.dialogVisible=true;
