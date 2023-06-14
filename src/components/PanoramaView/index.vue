@@ -520,14 +520,37 @@ export default {
 
 			return hotSpot;
 		},
-		addCaseHotSpot({ pitch, yaw }, hoverText = "") {
+		addCaseHotSpot({ pitch, yaw }, feature, hoverText = "") {
+			// console.log(feature);
 			const hotSpot = {
-				id: this.hotSpotId,
+				// id: this.hotSpotId,
 				type: "info",
 				pitch,
 				yaw,
 				text: hoverText,
-				cssClass: "hotSpotIcon alert"
+				cssClass: "hotSpotIcon alert",
+				createTooltipArgs: {
+					feature
+				},
+				createTooltipFunc: (div, createTooltipArgs) => {
+					const span = document.createElement('span');
+					span.innerHTML = hoverText;
+
+					const image = document.createElement('img');
+					image.src = createTooltipArgs.feature.properties.ImgZoomOut;
+					image.style.width = '160px';
+					image.style.paddingTop = '5px';
+					span.appendChild(image);
+
+					div.classList.add('pnlm-tooltip');
+					div.appendChild(span);
+					span.style.width = span.scrollWidth - 20 + 'px';
+					span.style.marginLeft = -(span.scrollWidth - div.offsetWidth) / 2 + 'px';
+					span.style.marginTop = -span.scrollHeight - 12 + 'px';
+
+					div.addEventListener('mouseover', (event) => { this.$emit("hightLight", createTooltipArgs.feature.properties.Id) });
+					div.addEventListener('mouseout', (event) => { this.$emit("hightLight") });
+				}
 			};
 
 			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
@@ -544,7 +567,7 @@ export default {
 				const geoCoordinates = caseSpec.properties.centerPt;
 				if(calcDistance(panoramaInfo.position, geoCoordinates) <= 15) {
 					const hoverText = `${this.options.caseTypeMap[caseSpec.properties.DistressType]} (${this.options.caseLevelMap[caseSpec.properties.DistressLevel]})`;
-					this.addCaseHotSpot(this.getCoords(geoCoordinates), hoverText);
+					this.addCaseHotSpot(this.getCoords(geoCoordinates), caseSpec, hoverText);
 				}
 			}
 		},

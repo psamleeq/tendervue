@@ -32,7 +32,7 @@
 					<span />
 					<span />
 				</div>
-				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @uploadCase="uploadCase" />
+				<panorama-view ref="panoramaView" :key="`${listQuery.inspectId}_${listQuery.caseInspectId}`" :loading.sync="loading" :isUpload.sync="isUpload" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @ @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
 	</div>
@@ -568,6 +568,20 @@ export default {
 			this.infoWindow.setPosition(position);
 
 			this.infoWindow.open(this.map);
+		},
+		hightLight(blockId) {
+			// console.log("highlight", blockId);
+			this.map.data.revertStyle();
+			this.infoWindow.close();
+
+			if(blockId != undefined) {
+				this.map.data.forEach(feature => {
+					if(feature.getProperty("Id") == blockId) {
+						this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
+						this.showCaseContent(feature, feature.getProperty("centerPt"));
+					}
+				});
+			}
 		},
 		clearAll() {
 			// console.log("clearAll");
