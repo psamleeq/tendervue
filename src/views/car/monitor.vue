@@ -2,11 +2,11 @@
 	<div class="car-monitor" v-loading="loading"> 
 		<h2>即時影像</h2>
 		<el-row>
-			<el-col :span="6" v-for="(distInfo, zip) in districtList" :key="zip">
+			<el-col :span="6" v-for="zip in zipCodeOrder" :key="zip">
 				<div class="car-vod-panel">
-					<div class="car-vod-title">{{ distInfo.name }}</div>
-					<i class="el-icon-video-camera" v-if="!distInfo.src"/>
-					<iframe v-else height="100%" width="100%" :src="distInfo.src" frameborder="0" allowfullscreen allow="autoplay" onerror="this.onerror=null; this.src=''" />
+					<div class="car-vod-title">{{ districtList[zip].name }}</div>
+					<i class="el-icon-video-camera" v-if="!districtList[zip].src"/>
+					<iframe v-else height="100%" width="100%" :src="districtList[zip].src" frameborder="0" allowfullscreen allow="autoplay" onerror="this.onerror=null; this.src=''" />
 				</div>
 			</el-col>
 		</el-row> 
@@ -136,6 +136,11 @@ export default {
 			}
 		};
 	},
+	computed: {
+		zipCodeOrder() {
+			return Object.keys(this.districtList).sort((a, b) => this.districtList[a].order - this.districtList[b].order);
+		}
+	},
 	async created() { 
 		for(const zipCode in this.districtList) {
 			const distInfo = this.districtList[zipCode];
@@ -185,13 +190,14 @@ export default {
 		border: 1px solid #F2F6FC
 		.car-vod-title
 			position: absolute
-			top: 5px
+			top: 12px
 			left: 50%
 			transform: translateX(-50%)
 			padding: 2px 5px
 			color: #909399
 			font-size: 16px
 			z-index: 10
+			background-color: rgba(#000, 0.1)
 		i.el-icon-video-camera
 			position: absolute
 			top: 50%
