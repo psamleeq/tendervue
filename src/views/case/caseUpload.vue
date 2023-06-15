@@ -60,7 +60,7 @@
 							:label="value"
 							:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
 							align="center"
-							:width="['id', 'caseLevel', 'duplicateId'].includes(key) ? 50 : null"
+							:width="['id', 'caseLevel', 'duplicateId'].includes(key) ? 55 : null"
 						/>
 					</el-table>
 				</el-collapse-item>
@@ -618,9 +618,9 @@ export default {
 				this.caseList = [];
 
 				if(!Array.isArray(json.kml.Document.Folder)) json.kml.Document.Folder = [ json.kml.Document.Folder ];
-				for(const folder of json.kml.Document.Folder) {
+				for(const [folderId, folder] of json.kml.Document.Folder.entries()) {
 					if(!Array.isArray(folder.Placemark)) folder.Placemark = [ folder.Placemark ];
-					for(const [index, caseInfo] of folder.Placemark.entries()) {
+					for(const [placeIndex, caseInfo] of folder.Placemark.entries()) {
 						// console.log(caseInfo);
 						const isLine = caseInfo.hasOwnProperty("LineString");
 						const coordinatesStr = isLine ?  caseInfo.LineString.coordinates : caseInfo.Polygon.outerBoundaryIs.LinearRing.coordinates;
@@ -634,7 +634,7 @@ export default {
 						const caseLevel = caseInfo.description != null && this.options.caseLevelMap[caseInfo.description.toUpperCase()] != undefined ? this.options.caseLevelMap[caseInfo.description.toUpperCase()] : caseInfo.description;
 
 						this.caseList.push({ 
-							id: index,
+							id: `${folderId}_${placeIndex}`,
 							caseName,
 							caseLevel,
 							geoType: caseInfo.hasOwnProperty("LineString") ? 'LineString' : caseInfo.hasOwnProperty("Polygon") ? 'Polygon' : '',
@@ -653,7 +653,7 @@ export default {
 							const polyline = new google.maps.Polyline({ 
 								map: this.map,
 								path,
-								description: `${index} - ${caseName}(${caseLevel})`,
+								description: `${folderId}_${placeIndex} - ${caseName}(${caseLevel})`,
 								strokeColor: color,
 								strokeWeight: 3,
 								strokeOpacity: 1,
@@ -669,7 +669,7 @@ export default {
 							const polygon = new google.maps.Polygon({ 
 								map: this.map,
 								path,
-								description: `${index} - ${caseName}(${caseLevel})`,
+								description: `${folderId}_${placeIndex} - ${caseName}(${caseLevel})`,
 								strokeColor: color,
 								strokeWeight: 1,
 								strokeOpacity: 1,
