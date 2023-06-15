@@ -1,6 +1,11 @@
 <template>
 	<div class="app-container case-marker-list" v-loading="loading">
 		<h2>標記列表</h2>
+		<aside style="white-space: pre-line">
+			1. 缺失類型: 人手孔缺失 和 其他 不能匯入。
+			<br>
+			2. 已匯入過的缺失不會重複匯入。
+		</aside>
 		<div class="filter-container">
 			<span class="filter-item">
 				<el-input v-model="listQuery.caseInspectId" placeholder="請輸入">
@@ -33,7 +38,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column type="selection" width="60" align="center" fixed />
+			<el-table-column type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType))" />
 			<el-table-column
 				v-for="(value, key) in headers"
 				:key="key"
@@ -156,9 +161,18 @@ export default {
 					16: "龜裂",
 					32: "車轍",
 					18: "隆起與凹陷",
-					58: "人手孔缺失",
+					34: "人手孔缺失",
 					51: "薄層剝離",
-					21: "其他"
+					21: "其他",
+					50: "塊狀裂縫",
+					53: "推擠",
+					65: "補綻及管線回填",
+					54: "冒油",
+					55: "波浪狀鋪面",
+					56: "車道與露肩分離",
+					49: "滑溜裂縫",
+					66: "骨材剝落",
+					58: "人孔高差"
 				},
 				pciCaseTypeMap: {
 					15: "坑洞",
@@ -166,9 +180,19 @@ export default {
 					16: "龜裂",
 					32: "車轍",
 					18: "隆起與凹陷",
-					58: "人孔高差",
+					// 34: "人手孔缺失",
 					51: "薄層剝離",
-					21: "其他"
+					51: "薄層剝離",
+					// 21: "其他",
+					50: "塊狀裂縫",
+					53: "推擠",
+					65: "補綻及管線回填",
+					54: "冒油",
+					55: "波浪狀鋪面",
+					56: "車道與露肩分離",
+					49: "滑溜裂縫",
+					66: "骨材剝落",
+					58: "人孔高差"
 				},
 				caseLevelMap: {
 					1: "輕",

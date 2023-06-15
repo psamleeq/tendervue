@@ -163,11 +163,21 @@ export default {
 					16: "龜裂",
 					32: "車轍",
 					18: "隆起與凹陷",
-					58: "人手孔缺失",
+					34: "人手孔缺失(不列入PCI)",
 					51: "薄層剝離",
-					21: "其他"
+					21: "其他(不列入PCI)",
+					50: "塊狀裂縫",
+					53: "推擠",
+					65: "補綻及管線回填",
+					54: "冒油",
+					55: "波浪狀鋪面",
+					56: "車道與露肩分離",
+					49: "滑溜裂縫",
+					66: "骨材剝落",
+					58: "人孔高差(只列入PCI)"
+
 				},
-				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 58, 51, 21 ],
+				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66 ],
 				caseLevelMap: {
 					1: "輕",
 					2: "中",
@@ -390,6 +400,7 @@ export default {
 					this.inspectIdNow = this.listQuery.inspectId;
 					const jsonUrl = response.data.inspection.url;
 
+					// fetch('/test/streetViewFix.json').then(response => response.json()).then(json => {
 					fetch(jsonUrl).then(response => response.json()).then(json => {
 						// this.panoramaInfo = json;
 						// this.panoramaInfo = Object.assign({}, this.panoramaInfo, json);
