@@ -9,6 +9,8 @@
 					style="display: inline-block; width: 180px"
 					@change="showPanoramaLayer(testQuery.sceneId)"
 				/>
+				<el-checkbox v-model="isAutoMove" @change="showPanoramaLayer(panorama.getScene())">自動前進</el-checkbox>
+				<el-checkbox v-model="isAutoRotate" @change="setAutoRotate()">自動旋轉</el-checkbox>
 				<div> {{ panorama.getScene() }}</div>
 				<div>{{ panoramaTestInfo }} </div>
 				<div>{{ panoramaTestInfo.position }}</div>
@@ -27,7 +29,7 @@
 					</el-form-item>
 					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 5px">
 						<el-select v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
-							<el-option v-for="(name, key) in options.caseTypeMap" :key="key" :label="name" :value="key" />
+							<el-option v-for="key in options.caseTypeMapOrder" :key="key" :label="options.caseTypeMap[key]" :value="key" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="level" label="缺失程度">
@@ -88,7 +90,7 @@ import html2canvas from 'html2canvas';
 import { parseXml, xml2json } from '../../utils/xml2json';
 import { getAddress } from "@/api/tool";
 const { calcDistance, calArea } = require('@/utils/geo-tools');
-const cameraHeight = 2.5; // 攝影機高度
+const cameraHeight = 2.25; // 攝影機高度
 
 export default {
 	name: "panoramaView",
@@ -122,6 +124,8 @@ export default {
 		return {
 			localEnv: process.env.NODE_ENV == 'development',
 			isGetAddress: false,
+			isAutoMove: false,
+			isAutoRotate: false,
 			panorama: null,
 			prevSceneId: [],
 			hotSpotId: 0,
@@ -172,8 +176,22 @@ export default {
 		// init panorama
 		// console.log("panorama_mounted");
 		this.panorama = pannellum.viewer("panorama", { scenes: {}, keyboardZoom: false, hotSpotDebug: false });
-		this.panorama.on("load", () => this.panorama.resize() );
-		this.panorama.on("scenechange", () => this.resetCaseHotSpot() );
+		this.panorama.on("load", () => this.panorama.resize());
+		this.panorama.on("scenechange", async() => {
+			this.setAutoRotate();
+			this.resetCaseHotSpot();
+
+			const delay = this.isAutoRotate ? 8000 : 3000;
+			if(this.isAutoMove) {
+				await new Promise(r => setTimeout(r, delay));
+				this.panorama.stopAutoRotate();
+				const lineInfoList = this.panoramaInfoProps.data.flat();
+				const sceneId = this.panorama.getScene();
+				const index = lineInfoList.map((el, index) => { if(el.fileName == sceneId) return index }).filter(el => el != undefined)[0];
+				this.showPanoramaLayer(lineInfoList[index+1].fileName);
+			}
+
+		});
 
 		this.panorama.on('mousedown', (evt) => {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
@@ -315,6 +333,12 @@ export default {
 		showPanoramaLayer(sceneId) {
 			// console.log("showPanoramaLayer");
 			this.$emit("showPanoramaLayer", sceneId);
+		},
+		setAutoRotate() {
+			if(this.isAutoRotate) {
+				this.panorama.setYaw(-80);
+				this.panorama.startAutoRotate(-20);
+			} else this.panorama.stopAutoRotate();
 		},
 		uploadCase() {
 			this.$confirm(`確定上傳缺失?`, "確認", { showClose: false }).then(() => {
@@ -571,7 +595,7 @@ export default {
 				}
 			}
 		},
-		clearHotSpot(sceneId= this.panorama.getScene()) {
+		clearHotSpot(sceneId = this.panorama.getScene()) {
 			for(const type in this.hotSpotIdList) {
 				for(const hotSpot of this.hotSpotIdList[type]) {
 					this.panorama.removeHotSpot(hotSpot.id, sceneId);
