@@ -275,41 +275,41 @@ export default {
 					};
 
 					let hotSpots = [];
-						const clickHandlerFunc = (evt, clickHandlerArgs) => {
-							if(clickHandlerArgs) {
-								this.clearHotSpot(clickHandlerArgs.sceneIdNow);
-								this.$emit('setMarkerPosition', clickHandlerArgs.sceneIdNow);
-							}
-						};
-
-						if (index >= 0 && index < lineInfo.length - 1) {
-							hotSpots.push({
-								pitch: this.panoramaInfoProps.sceneSetting.pitch,
-								yaw: this.panoramaInfoProps.sceneSetting.yaw,
-								type: "scene",
-								text: lineInfo[index + 1].fileName,
-								sceneId: lineInfo[index + 1].fileName,
-								clickHandlerArgs: {
-									sceneIdNow: lineInfo[index].fileName
-								},
-								clickHandlerFunc
-							});
+					const clickHandlerFunc = (evt, clickHandlerArgs) => {
+						if(clickHandlerArgs) {
+							this.clearHotSpot(clickHandlerArgs.sceneIdNow);
+							this.$emit('setMarkerPosition', clickHandlerArgs.sceneIdNow);
 						}
+					};
 
-						if (index > 0 && index < lineInfo.length) {
-							hotSpots.push({
-								pitch: this.panoramaInfoProps.sceneSetting.pitch,
-								yaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
-								type: "scene",
-								text: lineInfo[index - 1].fileName,
-								sceneId: lineInfo[index - 1].fileName,
-								targetYaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
-								clickHandlerArgs: {
-									sceneIdNow: lineInfo[index].fileName
-								},
-								clickHandlerFunc
-							});
-						}
+					if (index >= 0 && index < lineInfo.length - 1) {
+						hotSpots.push({
+							pitch: this.panoramaInfoProps.sceneSetting.pitch,
+							yaw: this.panoramaInfoProps.sceneSetting.yaw,
+							type: "scene",
+							text: lineInfo[index + 1].fileName,
+							sceneId: lineInfo[index + 1].fileName,
+							clickHandlerArgs: {
+								sceneIdNow: lineInfo[index].fileName
+							},
+							clickHandlerFunc
+						});
+					}
+
+					if (index > 0 && index < lineInfo.length) {
+						hotSpots.push({
+							pitch: this.panoramaInfoProps.sceneSetting.pitch,
+							yaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
+							type: "scene",
+							text: lineInfo[index - 1].fileName,
+							sceneId: lineInfo[index - 1].fileName,
+							targetYaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
+							clickHandlerArgs: {
+								sceneIdNow: lineInfo[index].fileName
+							},
+							clickHandlerFunc
+						});
+					}
 
 					this.panoramaInfoProps.streetViewList[info.fileName]["hotSpots"] = hotSpots;
 					this.$emit('update:panoramaInfo',this.panoramaInfoProps);

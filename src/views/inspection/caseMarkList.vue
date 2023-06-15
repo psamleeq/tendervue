@@ -112,7 +112,7 @@ export default {
 					name: "id",
 					sortable: true,
 				},
-				DistressType: {
+				DistressTypeName: {
 					name: "缺失類型",
 					sortable: true,
 				},
@@ -151,12 +151,24 @@ export default {
 			options: {
 				tenderMap: {},
 				caseTypeMap: {
-					29: "縱橫裂縫",
-					50: "塊狀裂縫",
 					15: "坑洞",
-					65: "補綻及管線回填",
+					29: "縱向及橫向裂縫",
+					16: "龜裂",
+					32: "車轍",
+					18: "隆起與凹陷",
+					58: "人手孔缺失",
+					51: "薄層剝離",
+					21: "其他"
+				},
+				pciCaseTypeMap: {
+					15: "坑洞",
+					29: "縱橫裂縫",
+					16: "龜裂",
+					32: "車轍",
+					18: "隆起與凹陷",
 					58: "人孔高差",
-					32: "車轍"
+					51: "薄層剝離",
+					21: "其他"
 				},
 				caseLevelMap: {
 					1: "輕",
@@ -255,7 +267,7 @@ export default {
 					// this.total = response.data.total;
 					this.list = response.data.list;
 					this.list.forEach(l => {
-						l.DistressType = this.options.caseTypeMap[l.DistressType];
+						l.DistressTypeName = this.options.caseTypeMap[l.DistressType];
 						l.DistressLevel = this.options.caseLevelMap[l.DistressLevel];
 					})
 				}
@@ -270,7 +282,7 @@ export default {
 				this.isUpload = true;
 
 				const uploadCaseList = this.tableSelect.map(caseSpec => {
-					return { caseDetectionId: caseSpec.id, caseName: caseSpec.DistressType, caseLevel: caseSpec.DistressLevel, geoJson: caseSpec.Geometry }
+					return { caseDetectionId: caseSpec.id, caseName: this.options.pciCaseTypeMap[caseSpec.DistressType], caseLevel: caseSpec.DistressLevel, geoJson: caseSpec.Geometry }
 				});
 				// console.log(uploadCaseList);
 

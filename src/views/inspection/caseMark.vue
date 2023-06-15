@@ -32,7 +32,7 @@
 					<span />
 					<span />
 				</div>
-				<panorama-view ref="panoramaView" :key="`${listQuery.inspectId}_${listQuery.caseInspectId}`" :loading.sync="loading" :isUpload.sync="isUpload" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @ @uploadCase="uploadCase" />
+				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @ @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
 	</div>
@@ -128,12 +128,12 @@ export default {
 					},
 					{
 						index: 1,
-						name: ["裂縫", "縱橫裂縫", "塊狀裂縫"],
+						name: ["裂縫", "縱橫裂縫", "塊狀裂縫", "縱向及橫向裂縫"],
 						color: "#009688"
 					},
 					{
 						index: 2,
-						name: ["坑洞", "人孔高差", "薄層剝離"],
+						name: ["坑洞", "人孔高差", "薄層剝離", "人手孔缺失"],
 						color: "#FF9800"
 					},
 					{
@@ -158,13 +158,16 @@ export default {
 					}
 				],
 				caseTypeMap: {
-					29: "縱橫裂縫",
-					50: "塊狀裂縫",
 					15: "坑洞",
-					65: "補綻及管線回填",
-					58: "人孔高差",
-					32: "車轍"
+					29: "縱向及橫向裂縫",
+					16: "龜裂",
+					32: "車轍",
+					18: "隆起與凹陷",
+					58: "人手孔缺失",
+					51: "薄層剝離",
+					21: "其他"
 				},
+				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 58, 51, 21 ],
 				caseLevelMap: {
 					1: "輕",
 					2: "中",
@@ -394,14 +397,13 @@ export default {
 						this.$set(this.panoramaInfo, "sceneSetting", json.sceneSetting);
 						// console.log(this.panoramaInfo);
 						this.setPanoramaLayer();
-						this.openPanorama(true);
-						this.loading = false;
-						
+						// this.openPanorama(true);
+						// this.loading = false;
+
+						this.getCaseList();
 					});
 				}
 			}).catch(err => this.loading = false);
-
-			this.getCaseList();
 		},
 		getCaseList() {
 			this.map.data.forEach(feature => this.map.data.remove(feature));
@@ -415,7 +417,8 @@ export default {
 
 				this.$nextTick(() => {
 					this.$refs.panoramaView.resetCaseHotSpot();
-					this.moveHandle(this.screenWidth*0.25);
+					this.openPanorama(true);
+					this.loading = false;
 				});
 			}).catch(err => this.loading = false);
 		},
