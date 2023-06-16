@@ -679,6 +679,7 @@ export default {
 			this.clearHotSpot();
 			this.caseInfo = {
 				dateReport: moment().startOf("d"),
+				trackingId: 0,
 				distressType: "",
 				distressLevel: "",
 				millingLength: 0,
