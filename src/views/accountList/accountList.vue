@@ -1,9 +1,19 @@
 <template>
 	<div class="app-container" v-loading="loading">
 		<h2>帳號列表</h2>
-		<div style="display:flex; flex-direction: row-reverse; margin:5px">
-			<el-button @click="showAddDialog=true" type="success">新增帳號</el-button>
+		<div class="filter-container">
+			<span class="filter-item" >
+				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>帳號</span>
+					</div>
+					<el-input type="text" v-model="listQuery.username"></el-input>
+				</div>
+			</span>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			<el-button style="float:right;" @click="showAddDialog=true" type="success">新增帳號</el-button>
 		</div>
+		
 		<el-table
 			:data="list"
 			empty-text="目前沒有資料"
@@ -17,22 +27,39 @@
 				:prop="key"
 				:label="value.name"
 				:sortable="value.sortable"
+				:width="value.width"
+				align="center"
 			>
 				<template slot-scope="{ row, column }">
-					<el-switch
-						v-if="['Active'].includes(column.property)"
-						:value="String(row.Active)" 
-						@change="updateActive(row, $event)"
-						active-color="#13ce66"
-						inactive-color="#ff4949"
-						active-value="1"
-						inactive-value="0">
-					</el-switch>
+					<span v-if="['Active'].includes(column.property)">
+						<span :style="{ color: row.Active ? '#000000' : '#ff4949' }">
+							停用
+						</span>
+						<el-switch
+							:value="String(row.Active)" 
+							@change="updateActive(row, $event)"
+							active-color="#13ce66"
+							inactive-color="#ff4949"
+							active-value="1"
+							inactive-value="0">
+						</el-switch>
+						 <span :style="{ color: row.Active ? '#13ce66' : '#000000' }">
+							啟用
+						</span>
+					</span>
 					<span v-else-if="['Create_At','Update_At'].includes(column.property)">
 							<span>{{ formatTime(row[column.property]) }}</span>
 					</span>
 					<span v-else-if="['changePassword'].includes(column.property)">
-						<el-button @click="showUpdate(row)" >修改密碼</el-button>
+						<el-button @click="showUpdate(row)" size="small" type="danger" plain>修改密碼</el-button>
+					</span>
+					<span v-else-if="['note'].includes(column.property)">
+						<el-input v-if="row.edit" v-model="row.Note" style="width: 80%" />
+						<el-button v-if="!row.edit" type="text" style="margin-left: 10px" size="mini" @click="row.edit = true"><i class="el-icon-edit" /></el-button>
+						<span v-if="row.edit">
+							<el-button type="text" @click="editNotes(row)"><i class="el-icon-check" style="color: #67C23A"/></el-button>
+							<el-button type="text" style="margin-left: 5px" @click="row.edit=false"><i class="el-icon-close" style="color: #F56C6C" /></el-button> 
+						</span>
 					</span>
 					<span v-else>
 							<span>{{ row[column.property] }}</span>
@@ -40,6 +67,9 @@
 				</template>
 			</el-table-column>
 		</el-table>
+
+		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
+
 
 		<!-- 新增帳號對話框 -->
 		<el-dialog
@@ -85,43 +115,62 @@
 
 <script>
 import moment from "moment";
+import Pagination from "@/components/Pagination";
 import { getAccountList,addAcount,changeActive,updatePassword } from "@/api/auth";
 
 
 export default {
 	name: "accountList",
+	components: { Pagination },
 	data() {
 		return {
 			loading: false,
 			showAddDialog:false,
 			showUpdateDialog:false,
+			total: 0,
 			list: [],
+			listQuery:{
+				username:'',
+				pageCurrent: 1,
+				pageSize: 50,
+			},
 			rowActive:{},
 			headers:{
+				UserId: {
+					name: "ID",
+					sortable: false,
+					width:60
+				},
 				UserName: {
 					name: "帳號",
-					sortable: false
+					sortable: false,
+					width:120
 				},
 				NickName: {
 					name: "暱稱",
-					sortable: false
+					sortable: false,
+					width:120
 				},
 				
 				Create_At: {
 					name: "創建日期",
-					sortable: false
+					sortable: false,
+					width:110
 				},
 				Update_At: {
 					name: "更新日期",
-					sortable: false
+					sortable: false,
+					width:110
 				},
 				Active: {
 					name: "狀態",
-					sortable: false
+					sortable: false,
+					width:135
 				},
 				changePassword: {
 					name: "動作",
-					sortable: false
+					sortable: false,
+					width:120
 				},
 				note: {
 					name: "備註",
@@ -150,19 +199,48 @@ export default {
 		this.getList()
 	},
 	methods: {
+		editNotes(row){
+			console.log(row);
+			this.getList()
+		},
 		getList(){
+			this.loading = true;
+			this.list = [];
+			// let query = {
+			// 	UserName:this.listQuery.username,
+			// 	pageCurrent: this.listQuery.pageCurrent,
+			// 	pageSize: this.listQuery.pageSize,
+			// };
 			getAccountList().then(response=>{
 				if (response.data.list.length == 0) {
-						if(showMsg) this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-						this.total = 0;
-					} else {
+					if(showMsg) this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+					this.total = 0;
+				} else {
+					console.log(response.data)
+					// this.total = response.data.total;
+					if(this.listQuery.username.length != 0){
+						let filterList = response.data.list.filter(l=>
+							l.UserName === this.listQuery.username
+						)
+						this.list = filterList;
+						this.list.forEach(l => {
+							this.$set(l, "edit", false);
+						})
+					}else{
 						this.list = response.data.list;
-						// console.log(this.list);
+						this.list.forEach(l => {
+							this.$set(l, "edit", false);
+						})
 					}
+					
+					// console.log(this.list);
+				}
 			})
+			this.loading = false;
+			
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD");
@@ -181,10 +259,10 @@ export default {
 		},
 		//狀態切換
 		updateActive(row,value){
-			this.$confirm(`是否確定 ${row.Active==1?'關閉':'啟用'} 帳號${row.UserName}的狀態?`, '提示', {
+			this.$confirm(`是否確定 ${row.Active==1?'停用':'啟用'} ${row.UserName}的權限?`, '提示', {
 				confirmButtonText: '確定',
 				cancelButtonText: '取消',
-				type: 'warning'
+				type: 'info'
 			}).then(() => {
 				changeActive({
 					"userId": row.UserId,
@@ -194,7 +272,7 @@ export default {
 				}).catch(err => {this.loading = false});
 				this.$message({
 					type: 'success',
-					message: `成功 ${row.Active==1?'關閉':'啟用'} 帳號${row.UserName}狀態!`
+					message: `成功 ${row.Active==1?'停用':'啟用'} ${row.UserName}的權限!`
 				});
 			}).catch(() => {
 				this.$message({
