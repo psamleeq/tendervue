@@ -637,8 +637,8 @@ export default {
 		},
 		checkCsv() {
 			// 檢查是否上傳
-			console.log(this.csvData);
-			console.log(this.uploadedIdList);
+			// console.log(this.csvData);
+			// console.log(this.uploadedIdList);
 			this.csvData = this.csvData.filter(caseSpec => !this.uploadedIdList.includes(Number(caseSpec["案件編號"])));
 			if(this.csvData.length == 0) {
 				this.$message({

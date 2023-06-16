@@ -177,7 +177,7 @@ export default {
 					58: "人孔高差(只列入PCI)"
 
 				},
-				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66 ],
+				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58 ],
 				caseLevelMap: {
 					1: "輕",
 					2: "中",
@@ -364,7 +364,10 @@ export default {
 				this.map.data.addListener('mouseover', (event) => { 
 					this.showCaseContent(event.feature, event.latLng);
 				});
-				this.map.data.addListener('mouseout', (event) => { this.infoWindow.close() });
+				this.map.data.addListener('mouseout', (event) => { 
+					this.infoWindow.close();
+					this.$refs.panoramaView.hightLight(event.feature.getProperty("Id"), false);
+				});
 				
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 
@@ -436,15 +439,16 @@ export default {
 		uploadCase(caseInfo) {
 			let uploadForm = new FormData();
 			uploadForm.append('inspectId', this.listQuery.inspectId);
+			uploadForm.append('trackingId', Number(caseInfo.trackingId));
 			uploadForm.append('dateReport', this.formatTime(caseInfo.dateReport));
 			uploadForm.append('distressType', caseInfo.distressType);
 			uploadForm.append('distressLevel', caseInfo.distressLevel);
-			uploadForm.append('millingLength', caseInfo.millingLength);
-			uploadForm.append('millingWidth', caseInfo.millingWidth);
-			uploadForm.append('millingArea', caseInfo.millingArea);
+			uploadForm.append('millingLength', Number(caseInfo.millingLength));
+			uploadForm.append('millingWidth', Number(caseInfo.millingWidth));
+			uploadForm.append('millingArea', Number(caseInfo.millingArea));
 			uploadForm.append('place', caseInfo.place);
 			uploadForm.append('direction', caseInfo.direction);
-			uploadForm.append('lane', caseInfo.lane);
+			uploadForm.append('lane', Number(caseInfo.lane));
 			uploadForm.append('geoJson', JSON.stringify(caseInfo.geoJson));
 			uploadForm.append('imgZoomIn', data2blob(caseInfo.imgZoomIn, 'image/jpeg'), 'imgZoomIn.jpg');
 			uploadForm.append('imgZoomOut', data2blob(caseInfo.imgZoomOut, 'image/jpeg'), 'imgZoomOut.jpg');
@@ -570,10 +574,10 @@ export default {
 			this.map.setZoom(20);
 		},
 		showCaseContent(feature, position) {
-			const caseTypeStr = `${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
-			const caseSizeStr = `${Math.round(feature.getProperty("MillingLength") * 100) / 100} x ${Math.round(feature.getProperty("MillingWidth") * 100) / 100} = ${Math.round(feature.getProperty("MillingArea") * 100) / 100}`
+			const caseTypeStr = `${feature.getProperty("Id")} - ${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
+			// const caseSizeStr = `${Math.round(feature.getProperty("MillingLength") * 100) / 100} x ${Math.round(feature.getProperty("MillingWidth") * 100) / 100} = ${Math.round(feature.getProperty("MillingArea") * 100) / 100}`;
 			let contentText = `<div style="width: 200px;">`;
-			contentText += `<div> ${caseTypeStr} - ${caseSizeStr}</div>`;
+			contentText += `<div> ${caseTypeStr} </div>`;
 			contentText += `<img src="${feature.getProperty("ImgZoomOut")}" class="img" onerror="this.className='img hide-img'">`;
 			contentText += `</div>`;
 
@@ -582,20 +586,22 @@ export default {
 			this.infoWindow.setPosition(position);
 
 			this.infoWindow.open(this.map);
+			this.$refs.panoramaView.hightLight(feature.getProperty("Id"), true);
 		},
 		hightLight(blockId) {
 			// console.log("highlight", blockId);
 			this.map.data.revertStyle();
 			this.infoWindow.close();
 
-			if(blockId != undefined) {
-				this.map.data.forEach(feature => {
-					if(feature.getProperty("Id") == blockId) {
-						this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
-						this.showCaseContent(feature, feature.getProperty("centerPt"));
-					}
-				});
-			}
+			this.map.data.forEach(feature => {
+				this.$refs.panoramaView.hightLight(feature.getProperty("Id"), false);
+
+				if(feature.getProperty("Id") == blockId) {
+					this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
+					this.showCaseContent(feature, feature.getProperty("CenterPt"));
+					this.$refs.panoramaView.hightLight(feature.getProperty("Id"), true);
+				}
+			});
 		},
 		clearAll() {
 			// console.log("clearAll");

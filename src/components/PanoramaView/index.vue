@@ -18,6 +18,9 @@
 
 			<el-card v-if="hotSpotIdList.dot.length > 1" class="info-box right">
 				<el-form :model="caseInfo" label-width="70px" size="small">
+					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
+						<el-input v-model="caseInfo.trackingId" size="mini" style="width: 130px" />
+					</el-form-item>
 					<el-form-item prop="date" label="通報時間">
 						<el-date-picker
 							v-model="caseInfo.dateReport"
@@ -29,12 +32,12 @@
 					</el-form-item>
 					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 5px">
 						<el-select v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
-							<el-option v-for="key in options.caseTypeMapOrder" :key="key" :label="options.caseTypeMap[key]" :value="key" />
+							<el-option v-for="key in options.caseTypeMapOrder" :key="key" :label="options.caseTypeMap[key]" :value="Number(key)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="level" label="缺失程度">
 						<el-select v-model="caseInfo.distressLevel" size="mini">
-							<el-option v-for="(name, level) in options.caseLevelMap" :key="level" :label="name" :value="level" />
+							<el-option v-for="(name, level) in options.caseLevelMap" :key="level" :label="name" :value="Number(level)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="millingLength" label="預估長" style="margin-bottom: 0">
@@ -60,7 +63,7 @@
 							</el-select>
 						</el-input>
 					</el-form-item>
-					<el-form-item v-for="(imgName, imgType) in options.imgTypeMap" :key="imgType" :prop="imgType" :label="imgName">
+					<el-form-item v-for="(imgName, imgType) in options.imgTypeMap" :key="imgType" :prop="imgType" :label="imgName" style="margin-bottom: 0">
 						<el-row :gutter="15" style="position: relative">
 							<el-col :span="10">
 								<el-popover v-if="caseInfo[imgType].length > 0" popper-class="imgHover" placement="left" trigger="hover">
@@ -148,6 +151,7 @@ export default {
 			},
 			caseInfo: {
 				dateReport: moment().startOf("d"),
+				trackingId: 0,
 				distressType: "",
 				distressLevel: "",
 				millingLength: 0,
@@ -176,8 +180,8 @@ export default {
 		// init panorama
 		// console.log("panorama_mounted");
 		this.panorama = pannellum.viewer("panorama", { scenes: {}, keyboardZoom: false, hotSpotDebug: false });
-		this.panorama.on("load", () => this.panorama.resize());
-		this.panorama.on("scenechange", async() => {
+		this.panorama.on("load", async () => {
+			this.panorama.resize();
 			this.setAutoRotate();
 			this.resetCaseHotSpot();
 
@@ -190,7 +194,6 @@ export default {
 				const index = lineInfoList.map((el, index) => { if(el.fileName == sceneId) return index }).filter(el => el != undefined)[0];
 				this.showPanoramaLayer(lineInfoList[index+1].fileName);
 			}
-
 		});
 
 		this.panorama.on('mousedown', (evt) => {
@@ -243,7 +246,7 @@ export default {
 
 		this.$el.querySelector("#panorama .pnlm-compass").addEventListener("click", (evt) => {
 			const northOffset = this.panorama.getNorthOffset();
-			this.panorama.setYaw(-northOffset);
+			this.panorama.setYaw(-northOffset, 0);
 			// this.$emit('setHeading', 0);
 
 			evt.stopPropagation();
@@ -544,27 +547,36 @@ export default {
 
 			return hotSpot;
 		},
-		addCaseHotSpot({ pitch, yaw }, feature, hoverText = "") {
-			// console.log(feature);
+		addCaseHotSpot({ pitch, yaw }, prop) {
+			// console.log(prop);
 			const hotSpot = {
 				// id: this.hotSpotId,
 				type: "info",
 				pitch,
 				yaw,
-				text: hoverText,
-				cssClass: "hotSpotIcon alert",
+				// text: hoverText,
+				cssClass: `hotSpotIcon alert caseId_${prop.Id}`,
 				createTooltipArgs: {
-					feature
+					prop
 				},
 				createTooltipFunc: (div, createTooltipArgs) => {
+					// console.log(createTooltipArgs.prop);
 					const span = document.createElement('span');
-					span.innerHTML = hoverText;
+					const caseTypeStr = `${this.options.caseTypeMap[createTooltipArgs.prop.DistressType]} (${this.options.caseLevelMap[createTooltipArgs.prop.DistressLevel]})`;
+					const caseSizeStr = `${Math.round(createTooltipArgs.prop.MillingLength * 100) / 100} x ${Math.round(createTooltipArgs.prop.MillingWidth * 100) / 100} = ${Math.round(createTooltipArgs.prop.MillingArea * 100) / 100}`;
+					span.innerHTML = 
+						`<div>Id: ${createTooltipArgs.prop.Id}</div>
+							<div>追蹤Id: ${createTooltipArgs.prop.TrackingId || "-"}</div>
+							<div>類型: ${caseTypeStr}</div>
+							<div>通報日期: ${moment(createTooltipArgs.prop.DateReport).format("YYYY-MM-DD")}</div>
+							<div>尺寸: ${caseSizeStr}</div>
+							<button type="button" id="info-tracking-btn" class="info-btn tracking el-button el-button--default" style="height: 20px; width: 40px;">追蹤</button>`;
 
-					const image = document.createElement('img');
-					image.src = createTooltipArgs.feature.properties.ImgZoomOut;
-					image.style.width = '160px';
-					image.style.paddingTop = '5px';
-					span.appendChild(image);
+					// const image = document.createElement('img');
+					// image.src = createTooltipArgs.prop.ImgZoomOut;
+					// image.style.width = '160px';
+					// image.style.paddingTop = '5px';
+					// span.appendChild(image);
 
 					div.classList.add('pnlm-tooltip');
 					div.appendChild(span);
@@ -572,13 +584,55 @@ export default {
 					span.style.marginLeft = -(span.scrollWidth - div.offsetWidth) / 2 + 'px';
 					span.style.marginTop = -span.scrollHeight - 12 + 'px';
 
-					div.addEventListener('mouseover', (event) => { this.$emit("hightLight", createTooltipArgs.feature.properties.Id) });
-					div.addEventListener('mouseout', (event) => { this.$emit("hightLight") });
+					div.addEventListener('mouseover', (event) => { this.$emit("hightLight", createTooltipArgs.prop.Id) });
+					div.addEventListener('mouseout', (event) => { 
+						const hotSpot = this.hotSpotIdList.case.filter(hotSpot => (hotSpot.createTooltipArgs.prop.Id == createTooltipArgs.prop.Id))[0];
+						if(!hotSpot.clickHandlerArgs.sticky) this.$emit("hightLight");
+					});
+				},
+				clickHandlerArgs: {
+					caseId: prop.Id,
+					sticky: false
+				},
+				clickHandlerFunc: (evt, clickHandlerArgs) => {
+					if(!clickHandlerArgs.sticky) this.hightLight(clickHandlerArgs.caseId, true);
+					else this.hightLight(clickHandlerArgs.caseId, false);
+
+					const hotSpot = this.hotSpotIdList.case.filter(hotSpot => (hotSpot.createTooltipArgs.prop.Id == clickHandlerArgs.caseId))[0];
+					hotSpot.clickHandlerArgs.sticky = clickHandlerArgs.sticky = !clickHandlerArgs.sticky;
 				}
 			};
 
 			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
 			this.hotSpotIdList.case.push(hotSpot);
+
+			// 按鈕click監聽
+			let infoTrackingBtn = this.$el.querySelectorAll("#info-tracking-btn");
+			infoTrackingBtn = infoTrackingBtn[infoTrackingBtn.length - 1];
+			// console.log(infoTrackingBtn);
+			if(infoTrackingBtn) {
+				infoTrackingBtn.addEventListener("click", (evt) => { 
+					this.caseInfo = Object.assign({}, this.caseInfo, {
+						trackingId: prop.TrackingId || prop.Id,
+						distressType: Number(prop.DistressType),
+						distressLevel: Number(prop.DistressLevel),
+						millingLength: Math.round(prop.MillingLength * 100) / 100 ,
+						millingWidth: Math.round(prop.MillingWidth * 100) / 100,
+						millingArea: Math.round(prop.MillingArea * 100) / 100,
+						place: prop.Place,
+						direction: prop.Direction,
+						lane: prop.Lane
+					});
+
+					for(const point of prop.Coordinates) {
+						const coordinates = { lat: point[1], lng: point[0] };
+						const hotSpot = this.addDotHotSpot(this.getCoords(coordinates), 1);
+						hotSpot.coordinates = coordinates;
+					}
+
+					evt.stopPropagation();
+				});
+			}
 		},
 		resetCaseHotSpot() {
 			this.clearAll();
@@ -588,10 +642,9 @@ export default {
 			// if(!panoramaInfo) return;
 
 			for(const caseSpec of this.caseGeoJson.features) {
-				const geoCoordinates = caseSpec.properties.centerPt;
+				const geoCoordinates = caseSpec.properties.CenterPt;
 				if(calcDistance(panoramaInfo.position, geoCoordinates) <= 15) {
-					const hoverText = `${this.options.caseTypeMap[caseSpec.properties.DistressType]} (${this.options.caseLevelMap[caseSpec.properties.DistressLevel]})`;
-					this.addCaseHotSpot(this.getCoords(geoCoordinates), caseSpec, hoverText);
+					this.addCaseHotSpot(this.getCoords(geoCoordinates), caseSpec.properties);
 				}
 			}
 		},
@@ -606,6 +659,21 @@ export default {
 				case: []
 			};
 			this.$emit("clearMarker");
+		},
+		hightLight(caseId, isOpen = true) {
+			let caseHotSpot = this.$el.querySelectorAll(`.pnlm-hotspot-base.hotSpotIcon.alert.caseId_${caseId}.pnlm-tooltip`);
+			caseHotSpot = caseHotSpot[caseHotSpot.length - 1];
+			// console.log(caseHotSpot);
+			if(!caseHotSpot) return;
+
+			if(isOpen) {
+				caseHotSpot.children[0].style.visibility = 'visible';
+				
+				// NOTE: 旋轉至缺失
+				// const hotSpot = this.hotSpotIdList.case.filter(hotSpot => (hotSpot.createTooltipArgs.prop.Id == caseId))[0];
+				// if(hotSpot) this.panorama.lookAt(hotSpot.pitch, hotSpot.yaw);
+			} else caseHotSpot.children[0].style = "width: 200px; margin-left: -97px; margin-top: -152px";
+			// target.dispatchEvent(new MouseEvent('mouseover', { 'bubbles': true }))
 		},
 		clearAll() {
 			this.clearHotSpot();
@@ -681,10 +749,11 @@ export default {
 </script>
 
 <style lang="sass">
+// *
+// 	border: 1px solid #000
 .imgHover
 	max-width: 600px
 	height: 300px
-
 .panorama-view
 	#panorama
 		height: calc(100vh - 50px)
@@ -727,6 +796,31 @@ export default {
 				background-image: url('../../../public/assets/icon/icon_alert.png')
 				background-size: 100% 
 				filter: drop-shadow(0px 0px 3px red)
+				z-index: 10
+				& > span 
+					font-size: 14px
+					text-align: left
+					&::after
+						content: ''
+						position: absolute
+						width: 0
+						height: 0
+						border-width: 10px
+						border-style: solid
+						border-color: rgba(0,0,0,0.7) transparent transparent transparent
+						bottom: -20px
+						left: -10px
+						margin: 0 50%
+				.info-btn.tracking
+					position: relative
+					// bottom: 25px
+					// right: 30px
+					float: right
+					color: white
+					padding: 0
+					background-color: #409EFF
+					border-color: #409EFF
+					transition-duration: 0s
 		.pnlm-hotspot.pnlm-scene
 			z-index: 10
 			opacity: 0.8
@@ -736,12 +830,12 @@ export default {
 			background-color: rgba(white, 0.6)
 			z-index: 11
 			&.right
-				top: 100px
+				top: 60px
 				right: 15px
 			.el-card__body
 				position: relative
 				padding: 5px
-				max-height: 650px
+				max-height: 680px
 				overflow-x: hidden
 				overflow-y: auto
 				.el-form-item

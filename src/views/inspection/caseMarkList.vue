@@ -117,6 +117,10 @@ export default {
 					name: "id",
 					sortable: true,
 				},
+				TrackingId: {
+					name: "追蹤Id",
+					sortable: false,
+				},
 				DistressTypeName: {
 					name: "缺失類型",
 					sortable: true,
