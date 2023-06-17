@@ -67,3 +67,12 @@ export function updatePassword(data) {
 		data
 	})
 }
+
+//修改備註
+export function updateNotes(data) {
+	return request({
+		url: '/auth/notes',
+		method: 'post',
+		data
+	})
+}
