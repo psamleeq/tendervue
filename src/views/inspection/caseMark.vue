@@ -637,7 +637,7 @@ export default {
 			else return row[column.property];
 		},
 		formatTime(time) {
-			return moment(time).format("YYYY-MM-DD HH:mm:ss");
+			return moment(time).format("YYYY-MM-DD");
 		}
 	},
 };

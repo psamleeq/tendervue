@@ -65,7 +65,7 @@
 			</el-table-column>
 		</el-table>
 
-		<!-- <pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" /> -->
+		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
 		<el-image-viewer
 			v-if="showImgViewer"
@@ -84,13 +84,13 @@
 import moment from "moment";
 import { getTenderMap } from "@/api/type";
 import { getInspectionCaseList, importInspectionCase } from "@/api/inspection";
-// import Pagination from "@/components/Pagination";
+import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "caseMarkerList",
-	components: { ElImageViewer, MapViewer },
+	components: { Pagination, ElImageViewer, MapViewer },
 	data() {
 		return {
 			loading: false,
@@ -292,7 +292,7 @@ export default {
 					});
 					this.total = 0;
 				} else {
-					// this.total = response.data.total;
+					this.total = response.data.total;
 					this.list = response.data.list;
 					this.list.forEach(l => {
 						l.DistressTypeName = this.options.caseTypeMap[l.DistressType];
