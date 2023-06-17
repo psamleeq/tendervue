@@ -44,6 +44,7 @@
 				:key="key"
 				:prop="key"
 				:label="value.name"
+				:width="value.width"
 				align="center"
 				:formatter="formatter"
 				:sortable="value.sortable"
@@ -55,12 +56,42 @@
 							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
 						</el-popover>
 					</span>
+					<span v-else-if="row.isEdit && column.property != 'id'">
+						<el-input v-if="['roadDir'].includes(column.property)" class="road-dir" v-model="row.Lane" size="mini">
+							<el-select slot="prepend" v-model="row.Direction" popper-class="type-select" size="mini">
+								<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
+							</el-select>
+						</el-input>
+						<el-input v-else-if="['TrackingId', 'MillingLength', 'MillingWidth', 'MillingArea' ].includes(column.property)" v-model="row[column.property]" size="mini" @change="calArea(row)" />
+						<el-select v-else-if="['DistressType', 'DistressLevel'].includes(column.property)" class="edit-select" v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]" size="mini" popper-class="type-select">
+							<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+						</el-select>
+						<el-date-picker
+							v-else-if="['DateReport'].includes(column.property)"
+							v-model="row.DateReport"
+							type="date"
+							placeholder="日期"
+							:clearable="false"
+							size="mini"
+						/>
+						<el-input v-else-if="['Place'].includes(column.property)" v-model="row.Place" type="textarea" autosize />
+						<el-button type="text" @click="setCaseInfo(row);">
+							<i class="el-icon-success" />
+						</el-button>
+						<el-button type="text" @click="row.edit = false; getList()">
+							<i class="el-icon-error" />
+						</el-button>
+					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="地圖" align="center">
+			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
+					<el-button-group v-if="!row.isEdit">
+						<el-button class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
+						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
+					</el-button-group>
+					<span v-else> - </span>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -83,7 +114,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap } from "@/api/type";
-import { getInspectionCaseList, importInspectionCase } from "@/api/inspection";
+import { getInspectionCaseList, setInspectionCaseList, importInspectionCase } from "@/api/inspection";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -116,50 +147,67 @@ export default {
 				id: {
 					name: "id",
 					sortable: true,
+					width: 60
 				},
 				TrackingId: {
 					name: "追蹤Id",
 					sortable: false,
+					width: 80
 				},
-				DistressTypeName: {
+				DistressType: {
 					name: "缺失類型",
 					sortable: true,
+					width: 160
 				},
 				DistressLevel: {
 					name: "損壞程度",
 					sortable: true,
+					width: 80
 				},
-				// roadName: {
-				// 	name: "道路名稱",
-				// 	sortable: true,
-				// },
+				DateReport: {
+					name: "通報時間",
+					sortable: true,
+					width: 150
+				},
+				Place: {
+					name: "地址",
+					sortable: true
+				},
+				roadDir: {
+					name: "車道",
+					sortable: false,
+					width: 110
+				},
 				MillingLength: {
 					name: "長度(m)",
 					sortable: true,
+					width: 80
 				},
 				MillingWidth: {
-					name: "寬度(cm)",
+					name: "寬度(m)",
 					sortable: true,
+					width: 80
 				},
 				MillingArea: {
 					name: "面積(㎡)",
 					sortable: true,
+					width: 80
 				},
 				ImgZoomIn: {
 					name: "近照",
-					sortable: false,
+					sortable: false
 				},
 				ImgZoomOut: {
 					name: "遠照",
-					sortable: false,
+					sortable: false
 				}
 			},
-			// total: 0,
+			total: 0,
 			list: [],
 			tableSelect: [],
 			options: {
 				tenderMap: {},
-				caseTypeMap: {
+				DistressType: {
 					15: "坑洞",
 					29: "縱向及橫向裂縫",
 					16: "龜裂",
@@ -198,15 +246,15 @@ export default {
 					66: "骨材剝落",
 					58: "人孔高差"
 				},
-				caseLevelMap: {
+				DistressLevel: {
 					1: "輕",
 					2: "中",
 					3: "重"
 				},
 				roadDir: {
 					0: "無",
-					1: "順向",
-					2: "逆向"
+					1: "順",
+					2: "逆"
 				}
 			}
 		};
@@ -295,12 +343,43 @@ export default {
 					this.total = response.data.total;
 					this.list = response.data.list;
 					this.list.forEach(l => {
-						l.DistressTypeName = this.options.caseTypeMap[l.DistressType];
-						l.DistressLevel = this.options.caseLevelMap[l.DistressLevel];
+						l.DateReport = this.formatTime(l.DateReport);
+						l.MillingLength = Math.round(l.MillingLength * 100) / 100;
+						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
+						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
+
+						this.$set(l, "isEdit", false);
 					})
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		setCaseInfo(row) {
+			this.loading = true;
+
+			setInspectionCaseList(row.id, {
+				trackingId: row.TrackingId,
+				dateReport: this.formatTime(row.DateReport),
+				distressType: row.DistressType,
+				distressLevel: row.DistressLevel,
+				millingLength: row.MillingLength,
+				millingWidth: row.MillingWidth,
+				millingArea: row.MillingArea,
+				place: row.Place,
+				direction: row.Direction,
+				lane: row.Lane
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "修改成功",
+						type: "success",
+					});
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
 		},
 		uploadCase() {
 			this.$confirm(`確定上傳缺失 ${this.tableSelect.length} 件 至 「${this.options.tenderMap[this.listQuery.tenderId].tenderName}」?`, "確認", {
@@ -338,12 +417,18 @@ export default {
 			});
 
 		},
+		calArea(row) {
+			row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
+		},
 		formatter(row, column) {
-			if (!["id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
+			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
+			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
+			else if (["roadDir"].includes(column.property)) return `${this.options.roadDir[row.Direction]}-${row.Lane}`;
+			else if (!["id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
 			else return row[column.property] || "-";
 		},
 		formatTime(time) {
-			return moment(time).utc().format("YYYY-MM-DD");
+			return moment(time).format("YYYY-MM-DD");
 		}
 	},
 };
@@ -365,6 +450,17 @@ export default {
 				.el-input__inner
 					padding-left: 10px
 					text-align: left
+	.road-dir, .el-date-editor
+		width: 110px
+		.el-input-group__prepend .el-select
+			width: 40px
+		.el-input__inner
+			padding: 5px 0 5px 17px
+		.el-input__inner
+			text-align: center
+	.road-dir .el-input__inner
+		width: 40px
+		padding: 5px 5px 5px 0
 	.btn-action
 		margin-left: 5px
 		padding: 5px
@@ -374,59 +470,10 @@ export default {
 			opacity: 0.7
 		.el-icon-circle-close
 			color:  #FFF
-	.dialog-filter 
-		.el-dialog
-			width: 450px
-			overflow: hidden
-		.el-dialog__header
-			background-color: #EBEEF5
-		.el-dialog__body
-			height: 80%
-			padding: 10px
-			margin: 0px 10px
-			.el-row
-				display: flex
-				flex-wrap: wrap
-				.el-col
-					padding: 10px 0px
-					position: relative
-					&::before
-						display: block
-						content: ''
-						position: absolute
-						border: 1px solid #eee
-						height: 100%
-						width: 100%
-					&.check-all-col::before
-						box-shadow: 0px 0px 2px #409EFF
-					.el-checkbox
-						width: 100%
-						padding-left: 20px
-					.check-all-btn
-						padding-left: 10px
-						margin-bottom: 5px
-						background-color: #F2F6FC
-						border: none
-						border-radius: 0px
-						box-shadow: inset 0px 0px 1px #C0C4CC
-						&.is-checked
-							background-color: #409EFF
-							span
-								color: white
-					.el-checkbox__input.is-indeterminate .el-checkbox__inner
-						background-color: lighten(#409EFF, 15)
-					.el-select
-						width: 55px
-						.el-input__inner
-							padding: 0 13px 0 5px
-							text-align: center
-							background-color: transparent
-						.el-input__suffix
-							right: 0px
-							margin-right: -3px
-							transform: scale(0.7)
-			.el-dialog__footer
-				margin: 5px 0px
+	.el-icon-success
+		margin-right: -10px
+	.el-icon-error
+		color: #F56C6C
 	.dialog-map
 		min-height: 300px 
 		.el-dialog__body
