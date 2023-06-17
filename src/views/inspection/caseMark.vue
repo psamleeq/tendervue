@@ -69,7 +69,8 @@ export default {
 			inspectIdNow: null,
 			clientStartX: 0,
 			caseGeoJson: {
-				features: []
+				caseNow: {}, 
+				casePrev: {}
 			},
 			polyLine: [],
 			markersTemp: {},
@@ -200,6 +201,8 @@ export default {
 		}
 	},
 	created() {
+		this.dataLayer = { caseNow: {}, casePrev: {} };
+
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
 			console.log("Google Map Failure");
@@ -313,61 +316,11 @@ export default {
 					this.map.overlayMapTypes.push(labelsMapType);
 				}
 
-				this.map.data.setStyle(feature => { 
-					// console.log(feature.getProperty("caseName"));
-					let color = this.options.caseColorMap.filter(color => color.name == '其他')[0].color;
-					if(feature.getProperty("DistressType")) {
-						const colorFilter = this.options.caseColorMap.filter(color => {
-							let caseFlag = false;
-							const distressType = this.options.caseTypeMap[feature.getProperty("DistressType")];
-							for(const name of color.name) {
-								caseFlag = (distressType.indexOf(name) != -1);
-								// console.log(name, caseFlag);
-								if(caseFlag) break;
-							}
-
-							return caseFlag; 
-						})
-						// console.log(colorFilter);
-						
-						if(colorFilter.length > 0) color = colorFilter[0].color;
-					}
-
-					// console.log(color);
-
-					if(feature.getProperty("isPoint")) {
-						return { 
-							icon: { 
-								url: `/assets/icon/icon_case_${this.options.caseLevelMap[feature.getProperty("DistressLevel")]}.png`,
-								anchor: new google.maps.Point(5, 5),
-								scaledSize: new google.maps.Size(25, 25),
-							}
-						};
-					} else if(feature.getProperty("isLine")) {
-						return { 
-							strokeColor: color,
-							strokeWeight: 3,
-							strokeOpacity: 0.8,
-							fillOpacity: 0
-						};
-					} else {
-						return { 
-							strokeColor: color,
-							strokeWeight: 1,
-							strokeOpacity: 1,
-							fillColor: color,
-							fillOpacity: 0.7
-						};
-					}
-				});
-
-				this.map.data.addListener('mouseover', (event) => { 
-					this.showCaseContent(event.feature, event.latLng);
-				});
-				this.map.data.addListener('mouseout', (event) => { 
-					this.infoWindow.close();
-					this.$refs.panoramaView.hightLight(event.feature.getProperty("Id"), false);
-				});
+				// 缺失
+				this.dataLayer.caseNow = new google.maps.Data({ map: this.map });
+				this.setDataLayer(this.dataLayer.caseNow);
+				this.dataLayer.casePrev = new google.maps.Data({ map: this.map });
+				this.setDataLayer(this.dataLayer.casePrev, true);
 				
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 
@@ -383,6 +336,62 @@ export default {
 
 				resolve();
 			})
+		},
+		setDataLayer(dataLayer, isPrev=false) {
+			dataLayer.setStyle(feature => { 
+				// console.log(feature.getProperty("caseName"));
+				let color = this.options.caseColorMap.filter(color => color.name == '其他')[0].color;
+				if(feature.getProperty("DistressType")) {
+					const colorFilter = this.options.caseColorMap.filter(color => {
+						let caseFlag = false;
+						const distressType = this.options.caseTypeMap[feature.getProperty("DistressType")];
+						for(const name of color.name) {
+							caseFlag = (distressType.indexOf(name) != -1);
+							// console.log(name, caseFlag);
+							if(caseFlag) break;
+						}
+
+						return caseFlag; 
+					})
+					// console.log(colorFilter);
+					
+					if(colorFilter.length > 0) color = colorFilter[0].color;
+				}
+
+				// console.log(color);
+
+				if(feature.getProperty("isPoint")) {
+					return { 
+						icon: { 
+							url: `/assets/icon/icon_case_${this.options.caseLevelMap[feature.getProperty("DistressLevel")]}.png`,
+							anchor: new google.maps.Point(5, 5),
+							scaledSize: new google.maps.Size(25, 25),
+						}
+					};
+				} else if(feature.getProperty("isLine")) {
+					return { 
+						strokeColor: isPrev ? '#556B2F' : color,
+						strokeWeight: 3,
+						strokeOpacity: isPrev ? 0.4 : 0.8,
+						fillOpacity: 0
+					};
+				} else {
+					return { 
+						strokeColor: isPrev ? '#556B2F' : color,
+						strokeWeight: 1,
+						strokeOpacity: 1,
+						fillColor: color,
+						fillOpacity: isPrev ? 0.3 : 0.7
+					};
+				}
+			});
+			dataLayer.addListener('mouseover', (event) => { 
+				this.showCaseContent(event.feature, event.latLng);
+			});
+			dataLayer.addListener('mouseout', (event) => { 
+				this.infoWindow.close();
+				this.$refs.panoramaView.hightLight(event.feature.getProperty("Id"), false);
+			});
 		},
 		getList() {
 			this.loading = true;
@@ -420,14 +429,17 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		getCaseList() {
-			this.map.data.forEach(feature => this.map.data.remove(feature));
-
+			for(const dataLayer of Object.values(this.dataLayer)) {
+				dataLayer.forEach(feature => dataLayer.remove(feature));
+			}
 			getInspectionCaseGeoJson({
-				caseInspectId: this.listQuery.caseInspectId
+				inspectId: this.listQuery.inspectId,
+				caseInspectId: this.listQuery.caseInspectId || 0
 			}).then(response => {
 				// this.caseGeoJson = response.data.caseGeoJson;
 				this.caseGeoJson = Object.assign({}, this.caseGeoJson, response.data.caseGeoJson);
-				this.map.data.addGeoJson(this.caseGeoJson);
+				this.dataLayer.caseNow.addGeoJson(this.caseGeoJson.caseNow);
+				this.dataLayer.casePrev.addGeoJson(this.caseGeoJson.casePrev);
 
 				this.$nextTick(() => {
 					this.$refs.panoramaView.resetCaseHotSpot();
@@ -590,22 +602,24 @@ export default {
 		},
 		hightLight(blockId) {
 			// console.log("highlight", blockId);
-			this.map.data.revertStyle();
 			this.infoWindow.close();
+			for(const dataLayer of Object.values(this.dataLayer)) {
+				dataLayer.revertStyle();
 
-			this.map.data.forEach(feature => {
-				this.$refs.panoramaView.hightLight(feature.getProperty("Id"), false);
+				dataLayer.forEach(feature => {
+					this.$refs.panoramaView.hightLight(feature.getProperty("Id"), false);
 
-				if(feature.getProperty("Id") == blockId) {
-					this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
-					this.showCaseContent(feature, feature.getProperty("CenterPt"));
-					this.$refs.panoramaView.hightLight(feature.getProperty("Id"), true);
-				}
-			});
+					if(feature.getProperty("Id") == blockId) {
+						this.map.data.overrideStyle(feature, { fillColor: "#FFF176" });
+						this.showCaseContent(feature, feature.getProperty("CenterPt"));
+						this.$refs.panoramaView.hightLight(feature.getProperty("Id"), true);
+					}
+				});
+			}
 		},
 		clearAll() {
 			// console.log("clearAll");
-			this.caseGeoJson = Object.assign({}, this.caseGeoJson, { features: [] });
+			this.caseGeoJson = Object.assign({}, this.caseGeoJson, { caseNow: {}, casePrev: {} });
 
 			this.pointCurr.setMap(null);
 

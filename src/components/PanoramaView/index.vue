@@ -16,13 +16,16 @@
 				<div>{{ panoramaTestInfo.position }}</div>
 			</div>
 
-			<el-card v-if="hotSpotIdList.dot.length > 1" class="info-box right">
+			<el-card v-if="hotSpotIdList.dot.length > 1 || isReview" class="info-box right">
 				<el-form :model="caseInfo" label-width="70px" size="small">
 					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
-						<el-input v-model="caseInfo.trackingId" size="mini" style="width: 130px" />
+						<span v-if="isReview">{{ caseInfo.trackingId }}</span>
+						<el-input v-else v-model="caseInfo.trackingId" size="mini" style="width: 130px" />
 					</el-form-item>
-					<el-form-item prop="date" label="通報時間">
+					<el-form-item prop="dateReport" label="通報時間">
+						<span v-if="isReview">{{ formatTime(caseInfo.dateReport) }}</span>
 						<el-date-picker
+							v-else
 							v-model="caseInfo.dateReport"
 							type="date"
 							placeholder="日期"
@@ -31,33 +34,40 @@
 						/>
 					</el-form-item>
 					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 5px">
-						<el-select v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
+						<span v-if="isReview">{{ options.caseTypeMap[caseInfo.distressType] }}</span>
+						<el-select v-else v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
 							<el-option v-for="key in options.caseTypeMapOrder" :key="key" :label="options.caseTypeMap[key]" :value="Number(key)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="level" label="缺失程度">
-						<el-select v-model="caseInfo.distressLevel" size="mini">
+						<span v-if="isReview">{{ options.caseLevelMap[caseInfo.distressLevel] }}</span>
+						<el-select v-else v-model="caseInfo.distressLevel" size="mini">
 							<el-option v-for="(name, level) in options.caseLevelMap" :key="level" :label="name" :value="Number(level)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="millingLength" label="預估長" style="margin-bottom: 0">
-						<el-input v-model="caseInfo.millingLength" size="mini" style="width: 130px" />
+						<span v-if="isReview">{{ caseInfo.millingLength }}</span>
+						<el-input v-else v-model="caseInfo.millingLength" size="mini" style="width: 130px" @change="calArea()" />
 					</el-form-item>
 					<el-form-item prop="millingWidth" label="預估寬" style="margin-bottom: 0">
-						<el-input v-model="caseInfo.millingWidth" size="mini" style="width: 130px" />
+						<span v-if="isReview">{{ caseInfo.millingWidth }}</span>
+						<el-input v-else v-model="caseInfo.millingWidth" size="mini" style="width: 130px" @change="calArea()" />
 					</el-form-item>
 					<el-form-item prop="millingArea" label="預估面積">
-						<el-input v-model="caseInfo.millingArea" size="mini" style="width: 130px" />
+						<span v-if="isReview">{{ caseInfo.millingArea }}</span>
+						<el-input v-else v-model="caseInfo.millingArea" size="mini" style="width: 130px" />
 					</el-form-item>
 					<el-form-item prop="address" label="地址" style="margin-bottom: 5px">
-						<el-input v-model="caseInfo.place" type="textarea" :rows="2" />
-						<div slot="label">
+						<span v-if="isReview">{{ caseInfo.millingArea }}</span>
+						<el-input v-else v-model="caseInfo.place" type="textarea" :rows="2" />
+						<div v-if="!isReview" slot="label">
 							<div style="height: 24px; line-height: 24px; margin: -3px 2px -5px 0">地址</div>
 							<el-button type="success" size="mini" style="padding: 5px" :loading="isGetAddress" @click="getAddress()">填入</el-button>
 						</div>
 					</el-form-item>
 					<el-form-item prop="roadDir" label="車道">
-						<el-input class="road-dir" v-model="caseInfo.lane" size="mini">
+						<span v-if="isReview">{{ options.roadDir[caseInfo.direction] }} - {{ caseInfo.lane }}</span>
+						<el-input v-else class="road-dir" v-model="caseInfo.lane" size="mini">
 							<el-select slot="prepend" v-model="caseInfo.direction" popper-class="type-select" size="mini">
 								<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
 							</el-select>
@@ -71,7 +81,7 @@
 									<el-image slot="reference" style="width: 100px; height: 100px" :src="caseInfo[imgType]" fit="contain" />
 								</el-popover>
 							</el-col>
-							<el-col class="btn-img-action" :span="8">
+							<el-col v-if="!isReview" class="btn-img-action" :span="8">
 								<el-button type="success" size="mini" @click="screenshot(imgType)">截圖</el-button>
 								<el-button v-if="caseInfo[imgType].length > 0" type="danger" size="mini" @click="caseInfo[imgType] = ''">刪除</el-button>
 							</el-col>
@@ -79,8 +89,8 @@
 					</el-form-item>
 				</el-form>
 				<el-button-group class="btn-action-group">
-					<el-button type="success" @click="uploadCase()" :loading="isUpload">新增</el-button>
-					<el-button type="danger" @click="clearAll()" :disabled="isUpload">清除</el-button>
+					<el-button v-if="!isReview" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase()" :loading="isUpload">{{ caseInfo.isPrev ? '追蹤' : '新增' }}</el-button>
+					<el-button type="danger" @click="clearAll(); resetCaseHotSpot();" :disabled="isUpload">{{ isReview ? '關閉' : '清除' }}</el-button>
 				</el-button-group>
 			</el-card>
 		</div>
@@ -129,6 +139,7 @@ export default {
 			isGetAddress: false,
 			isAutoMove: false,
 			isAutoRotate: false,
+			isReview: false,
 			panorama: null,
 			prevSceneId: [],
 			hotSpotId: 0,
@@ -380,8 +391,12 @@ export default {
 
 				this.caseInfo.millingLength = Math.round(Math.max(...distanceList) * 100) / 100;
 				this.caseInfo.millingWidth = Math.round(Math.min(...distanceList) * 100) / 100;
-				this.caseInfo.millingArea = Math.round(calArea(this.hotSpotIdList.dot.map(hotSpot => ([ hotSpot.coordinates.lng, hotSpot.coordinates.lat ]))) * 100) / 100;
+				// this.caseInfo.millingArea = Math.round(calArea(this.hotSpotIdList.dot.map(hotSpot => ([ hotSpot.coordinates.lng, hotSpot.coordinates.lat ]))) * 100) / 100;
+				this.calArea();
 			}
+		},
+		calArea() {
+			this.caseInfo.millingArea = Math.round(this.caseInfo.millingLength * this.caseInfo.millingWidth * 100 ) / 100;
 		},
 		getAddress() {
 			this.isGetAddress = true;
@@ -549,92 +564,62 @@ export default {
 
 			return hotSpot;
 		},
-		addCaseHotSpot({ pitch, yaw }, prop) {
+		addCaseHotSpot({ pitch, yaw }, prop, isPrev=false) {
 			// console.log(prop);
 			const hotSpot = {
-				// id: this.hotSpotId,
+				id: this.hotSpotId++,
+				caseId: prop.Id,
 				type: "info",
 				pitch,
 				yaw,
 				// text: hoverText,
-				cssClass: `hotSpotIcon alert caseId_${prop.Id}`,
+				cssClass: `hotSpotIcon alert ${isPrev ? "prev" : ""} caseId_${prop.Id}`,
 				createTooltipArgs: {
 					prop
 				},
 				createTooltipFunc: (div, createTooltipArgs) => {
 					// console.log(createTooltipArgs.prop);
-					const span = document.createElement('span');
-					const caseTypeStr = `${this.options.caseTypeMap[createTooltipArgs.prop.DistressType]} (${this.options.caseLevelMap[createTooltipArgs.prop.DistressLevel]})`;
-					const caseSizeStr = `${Math.round(createTooltipArgs.prop.MillingLength * 100) / 100} x ${Math.round(createTooltipArgs.prop.MillingWidth * 100) / 100} = ${Math.round(createTooltipArgs.prop.MillingArea * 100) / 100}`;
-					span.innerHTML = 
-						`<div>Id: ${createTooltipArgs.prop.Id}</div>
-							<div>追蹤Id: ${createTooltipArgs.prop.TrackingId || "-"}</div>
-							<div>類型: ${caseTypeStr}</div>
-							<div>通報日期: ${moment(createTooltipArgs.prop.DateReport).format("YYYY-MM-DD")}</div>
-							<div>尺寸: ${caseSizeStr}</div>
-							<button type="button" id="info-tracking-btn" class="info-btn tracking el-button el-button--default" style="height: 20px; width: 40px;">追蹤</button>`;
-
-					// const image = document.createElement('img');
-					// image.src = createTooltipArgs.prop.ImgZoomOut;
-					// image.style.width = '160px';
-					// image.style.paddingTop = '5px';
-					// span.appendChild(image);
-
-					div.classList.add('pnlm-tooltip');
-					div.appendChild(span);
-					span.style.width = span.scrollWidth - 20 + 'px';
-					span.style.marginLeft = -(span.scrollWidth - div.offsetWidth) / 2 + 'px';
-					span.style.marginTop = -span.scrollHeight - 12 + 'px';
-
+					// div.classList.add('pnlm-tooltip');
+					
 					div.addEventListener('mouseover', (event) => { this.$emit("hightLight", createTooltipArgs.prop.Id) });
-					div.addEventListener('mouseout', (event) => { 
-						const hotSpot = this.hotSpotIdList.case.filter(hotSpot => (hotSpot.createTooltipArgs.prop.Id == createTooltipArgs.prop.Id))[0];
-						if(!hotSpot.clickHandlerArgs.sticky) this.$emit("hightLight");
-					});
+					div.addEventListener('mouseout', (event) => { this.$emit("hightLight") });
 				},
 				clickHandlerArgs: {
-					caseId: prop.Id,
-					sticky: false
+					prop,
+					isPrev
 				},
 				clickHandlerFunc: (evt, clickHandlerArgs) => {
-					if(!clickHandlerArgs.sticky) this.hightLight(clickHandlerArgs.caseId, true);
-					else this.hightLight(clickHandlerArgs.caseId, false);
+					this.resetCaseHotSpot();
 
-					const hotSpot = this.hotSpotIdList.case.filter(hotSpot => (hotSpot.createTooltipArgs.prop.Id == clickHandlerArgs.caseId))[0];
-					hotSpot.clickHandlerArgs.sticky = clickHandlerArgs.sticky = !clickHandlerArgs.sticky;
+					this.caseInfo = Object.assign({}, this.caseInfo, {
+						trackingId: clickHandlerArgs.prop.TrackingId || prop.Id,
+						distressType: Number(clickHandlerArgs.prop.DistressType),
+						distressLevel: Number(clickHandlerArgs.prop.DistressLevel),
+						millingLength: Math.round(clickHandlerArgs.prop.MillingLength * 100) / 100 ,
+						millingWidth: Math.round(clickHandlerArgs.prop.MillingWidth * 100) / 100,
+						millingArea: Math.round(clickHandlerArgs.prop.MillingArea * 100) / 100,
+						place: clickHandlerArgs.prop.Place,
+						direction: clickHandlerArgs.prop.Direction,
+						lane: clickHandlerArgs.prop.Lane,
+						isPrev: clickHandlerArgs.isPrev,
+						imgZoomIn: clickHandlerArgs.isPrev ? "" : clickHandlerArgs.prop.ImgZoomIn,
+						imgZoomOut: clickHandlerArgs.isPrev ? "" : clickHandlerArgs.prop.ImgZoomOut
+					});
+
+					if(clickHandlerArgs.isPrev) {
+						for(const point of clickHandlerArgs.prop.Coordinates) {
+							const coordinates = { lat: point[1], lng: point[0] };
+							const hotSpot = this.addDotHotSpot(this.getCoords(coordinates), 1);
+							hotSpot.coordinates = coordinates;
+						}
+					} 
+
+					this.isReview = !clickHandlerArgs.isPrev;
 				}
 			};
 
 			this.panorama.addHotSpot(hotSpot, this.panorama.getScene());
 			this.hotSpotIdList.case.push(hotSpot);
-
-			// 按鈕click監聽
-			let infoTrackingBtn = this.$el.querySelectorAll("#info-tracking-btn");
-			infoTrackingBtn = infoTrackingBtn[infoTrackingBtn.length - 1];
-			// console.log(infoTrackingBtn);
-			if(infoTrackingBtn) {
-				infoTrackingBtn.addEventListener("click", (evt) => { 
-					this.caseInfo = Object.assign({}, this.caseInfo, {
-						trackingId: prop.TrackingId || prop.Id,
-						distressType: Number(prop.DistressType),
-						distressLevel: Number(prop.DistressLevel),
-						millingLength: Math.round(prop.MillingLength * 100) / 100 ,
-						millingWidth: Math.round(prop.MillingWidth * 100) / 100,
-						millingArea: Math.round(prop.MillingArea * 100) / 100,
-						place: prop.Place,
-						direction: prop.Direction,
-						lane: prop.Lane
-					});
-
-					for(const point of prop.Coordinates) {
-						const coordinates = { lat: point[1], lng: point[0] };
-						const hotSpot = this.addDotHotSpot(this.getCoords(coordinates), 1);
-						hotSpot.coordinates = coordinates;
-					}
-
-					evt.stopPropagation();
-				});
-			}
 		},
 		resetCaseHotSpot() {
 			this.clearAll();
@@ -643,10 +628,12 @@ export default {
 			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
 			// if(!panoramaInfo) return;
 
-			for(const caseSpec of this.caseGeoJson.features) {
-				const geoCoordinates = caseSpec.properties.CenterPt;
-				if(calcDistance(panoramaInfo.position, geoCoordinates) <= 15) {
-					this.addCaseHotSpot(this.getCoords(geoCoordinates), caseSpec.properties);
+			for(const caseType in this.caseGeoJson) {
+				for(const caseSpec of this.caseGeoJson[caseType].features) {
+					const geoCoordinates = caseSpec.properties.CenterPt;
+					if(calcDistance(panoramaInfo.position, geoCoordinates) <= 15) {
+						this.addCaseHotSpot(this.getCoords(geoCoordinates), caseSpec.properties, caseType == 'casePrev');
+					}
 				}
 			}
 		},
@@ -654,6 +641,7 @@ export default {
 			for(const type in this.hotSpotIdList) {
 				for(const hotSpot of this.hotSpotIdList[type]) {
 					this.panorama.removeHotSpot(hotSpot.id, sceneId);
+					if(type == 'case') this.hightLight(hotSpot.CaseId, false);
 				}
 			}
 			this.hotSpotIdList = {
@@ -663,22 +651,22 @@ export default {
 			this.$emit("clearMarker");
 		},
 		hightLight(caseId, isOpen = true) {
-			let caseHotSpot = this.$el.querySelectorAll(`.pnlm-hotspot-base.hotSpotIcon.alert.caseId_${caseId}.pnlm-tooltip`);
+			let caseHotSpot = this.$el.querySelectorAll(`.pnlm-hotspot-base.hotSpotIcon.alert.caseId_${caseId}`);
 			caseHotSpot = caseHotSpot[caseHotSpot.length - 1];
 			// console.log(caseHotSpot);
 			if(!caseHotSpot) return;
 
 			if(isOpen) {
-				caseHotSpot.children[0].style.visibility = 'visible';
+				caseHotSpot.classList.add('highlight');
 				
 				// NOTE: 旋轉至缺失
 				// const hotSpot = this.hotSpotIdList.case.filter(hotSpot => (hotSpot.createTooltipArgs.prop.Id == caseId))[0];
 				// if(hotSpot) this.panorama.lookAt(hotSpot.pitch, hotSpot.yaw);
-			} else caseHotSpot.children[0].style = "width: 200px; margin-left: -97px; margin-top: -152px";
-			// target.dispatchEvent(new MouseEvent('mouseover', { 'bubbles': true }))
+			} else caseHotSpot.classList.remove('highlight'); 
 		},
 		clearAll() {
 			this.clearHotSpot();
+			this.isReview = false;
 			this.caseInfo = {
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
@@ -690,6 +678,7 @@ export default {
 				place: "",
 				direction: 0,
 				lane: 1,
+				isPrev: false,
 				imgZoomIn: "",
 				imgZoomOut: ""
 			};
@@ -747,6 +736,9 @@ export default {
 			// console.log("geoCoordinates: ", geoCoordinates);
 			return geoCoordinates;
 		},
+		formatTime(time) {
+			return moment(time).format("YYYY-MM-DD");
+		}
 	}
 }
 </script>
@@ -800,6 +792,14 @@ export default {
 				background-size: 100% 
 				filter: drop-shadow(0px 0px 3px red)
 				z-index: 10
+				&.prev
+					background-image: url('../../../public/assets/icon/icon_alert_plus.png')
+					filter: drop-shadow(0px 0px 2px tomato)
+				&.highlight
+					transform: scale(1.5)
+					border: 1px solid #fff
+					border-radius: 4px
+					background-color: rgba(#fff, 0.4)
 				& > span 
 					font-size: 14px
 					text-align: left
@@ -844,7 +844,7 @@ export default {
 				.el-form-item
 					margin-bottom: 10px
 					.el-form-item__label
-						line-height: 40px
+						line-height: auto
 					.el-select, .road-dir, .el-textarea, .el-date-editor
 						width: 160px
 						.el-input__inner, .el-textarea__inner
