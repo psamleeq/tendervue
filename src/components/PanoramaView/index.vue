@@ -435,7 +435,9 @@ export default {
 						// 切換場景圖示
 						...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.pnlm-hotspot"),
 						// 缺失標記圖示
-						...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.alert")
+						...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.alert"),
+						// NOTE: 標記紅點圖示
+						...this.$el.querySelectorAll("#panorama .pnlm-hotspot-base.hotSpotIcon.redDot")
 					];
 					for(const dom of ignoreDomList) dom.setAttribute("data-html2canvas-ignore", true);
 
