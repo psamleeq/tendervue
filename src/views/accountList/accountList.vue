@@ -117,7 +117,7 @@
 <script>
 import moment from "moment";
 import Pagination from "@/components/Pagination";
-import { getAccountList,addAcount,changeActive,updatePassword } from "@/api/auth";
+import { getAccountList,addAcount,changeActive,updatePassword,updateNotes } from "@/api/auth";
 
 
 export default {
@@ -199,10 +199,6 @@ export default {
 		this.getList()
 	},
 	methods: {
-		editNotes(row){
-			console.log(row);
-			this.getList()
-		},
 		getList(){
 			this.loading = true;
 			this.list = [];
@@ -304,7 +300,15 @@ export default {
 					
 				})
 			
-		}
+		},
+		editNotes(row){
+			updateNotes({
+				userId:row.UserId,
+				notes:row.Notes
+			}).then(response => {
+				this.getList()
+			}).catch(err => this.loading = false);
+		},
 	
 	},
 };
