@@ -206,39 +206,28 @@ export default {
 		getList(){
 			this.loading = true;
 			this.list = [];
-			// let query = {
-			// 	UserName:this.listQuery.username,
-			// 	pageCurrent: this.listQuery.pageCurrent,
-			// 	pageSize: this.listQuery.pageSize,
-			// };
-			getAccountList().then(response=>{
+			let query = {
+				userName:this.listQuery.username,
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: this.listQuery.pageSize,
+			};
+			getAccountList(query).then(response => {
 				if (response.data.list.length == 0) {
-					if(showMsg) this.$message({
+					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
 					this.total = 0;
 				} else {
-					console.log(response.data)
-					// this.total = response.data.total;
-					if(this.listQuery.username.length != 0){
-						let filterList = response.data.list.filter(l=>
-							l.UserName === this.listQuery.username
-						)
-						this.list = filterList;
-						this.list.forEach(l => {
-							this.$set(l, "edit", false);
-						})
-					}else{
-						this.list = response.data.list;
-						this.list.forEach(l => {
-							this.$set(l, "edit", false);
-						})
-					}
-					
-					// console.log(this.list);
+					this.total = response.data.total;
+					this.list = response.data.list;
+					this.list.forEach(l => {
+						this.$set(l, "edit", false);
+					})
 				}
-			})
+				this.loading = false;
+			}).catch(err => this.loading = false);
+			
 			this.loading = false;
 			
 		},
