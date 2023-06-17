@@ -43,7 +43,7 @@
 							active-value="1"
 							inactive-value="0">
 						</el-switch>
-						 <span :style="{ color: row.Active ? '#13ce66' : '#000000' }">
+						<span :style="{ color: row.Active ? '#13ce66' : '#000000' }">
 							啟用
 						</span>
 					</span>
@@ -53,8 +53,9 @@
 					<span v-else-if="['changePassword'].includes(column.property)">
 						<el-button @click="showUpdate(row)" size="small" type="danger" plain>修改密碼</el-button>
 					</span>
-					<span v-else-if="['note'].includes(column.property)">
-						<el-input v-if="row.edit" v-model="row.Note" style="width: 80%" />
+					<span v-else-if="['Notes'].includes(column.property)">
+						<el-input v-if="row.edit" v-model="row.Notes" style="width: 80%" />
+						<span v-else>{{ row.Notes || "-" }}</span>
 						<el-button v-if="!row.edit" type="text" style="margin-left: 10px" size="mini" @click="row.edit = true"><i class="el-icon-edit" /></el-button>
 						<span v-if="row.edit">
 							<el-button type="text" @click="editNotes(row)"><i class="el-icon-check" style="color: #67C23A"/></el-button>
@@ -151,7 +152,6 @@ export default {
 					sortable: false,
 					width:120
 				},
-				
 				Create_At: {
 					name: "創建日期",
 					sortable: false,
@@ -172,7 +172,7 @@ export default {
 					sortable: false,
 					width:120
 				},
-				note: {
+				Notes: {
 					name: "備註",
 					sortable: false
 				},
