@@ -616,8 +616,7 @@ export default {
 					} 
 
 					this.isReview = !clickHandlerArgs.isPrev;
-					this.isSticky = !this.isSticky;
-					this.hightLight(clickHandlerArgs.prop.Id, true);
+					this.isSticky = !this.isSticky; 
 				}
 			};
 
