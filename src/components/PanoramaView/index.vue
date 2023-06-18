@@ -140,6 +140,7 @@ export default {
 			isAutoMove: false,
 			isAutoRotate: false,
 			isReview: false,
+			isSticky: false,
 			panorama: null,
 			prevSceneId: [],
 			hotSpotId: 0,
@@ -582,7 +583,7 @@ export default {
 					// div.classList.add('pnlm-tooltip');
 					
 					div.addEventListener('mouseover', (event) => { this.$emit("hightLight", createTooltipArgs.prop.Id) });
-					div.addEventListener('mouseout', (event) => { this.$emit("hightLight") });
+					div.addEventListener('mouseout', (event) => { this.$emit("hightLight", this.isSticky ? createTooltipArgs.prop.Id : null) });
 				},
 				clickHandlerArgs: {
 					prop,
@@ -615,6 +616,8 @@ export default {
 					} 
 
 					this.isReview = !clickHandlerArgs.isPrev;
+					this.isSticky = !this.isSticky;
+					this.hightLight(clickHandlerArgs.prop.Id, true);
 				}
 			};
 
@@ -667,6 +670,7 @@ export default {
 		clearAll() {
 			this.clearHotSpot();
 			this.isReview = false;
+			this.isSticky = false;
 			this.caseInfo = {
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
