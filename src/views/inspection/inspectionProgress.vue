@@ -61,7 +61,7 @@
 						</span>
 					</span>
 					<span v-else-if="['ZipCode'].includes(column.property)">
-						<span>{{ getAreaName(row.ZipCode) }}</span>
+						<span>{{ GetAreaName(row.ZipCode).area }}</span>
 					</span>
 					<span v-else>
 					<span>{{ row[column.property] || "-" }}</span>
@@ -98,8 +98,10 @@ import moment from "moment";
 import { getInspectionList, setInspectionList } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 import TimePicker from '@/components/TimePicker';
+import commonMixin from '@/functions/common'
 
 export default {
+	mixins: [commonMixin],
 	name: "inspectionProgress",
 	components: { TimePicker },
 	data() {
@@ -113,8 +115,18 @@ export default {
 		},
 		area:{
 			0: "全部",
-			103:"大同區",
-			104:"中山區"
+			100:'中正區',
+			103: '大同區',
+			104: '中山區',
+			105: '松山區',
+			106: '大安區',
+			108: '萬華區',
+			110: '信義區',
+			111: '士林區',
+			112: '北投區',
+			114: '內湖區',
+			115: '南港區',
+			116: '文山區',
 		},
 		list:[],
 		rowActive: {},
