@@ -98,7 +98,7 @@ import moment from "moment";
 import { getInspectionList, setInspectionList } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 import TimePicker from '@/components/TimePicker';
-import commonMixin from '@/functions/common'
+import commonMixin from '@/mixins/common'
 
 export default {
 	mixins: [commonMixin],
@@ -115,7 +115,7 @@ export default {
 		},
 		area:{
 			0: "全部",
-			100:'中正區',
+			100: '中正區',
 			103: '大同區',
 			104: '中山區',
 			105: '松山區',
