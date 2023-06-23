@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const caseRouter = {
 	path: '/case',
 	component: Layout,
-	redirect: '/case/list',
+	redirect: '/case/caseList',
 	name: 'road',
 	meta: {
 		title: '缺失管理',

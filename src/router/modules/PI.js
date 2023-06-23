@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const PIRouter = {
 	path: '/PIIndex',
 	component: Layout,
-	redirect: '/PI/precipitation',
+	redirect: 'noRedirect',
 	name: 'PIIndex',
 	meta: {
 		title: '成效指標',
@@ -19,7 +19,7 @@ const PIRouter = {
 				render: (c) => c('router-view')
 			},
 			name: 'caseCheck',
-			redirect: 'noRedirect',
+			redirect: '/PIIndex/caseCheck/caseList',
 			meta: {
 				title: '案件稽核',
 				roles: ['PIcase.viewer', 'PIcase.inspector', 'PIcase.supervisor', 'PIcase.editor']

@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const unitRouter = {
 	path: '/unit',
 	component: Layout,
-	redirect: '/unit/list',
+	redirect: '/unit/blockUnit',
 	name: 'unit',
 	meta: {
 		title: '單元管理',

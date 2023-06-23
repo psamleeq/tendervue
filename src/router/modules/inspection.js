@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const inspectionRouter = {
 	path: '/inspection',
 	component: Layout,
-	redirect: '/car/route',
+	redirect: '/inspection/inspectionProgress',
 	name: 'inspection',
 	meta: {
 		title: '巡查管理',

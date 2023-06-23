@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const dispatchRouter = {
 	path: '/dispatchV0',
 	component: Layout,
-	redirect: '/dispatchV0/plan_rm100',
+	redirect: '/dispatchV0/planV0',
 	name: 'dispatchV0',
 	meta: {
 		title: '派工管理_V0',

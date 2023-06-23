@@ -3,11 +3,11 @@ import Layout from '@/layout'
 const dispatchRouter = {
 	path: '/account',
 	component: Layout,
-	// redirect: '/dispatch/assign',
+	redirect: '/account/accountList',
 	name: 'accountManager',
 	meta: {
 		title: '帳號管理',
-		icon: 'clipboard-account-outline',
+		icon: 'el-icon-user-solid',
 		roles: ['rAdm'],
 		isNew: true
 	},

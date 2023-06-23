@@ -21,7 +21,7 @@ const carRouter = {
 			meta: {
 				title: '即時影像',
 				roles: ['car.viewer'],
-				vTag: 'alpha'
+				isNew: true 
 			}
 		},
 		{

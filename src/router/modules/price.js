@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const dispatchRouter = {
 	path: '/price',
 	component: Layout,
-	// redirect: '/dispatch/assign',
+	redirect: '/price/priceManage',
 	name: 'price',
 	meta: {
 		title: '計價管理',

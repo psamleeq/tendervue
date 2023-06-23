@@ -5,7 +5,7 @@ import Layout from '@/layout'
 const caseHistRouter = {
 	path: '/caseHist',
 	component: Layout,
-	redirect: '/caseHist/',
+	redirect: '/caseHist/inspectionHist',
 	name: 'caseHist',
 	meta: {
 		title: '案件紀錄',
