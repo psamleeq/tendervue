@@ -2,7 +2,7 @@ export default {
 	methods: {
 		GetAreaName(zipcode) {
 				const cityData = {
-					'台北市': {
+					'Taipei': {
 						100:'中正區',
 						103: '大同區',
 						104: '中山區',
@@ -16,7 +16,7 @@ export default {
 						115: '南港區',
 						116: '文山區',
 					},
-					'新北市': {
+					'NewTaipei': {
 						208: '金山區',
 						220: '板橋區',
 						221: '汐止區',
@@ -46,7 +46,7 @@ export default {
 						252: '三芝區',
 						253: '石門區',
 					},
-					'基隆市': {
+					'Keelung': {
 						200:'仁愛區',
 						201: '信義區',
 						202: '中正區',
@@ -55,7 +55,7 @@ export default {
 						205: '暖暖區',
 						206: '信義區',
 					},
-					'宜蘭縣': {
+					'Ilan': {
 						260: '宜蘭市',
 						261: '頭城鎮',
 						262: '礁溪鄉',
@@ -69,10 +69,10 @@ export default {
 						270: '蘇澳鎮',
 						272: '南澳鄉'
 					},
-					'新竹市': {
+					'HsinchuCity': {
 						300:'新竹市',
 					},
-					'新竹縣': {
+					'HsinchuCounty': {
 						302:'竹北市',
 						303:'湖口鄉',
 						304:'新豐鄉',
@@ -87,7 +87,7 @@ export default {
 						314:'北埔鄉',
 						315:'峨眉鄉',
 					},
-					'桃園市': {
+					'Taoyuan': {
 						320:'中壢區',
 						324:'平鎮區',
 						325:'龍潭區',
@@ -102,7 +102,7 @@ export default {
 						337:'大園區',
 						338:'蘆竹區',
 					},
-					'苗栗縣': {
+					'Miaoli': {
 						350:'竹南鎮',
 						351:'頭份市',
 						352:'三灣鄉',
@@ -122,7 +122,7 @@ export default {
 						368:'西湖鄉',
 						369:'卓蘭鎮',
 					},
-					'台中市': {
+					'Taichung': {
 						400:'中區',
 						401:'東區',
 						402:'南區',
@@ -153,7 +153,7 @@ export default {
 						438:'外埔區',
 						439:'大安區',
 					},
-					'彰化縣': {
+					'Changhua': {
 						500:'彰化市',
 						502:'芬園鄉',
 						503:'花壇鄉',
@@ -181,7 +181,7 @@ export default {
 						528:'芳苑鄉',
 						530:'二水鄉',
 					},
-					'南投縣': {
+					'Nantou': {
 						540:'南投市',
 						541:'中寮鄉',
 						542:'草屯鎮',
@@ -196,10 +196,10 @@ export default {
 						557:'竹山鎮',
 						558:'鹿谷鄉',
 					},
-					'嘉義市': {
+					'ChiayiCity': {
 						600:'嘉義市',
 					},
-					'嘉義縣': {
+					'ChiayiCounty': {
 						602:'番路鄉',
 						603:'梅山鄉',
 						604:'竹崎鄉',
@@ -219,7 +219,7 @@ export default {
 						624:'義竹鄉',
 						625:'布袋鎮',
 					},
-					'雲林縣': {
+					'Yunlin': {
 						630:'斗南鎮',
 						631:'大埤鄉',
 						632:'虎尾鎮',
@@ -241,7 +241,7 @@ export default {
 						654:'四湖鄉',
 						655:'元長鄉',
 					},
-					'台南市': {
+					'Tainan': {
 						701:'中西區',
 						701:'東區',
 						702:'南區',
@@ -280,7 +280,7 @@ export default {
 						744:'新市區',
 						745:'安定區',
 					},
-					'高雄市': {
+					'Kaohsiung': {
 						800:'新興區',
 						801:'前金區',
 						802:'苓雅區',
@@ -322,7 +322,7 @@ export default {
 						851:'茂林區',
 						852:'茄萣區',
 					},
-					'澎湖縣': {
+					'Penghu': {
 						880:'馬公市',
 						881:'西嶼鄉',
 						882:'望安鄉',
@@ -330,7 +330,7 @@ export default {
 						884:'白沙鄉',
 						885:'湖西鄉',
 					},
-					'金門縣': {
+					'Kinmen': {
 						890:'金沙鎮',
 						891:'金湖鎮',
 						892:'金寧鄉',
@@ -338,7 +338,7 @@ export default {
 						894:'烈嶼鄉',
 						896:'烏坵鄉',
 					},
-					'屏東縣': {
+					'Pingtung': {
 						900:'屏東市',
 						901:'三地門鄉',
 						902:'霧臺鄉',
@@ -373,7 +373,7 @@ export default {
 						946:'恆春鎮',
 						947:'滿州鄉',
 					},
-					'台東縣': {
+					'Taitung': {
 						950:'臺東市',
 						951:'綠島鄉',
 						952:'蘭嶼鄉',
@@ -391,7 +391,7 @@ export default {
 						965:'大武鄉',
 						966:'達仁鄉',
 					},
-					'花蓮縣': {
+					'Hualien': {
 						970:'花蓮市',
 						971:'新城鄉',
 						972:'秀林鄉',
@@ -407,10 +407,33 @@ export default {
 						983:'富里鄉',
 					},
 				};
+				const cityNameMap = {
+					Taipei: '台北市',
+					NewTaipei: '新北市',
+					Keelung: '基隆市',
+					Ilan: '宜蘭縣',
+					HsinchuCity: '新竹市',
+					HsinchuCounty: '新竹縣',
+					Taoyuan: '桃園市',
+					Miaoli: '苗栗縣',
+					Taichung: '台中市',
+					Changhua: '彰化縣',
+					Nantou: '南投縣',
+					ChiayiCity: '嘉義市',
+					ChiayiCounty: '嘉義縣',
+					Yunlin: '雲林縣',
+					Tainan: '台南市',
+					Kaohsiung: '高雄市',
+					Penghu: '屏東縣',
+					Kinmen: '金門縣',
+					Taitung: '台東縣',
+					Hualien: '花蓮縣'
+				};
 				for (const cityName in cityData) {
 					const areas = cityData[cityName];
 					if (areas.hasOwnProperty(zipcode)) {
-						return { city: cityName, area: areas[zipcode]+'('+cityName+')' };
+						const chineseCityName = cityNameMap[cityName];
+						return { city: cityName, area: areas[zipcode]+'('+chineseCityName+')' };
 					}
 				}
 				return { city: '-', area: '-' }; // 如果找不到對應的區域
