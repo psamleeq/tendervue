@@ -8,8 +8,8 @@
 		</aside>
 		<div class="filter-container">
 			<span class="filter-item">
-				<el-input v-model="listQuery.caseInspectId" placeholder="請輸入">
-					<span slot="prepend">缺失Id</span>
+				<el-input v-model="listQuery.inspectId" placeholder="請輸入">
+					<span slot="prepend">巡查Id</span>
 				</el-input>
 			</span>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
@@ -145,9 +145,9 @@ export default {
 			},
 			headers: {
 				id: {
-					name: "id",
+					name: "缺失Id",
 					sortable: true,
-					width: 60
+					width: 80
 				},
 				TrackingId: {
 					name: "追蹤Id",
@@ -339,9 +339,9 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		getList() {
-			if(this.listQuery.caseInspectId.length == 0 || !Number(this.listQuery.caseInspectId)) {
+			if(this.listQuery.inspectId.length == 0 || !Number(this.listQuery.inspectId)) {
 				this.$message({
-					message: "請輸入正確缺失Id",
+					message: "請輸入巡查Id",
 					type: "error",
 				});
 			} else {
@@ -351,7 +351,7 @@ export default {
 				this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
 
 				getInspectionCaseList({
-					caseInspectId: this.listQuery.caseInspectId,
+					inspectId: this.listQuery.inspectId,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {

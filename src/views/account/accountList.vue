@@ -136,7 +136,7 @@ export default {
 			rowActive:{},
 			headers:{
 				UserId: {
-					name: "ID",
+					name: "UID",
 					sortable: false,
 					width:60
 				},
