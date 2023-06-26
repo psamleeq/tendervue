@@ -169,6 +169,11 @@ export default {
 					sortable: true,
 					width: 150
 				},
+				Duty_With_Name: {
+					name: "標記人員",
+					sortable: false,
+					width: 80
+				},
 				Place: {
 					name: "地址",
 					sortable: true
