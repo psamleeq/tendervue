@@ -58,6 +58,14 @@ export function setInspectionCaseList(id, data) {
 	})
 }
 
+export function getImportCase(query) {
+	return request({
+		url: '/inspection/caseImport',
+		method: 'get',
+		params: query
+	})
+}
+
 export function importInspectionCase(data) {
 	return request({
 		url: '/inspection/caseImport',

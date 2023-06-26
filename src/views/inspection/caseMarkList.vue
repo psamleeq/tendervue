@@ -4,7 +4,7 @@
 		<aside style="white-space: pre-line">
 			1. 缺失類型: 人手孔缺失 和 其他 不能匯入。
 			<br>
-			2. 已匯入過的缺失不會重複匯入。
+			2. 已匯入過的缺失不能重複匯入，且無法編輯。
 		</aside>
 		<div class="filter-container">
 			<span class="filter-item">
@@ -19,7 +19,7 @@
 					<div class="el-input-group__prepend">
 						<span>合約</span>
 					</div>
-					<el-select v-model.number="listQuery.tenderId" class="tender-select" popper-class="type-select tender" :disabled="tableSelect.length == 0 || isUpload">
+					<el-select v-model.number="listQuery.tenderId" class="tender-select" popper-class="type-select tender" :disabled="list.length == 0 || isUpload" @change="getImportCaseList()">
 						<el-option v-for="(val, type) in options.tenderMap" :key="type" :label="val.tenderName" :value="Number(type)" />
 					</el-select>
 				</div>
@@ -38,7 +38,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType))" />
+			<el-table-column type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && !importCaseObj[listQuery.tenderId].includes(row.id))" />
 			<el-table-column
 				v-for="(value, key) in headers"
 				:key="key"
@@ -88,7 +88,7 @@
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.isEdit">
-						<el-button class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
+						<el-button v-if="!Object.values(importCaseObj).flat().includes(row.id)" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
 						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
 					</el-button-group>
 					<span v-else> - </span>
@@ -114,7 +114,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap } from "@/api/type";
-import { getInspectionCaseList, setInspectionCaseList, importInspectionCase } from "@/api/inspection";
+import { getInspectionCaseList, setInspectionCaseList, getImportCase, importInspectionCase } from "@/api/inspection";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -208,6 +208,7 @@ export default {
 				}
 			},
 			total: 0,
+			importCaseObj: {},
 			list: [],
 			tableSelect: [],
 			options: {
@@ -329,6 +330,14 @@ export default {
 			const zoom = this.map.getZoom();
 			this.map.setZoom(zoom < 21 ? 21 : zoom);
 		},
+		getImportCaseList() {
+			this.loading = true;
+			this.importCaseObj = [];
+			getImportCase({ tenderIdList: Object.keys(this.options.tenderMap)}).then(response => {
+				this.importCaseObj = response.data.caseDetectionIdObj;
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
 		getList() {
 			if(this.listQuery.caseInspectId.length == 0 || !Number(this.listQuery.caseInspectId)) {
 				this.$message({
@@ -364,6 +373,7 @@ export default {
 							this.$set(l, "isEdit", false);
 						})
 					}
+					this.getImportCaseList();
 					this.loading = false;
 				}).catch(err => this.loading = false);
 			}
@@ -403,7 +413,7 @@ export default {
 				this.isUpload = true;
 
 				const uploadCaseList = this.tableSelect.map(caseSpec => {
-					return { caseDetectionId: caseSpec.id, caseName: this.options.pciCaseTypeMap[caseSpec.DistressType], caseLevel: caseSpec.DistressLevel, geoJson: caseSpec.Geometry }
+					return { caseDetectionId: caseSpec.id, caseName: this.options.pciCaseTypeMap[caseSpec.DistressType], caseLevel: this.options.DistressLevel[caseSpec.DistressLevel], geoJson: caseSpec.Geometry }
 				});
 				// console.log(uploadCaseList);
 
@@ -418,6 +428,7 @@ export default {
 							type: "success",
 						});
 					} 
+					this.getList();
 					this.isUpload = false;
 					this.loading = false;
 				}).catch(err => {
