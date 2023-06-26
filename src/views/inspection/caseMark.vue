@@ -483,7 +483,8 @@ export default {
 			})
 		},
 		openPanorama(force = false) {
-			const ratio = (force || this.clientStartX == this.screenWidth * 0.5) ? 0.25 : 0.5;
+			this.clientStartX = this.leftPanel.offsetWidth;
+			const ratio = (force || this.clientStartX >= this.screenWidth * 0.5) ? 0.25 : 1;
 			this.$nextTick(() => this.moveHandle(this.screenWidth*ratio));
 		},
 		setHeading(azimuth) {
@@ -636,15 +637,20 @@ export default {
 			// console.log("computedPercent: ", computedPercent);
 			const leftBoxWidth = parseInt(this.leftPanel.style.width);
 			// console.log("leftBoxWidth: ", leftBoxWidth);
-			let changePercent = Math.ceil((leftBoxWidth + computedPercent) * 100) / 100;
+			let changePercent = (nowClientX == this.screenWidth) ? 100 : Math.ceil((leftBoxWidth + computedPercent) * 100) / 100;
 			if (changePercent < 25) changePercent = 25;
-			else if (changePercent > 50) changePercent = 50;
+			// else if (changePercent > 50) changePercent = 50;
 			// console.log("changePercent: ", changePercent);
 
 			this.leftPanel.style.width = `${changePercent}%`;
 			this.rightPanel.style.width = `${100 - changePercent}%`;
 			this.clientStartX = nowClientX;
-			this.$refs.panoramaView.panorama.resize();
+
+			if(nowClientX == this.screenWidth) this.setHeading(0);
+			else {
+				this.$refs.panoramaView.setHeading();
+				this.$refs.panoramaView.panorama.resize();
+			}
 		},
 		formatter(row, column) {
 			if(Number(row[column.property])) return row[column.property].toLocaleString();
