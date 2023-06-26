@@ -44,7 +44,7 @@
 						<span v-else> - </span>
 						<el-button v-if="checkPermission(['inspection.marker']) && row.DateCompleted_At" type="danger" size="mini" round plain @click="showDialog(row, -1)">撤銷</el-button>
 					</span>
-					<span v-else-if="['DateCreate_At'].includes(column.property)">
+					<span v-else-if="['DateCollect_At'].includes(column.property)">
 						<span>{{ formatTime(row[column.property]) }}</span>
 					</span>
 					<span v-else-if="['Notes'].includes(column.property)">
