@@ -139,7 +139,7 @@ export default {
 				name:'行政區',
 				sortable: false,
 			},
-			DateCreate_At:{
+			DateCollect_At:{
 				name:'收取日',
 				sortable: false,
 			},
