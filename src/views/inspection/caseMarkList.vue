@@ -325,34 +325,43 @@ export default {
 			this.map.setZoom(zoom < 21 ? 21 : zoom);
 		},
 		getList() {
-			this.loading = true;
-			this.list = [];
-			this.tableSelect = [];
-			this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
+			if(this.listQuery.caseInspectId.length == 0 || !Number(this.listQuery.caseInspectId)) {
+				this.$message({
+					message: "請輸入正確缺失Id",
+					type: "error",
+				});
+			} else {
+				this.loading = true;
+				this.list = [];
+				this.tableSelect = [];
+				this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
 
-			getInspectionCaseList({
-				caseInspectId: this.listQuery.caseInspectId
-			}).then(response => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-					this.total = 0;
-				} else {
-					this.total = response.data.total;
-					this.list = response.data.list;
-					this.list.forEach(l => {
-						l.DateReport = this.formatTime(l.DateReport);
-						l.MillingLength = Math.round(l.MillingLength * 100) / 100;
-						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
-						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
+				getInspectionCaseList({
+					caseInspectId: this.listQuery.caseInspectId,
+					pageCurrent: this.listQuery.pageCurrent,
+					pageSize: this.listQuery.pageSize
+				}).then(response => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+						this.total = 0;
+					} else {
+						this.total = response.data.total;
+						this.list = response.data.list;
+						this.list.forEach(l => {
+							l.DateReport = this.formatTime(l.DateReport);
+							l.MillingLength = Math.round(l.MillingLength * 100) / 100;
+							l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
+							l.MillingArea = Math.round(l.MillingArea * 100) / 100;
 
-						this.$set(l, "isEdit", false);
-					})
-				}
-				this.loading = false;
-			}).catch(err => this.loading = false);
+							this.$set(l, "isEdit", false);
+						})
+					}
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			}
 		},
 		setCaseInfo(row) {
 			this.loading = true;
