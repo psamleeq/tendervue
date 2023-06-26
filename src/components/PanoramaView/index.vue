@@ -259,12 +259,15 @@ export default {
 		this.$el.querySelector("#panorama .pnlm-compass").addEventListener("click", (evt) => {
 			const northOffset = this.panorama.getNorthOffset();
 			this.panorama.setYaw(-northOffset, 0);
-			// this.$emit('setHeading', 0);
+			this.$emit('setHeading', 0);
 
 			evt.stopPropagation();
 		});
 	},
 	methods: {
+		setHeading() {
+			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
+		},
 		setStreetViewList() {
 			// console.log("setStreetViewList");
 			// console.log(JSON.parse(JSON.stringify(this.panoramaInfo)));
