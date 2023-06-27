@@ -379,10 +379,10 @@ export default {
 		calcCaseInfo() {
 			if(this.caseInfo.distressType == 29 && this.hotSpotIdList.dot.length >= 2) {
 				this.caseInfo.millingLength =  this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
-					console.log("index: ", index);
 					if(array[index + 1] == undefined) return Math.round(acc * 100) / 100;
 					return acc += calcDistance(cur.coordinates, array[index + 1].coordinates);
 				}, 0)
+				this.caseInfo.millingWidth = 0;
 			}
 			if(this.caseInfo.distressType != 29 && this.hotSpotIdList.dot.length >= 4) {
 				const distanceList = this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
@@ -396,8 +396,9 @@ export default {
 				this.caseInfo.millingLength = Math.round(Math.max(...distanceList) * 100) / 100;
 				this.caseInfo.millingWidth = Math.round(Math.min(...distanceList) * 100) / 100;
 				// this.caseInfo.millingArea = Math.round(calArea(this.hotSpotIdList.dot.map(hotSpot => ([ hotSpot.coordinates.lng, hotSpot.coordinates.lat ]))) * 100) / 100;
-				this.calArea();
 			}
+
+			this.calArea();
 		},
 		calArea() {
 			this.caseInfo.millingArea = Math.round(this.caseInfo.millingLength * this.caseInfo.millingWidth * 100 ) / 100;
@@ -467,7 +468,6 @@ export default {
 					const { x: x_bg, y: y_bg, width: width_bg, height: height_bg } = containerDom.getBoundingClientRect();
 					const [ ratio_width, ratio_height ] = [ canvas.width / width_bg , canvas.height / height_bg ];
 					// console.log("containerDom: ", containerDom.getBoundingClientRect());
-					let begin;
 					canvasContext.beginPath();
 					canvasContext.lineWidth = 3;
 					canvasContext.strokeStyle = 'red';
@@ -478,14 +478,10 @@ export default {
 						const { x: x_el, y: y_el, width: width_el, height: height_el } = dom.getBoundingClientRect();
 						const [ x, y ] = [ (x_el - x_bg + width_el/2) * ratio_width, (y_el - y_bg + height_el/2) * ratio_height ];
 						// console.log(x, y);
-						if(index == 0) {
-							begin = { x, y }
-							canvasContext.moveTo(x, y);
-						} else canvasContext.lineTo(x, y);
-				
-						if(this.caseInfo.distressType != 29 && index == hotSpotIdOrder.length - 1) canvasContext.lineTo(begin.x, begin.y);
+						if(index == 0) canvasContext.moveTo(x, y);
+						else canvasContext.lineTo(x, y);
 					}
-					canvasContext.closePath();
+					if(this.caseInfo.distressType != 29) canvasContext.closePath();
 					canvasContext.stroke();
 					
 					// 產出jpg
