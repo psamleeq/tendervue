@@ -7,11 +7,16 @@
 			2. 已匯入過的缺失不能重複匯入，且無法編輯。
 		</aside>
 		<div class="filter-container">
-			<span class="filter-item">
-				<el-input v-model="listQuery.inspectId" placeholder="請輸入">
-					<span slot="prepend">巡查Id</span>
+			<div class="filter-item">
+				<el-input v-model="listQuery.filterId" placeholder="請輸入">
+					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
+							<el-option label="路線Id" :value="1"></el-option>
+							<el-option label="缺失Id" :value="2"></el-option>
+							<el-option label="追蹤Id" :value="3"></el-option>
+							<el-option label="標記人員" :value="4"></el-option>
+					</el-select>
 				</el-input>
-			</span>
+			</div>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<br>
 			<div class="filter-item">
@@ -27,6 +32,15 @@
 			<el-button type="success" :disabled="tableSelect.length == 0 || isUpload" @click="uploadCase()">上傳</el-button>
 		</div>
 
+		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
+			<div class="el-input-group__prepend">
+				<el-checkbox v-model="allHeaders" :indeterminate="partHeaders">欄位</el-checkbox>
+			</div>
+			<el-checkbox-group class="el-input__inner column-filter-item" v-model="headersCheckVal" style="line-height: 15px;">
+				<el-checkbox v-for="(value, key) in headers" :key="key" :label="key">{{ value.name }}</el-checkbox>
+			</el-checkbox-group>
+		</div>
+
 		<el-table
 			empty-text="目前沒有資料"
 			:data="list"
@@ -40,7 +54,7 @@
 		>
 			<el-table-column type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && !importCaseObj[listQuery.tenderId].includes(row.id))" />
 			<el-table-column
-				v-for="(value, key) in headers"
+				v-for="(value, key) in headersFilter"
 				:key="key"
 				:prop="key"
 				:label="value.name"
@@ -138,6 +152,8 @@ export default {
 			// 	moment().endOf("year").toDate(),
 			// ],
 			listQuery: {
+				filterId:null,
+				filterType: 1,
 				caseInspectId: "",
 				tenderId: 91,
 				pageCurrent: 1,
@@ -211,6 +227,8 @@ export default {
 			importCaseObj: {},
 			list: [],
 			tableSelect: [],
+			headersCheckVal: [],
+			allHeaders: true,
 			options: {
 				tenderMap: {},
 				DistressType: {
@@ -265,9 +283,28 @@ export default {
 			}
 		};
 	},
-	computed: { },
-	watch: {},
+	computed: {
+		partHeaders() {
+			return (this.headersCheckVal.length != 0 && this.headersCheckVal.length < Object.keys(this.headers).length);
+		},
+		headersFilter() {
+			return Object.keys(this.headers)
+			.filter(key => this.headersCheckVal.includes(key))
+			.reduce((result, key) => {
+				result[key] = this.headers[key];
+				return result;
+			}, {});
+		},
+	},
+	watch: {
+		allHeaders(val) {
+			if (val) this.headersCheckVal = Object.keys(this.headers);
+			else this.headersCheckVal = [];
+		}
+	},
 	created() {
+		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers).filter(key => !['CaseDate', 'estFinishDate'].includes(key));
+		else this.headersCheckVal = [];
 		getTenderMap().then(response => {
 			this.options.tenderMap = response.data.tenderMap;
 			if(Object.keys(this.options.tenderMap).length > 0) {
@@ -339,19 +376,42 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		getList() {
-			if(this.listQuery.inspectId.length == 0 || !Number(this.listQuery.inspectId)) {
-				this.$message({
-					message: "請輸入巡查Id",
-					type: "error",
-				});
-			} else {
+			// if(this.listQuery.inspectId.length == 0 || !Number(this.listQuery.inspectId)) {
+			// 	this.$message({
+			// 		message: "請輸入巡查Id",
+			// 		type: "error",
+			// 	});
+			// } else {
 				this.loading = true;
 				this.list = [];
 				this.tableSelect = [];
 				this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
 
+				let inspectId = null;
+				let caseId = null;
+				let trackingId = null;
+				let dutyWith = null;
+
+				switch (this.listQuery.filterType) {
+					case 1: // 路線Id
+							inspectId = this.listQuery.filterId;
+							break;
+					case 2: // 缺失Id
+							caseId = this.listQuery.filterId;
+							break;
+					case 3: // 追蹤Id
+							trackingId = this.listQuery.filterId;
+							break;
+					case 4: // 標記人員
+							dutyWith = this.listQuery.filterId;
+							break;
+				}
+
 				getInspectionCaseList({
-					inspectId: this.listQuery.inspectId,
+					inspectId: inspectId,
+					caseId: caseId,
+					trackingId: trackingId,
+					dutyWith: dutyWith,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
@@ -376,7 +436,7 @@ export default {
 					this.getImportCaseList();
 					this.loading = false;
 				}).catch(err => this.loading = false);
-			}
+			// }
 		},
 		setCaseInfo(row) {
 			this.loading = true;
@@ -467,6 +527,15 @@ export default {
 	max-width: 400px
 	// height: 400px
 .case-marker-list
+	.el-select
+		width: 80px
+		.el-input__inner
+			padding-left: 8px
+			padding-right: 10px
+		.el-input__suffix
+			right: 0
+			margin-right: -3px
+			transform: scale(0.7)
 	.filter-container
 		.filter-item
 			margin-right: 5px
