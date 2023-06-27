@@ -10,10 +10,10 @@
 			<div class="filter-item">
 				<el-input v-model="listQuery.filterId" placeholder="請輸入">
 					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-							<el-option label="路線Id" :value="1"></el-option>
-							<el-option label="缺失Id" :value="2"></el-option>
-							<el-option label="追蹤Id" :value="3"></el-option>
-							<el-option label="標記人員" :value="4"></el-option>
+						<el-option label="路線Id" :value="1"></el-option>
+						<el-option label="缺失Id" :value="2"></el-option>
+						<el-option label="追蹤Id" :value="3"></el-option>
+						<el-option label="標記人員" :value="4"></el-option>
 					</el-select>
 				</el-input>
 			</div>
@@ -152,7 +152,7 @@ export default {
 			// 	moment().endOf("year").toDate(),
 			// ],
 			listQuery: {
-				filterId:null,
+				filterId: "",
 				filterType: 1,
 				caseInspectId: "",
 				tenderId: 91,
@@ -303,7 +303,7 @@ export default {
 		}
 	},
 	created() {
-		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers).filter(key => !['CaseDate', 'estFinishDate'].includes(key));
+		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
 		else this.headersCheckVal = [];
 		getTenderMap().then(response => {
 			this.options.tenderMap = response.data.tenderMap;
@@ -376,12 +376,12 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		getList() {
-			// if(this.listQuery.inspectId.length == 0 || !Number(this.listQuery.inspectId)) {
-			// 	this.$message({
-			// 		message: "請輸入巡查Id",
-			// 		type: "error",
-			// 	});
-			// } else {
+			if(this.listQuery.filterId.length == 0) {
+				this.$message({
+					message: "請輸入查詢內容",
+					type: "error",
+				});
+			} else {
 				this.loading = true;
 				this.list = [];
 				this.tableSelect = [];
@@ -394,17 +394,17 @@ export default {
 
 				switch (this.listQuery.filterType) {
 					case 1: // 路線Id
-							inspectId = this.listQuery.filterId;
-							break;
+						inspectId = this.listQuery.filterId;
+						break;
 					case 2: // 缺失Id
-							caseId = this.listQuery.filterId;
-							break;
+						caseId = this.listQuery.filterId;
+						break;
 					case 3: // 追蹤Id
-							trackingId = this.listQuery.filterId;
-							break;
+						trackingId = this.listQuery.filterId;
+						break;
 					case 4: // 標記人員
-							dutyWith = this.listQuery.filterId;
-							break;
+						dutyWith = this.listQuery.filterId;
+						break;
 				}
 
 				getInspectionCaseList({
@@ -436,7 +436,7 @@ export default {
 					this.getImportCaseList();
 					this.loading = false;
 				}).catch(err => this.loading = false);
-			// }
+			}
 		},
 		setCaseInfo(row) {
 			this.loading = true;
