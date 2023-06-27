@@ -294,7 +294,7 @@ export default {
 		this.geoTiffPool = new Pool();
 	},
 	async mounted() {
-		this.loading = true;
+		// this.loading = true;
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
 			console.log("Google Map Failure");
@@ -701,7 +701,7 @@ export default {
 			this.map.fitBounds(bounds);
 
 			this.$router.push({ query: { ...this.$route.query , tenderRound: this.listQuery.tenderRound } });
-			this.getList();
+			// this.getList();
 		},
 		async getList() {
 			this.loading = true;
