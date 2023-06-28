@@ -58,7 +58,7 @@
 						<el-input v-else v-model="caseInfo.millingArea" size="mini" style="width: 130px" />
 					</el-form-item>
 					<el-form-item prop="address" label="地址" style="margin-bottom: 5px">
-						<span v-if="isReview">{{ caseInfo.millingArea }}</span>
+						<span v-if="isReview">{{ caseInfo.place }}</span>
 						<el-input v-else v-model="caseInfo.place" type="textarea" :rows="2" />
 						<div v-if="!isReview" slot="label">
 							<div style="height: 24px; line-height: 24px; margin: -3px 2px -5px 0">地址</div>

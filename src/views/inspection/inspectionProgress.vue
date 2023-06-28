@@ -252,7 +252,7 @@ export default {
 			return new Promise(resolve => {
 				setInspectionList(this.rowActive.InspectId, {
 					state: this.rowActive.state,
-					notes: this.rowActive.Notes || null,
+					notes: this.rowActive.Notes,
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						this.$message({
