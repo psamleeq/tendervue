@@ -602,8 +602,8 @@ export default {
 						direction: clickHandlerArgs.prop.Direction,
 						lane: clickHandlerArgs.prop.Lane,
 						isPrev: clickHandlerArgs.isPrev,
-						imgZoomIn: clickHandlerArgs.isPrev ? "" : clickHandlerArgs.prop.ImgZoomIn,
-						imgZoomOut: clickHandlerArgs.isPrev ? "" : clickHandlerArgs.prop.ImgZoomOut
+						imgZoomIn: clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomIn ? "" : clickHandlerArgs.prop.ImgZoomIn,
+						imgZoomOut: clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomOut ? "" : clickHandlerArgs.prop.ImgZoomOut
 					});
 
 					if(clickHandlerArgs.isPrev) {
