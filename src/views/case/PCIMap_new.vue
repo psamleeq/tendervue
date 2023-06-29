@@ -25,7 +25,7 @@
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
-				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">重整</el-button>
+				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">載入</el-button>
 				<el-button v-if="hasClearOverlay" class="filter-item" type="danger" size="small" icon="el-icon-delete" @click="clearOverlay()">清除正射</el-button>
 			</div>
 		</div>

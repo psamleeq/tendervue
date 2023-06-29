@@ -72,6 +72,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			init: true,
 			isUpload: false,
 			showImgViewer: false,
 			imgUrls: [],
@@ -225,7 +226,7 @@ export default {
 		// 初始化Google Map
 		loader.load().then(async () => {
 			await this.initMap();
-			if (this.$route.query.inspectId && this.$route.query.caseInspectId) {
+			if (this.$route.query.inspectId || this.$route.query.inspectId && this.$route.query.caseInspectId) {
 				this.listQuery.inspectId = this.$route.query.inspectId;
 				this.listQuery.caseInspectId = this.$route.query.caseInspectId;
 				this.getList();
@@ -353,6 +354,12 @@ export default {
 					}
 				});
 
+				this.pointCurr.addListener("click", (event) => {
+					this.init = false;
+					this.setMarkerPosition();
+					this.openPanorama();
+				})
+
 				resolve();
 			})
 		},
@@ -414,6 +421,7 @@ export default {
 		},
 		getList() {
 			this.loading = true;
+			this.init = true;
 			this.clearAll();
 			this.$router.push({ query: { inspectId: this.listQuery.inspectId, caseInspectId: this.listQuery.caseInspectId }});
 
@@ -462,7 +470,7 @@ export default {
 
 				this.$nextTick(() => {
 					this.$refs.panoramaView.resetCaseHotSpot();
-					this.openPanorama(true);
+					// this.openPanorama(true);
 					this.loading = false;
 				});
 			}).catch(err => this.loading = false);
@@ -510,7 +518,9 @@ export default {
 			this.$nextTick(() => this.moveHandle(this.screenWidth*ratio));
 		},
 		setHeading(azimuth) {
-			azimuth = Math.abs(azimuth) > 360 ? azimuth % 360 : azimuth;
+			console.log("setHeading: ", azimuth);
+			if(this.init) azimuth = 0;
+			else azimuth = Math.abs(azimuth) > 360 ? azimuth % 360 : azimuth;
 			// console.log("setHeading: ", azimuth);
 			// this.$refs.compass.style.transform = `rotate(${-azimuth}deg)`;
 			this.map.setHeading(azimuth);
@@ -543,6 +553,7 @@ export default {
 				);
 
 				this.polyLine[index].addListener("click", (event) => {
+					this.init = false;
 					const pointPos = event.latLng.toJSON();
 					const posList = this.panoramaInfo.data[index].map(info => ({ ...info.position, sceneId: info.fileName }));
 					const minDistObj = posList.reduce((minDistObj, curr) => {
@@ -558,19 +569,20 @@ export default {
 					this.showPanoramaLayer(minDistObj.sceneId);
 				})
 
-				// const bounds = new google.maps.LatLngBounds();
-				// path.forEach(position => bounds.extend(position));
-				// this.map.fitBounds(bounds);
+				const bounds = new google.maps.LatLngBounds();
+				path.forEach(position => bounds.extend(position));
+				this.map.fitBounds(bounds);
 			})
-			this.showPanoramaLayer(this.panoramaInfo.data[0][0].fileName);
+			this.showPanoramaLayer(this.panoramaInfo.data[0][0].fileName, true);
 		},
-		showPanoramaLayer(sceneId) {
+		showPanoramaLayer(sceneId, ) {
 			// console.log("showPanoramaLayer");
 			console.log(sceneId);
 			this.sceneId = sceneId;
-			this.setMarkerPosition() 
+			this.setMarkerPosition();
 
 			this.$refs.panoramaView.panorama.loadScene(sceneId);
+			if(!this.init) this.openPanorama(true);
 		},
 		addMarker({ id, position, type }) {
 			// console.log(type, position);
@@ -604,9 +616,11 @@ export default {
 			this.sceneId = sceneId ? sceneId : this.sceneId;
 			const pointInfo = this.panoramaInfo.data.flat().filter(pt => pt.fileName == this.sceneId)[0];
 			this.pointCurr.setPosition(pointInfo.position);
-			// this.setHeading(pointInfo.azimuth);
-			this.map.setCenter(pointInfo.position);
-			this.map.setZoom(20);
+			
+			if(!this.init) {
+				this.map.setCenter(pointInfo.position);
+				this.map.setZoom(20);
+			}
 		},
 		showCaseContent(feature, position) {
 			const caseTypeStr = `${feature.getProperty("Id")} - ${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;

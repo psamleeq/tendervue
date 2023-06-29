@@ -31,7 +31,7 @@
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
-				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">重整</el-button>
+				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">載入</el-button>
 			</div>
 			<span v-if="caseInfo.length != 0" style="background-color: #F2F6FC; margin: 0 5px; opacity: 0.8;">查詢期間：{{ searchRange }}</span>
 		</div>
