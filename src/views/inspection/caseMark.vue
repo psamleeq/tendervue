@@ -32,9 +32,16 @@
 					<span />
 					<span />
 				</div>
-				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @ @uploadCase="uploadCase" />
+				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @setCaseImgViewer="setCaseImgViewer" @ @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
+
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="img-preview"
+			:on-close="() => { showImgViewer = false; openPanorama(false, true); }"
+			:url-list="imgUrls"
+		/>
 	</div>
 </template>
 
@@ -44,6 +51,7 @@ import moment from 'moment'
 import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase } from "@/api/inspection";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -54,17 +62,19 @@ const loaderOpt = {
 	libraries: ["places"],
 };
 
-// TODO: apiKey先關閉
+// apiKey
 if(!sessionStorage.devMode && process.env.VUE_APP_MAP_KEY != undefined) loaderOpt.apiKey = process.env.VUE_APP_MAP_KEY;
 const loader = new Loader(loaderOpt);
 
 export default {
 	name: "caseMark",
-	components: { PanoramaView },
+	components: { PanoramaView, ElImageViewer },
 	data() {
 		return {
 			loading: false,
 			isUpload: false,
+			showImgViewer: false,
+			imgUrls: [],
 			map: null,
 			inspectIdNow: null,
 			clientStartX: 0,
@@ -323,6 +333,15 @@ export default {
 				this.setDataLayer(this.dataLayer.casePrev, true);
 				
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
+				this.infoWindow.addListener('domready', () => {
+					const caseImg = this.$el.querySelector("#map #case-img");
+					if(caseImg) {
+						const clickHandle = caseImg.addEventListener("click", () => { 
+							this.showImgViewer = true;
+							caseImg.removeEventListener("click", clickHandle);
+						});
+					}
+				});
 
 				// 建立marker
 				this.pointCurr = new google.maps.Marker({
@@ -482,9 +501,12 @@ export default {
 				this.isUpload = false;
 			})
 		},
-		openPanorama(force = false) {
+		openPanorama(force = false, isReset = false) {
+			let ratio = this.clientStartX / this.leftPanel.offsetWidth;
 			this.clientStartX = this.leftPanel.offsetWidth;
-			const ratio = (force || this.clientStartX >= this.screenWidth * 0.5) ? 0.25 : 1;
+			if(force || !isReset) {
+				ratio = (force || this.clientStartX >= this.screenWidth * 0.5) ? 0.25 : 1;
+			}
 			this.$nextTick(() => this.moveHandle(this.screenWidth*ratio));
 		},
 		setHeading(azimuth) {
@@ -588,10 +610,10 @@ export default {
 		},
 		showCaseContent(feature, position) {
 			const caseTypeStr = `${feature.getProperty("Id")} - ${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
-			// const caseSizeStr = `${Math.round(feature.getProperty("MillingLength") * 100) / 100} x ${Math.round(feature.getProperty("MillingWidth") * 100) / 100} = ${Math.round(feature.getProperty("MillingArea") * 100) / 100}`;
+			this.setCaseImgViewer({ imgUrls: [ `${feature.getProperty("ImgZoomOut")}` ] });
 			let contentText = `<div style="width: 200px;">`;
 			contentText += `<div> ${caseTypeStr} </div>`;
-			contentText += `<img src="${feature.getProperty("ImgZoomOut")}" class="img" onerror="this.className='img hide-img'">`;
+			contentText += `<img src="${feature.getProperty("ImgZoomOut")}" class="case-img" id ="case-img" onerror="this.className='case-img hide-img'">`;
 			contentText += `</div>`;
 
 			this.infoWindow.setContent(contentText);
@@ -600,6 +622,10 @@ export default {
 
 			this.infoWindow.open(this.map);
 			this.$refs.panoramaView.hightLight(feature.getProperty("Id"), true);
+		},
+		setCaseImgViewer({ imgUrls, isOpen=false }) {
+			if(imgUrls != null) this.imgUrls = imgUrls;
+			this.showImgViewer = isOpen;
 		},
 		hightLight(blockId) {
 			// console.log("highlight", blockId);
@@ -639,7 +665,7 @@ export default {
 			// console.log("leftBoxWidth: ", leftBoxWidth);
 			let changePercent = (nowClientX == this.screenWidth) ? 100 : Math.ceil((leftBoxWidth + computedPercent) * 100) / 100;
 			if (changePercent < 25) changePercent = 25;
-			// else if (changePercent > 50) changePercent = 50;
+			else if (changePercent >= 100) changePercent = 100;
 			// console.log("changePercent: ", changePercent);
 
 			this.leftPanel.style.width = `${changePercent}%`;
@@ -711,6 +737,12 @@ export default {
 			background: #aaa
 			margin: 0 2px
 			height: 15px
+	.img-preview
+		width: 100%
+		.el-image-viewer__mask
+			opacity: 0.7
+		.el-icon-circle-close
+			color:  #FFF
 	#map
 		overflow: hidden
 		background: none !important
@@ -725,7 +757,8 @@ export default {
 				border-collapse: collapse !important
 				border: none !important
 				padding: 5px
-			.img
+			.case-img
+				cursor: pointer
 				width: 100%
 				object-fit: scale-down
 				&.hide-img

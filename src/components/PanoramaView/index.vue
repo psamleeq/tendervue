@@ -78,7 +78,7 @@
 							<el-col :span="10">
 								<el-popover v-if="caseInfo[imgType].length > 0" popper-class="imgHover" placement="left" trigger="hover">
 									<el-image style="width: 100%; height: 100%" :src="caseInfo[imgType]" fit="contain" />
-									<el-image slot="reference" style="width: 100px; height: 100px" :src="caseInfo[imgType]" fit="contain" />
+									<el-image slot="reference" style="width: 100px; height: 100px" :src="caseInfo[imgType]" fit="contain" @click="$emit('setCaseImgViewer', { imgUrls: [ caseInfo[imgType] ], isOpen: true })" />
 								</el-popover>
 							</el-col>
 							<el-col v-if="!isReview" class="btn-img-action" :span="8">

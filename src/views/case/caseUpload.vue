@@ -560,8 +560,6 @@ export default {
 			const boundary = JSON.parse(this.options.districtMap[zipCode].boundary);
 			boundary.coordinates.flat().forEach(position => bounds.extend({ lat: position[1], lng: position[0] }));
 			this.map.fitBounds(bounds);
-
-			this.$router.push({ query: { ...this.$route.query , tenderRound: this.listQuery.tenderRound } });
 			await this.getBlock();
 		},
 		cellClassName({ row, column, _ }) { 
@@ -821,8 +819,6 @@ export default {
 						});
 						resolve();
 					} else {
-						this.$router.push({ query: { tenderId: this.listQuery.tenderId, roadName: this.listQuery.filterId }});
-						
 						const bounds = new google.maps.LatLngBounds();
 						for(const feature of featureList) {
 							this.dataLayer.PCIBlock.overrideStyle(feature, { strokeColor: "#FF6F00", zIndex: 3 });
