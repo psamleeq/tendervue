@@ -23,6 +23,16 @@ const dispatchRouter = {
 				isNew: true
 			}
 		},
+		{
+			path: 'accounPermission',
+			component: () => import('@/views/account/accountPermission'),
+			name: 'accountPermission',
+			meta: {
+				title: '帳號權限管理',
+				roles: ['rAdm'],
+				isNew: true
+			}
+		},
 	]
 }
 export default dispatchRouter

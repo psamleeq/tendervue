@@ -62,6 +62,9 @@
 							<el-button type="text" style="margin-left: 5px" @click="row.edit=false"><i class="el-icon-close" style="color: #F56C6C" /></el-button> 
 						</span>
 					</span>
+					<span v-else-if="['permissionManage'].includes(column.property)">
+						<el-button size="mini" type="success" @click="permissionManage(row)">管理</el-button>
+					</span>
 					<span v-else>
 							<span>{{ row[column.property] }}</span>
 					</span>
@@ -153,12 +156,12 @@ export default {
 				Create_At: {
 					name: "創建日期",
 					sortable: false,
-					width:110
+					width:100
 				},
 				Update_At: {
 					name: "更新日期",
 					sortable: false,
-					width:110
+					width:100
 				},
 				Active: {
 					name: "狀態",
@@ -174,7 +177,11 @@ export default {
 					name: "備註",
 					sortable: false
 				},
-				
+				permissionManage: {
+					name: "權限管理",
+					sortable: false,
+					width:80
+				}
 			},
 			newAccountForm: {
 				account:"",
@@ -320,7 +327,13 @@ export default {
 				this.getList()
 			}).catch(err => this.loading = false);
 		},
-	
+		//權限管理
+		permissionManage(row) {
+			this.$router.push({
+				path: "/account/accounPermission",
+				query: row,
+			});
+		},
 	},
 };
 </script>
