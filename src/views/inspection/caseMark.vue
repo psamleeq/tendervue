@@ -518,7 +518,7 @@ export default {
 			this.$nextTick(() => this.moveHandle(this.screenWidth*ratio));
 		},
 		setHeading(azimuth) {
-			console.log("setHeading: ", azimuth);
+			// console.log("setHeading: ", azimuth);
 			if(this.init) azimuth = 0;
 			else azimuth = Math.abs(azimuth) > 360 ? azimuth % 360 : azimuth;
 			// console.log("setHeading: ", azimuth);
@@ -570,12 +570,15 @@ export default {
 				})
 
 				const bounds = new google.maps.LatLngBounds();
-				path.forEach(position => bounds.extend(position));
+				path.forEach(position => {
+					if(position.lat >= 22 && position.lat <= 26 && position.lng >= 120 && position.lng <= 122) bounds.extend(position);
+				});
 				this.map.fitBounds(bounds);
+				console.log(bounds.getCenter().toString())
 			})
-			this.showPanoramaLayer(this.panoramaInfo.data[0][0].fileName, true);
+			this.showPanoramaLayer(this.panoramaInfo.data[0][0].fileName);
 		},
-		showPanoramaLayer(sceneId, ) {
+		showPanoramaLayer(sceneId) {
 			// console.log("showPanoramaLayer");
 			console.log(sceneId);
 			this.sceneId = sceneId;
