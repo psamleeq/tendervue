@@ -99,7 +99,7 @@
 
 		<el-card v-if="routeList.length > 0" class="info-box right">
 			<el-button-group style="width: 100%; margin-bottom: 5px;">
-				<el-button type="success" style="width: 50%" @click="uploadRoute">上傳路線</el-button>
+				<el-button type="success" style="width: 50%" :disabled="listQuery.inspectRound == 0" @click="uploadRoute()">上傳路線</el-button>
 				<el-button type="info" style="width: 50%" @click="handleDownload()">下載KML</el-button>
 			</el-button-group>
 			<el-table 
@@ -187,10 +187,14 @@ export default {
 					2: "實際路寬",
 				},
 				inspectRound: {
+					0: "全部",
 					1: "週期一",
 					2: "週期二",
 					3: "週期三",
-					4: "週期四"
+					4: "週期四",
+					5: "週期五",
+					6: "週期六",
+					7: "週期七"
 				}
 			}
 		};

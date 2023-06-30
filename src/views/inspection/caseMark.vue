@@ -3,14 +3,41 @@
 		<div class="header-bar">
 			<h2 class="route-title">缺失標記</h2>
 			<div class="filter-container">
+				<span class="filter-item" style="display: inline-flex">
+					<el-button :type="showLayerAttach ? 'primary' : 'info'" @click="showLayerAttach = !showLayerAttach">路線圖層</el-button>
+					<el-card v-if="showLayerAttach" :body-style="{ padding: '0 5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
+						<div class="filter-item">
+							<div class="select-district el-input el-input--medium el-input-group el-input-group--prepend">
+								<div class="el-input-group__prepend">
+									<span>行政區</span>
+								</div>
+								<el-select class="district-select" v-model="listQuery.inspectRoundZipCode">
+									<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+								</el-select>
+							</div>
+						</div>
+						<div class="filter-item">
+							<div class="select-district el-input el-input--medium el-input-group el-input-group--prepend">
+								<div class="el-input-group__prepend">
+									<span>週期</span>
+								</div>
+								<el-select class="district-select" v-model="listQuery.inspectRound">
+									<el-option v-for="(name, id) in options.inspectRound" :key="id" :label="name" :value="Number(id)" />
+								</el-select>
+							</div>
+						</div>
+						<el-button-group>
+							<el-button type="primary" size="small" @click="getRouteList()">載入</el-button>
+							<el-button type="info" size="small" @click="clearRouteLayer()">清空</el-button>
+						</el-button-group>
+					</el-card>
+				</span>
+				<br>
 				<span class="filter-item">
 					<el-input v-model="listQuery.inspectId" placeholder="請輸入">
 						<span slot="prepend">巡查Id</span>
 					</el-input>
 				</span>
-				<!-- <el-button class="filter-item" type="success" icon="el-icon-download" @click="getList()">載入</el-button> -->
-				<br>
-
 				<span class="filter-item">
 					<el-input v-model="listQuery.caseInspectId" placeholder="請輸入">
 						<span slot="prepend">缺失Id</span>
@@ -49,6 +76,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment'
 import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase } from "@/api/inspection";
+import { getInspectionRoute } from "@/api/inspection"
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -74,6 +102,7 @@ export default {
 			loading: false,
 			init: true,
 			isUpload: false,
+			showLayerAttach: false,
 			showImgViewer: false,
 			imgUrls: [],
 			map: null,
@@ -128,6 +157,54 @@ export default {
 				streetViewList: {}
 			},
 			options: {
+				districtList: {
+					100: {
+						name: "中正區"
+					},
+					103: {
+						name: "大同區"
+					},
+					104: {
+						name: "中山區"
+					},
+					105: {
+						name: "松山區"
+					},
+					106: {
+						name: "大安區"
+					},
+					108: {
+						name: "萬華區"
+					},
+					110: {
+						name: "信義區"
+					},
+					111: {
+						name: "士林區"
+					},
+					112: {
+						name: "北投區"
+					},
+					114: {
+						name: "內湖區"
+					},
+					115: {
+						name: "南港區"
+					},
+					116: {
+						name: "文山區"
+					},
+				},
+				inspectRound: {
+					0: "全部",
+					1: "週期一",
+					2: "週期二",
+					3: "週期三",
+					4: "週期四",
+					5: "週期五",
+					6: "週期六",
+					7: "週期七"
+				},
 				imgTypeMap: {
 					"imgZoomIn": "近照",
 					"imgZoomOut": "遠照"
@@ -212,7 +289,7 @@ export default {
 		}
 	},
 	created() {
-		this.dataLayer = { caseNow: {}, casePrev: {} };
+		this.dataLayer = { caseNow: {}, casePrev: {}, route: {} };
 
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
@@ -332,6 +409,17 @@ export default {
 				this.setDataLayer(this.dataLayer.caseNow);
 				this.dataLayer.casePrev = new google.maps.Data({ map: this.map });
 				this.setDataLayer(this.dataLayer.casePrev, true);
+
+				// 路線
+				this.dataLayer.route = new google.maps.Data({ map: this.map });
+				this.dataLayer.route.setStyle({ 
+					strokeColor: '#FFF',
+					strokeWeight: 1,
+					strokeOpacity: 1,
+					fillColor: '#FF8C00',
+					fillOpacity: 0.6,
+					zIndex: 1
+				});
 				
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
 				this.infoWindow.addListener('domready', () => {
@@ -456,8 +544,8 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		getCaseList() {
-			for(const dataLayer of Object.values(this.dataLayer)) {
-				dataLayer.forEach(feature => dataLayer.remove(feature));
+			for(const layerType of ['casePrev', 'caseNow']) {
+				this.dataLayer[layerType].forEach(feature => this.dataLayer[layerType].remove(feature));
 			}
 			getInspectionCaseGeoJson({
 				inspectId: this.listQuery.inspectId,
@@ -474,6 +562,48 @@ export default {
 					this.loading = false;
 				});
 			}).catch(err => this.loading = false);
+		},
+		getRouteList() {
+			this.loading = true;
+			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
+
+			getInspectionRoute({
+				zipCode: this.listQuery.inspectRoundZipCode,
+				inspectRound: this.listQuery.inspectRound,
+			}).then(response => {
+				if (response.data.blockList.length == 0 && response.data.routeList.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.blockList = response.data.blockList;
+
+					let geoJSON = {
+						"type": "FeatureCollection",
+						"name": "blockJSON",
+						"features": []
+					};
+
+					for (const blockSpec of this.blockList) {
+						let feature = {
+							"type": "Feature",
+							"properties": {
+								"id": blockSpec.id,
+								"roadName": blockSpec.roadName
+							},
+							"geometry": JSON.parse(blockSpec.geometry)
+						};
+						geoJSON.features.push(feature);
+					}
+					this.dataLayer.route.addGeoJson(geoJSON);
+				}
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
+		clearRouteLayer() {
+			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
+			this.showLayerAttach = false;
 		},
 		uploadCase(caseInfo) {
 			let uploadForm = new FormData();
