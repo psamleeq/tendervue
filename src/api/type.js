@@ -27,6 +27,14 @@ export function getBlockGeo(query) {
 	})
 }
 
+export function getBlockNcoGeo(query) {
+	return request({
+		url: '/type/blockNcoGeo',
+		method: 'get',
+		params: query
+	})
+}
+
 // 施工廠商Map
 export function getGuildMap(query) {
 	return request({

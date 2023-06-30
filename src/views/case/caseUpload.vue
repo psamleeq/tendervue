@@ -540,6 +540,7 @@ export default {
 			})
 		},
 		async changeTender() {
+			this.handleRemove(); 
 			const zipCode = this.options.tenderMap[this.listQuery.tenderId].zipCode;
 
 			this.dataLayer.district.setStyle(feature => {
@@ -781,6 +782,7 @@ export default {
 							type: "success",
 						});
 					} 
+					this.handleRemove();
 					this.loading = false;
 					this.isUpload = false;
 				}).catch(err => {

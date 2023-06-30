@@ -1,5 +1,22 @@
 import request from '@/utils/request'
 
+// 巡查路線
+export function getInspectionRoute(query) {
+	return request({
+		url: '/inspection/route',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setInspectionRoute(data) {
+	return request({
+		url: '/inspection/route',
+		method: 'post',
+		data
+	})
+}
+
 // 巡查歷程
 export function getInspectionList(query) {
 	return request({
@@ -8,6 +25,7 @@ export function getInspectionList(query) {
 		params: query
 	})
 }
+
 export function setInspectionList(id, data) {
 	return request({
 		url: `/inspection/list/${id}`,

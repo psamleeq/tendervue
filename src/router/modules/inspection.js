@@ -15,6 +15,16 @@ const inspectionRouter = {
 	},
 	children: [
 		{
+			path: 'caseInspectionRoute',
+			component: () => import('@/views/inspection/caseInspectionRoute'),
+			name: 'caseInspectionRoute',
+			meta: {
+				title: '巡查路線',
+				roles: ['inspection.editor'],
+				isNew: true
+			}
+		},
+		{
 			path: 'inspectionProgress',
 			component: () => import('@/views/inspection/inspectionProgress'),
 			name: 'inspectionProgress',
