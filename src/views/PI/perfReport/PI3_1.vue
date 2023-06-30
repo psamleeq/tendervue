@@ -221,8 +221,8 @@ export default {
 					if(['dailyReport_Num','qualifiedSafety_Num','unqualifiedSafety_Num','companyCheck_Num','supervisionCheckPass_Num','supervisionCheckFail_Num','organCheckPass_Num','organCheckFail_Num','totalUnqualified_Num',].includes(arg.key)) {
 						this.inputForm[arg.key] = parseInt(arg.value)
 					}
+					this.setPDFinputs();
 				});
-				this.setPDFinputs();
 			})
 		},
 		setPDFinputs() {

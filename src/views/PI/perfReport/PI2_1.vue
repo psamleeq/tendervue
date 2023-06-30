@@ -281,8 +281,8 @@ export default {
 					if(['failReason'].includes(arg.key)){
 						this.inputForm[arg.key] = arg.value
 					}
+					this.setPDFinputs();
 				});
-				this.setPDFinputs();
 			})
 		},
 		setPDFinputs() {
