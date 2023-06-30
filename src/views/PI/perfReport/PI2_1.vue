@@ -60,7 +60,7 @@
 						<el-form-item label="廠商自主檢查件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.companyCheck_Num" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
+						<!-- <el-divider />
 						<h4>監造自主檢查件數</h4>
 						<el-form-item label="合格件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.supervisionCheckPass_Num" controls-position="right" :min="0" @change="setPDFinputs" />
@@ -79,7 +79,7 @@
 						<el-divider />
 						<el-form-item label="未登入或登入不完整案件總數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.totalIncomplete_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
+						</el-form-item> -->
 						<el-divider />
 						<h4>應檢附文件</h4>
 						<el-form-item label="" :label-width="labelWidth2">
@@ -91,7 +91,7 @@
 							<br/>
 							<el-checkbox v-model="inputForm.checkPeriod_IncompleteLogin" @change="setPDFinputs">期間系統資料登錄不完整案件資訊</el-checkbox>
 						</el-form-item>
-						<el-divider />
+						<!-- <el-divider />
 						<h4>是否合格</h4>
 						<el-form-item label="" :label-width="labelWidth2">
 							<el-checkbox v-model="inputForm.pass" @change="setPDFinputs">是</el-checkbox>
@@ -101,7 +101,7 @@
 							<el-input type="text" v-model="inputForm.failReason" @change="setPDFinputs" size="small" style="width:300px">
 								<template slot="prepend">原因</template>
 							</el-input>
-						</el-form-item>
+						</el-form-item> -->
 					</el-form>
 				</el-card>
 			</el-col>
@@ -174,10 +174,10 @@ export default {
 				EFA:0,
 				EFGA:0,
 				EFGHA:0,
-				checkCo_dailyInform:false,
-				checkCo_dailyLogin:false,
-				checkPeriod_Complete:false,
-				checkPeriod_IncompleteLogin:false,
+				checkCo_dailyInform:true,
+				checkCo_dailyLogin:true,
+				checkPeriod_Complete:true,
+				checkPeriod_IncompleteLogin:true,
 				pass:false,
 				fail:false,
 				failReason: ''
@@ -281,8 +281,8 @@ export default {
 					if(['failReason'].includes(arg.key)){
 						this.inputForm[arg.key] = arg.value
 					}
+					this.setPDFinputs();
 				});
-				this.setPDFinputs();
 			})
 		},
 		setPDFinputs() {

@@ -44,7 +44,7 @@
 						<el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.companyCheck_Num" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
+						<!-- <el-divider />
 						<h4>監造抽查人次數</h4>
 						<el-form-item label="合格人次數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.supervisionCheckPass_Num" controls-position="right" :min="0" @change="setPDFinputs" />
@@ -63,7 +63,7 @@
 						<el-divider />
 						<el-form-item label="確定不合格總人次數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.totalUnqualified_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
+						</el-form-item> -->
 						<el-divider />
 						<h4>應檢附文件</h4>
 						<el-form-item label="" :label-width="labelWidth2">
@@ -75,7 +75,7 @@
 							<br/>
 							<el-checkbox v-model="inputForm.checkCo_unreasonable" @change="setPDFinputs">廠商認為查檢核發現未滿足不合理資訊</el-checkbox>
 						</el-form-item>
-						<el-divider />
+						<!-- <el-divider />
 						<h4>是否合格</h4>
 						<el-form-item label="" :label-width="labelWidth2">
 							<el-checkbox v-model="inputForm.pass" @change="setPDFinputs">是</el-checkbox>
@@ -86,7 +86,7 @@
 								<template slot="prepend">原因</template>
 							</el-input>
 
-						</el-form-item>
+						</el-form-item> -->
 					</el-form>
 				</el-card>
 			</el-col>
@@ -154,10 +154,10 @@ export default {
 				BCA:0,
 				BCDA:0,
 				BCDEA:0,
-				checkCo_dailyInspectAll:false,
-				checkCo_discoverUnSafety:false,
-				checkOr_discoverUnSafety:false,
-				checkCo_unreasonable:false,
+				checkCo_dailyInspectAll:true,
+				checkCo_discoverUnSafety:true,
+				checkOr_discoverUnSafety:true,
+				checkCo_unreasonable:true,
 				pass:false,
 				fail:false,
 				failReson: ''
@@ -221,8 +221,8 @@ export default {
 					if(['dailyReport_Num','qualifiedSafety_Num','unqualifiedSafety_Num','companyCheck_Num','supervisionCheckPass_Num','supervisionCheckFail_Num','organCheckPass_Num','organCheckFail_Num','totalUnqualified_Num',].includes(arg.key)) {
 						this.inputForm[arg.key] = parseInt(arg.value)
 					}
+					this.setPDFinputs();
 				});
-				this.setPDFinputs();
 			})
 		},
 		setPDFinputs() {
