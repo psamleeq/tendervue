@@ -206,7 +206,7 @@ export default {
 		this.geoJSON = {};
 	},
 	async mounted() {
-		// this.loading = true;
+		this.loading = true;
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
 			console.log("Google Map Failure");
@@ -408,12 +408,27 @@ export default {
 							this.blockList.push({
 								id: event.feature.getProperty("id"),
 								roadName: event.feature.getProperty("roadName"),
+								zipCode: event.feature.getProperty("zipCode"),
 								geometry: json.geometry
 							});	
 						});
 					}
 
-					this.$nextTick(() => this.revertStyle());
+					this.$nextTick(() => {
+						this.revertStyle();
+
+						this.routeList = this.blockList.reduce((acc, curr) => {
+							if(acc.length == 0 || !acc.map(route => route.roadName).includes(curr.roadName)) {
+								acc.push({
+									id: acc.length,
+									roadName: curr.roadName,
+									dist: this.options.districtMap[curr.zipCode].district,
+									isMatch: true
+								})
+							}
+							return acc
+						}, []);
+					});
 				});
 			})
 		},

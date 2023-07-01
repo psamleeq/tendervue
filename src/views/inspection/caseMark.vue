@@ -38,6 +38,7 @@
 						<span slot="prepend">巡查Id</span>
 					</el-input>
 				</span>
+				<br>
 				<span class="filter-item">
 					<el-input v-model="listQuery.caseInspectId" placeholder="請輸入">
 						<span slot="prepend">缺失Id</span>
