@@ -74,3 +74,11 @@ export function addCaseWarrantyList(data) {
 		data
 	})
 }
+
+export function delCaseWarrantyList(data) {
+	return request({
+		url: `/PI/caseWarrantyList`,
+		method: 'delete',
+		data
+	})
+}

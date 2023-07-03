@@ -14,6 +14,10 @@
 				<time-picker v-else-if="listQuery.filterType == 2" class="filter-item" :disabledDate="false" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			<el-button v-if="checkPermission(['PIcase.editor']) && tableSelect.length > 0" class="filter-item" :type="listQuery.filter ? 'success' : 'danger'" icon="el-icon-delete" @click="delCase(Number(listQuery.filter))">{{ listQuery.filter ? '恢復' : '刪除' }}</el-button>
+			<el-checkbox v-if="checkPermission(['PIcase.editor'])" v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
+
+			<br>
 			<el-button
 				class="filter-item"
 				type="info"
@@ -28,16 +32,23 @@
 				<el-button v-if="csvFileList.length > 0" type="success" @click="showCsvList = true">建立列表</el-button>
 			</transition>
 			<el-button type="text" @click="showDemo = true">CSV範例</el-button>
+
 		</div>
 		
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+
+		<aside>
+			<span v-if="this.list.length != 0"> 案件數: {{ this.list.length }} </span>
+		</aside>
 		
 		<el-table
 			:data="list"
 			border
 			:header-cell-style="{'background-color': '#F2F6FC'}"
 			style="width: 100%"
+			@selection-change="handleSelectionChange"
 		>
+			<el-table-column v-if="checkPermission(['PIcase.editor'])" type="selection" width="55" align="center" />
 			<el-table-column
 				v-for="(value, key) in headers"
 				:key="key"
@@ -141,8 +152,9 @@
 import moment from "moment";
 import jschardet from "jschardet";
 import iconv from "iconv-lite";
-import { getCaseWarrantyList, addCaseWarrantyList } from "@/api/PI";
+import { getCaseWarrantyList, addCaseWarrantyList, delCaseWarrantyList } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
+import checkPermission from '@/utils/permission';
 
 export default {
 	name: "caseWarrantyList",
@@ -158,7 +170,8 @@ export default {
 			searchRange: "",
 			listQuery: {
 				zipCode: 104,
-				filterType: 1
+				filterType: 1,
+				filter: false
 			},
 			headers: {
 				UploadCaseNo: {
@@ -251,6 +264,7 @@ export default {
 		this.showCsvList = false;
 	},
 	methods: {
+		checkPermission,
 		getList() {
 			this.loading = true;
 			let startDate = '';
@@ -266,6 +280,7 @@ export default {
 			this.list = [];
 			getCaseWarrantyList({
 				zipCode: this.listQuery.zipCode,
+				filter: this.listQuery.filter,
 				filterType: this.listQuery.filterType,
 				timeStart: startDate,
 				timeEnd: (this.listQuery.filterType == 1) ? '' : moment(endDate).add(1, "d").format("YYYY-MM-DD")
@@ -310,6 +325,28 @@ export default {
 						type: "warning",
 				});
 			}
+		},
+		delCase(opType) {
+			this.$confirm(`確定${opType == 1 ? '恢復' : '刪除'} ${this.tableSelect.length}件案件?`, "確認", { showClose: false }).then(() => {
+				delCaseWarrantyList({
+					opType,
+					CNList: this.tableSelect.map(row => row.UploadCaseNo)
+				}).then(response => {
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: `${opType == 1 ? '恢復' : '刪除'}成功`,
+							type: "success",
+						});
+						this.getList();
+					} 
+				}).catch(err => {
+					console.log(err);
+					this.getList();
+				})
+			})
+		},
+		handleSelectionChange(value) {
+			this.tableSelect = value;
 		},
 		formatter(row, column) {
 			if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";

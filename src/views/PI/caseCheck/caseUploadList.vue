@@ -281,7 +281,7 @@ export default {
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						this.$message({
-							message: "提交成功",
+							message: "刪除成功",
 							type: "success",
 						});
 						this.getList();
