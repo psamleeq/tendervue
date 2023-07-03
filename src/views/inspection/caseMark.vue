@@ -28,6 +28,7 @@
 						</div>
 						<el-button-group>
 							<el-button type="primary" size="small" @click="getRouteList()">載入</el-button>
+							<el-button type="success" size="small" @click="intersectRoute()">比對</el-button>
 							<el-button type="info" size="small" @click="clearRouteLayer()">清空</el-button>
 						</el-button-group>
 					</el-card>
@@ -75,7 +76,7 @@
 
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
-import moment from 'moment'
+import moment from 'moment';
 import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase } from "@/api/inspection";
 import { getInspectionRoute } from "@/api/inspection"
 import data2blob from '@/utils/data2blob.js';
@@ -449,6 +450,8 @@ export default {
 					this.openPanorama();
 				})
 
+				// jsts
+				this.geometryFactory = new jsts.geom.GeometryFactory();
 				resolve();
 			})
 		},
@@ -670,7 +673,7 @@ export default {
 
 			// 掛載 polyline Layer(street view)
 			lineInfo.forEach((polyInfo, index) => {
-				const path = polyInfo.map((info) => info.position)
+				const path = polyInfo.map((info) => info.position);
 				this.polyLine.push(
 					new google.maps.Polyline({
 						path,
@@ -792,6 +795,40 @@ export default {
 				});
 			}
 		},
+		intersectRoute() {
+			this.dataLayer.route.revertStyle();
+			const jstsRoutePoints = this.panoramaInfo.data.flat(1).map(point => this.createJstsGeometry([[ point.position.lng, point.position.lat ]]));
+			// console.log(jstsRoutePoints.length);
+			this.dataLayer.route.forEach(feature => {
+				feature.toGeoJson(json => {
+					const jstsBlockPolygon = this.createJstsGeometry(json.geometry.coordinates.flat(2));
+					for(let i=0; i <= jstsRoutePoints.length - 1; i++) {
+						// console.log(i);
+						if(i == 0) this.loading = true;
+						if(jstsBlockPolygon.contains(jstsRoutePoints[i])) {
+							// console.log("BINGO: ", i);
+							this.dataLayer.route.overrideStyle(feature, { fillColor: "#8FBC8F" });
+							this.loading = false;
+							break;
+						} else if(i == jstsRoutePoints.length - 1) {
+							this.loading = false;
+							this.dataLayer.route.overrideStyle(feature, { fillColor: "#DC143C" });
+						}
+					}
+				});
+			})
+		},
+		createJstsGeometry(boundary) {
+			// console.log(boundary);
+			let coordinates = boundary.map(coord => new jsts.geom.Coordinate(coord[1], coord[0]));
+
+			if (coordinates.length == 1) return this.geometryFactory.createPoint(coordinates[0]);
+			else {
+				if(coordinates[0].compareTo(coordinates[coordinates.length-1]) != 0) coordinates.push(coordinates[0]);
+				const shell = this.geometryFactory.createLinearRing(coordinates);
+				return this.geometryFactory.createPolygon(shell);
+			}
+		},
 		clearAll() {
 			// console.log("clearAll");
 			this.caseGeoJson = Object.assign({}, this.caseGeoJson, { caseNow: {}, casePrev: {} });
@@ -802,6 +839,7 @@ export default {
 			this.polyLine = [];
 
 			this.clearMarker();
+			this.dataLayer.route.revertStyle();
 
 			this.panoramaInfo = Object.assign({}, this.panoramaInfo, { data: [], sceneSetting: {}, streetViewList: {} });
 			this.$refs.panoramaView.removeAllScene();
