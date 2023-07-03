@@ -91,3 +91,12 @@ export function importInspectionCase(data) {
 		data
 	})
 }
+
+// 追蹤列表
+export function getCaseTrackingList(query) {
+	return request({
+		url: '/inspection/caseTrackingList',
+		method: 'get',
+		params: query
+	})
+}

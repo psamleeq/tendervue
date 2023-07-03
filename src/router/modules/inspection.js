@@ -54,6 +54,17 @@ const inspectionRouter = {
 				isNew: true
 			}
 		}
+		,
+		{
+			path: 'caseTrackingList',
+			component: () => import('@/views/inspection/caseTrackingList'),
+			name: 'caseTrackingList',
+			meta: {
+				title: '追蹤列表',
+				roles: ['inspection.marker'],
+				isNew: true
+			}
+		}
 	]
 }
 export default inspectionRouter
