@@ -87,6 +87,7 @@
 				<el-upload :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
 					<el-button type="info">上傳CSV</el-button>
 				</el-upload>
+				<el-button class="filter-item" type="text" @click="showDemo = true">CSV範例</el-button>
 				<br>
 				<div class="filter-item">
 					<el-input v-model="listQuery.filterId" placeholder="請輸入">
@@ -125,6 +126,12 @@
 				/>
 			</el-table>
 		</el-card>
+
+		<el-dialog :visible.sync="showDemo" width="1110px" center>
+			<div>1標週期一.csv (<el-link href="/demo/1標週期一.csv" target="_blank">下載<i class="el-icon-download" /></el-link>)</div>
+			<br>
+			<iframe width="100%" height="600" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vT4pCyT7h1wL1YL_VyH076qo5jg0vC3nQcI-nF4zbZ52XO5rsn7DjlhJvFaN_R7rX_mMciiOdCIGNyS/pubhtml?gid=172832862&single=true&widget=false&headers=false&chrome=false" />
+		</el-dialog>
 	</div>
 </template>
 
@@ -157,6 +164,7 @@ export default {
 			loading: false,
 			isUpload: false,
 			showBlockFilter: false,
+			showDemo: false,
 			screenWidth: window.innerWidth,
 			// map: null,
 			// dataLayer: {},
