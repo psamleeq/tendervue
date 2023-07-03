@@ -423,7 +423,10 @@ export default {
 					});
 				}
 				this.isGetAddress = false;
-			}).catch(err => console.log(err));
+			}).catch(err => {
+				console.log(err);
+				this.isGetAddress = false;
+			});
 		},
 		screenshot(imgType="imgZoomIn", hfov) {
 			hfov = (hfov != undefined) ? hfov : this.panorama.getHfov();
