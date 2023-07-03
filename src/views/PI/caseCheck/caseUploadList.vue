@@ -29,9 +29,12 @@
 				/>
 			</span>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+
+			<el-button v-if="list.length > 0" class="filter-item" type="danger" icon="el-icon-delete" @click="delCase(0)">刪除</el-button>
+			<!-- <el-button v-if="list.length == 0" class="filter-item" type="success" icon="el-icon-delete" @click="delCase(1)">恢復</el-button> -->
 		</div>
 		
-		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
+		<h5 v-if="list.length != 0">查詢日期：{{ searchDateNow }}</h5>
 
 		<aside>
 			<span v-if="this.list.length != 0"> 案件數: {{ this.list.length }} </span>
@@ -74,7 +77,7 @@
 <script>
 import moment from "moment";
 import { getTypeMap } from "@/api/type";
-import { getCaseList } from "@/api/PI";
+import { getCaseList, delCaseList } from "@/api/PI";
 
 export default {
 	name: "PICaseUploadList",
@@ -114,7 +117,7 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
-			searchRange: "",
+			searchDateNow: "",
 			listQuery: {
 				caseType: 1,
 				zipCode: 104
@@ -240,7 +243,7 @@ export default {
 			this.loading = true;
 
 			let date = moment(this.searchDate).format("YYYY-MM-DD");
-			this.searchRange = date;
+			this.searchDateNow = date;
 
 			this.list = [];
 			getCaseList({
@@ -268,6 +271,26 @@ export default {
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
+		},
+		delCase(opType) {
+			this.$confirm(`<p>確定刪除${this.searchDateNow} 共${this.list.length}件案件? <br/>(刪除後案件列表將<span style="color: #F56C6C">無法恢復</span>。)</p>`, "確認", { dangerouslyUseHTMLString: true, showClose: false }).then(() => {
+				delCaseList( 0, {
+					opType,
+					timeStart: this.searchDateNow,
+					timeEnd: moment(this.searchDateNow).add(1, "d").format("YYYY-MM-DD")
+				}).then(response => {
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: "提交成功",
+							type: "success",
+						});
+						this.getList();
+					} 
+				}).catch(err => {
+					console.log(err);
+					this.getList();
+				})
+			})
 		},
 		formatter(row, column) {
 			if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];

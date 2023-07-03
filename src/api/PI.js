@@ -25,6 +25,14 @@ export function setCaseList(id, data) {
 	})
 }
 
+export function delCaseList(id, data) {
+	return request({
+		url: `/PI/caseList/${id}`,
+		method: 'delete',
+		data
+	})
+}
+
 export function archiveCaseList(data) {
 	return request({
 		url: `/PI/caseList`,
