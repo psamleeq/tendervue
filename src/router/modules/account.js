@@ -1,6 +1,6 @@
 import Layout from '@/layout'
 
-const dispatchRouter = {
+const accountRouter = {
 	path: '/account',
 	component: Layout,
 	redirect: '/account/accountList',
@@ -23,6 +23,17 @@ const dispatchRouter = {
 				isNew: true
 			}
 		},
+		{
+			path: 'accountPermission',
+			component: () => import('@/views/account/accountPermission'),
+			name: 'accountPermission',
+			meta: {
+				title: '權限管理',
+				roles: ['rAdm'],
+				isNew: true
+			},
+			hidden: true
+		},
 	]
 }
-export default dispatchRouter
+export default accountRouter
