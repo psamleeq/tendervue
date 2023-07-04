@@ -39,12 +39,18 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
+						<el-form-item label="行政區">
+							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()">
+								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
+							</el-select>
+							<!-- <el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" /> -->
+						</el-form-item>
 						<!-- <span v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`"> -->
 						<el-collapse v-model="activeName">
 							<el-collapse-item v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`" class="collapse-label" :title="`${inputForm.serialNumber} (P${index+1})`" :name="index">
 								<template slot="title">
 									<span>{{ inputForm.serialNumber }} (P{{ index+1 }})</span>
-									<el-button class="btn-remove" type="danger" size="mini" plain :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage(index)">刪除</el-button>
+									<el-button class="btn-remove" type="danger" size="mini" plain :disabled="template.schemas != undefined && template.schemas.length <= 2||index==0" @click="removePage(index)">刪除</el-button>
 									<!-- <el-button type="text" style="margin-left: 5px" :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage"><i class="el-icon-close" style="color: #F56C6C" /></el-button> -->
 								</template>
 								<!-- <el-divider>{{ inputForm.serialNumber }} (P{{ index+1 }})</el-divider> -->
@@ -53,7 +59,8 @@
 									<br/>
 									<el-checkbox v-model="inputForm.checkIdCard" @change="setPDFinputs">識別證</el-checkbox>
 									<br/>
-									<el-checkbox v-model="inputForm.checkWhistle" @change="setPDFinputs">哨子</el-checkbox>
+									<el-checkbox v-if="index==0" v-model="inputForm.checkWhistle" @change="setPDFinputs">哨子</el-checkbox>
+									<el-checkbox v-else-if="index!=0" v-model="inputForm.checkWhistle" @change="setPDFinputs">工程帽</el-checkbox>
 								</el-form-item>
 								<el-form-item label="檢查人數">
 									<el-input-number v-model="inputForm.checkNum" controls-position="right" :min="0" @change="setPDFinputs" />
@@ -122,6 +129,44 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
+			districtList: {
+				// 100: {
+				// 	"name": "中正區"
+				// },
+				103: {
+					"name": "大同區"
+				},
+				104: {
+					"name": "中山區"
+				},
+				// 105: {
+				// 	"name": "松山區"
+				// },
+				// 106: {
+				// 	"name": "大安區"
+				// },
+				// 108: {
+				// 	"name": "萬華區"
+				// },
+				// 110: {
+				// 	"name": "信義區"
+				// },
+				// 111: {
+				// 	"name": "士林區"
+				// },
+				// 112: {
+				// 	"name": "北投區"
+				// },
+				// 114: {
+				// 	"name": "內湖區"
+				// },
+				// 115: {
+				// 	"name": "南港區"
+				// },
+				// 116: {
+				// 	"name": "文山區"
+				// }
+			},
 			activeName: [0],
 			template: {},
 			inputFormArr: [
@@ -134,15 +179,15 @@ export default {
 					failNum: 0,
 					reason: "無"
 				},
-				{
-					serialNumber: "",
-					checkVest: false,		// 反光背心
-					checkIdCard: false,	// 識別證
-					checkWhistle: false,	// 哨子
-					checkNum: 0,
-					failNum: 0,
-					reason: "無"
-				}
+				// {
+				// 	serialNumber: "",
+				// 	checkVest: false,		// 反光背心
+				// 	checkIdCard: false,	// 識別證
+				// 	checkWhistle: false,	// 工作帽
+				// 	checkNum: 0,
+				// 	failNum: 0,
+				// 	reason: "無"
+				// }
 			],
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約', 
@@ -151,6 +196,7 @@ export default {
 				serialNumber2: '1111102106',
 				serialNumber3: '1111102107',
 				date: '111年11月02日',
+				zipCode: '104',
 				district: '中山區',
 				checkVest1: '',		// 反光背心
 				checkIdCard1: '',	// 識別證
@@ -279,6 +325,9 @@ export default {
 		setPDFinputs() {
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
+			this.inputs.district = this.districtList[this.inputs.zipCode].name;
+			//工程名稱
+			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
 			for(let i=0; i < this.template.schemas.length; i++) {
 				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}

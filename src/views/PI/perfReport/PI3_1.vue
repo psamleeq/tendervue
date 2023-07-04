@@ -12,7 +12,7 @@
 		</div>
 
 		<el-row :gutter="24">
-			<el-col :span="13">
+			<el-col :span="11">
 				<el-card shadow="never" style="width: 500px; margin: 40px auto; padding: 5px 10px; ">
 					<el-form :model="inputForm" >
 						<h2>檢核資訊</h2>
@@ -27,6 +27,12 @@
 								style="width: 200px"
 								@change="setPDFinputs"
 							/>
+						</el-form-item>
+						<el-divider />
+						<el-form-item label="行政區" :label-width="labelWidth1">
+							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()" style="width: 200px">
+								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
+							</el-select>
 						</el-form-item>
 						<el-divider />
 						<el-form-item label="當日工作執行日報填寫人次數" :label-width="labelWidth1">
@@ -90,7 +96,7 @@
 					</el-form>
 				</el-card>
 			</el-col>
-			<el-col :span="11" ref="container" class="container"/>
+			<el-col :span="13" ref="container" class="container"/>
 		</el-row>
 	</div>
 </template>
@@ -138,8 +144,46 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
+			initPage:4,
 			searchDate: moment().startOf("d").subtract(1, "d"),
-			
+			districtList: {
+				// 100: {
+				// 	"name": "中正區"
+				// },
+				103: {
+					"name": "大同區"
+				},
+				104: {
+					"name": "中山區"
+				},
+				// 105: {
+				// 	"name": "松山區"
+				// },
+				// 106: {
+				// 	"name": "大安區"
+				// },
+				// 108: {
+				// 	"name": "萬華區"
+				// },
+				// 110: {
+				// 	"name": "信義區"
+				// },
+				// 111: {
+				// 	"name": "士林區"
+				// },
+				// 112: {
+				// 	"name": "北投區"
+				// },
+				// 114: {
+				// 	"name": "內湖區"
+				// },
+				// 115: {
+				// 	"name": "南港區"
+				// },
+				// 116: {
+				// 	"name": "文山區"
+				// }
+			},
 			template: {},
 			inputForm: {
 				dailyReport_Num: 0,
@@ -167,6 +211,8 @@ export default {
 				serialNumber: '1111102104',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
+				zipCode: '104',//行政區
+				district: '中山區',
 				requiredStandard:'廠商人員執行工作應滿足安全性要求',//要求標準
 				measurement:'當天滿足要求人次數/當日工作執行日報填寫人數',//量測方式
 				dailyReport_Num: '0件',//A
@@ -223,12 +269,18 @@ export default {
 					}
 					this.setPDFinputs();
 				});
+				this.setPDFinputs();
 			})
 		},
 		setPDFinputs() {
 			//檢查日期
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
+			//工程名稱
+			this.inputs.district = this.districtList[this.inputs.zipCode].name;
+			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
+			//紀錄編號
+			this.inputs.serialNumber = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
 			//查核人次數
 			for(const key of [ 
 				'dailyReport_Num',
@@ -296,10 +348,10 @@ export default {
 	.filter-container 
 		.filter-item
 			margin-right: 5px
-	.container
-		position: fixed
-		top:30px
-		right:0
-		z-index: index -100 
+	// .container
+	// 	position: fixed
+	// 	top:30px
+	// 	right:0
+	// 	z-index: index -100 
 	
 </style>

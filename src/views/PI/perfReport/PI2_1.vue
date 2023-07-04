@@ -12,7 +12,7 @@
 		</div>
 
 		<el-row :gutter="24">
-			<el-col :span="13">
+			<el-col :span="11">
 				<el-card shadow="never" style="width: 480px; margin: 20px auto; padding: 5px 10px;">
 					<el-form :model="inputForm">
 						<h2>檢核資訊</h2>
@@ -33,11 +33,12 @@
 							/>
 						</el-form-item>
 						<el-divider />
-						<!-- <el-form-item label="行政區">
-							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="getList()">
+						<el-form-item label="行政區" :label-width="labelWidth1">
+							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()" style="width: 200px">
 								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
 							</el-select>
-						</el-form-item> -->
+						</el-form-item>
+						<el-divider />
 						<h4>所有通報數</h4>
 						<el-form-item label="被通報案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.informed_Num" controls-position="right" :min="0" @change="setPDFinputs" />
@@ -49,16 +50,8 @@
 							<el-input-number v-model="inputForm.unreasonable_Num" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
-						<el-form-item label="道路系統登入件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.roadSystem_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
 						<el-form-item label="未登入或登入不完整案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.incomplete_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<el-form-item label="廠商自主檢查件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.companyCheck_Num" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<!-- <el-divider />
 						<h4>監造自主檢查件數</h4>
@@ -105,7 +98,7 @@
 					</el-form>
 				</el-card>
 			</el-col>
-			<el-col :span="11" ref="container" class="container"/>
+			<el-col :span="13" ref="container" class="container"/>
 		</el-row>
 	</div>
 </template>
@@ -157,6 +150,44 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
+			districtList: {
+				// 100: {
+				// 	"name": "中正區"
+				// },
+				103: {
+					"name": "大同區"
+				},
+				104: {
+					"name": "中山區"
+				},
+				// 105: {
+				// 	"name": "松山區"
+				// },
+				// 106: {
+				// 	"name": "大安區"
+				// },
+				// 108: {
+				// 	"name": "萬華區"
+				// },
+				// 110: {
+				// 	"name": "信義區"
+				// },
+				// 111: {
+				// 	"name": "士林區"
+				// },
+				// 112: {
+				// 	"name": "北投區"
+				// },
+				// 114: {
+				// 	"name": "內湖區"
+				// },
+				// 115: {
+				// 	"name": "南港區"
+				// },
+				// 116: {
+				// 	"name": "文山區"
+				// }
+			},
 			template: {},
 			inputForm: {
 				sumInform_Num:0,
@@ -187,6 +218,8 @@ export default {
 				serialNumber: '1111102101',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
+				zipCode: '104',
+				district: '中山區',
 				requiredStandard:'完成巡查工作後必須及時登錄資料',//要求標準
 				measurement:'廠商於系統當天登錄資料數量/廠商當天通報數',//量測方式
 				sumInform_Num: '0件',//A
@@ -224,28 +257,6 @@ export default {
 		this.initPDF();
 	},
 	methods: {
-		dateShortcuts(index) {
-			this.timeTabId = index;
-
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
-			};
-
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
-					break;
-			}
-			this.getList();
-		},
 		initPDF() {
 			fetch(`/assets/pdf/PI2_1-Main.json?t=${Date.now()}`).then(async (response) => {
 				const domContainer = this.$refs.container.$el;
@@ -268,7 +279,6 @@ export default {
 						'informed_Num',
 						'companyInform_Num',
 						'unreasonable_Num',
-						'roadSystem_Num',
 						'incomplete_Num',
 						'companyCheck_Num',
 						'supervisionCheckPass_Num',
@@ -283,29 +293,34 @@ export default {
 					}
 					this.setPDFinputs();
 				});
+				this.setPDFinputs();
 			})
 		},
 		setPDFinputs() {
 			//檢查日期
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			//查核人次數
+			//工程名稱
+			this.inputs.district = this.districtList[this.inputs.zipCode].name;
+			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
+			//紀錄編號
+			this.inputs.serialNumber = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
+			//查核人次數(資料轉換)
 			for(const key of [
 				'informed_Num',
 				'companyInform_Num',
 				'unreasonable_Num',
-				'roadSystem_Num',
 				'incomplete_Num',
-				'companyCheck_Num',
 				'supervisionCheckPass_Num',
 				'supervisionCheckFail_Num',
 				'organCheckPass_Num',
 				'organCheckFail_Num',
 				'totalIncomplete_Num']) {
-				this.inputs[key] = this.inputForm[key] + '件';
+				this.inputs[key] = this.inputForm[key] + ' 件';
 			}
-			//計算所有通報數(A)
-			this.inputs.sumInform_Num = (this.inputForm.informed_Num+this.inputForm.companyInform_Num)+ '件';
+			//廠商自主檢查件數 = 廠商通報數(C)
+			 this.inputs.companyCheck_Num = this.inputForm.companyInform_Num + ' 件'
+			
 			//計算指標數值
 			const A = this.inputForm.informed_Num+this.inputForm.companyInform_Num;
 			const E = this.inputForm.roadSystem_Num;
@@ -319,6 +334,9 @@ export default {
 				this.inputs.EFGA=String(((E-F-G)/A)*100)
 				this.inputs.EFGHA=String(((E-F-G-H)/A)*100)
 			}
+			//計算所有通報數(A) && (E)=(A)
+			this.inputs.sumInform_Num = A+ ' 件';
+			this.inputs.roadSystem_Num = A+ ' 件';
 			//應檢附文件
 			for(const key of ['checkCo_dailyInform','checkCo_dailyLogin','checkPeriod_Complete','checkPeriod_IncompleteLogin','pass','fail']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';
@@ -364,8 +382,8 @@ export default {
 	.filter-container 
 		.filter-item
 			margin-right: 5px
-	.container
-		position: fixed
-		top:30px
-		right:0
+	// .container
+	// 	position: fixed
+	// 	top:30px
+	// 	right:0
 </style>
