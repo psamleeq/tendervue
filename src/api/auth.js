@@ -76,3 +76,20 @@ export function updateNotes(data) {
 		data
 	})
 }
+
+//權限管理
+export function getPermit(query) {
+	return request({
+		url: '/auth/permit',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setPermit(data) {
+	return request({
+		url: '/auth/permit',
+		method: 'post',
+		data
+	})
+}

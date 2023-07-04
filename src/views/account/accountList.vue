@@ -292,46 +292,50 @@ export default {
 		},
 		updatePassword(){
 			this.$confirm(`是否確定更改帳號${this.rowActive.UserName}的密碼?`, '提示', {
-					confirmButtonText: '確定',
-					cancelButtonText: '取消',
-					type: 'warning'
-				}).then(() => {
-					if(this.updatePasswordForm.newPassword.length>=6){			
-						updatePassword({
-							userId: this.rowActive.UserId,
-							newPwd: this.updatePasswordForm.newPassword
-						}).then(response=>{
-							console.log(response);
-							this.getList()
-						}).catch(err => {this.loading = false});
-						this.updatePasswordForm.newPassword="";
-						this.updatePasswordForm.confirmPassword="";
-						this.showUpdateDialog=false;
-						this.$message({
-							type: 'success',
-							message: `成功更改密碼!`
-						})
-					}else{
-						this.$message({
-							type: 'warning',
-							message: '密碼輸入有誤，請重新輸入'
-						})
-					}
-				})
+				confirmButtonText: '確定',
+				cancelButtonText: '取消',
+				type: 'warning'
+			}).then(() => {
+				if(this.updatePasswordForm.newPassword.length>=6){			
+					updatePassword({
+						userId: this.rowActive.UserId,
+						newPwd: this.updatePasswordForm.newPassword
+					}).then(response=>{
+						console.log(response);
+						this.getList()
+					}).catch(err => {this.loading = false});
+					this.updatePasswordForm.newPassword="";
+					this.updatePasswordForm.confirmPassword="";
+					this.showUpdateDialog=false;
+					this.$message({
+						type: 'success',
+						message: `成功更改密碼!`
+					})
+				}else{
+					this.$message({
+						type: 'warning',
+						message: '密碼輸入有誤，請重新輸入'
+					})
+				}
+			})
 		},
 		editNotes(row){
 			updateNotes({
 				userId:row.UserId,
 				notes:row.Notes
 			}).then(response => {
-				this.getList()
+				this.$message({
+					type: 'success',
+					message: `修改成功!`
+				})
+				this.getList();
 			}).catch(err => this.loading = false);
 		},
 		//權限管理
 		permissionManage(row) {
 			this.$router.push({
-				path: "/account/accounPermission",
-				query: row,
+				path: "/account/accountPermission",
+				query: { userId: row.UserId },
 			});
 		},
 	},
