@@ -174,7 +174,7 @@ export default {
 			this.setResult().then(() => {
 				this.$router.push({
 					path: "/inspection/caseMark",
-					query: { inspectId: row.InspectId, caseInspectId: row.InspectId },
+					query: { inspectId: row.InspectId },
 				});
 			})
 		},
