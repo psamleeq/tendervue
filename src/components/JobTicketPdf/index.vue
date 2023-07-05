@@ -636,18 +636,18 @@ export default {
 				
 				const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => (
 					{
-							"OrderSN": {
-								"type": "text",
-								"position": {
-									"x": orientation == 'p' ? 168 : 255,
-									"y": 26
-								},
-								"width": 27.24,
-								"height": 6.12,
-								"fontSize": 14,
-								"alignment": "center"
-							}
+						"OrderSN": {
+							"type": "text",
+							"position": {
+								"x": orientation == 'p' ? 168 : 255,
+								"y": 26
+							},
+							"width": 27.24,
+							"height": 6.12,
+							"fontSize": 14,
+							"alignment": "center"
 						}
+					}
 				));
 
 				this.viewer.updateTemplate({ basePdf: this.pdfDoc.output('bloburl'), schemas });

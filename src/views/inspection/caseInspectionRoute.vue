@@ -525,6 +525,7 @@ export default {
 		async readCSV(file, fileList) {
 			if(fileList.length > 1) fileList.shift();
 			this.csvFileList = JSON.parse(JSON.stringify(fileList));
+			this.blockList = [];
 			this.routeList = [];
 
 			if(file.raw.type != "text/csv") {
