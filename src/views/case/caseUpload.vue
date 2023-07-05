@@ -217,10 +217,14 @@ export default {
 			return listFilter.length == 0
 		},
 		caseErrList() {
+			// 自相交
+			let errPolygonList =this.caseList.filter(caseSpec => caseSpec.selfIntersection);
+			let caseFilter = this.caseList.filter(caseSpec => !caseSpec.selfIntersection);
+
 			// 重複
 			let duplicateList = {};
 			for(const geoType of ['LineString', 'Polygon']) {
-				const caseTypeFilter = this.caseList.filter(caseSpec => caseSpec.geoType == geoType);
+				const caseTypeFilter = caseFilter.filter(caseSpec => caseSpec.geoType == geoType);
 				caseTypeFilter.forEach(caseSpec1 => {
 					// console.log("caseSpec1: ", caseSpec1.id);
 					const duplicateIdList = Object.values(duplicateList).flat().map(obj => obj.id);
@@ -237,7 +241,7 @@ export default {
 			}
 
 			let errIdList = Object.values(duplicateList).flat().map(obj => obj.id);
-			let caseFilter = this.caseList.filter(caseSpec => !errIdList.includes(caseSpec.id));
+			caseFilter = caseFilter.filter(caseSpec => !errIdList.includes(caseSpec.id));
 			
 			// ----
 			// 欄位缺漏
@@ -261,6 +265,12 @@ export default {
 			caseFilter = this.caseList.filter(caseSpec => !errIdList.includes(caseSpec.id));
 
 			return [
+				{
+					key: "errPolygon",
+					name: "自相交",
+					list: Object.values(errPolygonList).flat(),
+					errPolygonList
+				},
 				{
 					key: "duplicateCase",
 					name: "重複",
@@ -301,6 +311,7 @@ export default {
 		this.dataLayer = {  PCIBlock: {} };
 		this.geoJSON = {};
 		this.polygons = [];
+		this.markers = [];
 	},
 	async mounted() {
 		// this.loading = true;
@@ -456,6 +467,9 @@ export default {
 				}
 
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
+
+				// jsts
+				this.geometryFactory = new jsts.geom.GeometryFactory();
 				resolve();
 
 				// 載入區域GeoJson
@@ -629,6 +643,30 @@ export default {
 							return { lat: Number(point[1]), lng: Number(point[0]) };
 						});
 
+						// 自相交檢測
+						let isSelfIntersection = false;
+						if(!isLine) {
+							const jstsPolygon = this.createJstsGeometry(path);
+							const validator = new jsts.operation.IsSimpleOp(jstsPolygon);
+							if (validator.isSimpleLinearGeometry(jstsPolygon)) {}
+							const graph = new jsts.geomgraph.GeometryGraph(0, jstsPolygon);
+							const cat = new jsts.operation.valid.ConsistentAreaTester(graph);
+							isSelfIntersection = !cat.isNodeConsistentArea();
+							if(isSelfIntersection) {
+								const pt = cat.getInvalidPoint();
+								this.markers.push(
+									new google.maps.Marker({
+										position: { lat: pt.x, lng: pt.y },
+										icon: { 
+											url: `/assets/icon/icon_redDot.png`,
+											scaledSize: new google.maps.Size(6, 6) 
+										},
+										map: this.map
+									})
+								);
+							}
+						}
+
 						const caseName = caseInfo.name != null && this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] != undefined ? this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] : caseInfo.name;
 						const caseLevel = caseInfo.description != null && this.options.caseLevelMap[caseInfo.description.toUpperCase()] != undefined ? this.options.caseLevelMap[caseInfo.description.toUpperCase()] : caseInfo.description;
 
@@ -638,7 +676,8 @@ export default {
 							caseLevel,
 							geoType: caseInfo.hasOwnProperty("LineString") ? 'LineString' : caseInfo.hasOwnProperty("Polygon") ? 'Polygon' : '',
 							coordinates: path,
-							oriJSON: caseInfo
+							oriJSON: caseInfo,
+							selfIntersection: isSelfIntersection
 						});
 
 						// console.log(path);
@@ -688,12 +727,25 @@ export default {
 				this.map.fitBounds(bounds);
 			}
 		},
+		createJstsGeometry(boundary) {
+			// console.log(boundary);
+			let coordinates = boundary.map(coord => new jsts.geom.Coordinate(coord.lat, coord.lng));
+
+			if (coordinates.length == 1) return this.geometryFactory.createPoint(coordinates[0]);
+			else {
+				if(coordinates[0].compareTo(coordinates[coordinates.length-1]) != 0) coordinates.push(coordinates[0]);
+				const shell = this.geometryFactory.createLinearRing(coordinates);
+				return this.geometryFactory.createPolygon(shell);
+			}
+		},
 		handleRemove(file, fileList) {
 			if(fileList == undefined) this.kmlFileList = [];
 			else this.kmlFileList = JSON.parse(JSON.stringify(fileList));
 			for(const polygon of this.polygons) polygon.setMap(null);
+			for(const marker of this.markers) marker.setMap(null);
 			this.caseList = [];
 			this.polygons = [];
+			this.markers = [];
 			this.$refs.uploadFile.clearFiles();
 			this.isUpload = false;
 		},
