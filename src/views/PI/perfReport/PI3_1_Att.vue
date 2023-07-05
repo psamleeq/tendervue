@@ -172,9 +172,9 @@ export default {
 			inputFormArr: [
 				{
 					serialNumber: "",
-					checkVest: false,		// 反光背心
-					checkIdCard: false,	// 識別證
-					checkWhistle: false,	// 哨子
+					checkVest: true,		// 反光背心
+					checkIdCard: true,	// 識別證
+					checkWhistle: true,	// 哨子
 					checkNum: 0,
 					failNum: 0,
 					reason: "無"
@@ -198,9 +198,9 @@ export default {
 				date: '111年11月02日',
 				zipCode: '104',
 				district: '中山區',
-				checkVest1: '',		// 反光背心
-				checkIdCard1: '',	// 識別證
-				checkWhistle1: '',	// 哨子
+				checkVest1: 'V',		// 反光背心
+				checkIdCard1: 'V',	// 識別證
+				checkWhistle1: 'V',	// 哨子
 				checkNum1: '0',
 				passNum1: '0',
 				failNum1: '0',
@@ -293,9 +293,9 @@ export default {
 			this.template.schemas.splice(this.template.schemas.length-1, 0, addTemplate.schemas[0]);
 			this.inputFormArr.push({
 					serialNumber: "",
-					checkVest: false,		// 反光背心
-					checkIdCard: false,	// 識別證
-					checkWhistle: false,	// 哨子
+					checkVest: true,		// 反光背心
+					checkIdCard: true,	// 識別證
+					checkWhistle: true,	// 工程帽
 					checkNum: 0,
 					failNum: 0,
 					reason: "無"
