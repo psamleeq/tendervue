@@ -117,6 +117,16 @@ const PIRouter = {
 					}
 				},
 				{
+					path: 'PI2_1_Att_2',
+					component: () => import('@/views/PI/perfReport/PI2_1_Att_2'),
+					name: 'PI2_1_Att_2',
+					meta: { 
+						title: 'PI2.1附件-2', 
+						roles: ['PIreport.21'],
+						vTag: 'Alpha' 
+					}
+				},
+				{
 					path: 'PI3_1',
 					component: () => import('@/views/PI/perfReport/PI3_1'),
 					name: 'PI3_1',
