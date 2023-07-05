@@ -239,7 +239,7 @@ export default {
 
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {
-					console.log(arg);
+					// console.log(arg);
 					// const key = arg.key.slice(0, arg.key.length-1);
 					// const index = arg.key.slice(arg.key.length-1);
 					const [key, index] = arg.key.split(/([a-zA-Z]+)(\d?)/g).filter(s => s.length > 0);
@@ -248,6 +248,18 @@ export default {
 					if(['serialNumber', 'reason'].includes(key)) this.inputFormArr[index-1][key] = arg.value;
 					if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
 					if(['checkNum', 'failNum', 'passNum'].includes(key)) this.inputFormArr[index-1][key] = Number(arg.value);
+					if(['checkImg'].includes(key)) {
+						const img = new Image();
+						img.onload = () => {
+							// console.log(img.width, img.height);
+							this.inputFormArr[index-1][key] = arg.value;
+							const height = this.template.schemas[index-1][arg.key].height;
+
+							this.template.schemas[index-1][arg.key].width = height / img.height * img.width;
+							this.form.updateTemplate(this.template);
+						}
+						img.src = arg.value;
+					}
 				});
 				this.setPDFinputs();
 				// this.getList();
@@ -334,6 +346,7 @@ export default {
 
 			for(let [ i, inputForm ] of this.inputFormArr.entries()) {
 				inputForm.serialNumber = this.inputs[`serialNumber${i+1}`];
+				if(inputForm.checkImg) this.inputs[`checkImg${i+1}`] = inputForm.checkImg;
 				for(const key of [ 'checkVest', 'checkIdCard', 'checkWhistle' ]) this.inputs[`${key}${i+1}`] = inputForm[key] ? 'V' : '';
 				this.inputs[`checkNum${i+1}`] = String(inputForm.checkNum);
 				this.inputs[`failNum${i+1}`] = String(inputForm.failNum);

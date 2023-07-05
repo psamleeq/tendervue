@@ -245,9 +245,21 @@ export default {
 
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {
-					console.log(arg);
+					// console.log(arg);
 					// if(['contractName', 'companyName', 'serialNumber', 'date', 'district'].includes(arg.key)) this.inputs[arg.key] = arg.value;
 					if(['caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+					if(['caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2'].includes(arg.key)) {
+						const img = new Image();
+						img.onload = () => {
+							// console.log(img.width, img.height);
+							this.inputForm[arg.key] = arg.value;
+							const height = this.template.schemas[0][arg.key].height;
+
+							this.template.schemas[0][arg.key].width = height / img.height * img.width;
+							this.form.updateTemplate(this.template);
+						}
+						img.src = arg.value;
+					}
 				});
 				this.getList();
 			})
@@ -263,15 +275,17 @@ export default {
 				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
 			//資料數轉換
+			let sum = 0
 			for(const key of [ 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg' ]) {
 				this.inputs[key] = String(this.inputForm[key]);
+				//本日通報 加總
+				sum += Number(this.inputForm[key]);
 			}
-			//本日通報 加總
-			let sum = 0
-			for(const key of [ 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg' ]) {			
-				 sum += Number(this.inputForm[key])
+			this.inputs.caseReportTotal = String(sum);
+
+			for(const key of [ 'caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2' ]) {
+				if(this.inputForm[key]) this.inputs[key] = this.inputForm[key];
 			}
-			this.inputs.caseReportTotal = String(sum)
 
 			this.form.setInputs([this.inputs]);
 			this.form.render();
