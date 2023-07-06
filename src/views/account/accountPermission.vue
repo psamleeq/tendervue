@@ -7,17 +7,34 @@
 				帳號: {{ accountData.userName }}
 			</div>
 		</div>
-		<el-tree
-			ref="tree"
-			:data="treeData"
-			node-key="id"
-			show-checkbox
-			@check="handleCheck"
-		>
-			<span slot-scope="{ node, data }" :style="node.level === 1 ? { fontSize: '18px', lineHeight: 2 } : {}">
-				{{ data.label }}
-			</span>
-		</el-tree>
+		<el-row>
+			<el-col :span="12">
+				<el-tree
+					ref="tree1"
+					:data="firstHalfTreeData"
+					node-key="id"
+					show-checkbox
+					@check="handleCheck1"
+				>
+					<span slot-scope="{ node, data }" :style="node.level === 1 ? { fontSize: '18px', lineHeight: 2 } : {}">
+						{{ data.label }}
+					</span>
+				</el-tree>
+			</el-col>
+			<el-col :span="12">
+				<el-tree
+					ref="tree2"
+					:data="secondHalfTreeData"
+					node-key="id"
+					show-checkbox
+					@check="handleCheck2"
+				>
+					<span slot-scope="{ node, data }" :style="node.level === 1 ? { fontSize: '18px', lineHeight: 2 } : {}">
+						{{ data.label }}
+					</span>
+				</el-tree>
+			</el-col>
+		</el-row>
 		<div class="button-container">
 			<el-button type="info" @click="undo()">取消返回</el-button>
 			<el-button type="success" @click="confirmPermission()">確認送出</el-button>
@@ -38,13 +55,19 @@ export default {
 	data() {
 		return {
 			loading: false,
-			treeData: [],
+			// treeData: [],
+			roles1:[],
+			roles2:[],
+			firstHalfTreeData: [],
+			secondHalfTreeData: [],
 			nodeIdCounter: 0, // 用於生成唯一節點ID,
 			listQuery: {
 				userId: 0
 			},
 			accountData:{},
-			checkedKeys: []
+			checkedKeys1: [],
+			checkedKeys2: [],
+			sumCheckedKeys:[]
 		};
 	},
 	created() {
@@ -63,6 +86,11 @@ export default {
 		},
 		getList() {
 			this.loading = true;
+			this.roles1 = [];
+			this.roles2 = [];
+			this.checkedKeys1 = [];
+			this.checkedKeys2 = [];
+			this.sumCheckedKeys = [];
 
 			getPermit({
 				userId: Number(this.listQuery.userId)
@@ -72,8 +100,12 @@ export default {
 
 				this.accountData.roles.forEach(role => {
 					// console.log(role);
-					this.checkRole(this.treeData, role);
+					// this.checkRole(this.treeData, role);
+					this.checkRole(this.firstHalfTreeData, role); 
+					this.checkRole(this.secondHalfTreeData, role); 
+
 				});
+				
 
 				this.loading = false;
 			}).catch(err => this.loading = false);
@@ -82,18 +114,20 @@ export default {
 			// console.log(nodes);
 			nodes.forEach(node => {
 				if (node.roles.includes(role)) {
-					this.checkedKeys.push(role);
+					if(this.roles1.includes(role)) this.checkedKeys1.push(role);
+					if(this.roles2.includes(role)) this.checkedKeys2.push(role);
 					this.$nextTick(() => {
-						this.$refs.tree.setChecked(node, true);
+						// this.$refs.tree.setChecked(node, true);
+						this.$refs.tree1.setChecked(node, true);
+						this.$refs.tree2.setChecked(node, true);
 					});
 				}
 				if (node.children && node.children.length > 0) {
 					this.checkRole(node.children, role);
 				}
-
 			});
 		},
-		handleCheck(data, checked) {
+		handleCheck1(data, checked) {
 			const selectedPermissions = [];
 			checked.checkedNodes.forEach(node => {
 				const { roles } = node;
@@ -102,11 +136,22 @@ export default {
 				}
 			});
 			//去重
-			this.checkedKeys = Array.from(new Set(selectedPermissions));
+			this.checkedKeys1 = Array.from(new Set(selectedPermissions));
+		},
+		handleCheck2(data, checked) {
+			const selectedPermissions = [];
+			checked.checkedNodes.forEach(node => {
+				const { roles } = node;
+				if (roles && roles.length > 0) {
+					selectedPermissions.push(...roles);
+				}
+			});
+			//去重
+			this.checkedKeys2 = Array.from(new Set(selectedPermissions));
 		},
 		//路由規則轉樹型控件格式
 		permissionTree() {
-			const formatRoutes = (routes) => {
+			const formatRoutes = (routes, id) => {
 				// console.log(routes);
 				const permissionTree = routes.map(route => {
 					let node = null; 
@@ -117,19 +162,37 @@ export default {
 							roles: route.meta.roles,
 						};
 						if (route.children && route.children.length > 0) {
-							node.children = formatRoutes(route.children);
+							node.children = formatRoutes(route.children, id);
 						}
+						this[id].push(...route.meta.roles);
 					}
 					return node;
 				}).filter(route => route);
 				return permissionTree;
 			};
 
-			this.treeData = [];
+			// this.treeData = [];
 
-			asyncRoutes.forEach(route => {
-				if(route.path != '*') this.treeData.push(...formatRoutes([route]));
-			})
+			// asyncRoutes.forEach(route => {
+			// 	if(route.path != '*') this.treeData.push(...formatRoutes([route]));
+			// })
+
+			const halfIndex = Math.ceil(asyncRoutes.length / 2);
+			const firstHalfRoutes = asyncRoutes.slice(0, halfIndex);
+			const secondHalfRoutes = asyncRoutes.slice(halfIndex);
+		
+			this.firstHalfTreeData = [];
+			this.secondHalfTreeData = [];
+		
+			firstHalfRoutes.forEach(route => {
+				if(route.path != '*')this.firstHalfTreeData.push(...formatRoutes([route], 'roles1'));
+			});
+			secondHalfRoutes.forEach(route => {
+				if(route.path != '*')this.secondHalfTreeData.push(...formatRoutes([route], 'roles2'));
+			});
+
+			
+
 		},
 		undo(){
 			this.$router.push({ path: "/account/accountList" });
@@ -141,12 +204,14 @@ export default {
 			}).then(() => {
 				this.loading = true;
 				//去重
-				this.checkedKeys = Array.from(new Set(this.checkedKeys));
+				this.sumCheckedKeys.push(...this.checkedKeys1)
+				this.sumCheckedKeys.push(...this.checkedKeys2)
+				this.sumCheckedKeys = Array.from(new Set(this.sumCheckedKeys));
 				
 				// 將選中的權限訊息傳給API
 				setPermit({
 					userId: this.listQuery.userId,
-					roles: this.checkedKeys
+					roles: this.sumCheckedKeys
 				}).then(response=>{
 					this.$message({
 						type: 'success',
@@ -169,4 +234,15 @@ export default {
 		display: flex
 		justify-content: center
 		margin-top: 20px
+	.el-tree-node 
+		border: 1px black
+		.el-tree-node__content
+			background-color:#EBEEF5
+			height: 30px
+			margin-bottom: 5px
+			margin-right: 2px
+		.el-tree-node__children
+			.el-tree-node 
+				.el-tree-node__content
+					background-color: white
 </style>
