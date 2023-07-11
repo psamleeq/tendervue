@@ -93,6 +93,9 @@
 					<el-button type="danger" @click="clearAll(); resetCaseHotSpot();" :disabled="isUpload">{{ isReview ? '關閉' : '清除' }}</el-button>
 				</el-button-group>
 			</el-card>
+
+			<el-button class="btn-forward" size="mini" round plain @click="forwardPanorama"><i class="el-icon-caret-top" /></el-button>
+			<el-button class="btn-backward" size="mini" round plain @click="backwardPanorama"><i class="el-icon-caret-bottom" /></el-button>
 		</div>
 	</div>
 </template>
@@ -352,6 +355,20 @@ export default {
 		showPanoramaLayer(sceneId) {
 			// console.log("showPanoramaLayer");
 			this.$emit("showPanoramaLayer", sceneId);
+		},
+		forwardPanorama() {
+			const lineInfoList = this.panoramaInfoProps.data.flat();
+			const sceneId = this.panorama.getScene();
+			const index = lineInfoList.map((el, index) => { if(el.fileName == sceneId) return index }).filter(el => el != undefined)[0];
+			if(index == lineInfoList.length - 1) return;
+			else this.showPanoramaLayer(lineInfoList[index+1].fileName);
+		},
+		backwardPanorama() {
+			const lineInfoList = this.panoramaInfoProps.data.flat();
+			const sceneId = this.panorama.getScene();
+			const index = lineInfoList.map((el, index) => { if(el.fileName == sceneId) return index }).filter(el => el != undefined)[0];
+			if(index == 0) return;
+			else this.showPanoramaLayer(lineInfoList[index-1].fileName);
 		},
 		setAutoRotate() {
 			if(this.isAutoRotate) {
@@ -774,7 +791,18 @@ export default {
 		.pnlm-compass
 			cursor: pointer
 			right: 10px
-			bottom: 104px
+			bottom: 114px
+		.btn-forward, .btn-backward
+			position: absolute
+			right: 18px
+			bottom: 90px
+			padding: 2px 10px
+			font-size: 14px
+			z-index: 10
+		.btn-forward
+			bottom: 170px
+		.pnlm-hotspot-base.pnlm-hotspot
+			box-shadow: 0px 0px 4px #eee, 0px 0px 2px #444, 0px 0px 4px #eee
 		.hotSpotIcon
 			cursor: pointer
 			width: 26px
