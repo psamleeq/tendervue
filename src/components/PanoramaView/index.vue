@@ -27,7 +27,7 @@
 						<el-date-picker
 							v-else
 							v-model="caseInfo.dateReport"
-							type="date"
+							type="datetime"
 							placeholder="日期"
 							:clearable="false"
 							size="mini"

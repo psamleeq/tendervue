@@ -183,7 +183,7 @@ export default {
 				DateReport: {
 					name: "通報時間",
 					sortable: true,
-					width: 150
+					width: 160
 				},
 				Duty_With_Name: {
 					name: "標記人員",
@@ -512,7 +512,7 @@ export default {
 			else return row[column.property] || "-";
 		},
 		formatTime(time) {
-			return moment(time).format("YYYY-MM-DD");
+			return moment(time).format("YYYY-MM-DD hh:MM:ss");
 		}
 	},
 };
