@@ -78,7 +78,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
 import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase } from "@/api/inspection";
-import { getInspectionRoute } from "@/api/inspection"
+import { getInspectionRoute } from "@/api/inspection";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -412,7 +412,7 @@ export default {
 				this.dataLayer.casePrev = new google.maps.Data({ map: this.map });
 				this.setDataLayer(this.dataLayer.casePrev, true);
 
-				// 路線
+				// 巡查路線(預定)
 				this.dataLayer.route = new google.maps.Data({ map: this.map });
 				this.dataLayer.route.setStyle({ 
 					strokeColor: '#FFF',

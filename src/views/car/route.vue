@@ -6,6 +6,37 @@
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
 			<div class="filter-container">
+				<span class="filter-item" style="display: inline-flex">
+					<el-button :type="showLayerAttach ? 'primary' : 'info'" @click="showLayerAttach = !showLayerAttach">路線圖層</el-button>
+					<el-card v-if="showLayerAttach" :body-style="{ padding: '0 5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
+						<div class="filter-item">
+							<div class="select-district el-input el-input--medium el-input-group el-input-group--prepend">
+								<div class="el-input-group__prepend">
+									<span>行政區</span>
+								</div>
+								<el-select class="district-select" v-model="listQuery.inspectRoundZipCode">
+									<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+								</el-select>
+							</div>
+						</div>
+						<div class="filter-item">
+							<div class="select-district el-input el-input--medium el-input-group el-input-group--prepend">
+								<div class="el-input-group__prepend">
+									<span>週期</span>
+								</div>
+								<el-select class="district-select" v-model="listQuery.inspectRound">
+									<el-option v-for="(name, id) in options.inspectRound" :key="id" :label="name" :value="Number(id)" />
+								</el-select>
+							</div>
+						</div>
+						<el-button-group>
+							<el-button type="primary" size="small" @click="getRouteList()">載入</el-button>
+							<el-button type="success" size="small" @click="intersectRoute()">比對</el-button>
+							<el-button type="info" size="small" @click="clearRouteLayer()">清空</el-button>
+						</el-button-group>
+					</el-card>
+				</span>
+				<br>
 				<el-select v-model="listQuery.contractId" placeholder="請選擇">
 					<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
 				</el-select>
@@ -124,6 +155,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
 import { getInspectionList, getSpecInspection, getSpecInspectionTracks } from "@/api/car";
+import { getInspectionRoute } from "@/api/inspection";
 import elDragDialog from '@/directive/el-drag-dialog';
 
 // 載入 Google Map API
@@ -147,6 +179,7 @@ export default {
 			loading: false,
 			mediaAPIUrl: process.env.VUE_APP_MEDIA_API,
 			mediaGCSUrl: process.env.VUE_APP_MEDIA_URL,
+			showLayerAttach: false,
 			map: null,
 			polyLine: null,
 			markers: {
@@ -202,6 +235,54 @@ export default {
 				createdAt: "開始時間"
 			},
 			options: {
+				districtList: {
+					100: {
+						name: "中正區"
+					},
+					103: {
+						name: "大同區"
+					},
+					104: {
+						name: "中山區"
+					},
+					105: {
+						name: "松山區"
+					},
+					106: {
+						name: "大安區"
+					},
+					108: {
+						name: "萬華區"
+					},
+					110: {
+						name: "信義區"
+					},
+					111: {
+						name: "士林區"
+					},
+					112: {
+						name: "北投區"
+					},
+					114: {
+						name: "內湖區"
+					},
+					115: {
+						name: "南港區"
+					},
+					116: {
+						name: "文山區"
+					},
+				},
+				inspectRound: {
+					0: "全部",
+					1: "週期一",
+					2: "週期二",
+					3: "週期三",
+					4: "週期四",
+					5: "週期五",
+					6: "週期六",
+					7: "週期七"
+				},
 				modeId: {
 					1: "手持巡查",
 					2: "手持巡查(AI)",
@@ -256,6 +337,8 @@ export default {
 		}
 	},
 	created() {
+		this.dataLayer = { route: {} };
+
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
 			console.log("Google Map Failure");
@@ -359,6 +442,20 @@ export default {
 					scaledSize: new google.maps.Size(24, 24)
 				}
 			});
+
+			// 巡查路線(預定)
+			this.dataLayer.route = new google.maps.Data({ map: this.map });
+			this.dataLayer.route.setStyle({ 
+				strokeColor: '#FFF',
+				strokeWeight: 1,
+				strokeOpacity: 1,
+				fillColor: '#FF8C00',
+				fillOpacity: 0.6,
+				zIndex: 1
+			});
+
+			// jsts
+			this.geometryFactory = new jsts.geom.GeometryFactory();
 		},
 		dateShortcuts(index) {
 			this.timeTabId = index;
@@ -456,6 +553,7 @@ export default {
 		getCarTrack() {
 			// if(this.polyLine != undefined) this.polyLine.setMap(null);
 			// for(const marker of Object.values(this.markers)) marker.setMap(null);
+			this.dataLayer.route.revertStyle();
 
 			getSpecInspectionTracks(this.listQuery.inspectionId).then(response => {
 				if (response.data.list.length == 0) {
@@ -488,6 +586,82 @@ export default {
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
+		},
+		getRouteList() {
+			this.loading = true;
+			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
+
+			getInspectionRoute({
+				zipCode: this.listQuery.inspectRoundZipCode,
+				inspectRound: this.listQuery.inspectRound,
+			}).then(response => {
+				if (response.data.blockList.length == 0 && response.data.routeList.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.blockList = response.data.blockList;
+
+					let geoJSON = {
+						"type": "FeatureCollection",
+						"name": "blockJSON",
+						"features": []
+					};
+
+					for (const blockSpec of this.blockList) {
+						let feature = {
+							"type": "Feature",
+							"properties": {
+								"id": blockSpec.id,
+								"roadName": blockSpec.roadName
+							},
+							"geometry": JSON.parse(blockSpec.geometry)
+						};
+						geoJSON.features.push(feature);
+					}
+					this.dataLayer.route.addGeoJson(geoJSON);
+				}
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
+		clearRouteLayer() {
+			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
+			this.showLayerAttach = false;
+		},
+		intersectRoute() {
+			this.dataLayer.route.revertStyle();
+			const jstsRoutePoints = this.carTracks.map(point => this.createJstsGeometry([[ point.long, point.lat ]]));
+			// console.log(jstsRoutePoints.length);
+			this.dataLayer.route.forEach(feature => {
+				feature.toGeoJson(json => {
+					const jstsBlockPolygon = this.createJstsGeometry(json.geometry.coordinates.flat(2));
+					for(let i=0; i <= jstsRoutePoints.length - 1; i++) {
+						// console.log(i);
+						if(i == 0) this.loading = true;
+						if(jstsBlockPolygon.contains(jstsRoutePoints[i])) {
+							// console.log("BINGO: ", i);
+							this.dataLayer.route.overrideStyle(feature, { fillColor: "#8FBC8F" });
+							this.loading = false;
+							break;
+						} else if(i == jstsRoutePoints.length - 1) {
+							this.loading = false;
+							this.dataLayer.route.overrideStyle(feature, { fillColor: "#DC143C" });
+						}
+					}
+				});
+			})
+		},
+		createJstsGeometry(boundary) {
+			// console.log(boundary);
+			let coordinates = boundary.map(coord => new jsts.geom.Coordinate(coord[1], coord[0]));
+
+			if (coordinates.length == 1) return this.geometryFactory.createPoint(coordinates[0]);
+			else {
+				if(coordinates[0].compareTo(coordinates[coordinates.length-1]) != 0) coordinates.push(coordinates[0]);
+				const shell = this.geometryFactory.createLinearRing(coordinates);
+				return this.geometryFactory.createPolygon(shell);
+			}
 		},
 		formatter(row, column) {
 			if(Number(row[column.property])) return row[column.property].toLocaleString();
