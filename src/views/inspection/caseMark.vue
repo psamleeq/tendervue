@@ -561,7 +561,16 @@ export default {
 				this.dataLayer.casePrev.addGeoJson(this.caseGeoJson.casePrev);
 
 				this.$nextTick(() => {
-					this.$refs.panoramaView.resetCaseHotSpot();
+					if(localStorage.inspectIdNow == this.inspectIdNow && localStorage.sceneIdNow) {
+						this.$confirm(`是否跳至前次操作街景位址?`).then(() => {
+							this.init = false;
+							this.showPanoramaLayer(localStorage.sceneIdNow) ;
+						})
+					} else {
+						localStorage.inspectIdNow = this.inspectIdNow;
+						localStorage.removeItem("sceneIdNow");
+					}
+					this.$refs.panoramaView.resetCaseHotSpot();	
 					// this.openPanorama(true);
 					this.loading = false;
 				});
@@ -719,7 +728,10 @@ export default {
 			this.setMarkerPosition();
 
 			this.$refs.panoramaView.panorama.loadScene(sceneId);
-			if(!this.init) this.openPanorama(true);
+			if(!this.init) {
+				localStorage.sceneIdNow = sceneId;
+				this.openPanorama(true);
+			}
 		},
 		addMarker({ id, position, type }) {
 			// console.log(type, position);

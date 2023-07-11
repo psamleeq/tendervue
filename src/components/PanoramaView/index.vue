@@ -297,6 +297,7 @@ export default {
 						if(clickHandlerArgs) {
 							this.clearHotSpot(clickHandlerArgs.sceneIdNow);
 							this.$emit('setMarkerPosition', clickHandlerArgs.sceneIdNow);
+							localStorage.sceneIdNow = clickHandlerArgs.sceneIdNow;
 						}
 					};
 
@@ -308,7 +309,7 @@ export default {
 							text: lineInfo[index + 1].fileName,
 							sceneId: lineInfo[index + 1].fileName,
 							clickHandlerArgs: {
-								sceneIdNow: lineInfo[index].fileName
+								sceneIdNow: lineInfo[index + 1].fileName
 							},
 							clickHandlerFunc
 						});
@@ -323,7 +324,7 @@ export default {
 							sceneId: lineInfo[index - 1].fileName,
 							targetYaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
 							clickHandlerArgs: {
-								sceneIdNow: lineInfo[index].fileName
+								sceneIdNow: lineInfo[index - 1].fileName
 							},
 							clickHandlerFunc
 						});
