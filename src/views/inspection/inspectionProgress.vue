@@ -25,7 +25,7 @@
 			</div>
 			<div class="filter-item">
 				<div style="font-size: 12px; color: #909399">收取日</div>
-				<time-picker class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="listQuery.searchDate" @search="getList"/>
+				<time-picker class="filter-item" :shortcutType="'year'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</div>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 		</div>
@@ -109,9 +109,9 @@ export default {
 		loading: false,
 		dialogMapVisible: true,
 		timeTabId: 1,
+		dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
 			ZipCode:0,
-			searchDate:[],
 		},
 		area:{
 			0: "全部",
@@ -158,12 +158,7 @@ export default {
 	},
 	computed: {},
 	watch: {},
-	created() {
-		// 設置收取日的默認值為昨日
-		const yesterday = new Date();
-		yesterday.setDate(yesterday.getDate() - 1);
-		this.listQuery.searchDate = [yesterday, yesterday]; 
-	},
+	created() { },
 	mounted() {},
 	methods: {
 		checkPermission,
@@ -188,28 +183,22 @@ export default {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
 		},
 		getList(){
-			if ((this.listQuery.ZipCode != 0 && !Number(this.listQuery.ZipCode)) || this.listQuery.searchDate==[]) {
+			if ((this.listQuery.ZipCode != 0 && !Number(this.listQuery.ZipCode))) {
 				this.$message({
 					message: "請選擇行政區",
 					type: "error",
 				});
-			}else if(this.listQuery.searchDate.length==0){
-				this.$message({
-					message: "請選擇收取日",
-					type: "error",
-				});
 			} else {
 				this.loading = true;
+				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+				this.searchRange = startDate + " - " + endDate;
 				this.list = [];
-
-				const date = new Date(this.listQuery.searchDate[1])
-				date.setDate(date.getDate() + 1)
-				const newDate = date.toString();
 
 				getInspectionList({
 					zipCode: this.listQuery.ZipCode,
-					timeStart: this.formatTime(this.listQuery.searchDate[0]),
-					timeEnd: this.formatTime(newDate)
+					timeStart: startDate,
+					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 				}).then(response => {
 					if (response.data.list.length == 0) {
 						this.$message({
