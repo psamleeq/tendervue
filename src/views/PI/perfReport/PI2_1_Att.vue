@@ -49,18 +49,16 @@
 						<el-form-item label="起始頁碼">
 							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
-
-						<h3>廠商通報</h3>
+						<!-- <h3>廠商通報</h3> -->
 						<el-form-item label="行政區">
 							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="getList()">
 								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
 							</el-select>
 							<!-- <el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" /> -->
 						</el-form-item>
-						<el-form-item label="本日通報">
+						<!-- <el-form-item label="本日通報">
 							<el-input-number v-model="inputForm.caseReportTotal" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
+						</el-form-item> -->
 						<el-divider />
 
 						<h3>系統登錄</h3>
@@ -187,11 +185,11 @@ export default {
 				date: '111年11月02日',
 				zipCode: '104',
 				district: '中山區',
-				caseReportTotal: '0 筆',
-				ACTotal_Obs: '0 筆',
-				ACTotal_Reg: '0 筆',
-				facTotal_Obs: '0 筆',
-				facTotal_Reg: '0 筆',
+				caseReportTotal: '0',
+				ACTotal_Obs: '0',
+				ACTotal_Reg: '0',
+				facTotal_Obs: '0',
+				facTotal_Reg: '0',
 				info1: '無',
 				info2: '無'
 			},
@@ -247,9 +245,21 @@ export default {
 
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {
-					console.log(arg);
+					// console.log(arg);
 					// if(['contractName', 'companyName', 'serialNumber', 'date', 'district'].includes(arg.key)) this.inputs[arg.key] = arg.value;
 					if(['caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+					if(['caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2','caseReportImg_neo3'].includes(arg.key)) {
+						const img = new Image();
+						img.onload = () => {
+							// console.log(img.width, img.height);
+							this.inputForm[arg.key] = arg.value;
+							const height = this.template.schemas[0][arg.key].height;
+
+							this.template.schemas[0][arg.key].width = height / img.height * img.width;
+							this.form.updateTemplate(this.template);
+						}
+						img.src = arg.value;
+					}
 				});
 				this.getList();
 			})
@@ -258,12 +268,25 @@ export default {
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
 			this.inputs.district = this.districtList[this.inputs.zipCode].name;
+			//工程名稱
+			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
+			//紀錄編號
 			for(let i=0; i < this.template.schemas.length; i++) {
 				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
-			for(const key of [ 'caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg' ]) {
-				this.inputs[key] = this.inputForm[key] + ' 筆';
+			//資料數轉換
+			let sum = 0
+			for(const key of [ 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg' ]) {
+				this.inputs[key] = String(this.inputForm[key]);
+				//本日通報 加總
+				sum += Number(this.inputForm[key]);
 			}
+			this.inputs.caseReportTotal = String(sum);
+
+			for(const key of [ 'caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2', 'caseReportImg_neo3' ]) {
+				if(this.inputForm[key]) this.inputs[key] = this.inputForm[key];
+			}
+
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},
