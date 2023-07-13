@@ -248,7 +248,7 @@ export default {
 					// console.log(arg);
 					// if(['contractName', 'companyName', 'serialNumber', 'date', 'district'].includes(arg.key)) this.inputs[arg.key] = arg.value;
 					if(['caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
-					if(['caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2'].includes(arg.key)) {
+					if(['caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2','caseReportImg_neo3'].includes(arg.key)) {
 						const img = new Image();
 						img.onload = () => {
 							// console.log(img.width, img.height);
@@ -283,7 +283,7 @@ export default {
 			}
 			this.inputs.caseReportTotal = String(sum);
 
-			for(const key of [ 'caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2' ]) {
+			for(const key of [ 'caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2', 'caseReportImg_neo3' ]) {
 				if(this.inputForm[key]) this.inputs[key] = this.inputForm[key];
 			}
 

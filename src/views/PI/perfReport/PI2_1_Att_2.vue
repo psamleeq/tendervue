@@ -340,6 +340,8 @@ export default {
 			
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
+
+				//第一頁
 				this.pdfDoc.setFontSize(15)
 				this.pdfDoc.text(`成效式契約指標檢核表`, width/2, height-280, { align: 'center' });
 				this.pdfDoc.setFontSize(12)
@@ -348,7 +350,7 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.inputForm.dateYear+"年度"+this.inputForm.district+"道路巡查維護修繕成效式契約"}`,'紀錄編號',`${this.inputForm.serialNumber1}`]],
+					head: [['工程名稱',`${this.inputForm.dateYear+"年度"+this.inputForm.district+"道路巡查維護修繕成效式契約"}`,'紀錄編號',`${this.inputForm.serialNumber1+'-1'}`]],
 					body: [['施工廠商',`${this.inputForm.companyName}`,'檢查日期',`${this.inputForm.formatDate}`]],
 					startY: height-265,
 				})
@@ -425,7 +427,7 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.inputForm.dateYear+"年度"+this.inputForm.district+"道路巡查維護修繕成效式契約"}`,'紀錄編號',`${this.inputForm.serialNumber2}`]],
+					head: [['工程名稱',`${this.inputForm.dateYear+"年度"+this.inputForm.district+"道路巡查維護修繕成效式契約"}`,'紀錄編號',`${this.inputForm.serialNumber1+'-2'}`]],
 					body: [['施工廠商',`${this.inputForm.companyName}`,'檢查日期',`${this.inputForm.formatDate}`]],
 					startY: height-265,
 				})

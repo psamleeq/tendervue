@@ -39,18 +39,18 @@
 							<el-input-number v-model="inputForm.dailyReport_Num" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
-						<el-form-item label="滿足安全性巡查人數" :label-width="labelWidth1">
+						<!-- <el-form-item label="滿足安全性巡查人數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.qualifiedSafety_Num" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
+						<el-divider /> -->
 						<el-form-item label="未滿足基本安全要求人數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.unqualifiedSafety_Num" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
+						<!-- <el-divider />
 						<el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.companyCheck_Num" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<!-- <el-divider />
+						<el-divider />
 						<h4>監造抽查人次數</h4>
 						<el-form-item label="合格人次數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.supervisionCheckPass_Num" controls-position="right" :min="0" @change="setPDFinputs" />
@@ -215,15 +215,15 @@ export default {
 				district: '中山區',
 				requiredStandard:'廠商人員執行工作應滿足安全性要求',//要求標準
 				measurement:'當天滿足要求人次數/當日工作執行日報填寫人數',//量測方式
-				dailyReport_Num: '0件',//A
-				qualifiedSafety_Num: '0件',//B
-				unqualifiedSafety_Num: '0件',//C
-				companyCheck_Num:'0件',
-				supervisionCheckPass_Num: '0件',
-				supervisionCheckFail_Num: '0件',//D
-				organCheckPass_Num: '0件',
-				organCheckFail_Num: '0件',//E
-				totalUnqualified_Num: '0件',
+				dailyReport_Num: '0 件',//A
+				qualifiedSafety_Num: '0 件',//B
+				unqualifiedSafety_Num: '0 件',//C
+				companyCheck_Num:'0 件',
+				supervisionCheckPass_Num: '0 件',
+				supervisionCheckFail_Num: '0 件',//D
+				organCheckPass_Num: '0 件',
+				organCheckFail_Num: '0 件',//E
+				totalUnqualified_Num: '0 件',
 				BCA:'',
 				BCDA:'',
 				BCDEA:'',
@@ -284,35 +284,37 @@ export default {
 			//查核人次數
 			for(const key of [ 
 				'dailyReport_Num',
-				'qualifiedSafety_Num',
 				'unqualifiedSafety_Num',
-				'companyCheck_Num',
 				'supervisionCheckPass_Num',
 				'supervisionCheckFail_Num',
 				'organCheckPass_Num',
 				'organCheckFail_Num',
 				'totalUnqualified_Num']) {
-				this.inputs[key] = this.inputForm[key] + '件';
+				this.inputs[key] = this.inputForm[key] + ' 件';
 			}
+			//計算當日工作執行日報填寫人次數(A) = 滿足安全性巡查人數(B) = 廠商自主檢查人次數
+			this.inputs.qualifiedSafety_Num = this.inputForm.dailyReport_Num+ ' 件';
+			this.inputs.companyCheck_Num = this.inputForm.dailyReport_Num+ ' 件';
 			//計算指標數值
 			const A = this.inputForm.dailyReport_Num;
-			const B = this.inputForm.qualifiedSafety_Num;
+			const B = this.inputForm.qualifiedSafety_Num = this.inputForm.dailyReport_Num;
 			const C = this.inputForm.unqualifiedSafety_Num;
-			const D = this.inputForm.supervisionCheckFail_Num;
-			const E = this.inputForm.organCheckFail_Num;
+			// const D = this.inputForm.supervisionCheckFail_Num;
+			// const E = this.inputForm.organCheckFail_Num;
 			if(A==0){
 				this.inputs.BCA='';this.inputs.BCDA='';this.inputs.BCDEA='';
 			}else{
 				this.inputs.BCA=String(((B-C)/A)*100)
-				this.inputs.BCDA=String(((B-C-D)/A)*100)
-				this.inputs.BCDEA=String(((B-C-D-E)/A)*100)
+				// this.inputs.BCDA=String(((B-C-D)/A)*100)
+				// this.inputs.BCDEA=String(((B-C-D-E)/A)*100)
 			}
 			//應檢附文件
 			for(const key of ['checkCo_dailyInspectAll','checkCo_discoverUnSafety','checkOr_discoverUnSafety','checkCo_unreasonable','pass','fail']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			}
 			//否定原因填寫
-			this.inputs.failReson=this.inputForm.failReson
+			// this.inputs.failReson=this.inputForm.failReson
+			
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},
