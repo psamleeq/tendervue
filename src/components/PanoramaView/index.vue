@@ -802,7 +802,18 @@ export default {
 		.btn-forward
 			bottom: 170px
 		.pnlm-hotspot-base.pnlm-hotspot
-			box-shadow: 0px 0px 4px #eee, 0px 0px 2px #444, 0px 0px 4px #eee
+			box-shadow: 0px 0px 4px #eee, 0px 0px 6px #444, 0px 0px 10px #FF0000
+			animation: hight-light 1.8s infinite both
+			@keyframes hight-light
+				0%
+					box-shadow: 0px 0px 4px #eee, 0px 0px 6px #444, 0px 0px 10px #FF0000
+				70% 
+					box-shadow: 0px 0px 6px #eee, 0px 0px 8px #444, 0px 0px 16px #FF0000, 0px 0px 18px #eee
+				100% 
+					box-shadow: 0px 0px 4px #eee, 0px 0px 6px #444, 0px 0px 10px #FF0000
+			&:hover > span.pnlm-pointer.pnlm-pointer
+				max-width: 40vw
+				width: auto !important
 		.hotSpotIcon
 			cursor: pointer
 			width: 26px
