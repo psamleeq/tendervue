@@ -35,17 +35,24 @@
 				</span>
 				<br>
 				<span class="filter-item">
-					<el-input v-model="listQuery.inspectId" placeholder="請輸入">
+					<el-input v-model="listQuery.inspectId" placeholder="請輸入" size="medium" style="width: 254px;">
 						<span slot="prepend">巡查Id</span>
 					</el-input>
 				</span>
 				<br>
 				<span class="filter-item">
-					<el-input v-model="listQuery.caseInspectId" placeholder="請輸入">
+					<el-input v-model="listQuery.caseInspectId" placeholder="請輸入" size="medium" style="width: 254px;">
+						<span slot="prepend">前次巡查Id</span>
+					</el-input>
+				</span>
+				<el-button class="filter-item" type="success" icon="el-icon-download" size="small" @click="getList()">載入</el-button>
+				<br>
+				<span class="filter-item">
+					<el-input v-model="listQuery.caseId" placeholder="請輸入" size="medium" style="width: 254px;" :disabled="Object.keys(caseGeoJson.caseNow).length == 0">
 						<span slot="prepend">缺失Id</span>
 					</el-input>
 				</span>
-				<el-button class="filter-item" type="success" icon="el-icon-download" @click="getList()">載入</el-button>
+				<el-button class="filter-item" type="primary" icon="el-icon-search" size="small" :disabled="Object.keys(caseGeoJson.caseNow).length == 0" @click="search()">搜尋</el-button>
 			</div>
 		</div>
 		<el-row>
@@ -151,7 +158,8 @@ export default {
 			screenWidth: 0,
 			listQuery: {
 				inspectId: "",
-				caseInspectId: ""
+				caseInspectId: "",
+				caseId: ""
 			},
 			panoramaInfo: {
 				data: [],
@@ -807,6 +815,50 @@ export default {
 				});
 			}
 		},
+		async search() {
+			this.loading = true;
+			await this.focusMap();
+			this.loading = false;
+		},
+		async focusMap() {
+			// console.log("focusMap");
+			return new Promise(resolve => {
+				this.dataLayer.caseNow.revertStyle();
+				this.infoWindow.close();
+
+				if(!this.listQuery.caseId || this.listQuery.caseId.length == 0) resolve();
+				if(this.listQuery.caseId.length != 0 && !Number(this.listQuery.caseId)) {
+					this.$message({
+						message: "請輸入正確缺失Id",
+						type: "error",
+					});
+					resolve();
+				} else {
+					const caseSpec = this.caseGeoJson.caseNow.features.filter(feature => (feature.properties.Id == this.listQuery.caseId))[0];
+					if(caseSpec == undefined ) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+						resolve();
+					} else {
+						console.log(caseSpec);
+						const depth = caseSpec.geometry.type == 'MultiLineString' ? 1 : 2;
+						const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
+						const bounds = new google.maps.LatLngBounds();
+						paths.forEach(position => bounds.extend(position));
+						this.map.fitBounds(bounds);
+
+						this.dataLayer.caseNow.forEach(feature => { 
+							if(feature.getProperty("Id") == this.listQuery.caseId) {
+								this.showCaseContent(feature, feature.getProperty("CenterPt"));
+								resolve();
+							}
+						});
+					}
+				}
+			})
+		},
 		intersectRoute() {
 			this.dataLayer.route.revertStyle();
 			const jstsRoutePoints = this.panoramaInfo.data.flat(1).map(point => this.createJstsGeometry([[ point.position.lng, point.position.lat ]]));
@@ -903,11 +955,6 @@ export default {
 		.route-title
 			text-stroke: 0.6px white
 			-webkit-text-stroke: 0.6px white
-			.route-info
-				background-color: rgba(white, 0.5)
-				padding: 0 5px
-				font-size: 18px 
-				color: #555
 		.filter-container 
 			& > *
 				padding-right: 5px

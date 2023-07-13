@@ -315,7 +315,8 @@ export default {
 		this.dialogMapVisible = false;
 
 		if (this.$route.query.caseInspectId) {
-			this.listQuery.caseInspectId = this.$route.query.caseInspectId;
+			this.listQuery.filterType = 1;
+			this.listQuery.filterId = this.$route.query.caseInspectId;
 			this.getList();
 		}
 	},
