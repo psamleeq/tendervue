@@ -253,9 +253,13 @@ export default {
 						img.onload = () => {
 							// console.log(img.width, img.height);
 							this.inputForm[arg.key] = arg.value;
-							const height = this.template.schemas[0][arg.key].height;
+							const templateWidth = this.template.schemas[0][arg.key].width;
+							const templateHeight = this.template.schemas[0][arg.key].height;
+							const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
+							// console.log(ratio);
 
-							this.template.schemas[0][arg.key].width = height / img.height * img.width;
+							this.template.schemas[0][arg.key].width = img.width * ratio;
+							this.template.schemas[0][arg.key].height = img.height * ratio;
 							this.form.updateTemplate(this.template);
 						}
 						img.src = arg.value;
