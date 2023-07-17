@@ -260,7 +260,7 @@ export default {
 		});
 
 		this.$refs.panoramaView.addEventListener("keyup", (evt) => {
-			console.log(evt);
+			// console.log(evt);
 
 			if(evt.keyCode == 87) this.forwardPanorama();
 			if(evt.keyCode == 83) this.backwardPanorama();
