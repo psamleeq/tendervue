@@ -259,16 +259,19 @@ export default {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		});
 
-		this.$refs.panoramaView.addEventListener("keyup", (evt) => {
+		this.$refs.panoramaView.addEventListener("keydown", (evt) => {
 			// console.log(evt);
-
+			// w
 			if(evt.keyCode == 87) this.forwardPanorama();
+			// s
 			if(evt.keyCode == 83) this.backwardPanorama();
+			// q
 			if(evt.keyCode == 81) {
 				const northOffset = this.panorama.getNorthOffset();
 				this.panorama.setYaw(-northOffset);
 				this.$emit('setHeading', 0);
 			}
+			// e
 			if(evt.keyCode == 69) {
 				const northOffset = this.panorama.getNorthOffset();
 				this.panorama.setYaw(0);
