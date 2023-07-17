@@ -195,7 +195,8 @@ export default {
 				1:'AC路面',
 				2:'人行道',
 				3:'側溝',
-			}
+			},
+			pdfString:''
 		}
 	},
 	computed: {},
@@ -219,22 +220,24 @@ export default {
 			//行政區
 			this.district = this.districtList[this.listQuery.zipCode].name		
 		},
-		getList() {
-			this.loading = true;
-			dateWatcher(this.districtList[this.listQuery.zipCode].start, this.dateRange);
-			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
-			this.list = [];
+		async getList() {
+				this.loading = true;
+				dateWatcher(this.districtList[this.listQuery.zipCode].start, this.dateRange);
+				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+				this.searchRange = startDate + " - " + endDate;
+				this.list = [];
 
-			getCaseList({
-				filterType: 2,
-				caseType: 2,
-				zipCode: this.listQuery.zipCode,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-			}).then((response) => {
-				if (response.data.list.length == 0) {
+			try {
+				const response = await getCaseList({
+					filterType: 2,
+					caseType: 2,
+					zipCode: this.listQuery.zipCode,
+					timeStart: startDate,
+					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+				});
+
+				if (response.data.list.length === 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
@@ -242,8 +245,8 @@ export default {
 				} else {
 					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
-					this.listNo1999 =this.list.filter(l => l.DistressSrc!=="1999交辦案件");
-					this.listUnreason = this.list.filter(l => l.State&16);
+					this.listNo1999 = this.list.filter(l => l.DistressSrc !== "1999交辦案件");
+					this.listUnreason = this.list.filter(l => l.State & 16);
 
 					// 讀入字型
 					const readBlob = (blob) => {
@@ -253,43 +256,117 @@ export default {
 							reader.readAsDataURL(blob);
 						});
 					};
-					fetch('/assets/font/edukai-4.0.ttf')
-					// .then(res => res.arrayBuffer())
-					// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
-					.then(res => res.blob())
-					.then(async(blob) => {
-						this.viewer = new Viewer({
-							domContainer: this.$refs.pdfViewer,
-							template: {
-								basePdf: BLANK_PDF,
-								schemas: [{ }]
-							},
-							inputs: [{ }],
-							options: {
-								font:{
-									edukai: {
-										data: await blob.arrayBuffer(),
-										fallback: true
-									}
+
+					const res = await fetch('/assets/font/edukai-4.0.ttf');
+					const blob = await res.blob();
+					const dataUri = await readBlob(blob);
+					const fontBString = dataUri.substr(dataUri.indexOf('base64,') + 7);
+
+					// init jsPDF
+					this.pdfDoc = new jsPDF();
+					this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+					this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+					this.pdfDoc.setFont("edukai");
+
+					this.viewer = new Viewer({
+						domContainer: this.$refs.pdfViewer,
+						template: {
+							basePdf: BLANK_PDF,
+							schemas: [{}]
+						},
+						inputs: [{}],
+						options: {
+							font: {
+								edukai: {
+									data: await blob.arrayBuffer(),
+									fallback: true
 								}
 							}
-						});
-
-						return readBlob(blob);
-					}).then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7)).then(fontBString => {
-						// console.log(fontBString);
-
-						// init jsPDF
-						this.pdfDoc = new jsPDF();
-						this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
-						this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
-						this.pdfDoc.setFont("edukai");
-						this.previewPdf()
+						}
 					});
+
+					await this.previewPdf();
 				}
-				this.loading = false;
-			}).catch(err => { this.loading = false; });
+			} catch (error) {
+				this.$message({
+					message: "出現錯誤",
+					type: "error",
+				});
+			}
+
+			this.loading = false;
 		},
+		// getList() {
+		// 	this.loading = true;
+		// 	dateWatcher(this.districtList[this.listQuery.zipCode].start, this.dateRange);
+		// 	let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+		// 	let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+		// 	this.searchRange = startDate + " - " + endDate;
+		// 	this.list = [];
+
+		// 	getCaseList({
+		// 		filterType: 2,
+		// 		caseType: 2,
+		// 		zipCode: this.listQuery.zipCode,
+		// 		timeStart: startDate,
+		// 		timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+		// 	}).then((response) => {
+		// 		if (response.data.list.length == 0) {
+		// 			this.$message({
+		// 				message: "查無資料",
+		// 				type: "error",
+		// 			});
+		// 		} else {
+		// 			this.zipCodeNow = this.listQuery.zipCode;
+		// 			this.list = response.data.list;
+		// 			this.listNo1999 =this.list.filter(l => l.DistressSrc!=="1999交辦案件");
+		// 			this.listUnreason = this.list.filter(l => l.State&16);
+
+		// 			// 讀入字型
+		// 			const readBlob = (blob) => {
+		// 				return new Promise((resolve, reject) => {
+		// 					const reader = new FileReader();
+		// 					reader.onloadend = () => resolve(reader.result);
+		// 					reader.readAsDataURL(blob);
+		// 				});
+		// 			};
+		// 			fetch('/assets/font/edukai-4.0.ttf')
+		// 			// .then(res => res.arrayBuffer())
+		// 			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
+		// 			.then(res => res.blob())
+		// 			.then(async(blob) => {
+		// 				this.viewer = new Viewer({
+		// 					domContainer: this.$refs.pdfViewer,
+		// 					template: {
+		// 						basePdf: BLANK_PDF,
+		// 						schemas: [{ }]
+		// 					},
+		// 					inputs: [{ }],
+		// 					options: {
+		// 						font:{
+		// 							edukai: {
+		// 								data: await blob.arrayBuffer(),
+		// 								fallback: true
+		// 							}
+		// 						}
+		// 					}
+		// 				});
+
+		// 				return readBlob(blob);
+		// 			}).then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7)).then(fontBString => {
+		// 				// console.log(fontBString);
+
+		// 				// init jsPDF
+		// 				this.pdfDoc = new jsPDF();
+		// 				this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+		// 				this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+		// 				this.pdfDoc.setFont("edukai");
+		// 				this.previewPdf()
+		// 			});
+		// 		}
+		// 		this.loading = false;
+		// 	}).catch(err => { this.loading = false; });
+		// },
 		handleChange(file, fileList) {
 			this.imageUrl = URL.createObjectURL(file.raw);
 			// console.log(this.imageUrl);
@@ -458,7 +535,7 @@ export default {
 			})
 		},
 
-		previewPdf(isInstant = false) {
+		async previewPdf(isInstant = false) {
 			this.loading = true;
 			this.formatFormData();
 			this.createPdf().then(() => {
@@ -480,6 +557,10 @@ export default {
 
 				this.viewer.updateTemplate({ basePdf: this.pdfDoc.output('bloburl'), schemas });
 
+				// 将 PDF 文档转换为字符串形式
+				// this.pdfString = this.pdfDoc.output('datauristring');
+				// // // this.pdfDataString = pdfString.substring(pdfString.indexOf(',') + 1);
+				// console.log(this.pdfString);
 				if(isInstant) this.downloadPdf();
 				else {
 					this.viewer.setInputs([{ "OrderSN": "(預覽列印)" }]);

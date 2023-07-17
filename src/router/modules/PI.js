@@ -97,6 +97,26 @@ const PIRouter = {
 				// 	}
 				// },
 				{
+					path: 'download',
+					component: () => import('@/views/PI/perfReport/download'),
+					name: 'download',
+					meta: { 
+						title: '日報表總表', 
+						roles: ['PIreport.21'],
+						vTag: 'Alpha' 
+					}
+				},
+				{
+					path: 'perfReportList',
+					component: () => import('@/views/PI/perfReport/perfReportList'),
+					name: 'perfReportList',
+					meta: { 
+						title: '日報表編輯列表', 
+						roles: ['PIreport.21'],
+						vTag: 'Alpha' 
+					}
+				},
+				{
 					path: 'PI2_1',
 					component: () => import('@/views/PI/perfReport/PI2_1'),
 					name: 'PI2_1',
