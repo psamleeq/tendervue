@@ -259,6 +259,25 @@ export default {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		});
 
+		this.$refs.panoramaView.addEventListener("keyup", (evt) => {
+			console.log(evt);
+
+			if(evt.keyCode == 87) this.forwardPanorama();
+			if(evt.keyCode == 83) this.backwardPanorama();
+			if(evt.keyCode == 81) {
+				const northOffset = this.panorama.getNorthOffset();
+				this.panorama.setYaw(-northOffset);
+				this.$emit('setHeading', 0);
+			}
+			if(evt.keyCode == 69) {
+				const northOffset = this.panorama.getNorthOffset();
+				this.panorama.setYaw(0);
+				this.$emit('setHeading', northOffset);
+			}
+
+			evt.stopPropagation();
+		})
+
 		this.$el.querySelector("#panorama .pnlm-compass").addEventListener("click", (evt) => {
 			const northOffset = this.panorama.getNorthOffset();
 			this.panorama.setYaw(-northOffset, 0);
