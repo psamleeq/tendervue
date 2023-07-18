@@ -190,8 +190,8 @@ export default {
 				ACTotal_Reg: '0',
 				facTotal_Obs: '0',
 				facTotal_Reg: '0',
-				info1: '無',
-				info2: '無'
+				info1_21Att: '無',
+				info2_21Att: '無'
 			},
 		};
 	},

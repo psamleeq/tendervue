@@ -56,8 +56,7 @@ applyPlugin(jsPDF);
 import { PDFDocument } from 'pdf-lib';
 import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
-import PI21Att2 from '@/views/PI/perfReport/PI21Att2.vue'
-import { log } from 'geotiff/dist-node/logging';
+import PI21Att2 from '@/views/PI/perfReport/component/PI21Att2.vue'
 
 export default {
 	name: "perfReportList",
@@ -120,7 +119,7 @@ export default {
 				info2_21Att: '無',
 
 				//PI2.1_Att_1
-				caseReportTotal_21Att: '0',
+				caseReportTotal: '0',
 				ACTotal_Obs: '0',
 				ACTotal_Reg: '0',
 				facTotal_Obs: '0',
@@ -237,31 +236,28 @@ export default {
 			// 	this.showPdfDialog = true;	
 			// }
 		},
-		// downloadPdf() {
-		// 	this.$emit("downloadPdf", (orderSN) => {
-		// 		this.viewer.setInputs([{ "OrderSN": String(orderSN) }]);
-		// 		this.showJobTicket = false;
-		// 		this.handleDownload(`維修派工單_${orderSN}.pdf`);
-		// 		// this.pdfDoc.save(`維修派工單_${orderSN}.pdf`);
-		// 	});
-		// },
-		// handleDownload(filename) {
-		// 	generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
-		// 		// console.log(pdf);
-		// 		const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
-		// 		// window.open(URL.createObjectURL(blob));
+		downloadPdf() {
+			this.viewer.setInputs([{ "OrderSN": '' }]);
+			this.showPdfDialog = false;
+			this.handleDownload(`日報表.pdf`);
+		},
+		handleDownload(filename) {
+			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
+				// console.log(pdf);
+				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
+				// window.open(URL.createObjectURL(blob));
 
-		// 		const file = new File([blob], filename, { type: 'application/pdf' });
-		// 		const link = document.createElement('a');
-		// 		const url = URL.createObjectURL(file);
-		// 		link.href = url;
-		// 		link.download = file.name;
-		// 		document.body.appendChild(link);
-		// 		link.click();
-		// 		document.body.removeChild(link);
-		// 		URL.revokeObjectURL(url);
-		// 	});
-		// },
+				const file = new File([blob], filename, { type: 'application/pdf' });
+				const link = document.createElement('a');
+				const url = URL.createObjectURL(file);
+				link.href = url;
+				link.download = file.name;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+			});
+		},
 		
 	}
 };

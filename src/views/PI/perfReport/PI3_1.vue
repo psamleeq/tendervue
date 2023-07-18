@@ -36,7 +36,7 @@
 						</el-form-item>
 						<el-divider />
 						<el-form-item label="當日工作執行日報填寫人次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.dailyReport_Num" controls-position="right" :min="0" @change="setPDFinputs" />
+							<el-input-number v-model="inputForm.dailyReport_Num31" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
 						<!-- <el-form-item label="滿足安全性巡查人數" :label-width="labelWidth1">
@@ -44,7 +44,7 @@
 						</el-form-item>
 						<el-divider /> -->
 						<el-form-item label="未滿足基本安全要求人數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.unqualifiedSafety_Num" controls-position="right" :min="0" @change="setPDFinputs" />
+							<el-input-number v-model="inputForm.unqualifiedSafety_Num31" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<!-- <el-divider />
 						<el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
@@ -73,13 +73,13 @@
 						<el-divider />
 						<h4>應檢附文件</h4>
 						<el-form-item label="" :label-width="labelWidth2">
-							<el-checkbox v-model="inputForm.checkCo_dailyInspectAll" @change="setPDFinputs" >廠商每日完成自主檢查資訊</el-checkbox>
+							<el-checkbox v-model="inputForm.checkCo_dailyInspectAll31" @change="setPDFinputs" >廠商每日完成自主檢查資訊</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkCo_discoverUnSafety" @change="setPDFinputs">廠商自主發現未滿足基本安全要求人次數資訊</el-checkbox>
+							<el-checkbox v-model="inputForm.checkCo_discoverUnSafety31" @change="setPDFinputs">廠商自主發現未滿足基本安全要求人次數資訊</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkOr_discoverUnSafety" @change="setPDFinputs">機關或監造於抽查檢核後發現為滿足基本安全要求人次數資訊</el-checkbox>
+							<el-checkbox v-model="inputForm.checkOr_discoverUnSafety31" @change="setPDFinputs">機關或監造於抽查檢核後發現為滿足基本安全要求人次數資訊</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkCo_unreasonable" @change="setPDFinputs">廠商認為查檢核發現未滿足不合理資訊</el-checkbox>
+							<el-checkbox v-model="inputForm.checkCo_unreasonable31" @change="setPDFinputs">廠商認為查檢核發現未滿足不合理資訊</el-checkbox>
 						</el-form-item>
 						<!-- <el-divider />
 						<h4>是否合格</h4>
@@ -186,25 +186,25 @@ export default {
 			},
 			template: {},
 			inputForm: {
-				dailyReport_Num: 0,
-				qualifiedSafety_Num: 0,
-				unqualifiedSafety_Num: 0,
-				companyCheck_Num:0,
-				supervisionCheckPass_Num: 0,
-				supervisionCheckFail_Num: 0,
-				organCheckPass_Num: 0,
-				organCheckFail_Num: 0,
-				totalUnqualified_Num: 0,
-				BCA:0,
-				BCDA:0,
-				BCDEA:0,
-				checkCo_dailyInspectAll:true,
-				checkCo_discoverUnSafety:true,
-				checkOr_discoverUnSafety:true,
-				checkCo_unreasonable:true,
-				pass:false,
-				fail:false,
-				failReson: ''
+				dailyReport_Num31: 0,
+				qualifiedSafety_Num31: 0,
+				unqualifiedSafety_Num31: 0,
+				companyCheck_Num31:0,
+				// supervisionCheckPass_Num: 0,
+				// supervisionCheckFail_Num: 0,
+				// organCheckPass_Num: 0,
+				// organCheckFail_Num: 0,
+				// totalUnqualified_Num: 0,
+				BCA_31:0,
+				// BCDA:0,
+				// BCDEA:0,
+				checkCo_dailyInspectAll31:true,
+				checkCo_discoverUnSafety31:true,
+				checkOr_discoverUnSafety31:true,
+				checkCo_unreasonable31:true,
+				// pass:false,
+				// fail:false,
+				// failReson: ''
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
@@ -213,27 +213,27 @@ export default {
 				date: '',//檢查日期
 				zipCode: '104',//行政區
 				district: '中山區',
-				requiredStandard:'廠商人員執行工作應滿足安全性要求',//要求標準
-				measurement:'當天滿足要求人次數/當日工作執行日報填寫人數',//量測方式
-				dailyReport_Num: '0 件',//A
-				qualifiedSafety_Num: '0 件',//B
-				unqualifiedSafety_Num: '0 件',//C
-				companyCheck_Num:'0 件',
-				supervisionCheckPass_Num: '0 件',
-				supervisionCheckFail_Num: '0 件',//D
-				organCheckPass_Num: '0 件',
-				organCheckFail_Num: '0 件',//E
-				totalUnqualified_Num: '0 件',
-				BCA:'',
-				BCDA:'',
-				BCDEA:'',
-				checkCo_dailyInspectAll:'',
-				checkCo_discoverUnSafety:'',
-				checkOr_discoverUnSafety:'',
-				checkCo_unreasonable:'',
-				pass:'',
-				fail:'',
-				failReson: '',
+				requiredStandard_31:'廠商人員執行工作應滿足安全性要求',//要求標準
+				measurement_31:'當天滿足要求人次數/當日工作執行日報填寫人數',//量測方式
+				dailyReport_Num31: '0 件',//A
+				qualifiedSafety_Num31: '0 件',//B
+				unqualifiedSafety_Num31: '0 件',//C
+				companyCheck_Num31:'0 件',
+				// supervisionCheckPass_Num: '0 件',
+				// supervisionCheckFail_Num: '0 件',//D
+				// organCheckPass_Num: '0 件',
+				// organCheckFail_Num: '0 件',//E
+				// totalUnqualified_Num: '0 件',
+				BCA_31:'',
+				// BCDA:'',
+				// BCDEA:'',
+				checkCo_dailyInspectAll31:'',
+				checkCo_discoverUnSafety31:'',
+				checkOr_discoverUnSafety31:'',
+				checkCo_unreasonable31:'',
+				// pass:'',
+				// fail:'',
+				// failReson: '',
 			},
 		};
 	},
@@ -261,10 +261,10 @@ export default {
 
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {
-					if(['checkCo_dailyInspectAll','checkCo_discoverUnSafety','checkOr_discoverUnSafety','checkCo_unreasonable','pass','fail'].includes(arg.key)){
+					if(['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31'].includes(arg.key)){
 						this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
 					}
-					if(['dailyReport_Num','qualifiedSafety_Num','unqualifiedSafety_Num','companyCheck_Num','supervisionCheckPass_Num','supervisionCheckFail_Num','organCheckPass_Num','organCheckFail_Num','totalUnqualified_Num',].includes(arg.key)) {
+					if(['dailyReport_Num31','qualifiedSafety_Num31','unqualifiedSafety_Num31','companyCheck_Num31'].includes(arg.key)) {
 						this.inputForm[arg.key] = parseInt(arg.value)
 					}
 					this.setPDFinputs();
@@ -283,33 +283,28 @@ export default {
 			this.inputs.serialNumber = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
 			//查核人次數
 			for(const key of [ 
-				'dailyReport_Num',
-				'unqualifiedSafety_Num',
-				'supervisionCheckPass_Num',
-				'supervisionCheckFail_Num',
-				'organCheckPass_Num',
-				'organCheckFail_Num',
-				'totalUnqualified_Num']) {
+				'dailyReport_Num31',
+				'unqualifiedSafety_Num31']) {
 				this.inputs[key] = this.inputForm[key] + ' 件';
 			}
 			//計算當日工作執行日報填寫人次數(A) = 滿足安全性巡查人數(B) = 廠商自主檢查人次數
-			this.inputs.qualifiedSafety_Num = this.inputForm.dailyReport_Num+ ' 件';
-			this.inputs.companyCheck_Num = this.inputForm.dailyReport_Num+ ' 件';
+			this.inputs.qualifiedSafety_Num31 = this.inputForm.dailyReport_Num31+ ' 件';
+			this.inputs.companyCheck_Num31 = this.inputForm.dailyReport_Num31+ ' 件';
 			//計算指標數值
-			const A = this.inputForm.dailyReport_Num;
-			const B = this.inputForm.qualifiedSafety_Num = this.inputForm.dailyReport_Num;
-			const C = this.inputForm.unqualifiedSafety_Num;
+			const A = this.inputForm.dailyReport_Num31;
+			const B = this.inputForm.qualifiedSafety_Num31 = this.inputForm.dailyReport_Num31;
+			const C = this.inputForm.unqualifiedSafety_Num31;
 			// const D = this.inputForm.supervisionCheckFail_Num;
 			// const E = this.inputForm.organCheckFail_Num;
 			if(A==0){
-				this.inputs.BCA='';this.inputs.BCDA='';this.inputs.BCDEA='';
+				this.inputs.BCA_31=''
 			}else{
-				this.inputs.BCA=String(((B-C)/A)*100)
+				this.inputs.BCA_31=String(((B-C)/A)*100)
 				// this.inputs.BCDA=String(((B-C-D)/A)*100)
 				// this.inputs.BCDEA=String(((B-C-D-E)/A)*100)
 			}
 			//應檢附文件
-			for(const key of ['checkCo_dailyInspectAll','checkCo_discoverUnSafety','checkOr_discoverUnSafety','checkCo_unreasonable','pass','fail']){
+			for(const key of ['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			}
 			//否定原因填寫

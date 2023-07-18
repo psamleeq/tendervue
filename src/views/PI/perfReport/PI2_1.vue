@@ -41,17 +41,17 @@
 						<el-divider />
 						<h4>所有通報數</h4>
 						<el-form-item label="被通報案件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.informed_Num" controls-position="right" :min="0" @change="setPDFinputs" />
+							<el-input-number v-model="inputForm.informed_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-form-item label="廠商通報數(查報數)" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.companyInform_Num" controls-position="right" :min="0" @change="setPDFinputs" />
+							<el-input-number v-model="inputForm.companyInform_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-form-item label="不合理案件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.unreasonable_Num" controls-position="right" :min="0" @change="setPDFinputs" />
+							<el-input-number v-model="inputForm.unreasonable_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
 						<el-form-item label="未登入或登入不完整案件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.incomplete_Num" controls-position="right" :min="0" @change="setPDFinputs" />
+							<el-input-number v-model="inputForm.incomplete_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<!-- <el-divider />
 						<h4>監造自主檢查件數</h4>
@@ -76,13 +76,13 @@
 						<el-divider />
 						<h4>應檢附文件</h4>
 						<el-form-item label="" :label-width="labelWidth2">
-							<el-checkbox v-model="inputForm.checkCo_dailyInform" @change="setPDFinputs">廠商每天通報資訊(巡查日誌)</el-checkbox>
+							<el-checkbox v-model="inputForm.checkCo_dailyInform21" @change="setPDFinputs">廠商每天通報資訊(巡查日誌)</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkCo_dailyLogin" @change="setPDFinputs">廠商於系統每天登錄資料數量資訊(道管系統案件處理+觀察案件)</el-checkbox>
+							<el-checkbox v-model="inputForm.checkCo_dailyLogin21" @change="setPDFinputs">廠商於系統每天登錄資料數量資訊(道管系統案件處理+觀察案件)</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkPeriod_Complete" @change="setPDFinputs">期間有完成巡查工作但未登錄之資訊</el-checkbox>
+							<el-checkbox v-model="inputForm.checkPeriod_Complete21" @change="setPDFinputs">期間有完成巡查工作但未登錄之資訊</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkPeriod_IncompleteLogin" @change="setPDFinputs">期間系統資料登錄不完整案件資訊</el-checkbox>
+							<el-checkbox v-model="inputForm.checkPeriod_IncompleteLogin21" @change="setPDFinputs">期間系統資料登錄不完整案件資訊</el-checkbox>
 						</el-form-item>
 						<!-- <el-divider />
 						<h4>是否合格</h4>
@@ -190,28 +190,28 @@ export default {
 			},
 			template: {},
 			inputForm: {
-				sumInform_Num:0,
-				informed_Num: 0,
-				companyInform_Num: 0,
-				unreasonable_Num: 0,
-				roadSystem_Num:0,
-				incomplete_Num: 0,
-				companyCheck_Num: 0,
-				supervisionCheckPass_Num: 0,
-				supervisionCheckFail_Num: 0,
-				organCheckPass_Num: 0,
-				organCheckFail_Num: 0,
-				totalIncomplete_Num: 0,
-				EFA:0,
-				EFGA:0,
-				EFGHA:0,
-				checkCo_dailyInform:true,
-				checkCo_dailyLogin:true,
-				checkPeriod_Complete:true,
-				checkPeriod_IncompleteLogin:true,
-				pass:false,
-				fail:false,
-				failReason: ''
+				sumInform_Num21:0,
+				informed_Num21: 0,
+				companyInform_Num21: 0,
+				unreasonable_Num21: 0,
+				roadSystem_Num21:0,
+				incomplete_Num21: 0,
+				companyCheck_Num21: 0,
+				// supervisionCheckPass_Num: 0,
+				// supervisionCheckFail_Num: 0,
+				// organCheckPass_Num: 0,
+				// organCheckFail_Num: 0,
+				// totalIncomplete_Num: 0,
+				EFA_21:0,
+				// EFGA:0,
+				// EFGHA:0,
+				checkCo_dailyInform21:true,
+				checkCo_dailyLogin21:true,
+				checkPeriod_Complete21:true,
+				checkPeriod_IncompleteLogin21:true,
+				// pass:false,
+				// fail:false,
+				// failReason: ''
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
@@ -220,30 +220,30 @@ export default {
 				date: '',//檢查日期
 				zipCode: '104',
 				district: '中山區',
-				requiredStandard:'完成巡查工作後必須及時登錄資料',//要求標準
-				measurement:'廠商於系統當天登錄資料數量/廠商當天通報數',//量測方式
-				sumInform_Num: '0件',//A
-				informed_Num: '0件',//B
-				companyInform_Num: '0件',//C
-				unreasonable_Num: '0件',//D
-				roadSystem_Num:'0件',//E
-				incomplete_Num: '0件',//F
-				companyCheck_Num: '0件',
-				supervisionCheckPass_Num: '0件',
-				supervisionCheckFail_Num: '0件',//G
-				organCheckPass_Num: '0件',
-				organCheckFail_Num: '0件',//H
-				totalIncomplete_Num: '0件',
-				EFA:'',
-				EFGA:'',
-				EFGHA:'',
-				checkCo_dailyInform:'',
-				checkCo_dailyLogin:'',
-				checkPeriod_Complete:'',
-				checkPeriod_IncompleteLogin:'',
-				pass:'',
-				fail:'',
-				failReason: '',
+				requiredStandard_21:'完成巡查工作後必須及時登錄資料',//要求標準
+				measurement_21:'廠商於系統當天登錄資料數量/廠商當天通報數',//量測方式
+				sumInform_Num21: '0件',//A
+				informed_Num21: '0件',//B
+				companyInform_Num21: '0件',//C
+				unreasonable_Num21: '0件',//D
+				roadSystem_Num21:'0件',//E
+				incomplete_Num21: '0件',//F
+				companyCheck_Num21: '0件',
+				// supervisionCheckPass_Num: '0件',
+				// supervisionCheckFail_Num: '0件',//G
+				// organCheckPass_Num: '0件',
+				// organCheckFail_Num: '0件',//H
+				// totalIncomplete_Num: '0件',
+				EFA_21:'',
+				// EFGA:'',
+				// EFGHA:'',
+				checkCo_dailyInform21:'',
+				checkCo_dailyLogin21:'',
+				checkPeriod_Complete21:'',
+				checkPeriod_IncompleteLogin21:'',
+				// pass:'',
+				// fail:'',
+				// failReason: '',
 			},
 		};
 	},
@@ -272,20 +272,15 @@ export default {
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {
 					// console.log(arg);
-					if(['checkCo_dailyInform','checkCo_dailyLogin','checkPeriod_Complete','checkPeriod_IncompleteLogin','pass','fail'].includes(arg.key)){
+					if(['checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21'].includes(arg.key)){
 						this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
 					}
 					if([
-						'informed_Num',
-						'companyInform_Num',
-						'unreasonable_Num',
-						'incomplete_Num',
-						'companyCheck_Num',
-						'supervisionCheckPass_Num',
-						'supervisionCheckFail_Num',
-						'organCheckPass_Num',
-						'organCheckFail_Num',
-						'totalIncomplete_Num'].includes(arg.key)) {
+						'informed_Num21',
+						'companyInform_Num21',
+						'unreasonable_Num21',
+						'incomplete_Num21',
+						'companyCheck_Num21'].includes(arg.key)) {
 						this.inputForm[arg.key] = parseInt(arg.value)
 					}
 					if(['failReason'].includes(arg.key)){
@@ -307,42 +302,35 @@ export default {
 			this.inputs.serialNumber = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
 			//查核人次數(資料轉換)
 			for(const key of [
-				'informed_Num',
-				'companyInform_Num',
-				'unreasonable_Num',
-				'incomplete_Num',
-				'supervisionCheckPass_Num',
-				'supervisionCheckFail_Num',
-				'organCheckPass_Num',
-				'organCheckFail_Num',
-				'totalIncomplete_Num']) {
+				'informed_Num21',
+				'companyInform_Num21',
+				'unreasonable_Num21',
+				'incomplete_Num21']) {
 				this.inputs[key] = this.inputForm[key] + ' 件';
 			}
 			//廠商自主檢查件數 = 廠商通報數(C)
-			 this.inputs.companyCheck_Num = this.inputForm.companyInform_Num + ' 件'
+			 this.inputs.companyCheck_Num21 = this.inputForm.companyInform_Num21 + ' 件'
 			
-			//計算指標數值
-			const A = this.inputForm.informed_Num+this.inputForm.companyInform_Num;
-			const E = this.inputForm.roadSystem_Num;
-			const F = this.inputForm.incomplete_Num;
-			const G = this.inputForm.supervisionCheckFail_Num;
-			const H = this.inputForm.organCheckFail_Num;
+			//計算指標數值(A=E)
+			const A = this.inputForm.informed_Num21+this.inputForm.companyInform_Num21;
+			const E = this.inputForm.roadSystem_Num21 = this.inputForm.informed_Num21+this.inputForm.companyInform_Num21
+			const F = this.inputForm.incomplete_Num21;
+			// const G = this.inputForm.supervisionCheckFail_Num;
+			// const H = this.inputForm.organCheckFail_Num;
 			if(A==0){
-				this.inputs.EFA='';this.inputs.EFGA='';this.inputs.EFGHA='';
+				this.inputs.EFA_21=''
 			}else{
-				this.inputs.EFA=String(((E-F)/A)*100)
-				this.inputs.EFGA=String(((E-F-G)/A)*100)
-				this.inputs.EFGHA=String(((E-F-G-H)/A)*100)
+				console.log(E,F,A);
+				this.inputs.EFA_21=String(((E-F)/A)*100)
 			}
 			//計算所有通報數(A) && (E)=(A)
-			this.inputs.sumInform_Num = A+ ' 件';
-			this.inputs.roadSystem_Num = A+ ' 件';
+			this.inputs.sumInform_Num21 = A+ ' 件';
+			this.inputs.roadSystem_Num21 = A+ ' 件';
 			//應檢附文件
-			for(const key of ['checkCo_dailyInform','checkCo_dailyLogin','checkPeriod_Complete','checkPeriod_IncompleteLogin','pass','fail']){
+			for(const key of ['checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			}
-			//否定原因填寫
-			this.inputs.failReason=this.inputForm.failReason
+
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},

@@ -17,17 +17,14 @@
 				</el-table-column>
 				<el-table-column
 					prop="pdfPage"
-					label="Pdf頁面">
+					label="項目"
+					width="200">
 				</el-table-column>
 				<el-table-column
 					prop="name"
-					label="編輯人員">
+					label="說明">
 				</el-table-column>
-				<el-table-column
-					prop="editDate"
-					label="編輯日期">
-				</el-table-column>
-				<el-table-column label="動作" align="center">
+				<el-table-column label="動作" align="center" width="100">
 					<template slot-scope="{ row }">
 						<el-button type="success" plain size="mini" @click="beforeEdit(row)"><i class="el-icon-edit"></i>編輯</el-button>
 					</template>
@@ -45,10 +42,10 @@ export default {
 		return {
 			loading: false,
 			pdfList:[
-				{pdfPage:'PI2.1',name:'',editDate:''},
+				{pdfPage:'PI2.1',name:'登錄「道路管理資訊系統」資料之即時性',editDate:''},
 				{pdfPage:'PI2.1附件',name:'',editDate:''},
-				{pdfPage:'PI2.1附件(通報)',name:'',editDate:''},
-				{pdfPage:'PI3.1',name:'',editDate:''},
+				{pdfPage:'PI2.1附件(通報)',name:'當日被通報案件、當日廠商判定不合理案件',editDate:''},
+				{pdfPage:'PI3.1',name:'執行巡查與維護工作之安全性',editDate:''},
 				{pdfPage:'PI3.1附件',name:'',editDate:''},
 			],
 		};
