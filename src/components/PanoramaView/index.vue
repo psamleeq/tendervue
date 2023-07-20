@@ -173,7 +173,7 @@ export default {
 				millingWidth: 0,
 				millingArea: 0,
 				place: "",
-				direction: 0,
+				direction: 1,
 				lane: 1,
 				imgZoomIn: "",
 				imgZoomOut: ""
@@ -721,7 +721,7 @@ export default {
 				millingWidth: 0,
 				millingArea: 0,
 				place: "",
-				direction: 0,
+				direction: 1,
 				lane: 1,
 				isPrev: false,
 				imgZoomIn: "",
