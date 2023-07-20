@@ -1,26 +1,34 @@
 <template>
 	<div class="app-container PI2_1-Att" v-loading="loading">
 		<h2>PI2.1</h2>
-		<div class="filter-container">
+		<!-- <div class="filter-container">
 			<el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				@click="handleDownload"
 			>輸出PDF</el-button>
-			<!-- <el-button class="filter-item" type="info" @click="setPDFinputs">更新內容</el-button> -->
-		</div>
-
+		</div> -->
+		
 		<el-row :gutter="24">
 			<el-col :span="11">
 				<el-card shadow="never" style="width: 480px; margin: 20px auto; padding: 5px 10px;">
 					<el-form :model="inputForm">
-						<h2>檢核資訊</h2>
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h2>檢核資訊</h2>
+							<el-button
+								class="filter-item"
+								type="success"
+								icon="el-icon-document"
+								@click="storeData"
+								style="height:40px"
+							>儲存</el-button>
+						</div>
+						
 						<el-divider />
 						<!-- <el-form-item label="起始頁碼">
-							<el-input-number v-model="initPage" controls-position="right" :min="1" :max="1" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider /> -->
+							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
+						</el-form-item> -->
 						<el-form-item label="檢查日期" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="searchDate"
@@ -32,7 +40,6 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<el-divider />
 						<el-form-item label="行政區" :label-width="labelWidth1">
 							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()" style="width: 200px">
 								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
@@ -107,6 +114,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
+import { getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
 	name: "PI2_1",
@@ -190,32 +198,22 @@ export default {
 			},
 			template: {},
 			inputForm: {
-				sumInform_Num21:0,
+				// sumInform_Num21:0,
 				informed_Num21: 0,
 				companyInform_Num21: 0,
 				unreasonable_Num21: 0,
-				roadSystem_Num21:0,
+				// roadSystem_Num21:0,
 				incomplete_Num21: 0,
-				companyCheck_Num21: 0,
-				// supervisionCheckPass_Num: 0,
-				// supervisionCheckFail_Num: 0,
-				// organCheckPass_Num: 0,
-				// organCheckFail_Num: 0,
-				// totalIncomplete_Num: 0,
-				EFA_21:0,
-				// EFGA:0,
-				// EFGHA:0,
+				// companyCheck_Num21: 0,
+				// EFA_21:0,
 				checkCo_dailyInform21:true,
 				checkCo_dailyLogin21:true,
 				checkPeriod_Complete21:true,
 				checkPeriod_IncompleteLogin21:true,
-				// pass:false,
-				// fail:false,
-				// failReason: ''
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
-				serialNumber: '1111102101',//紀錄編號
+				serialNumber_21Main: '1111102101',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
 				zipCode: '104',
@@ -229,22 +227,14 @@ export default {
 				roadSystem_Num21:'0件',//E
 				incomplete_Num21: '0件',//F
 				companyCheck_Num21: '0件',
-				// supervisionCheckPass_Num: '0件',
-				// supervisionCheckFail_Num: '0件',//G
-				// organCheckPass_Num: '0件',
-				// organCheckFail_Num: '0件',//H
-				// totalIncomplete_Num: '0件',
 				EFA_21:'',
-				// EFGA:'',
-				// EFGHA:'',
 				checkCo_dailyInform21:'',
 				checkCo_dailyLogin21:'',
 				checkPeriod_Complete21:'',
 				checkPeriod_IncompleteLogin21:'',
-				// pass:'',
-				// fail:'',
-				// failReason: '',
 			},
+			perfContentId:null,
+			list:[],
 		};
 	},
 	computed: { },
@@ -254,11 +244,35 @@ export default {
 		// this.form = {};
 	},
 	mounted() {
-		this.initPDF();
+		this.perfContentId = this.$route.query.row.id
+		// console.log(this.perfContentId);
+
+		getPerfContent({
+			contentId: this.perfContentId
+		}).then((response) => {
+			if (response.data.list.length == 0) {
+				this.$message({
+					message: "查無資料",
+					type: "error",
+				});
+			} else {
+				this.list = response.data.list;
+				if(this.list[0].content.length!=0){
+					this.inputs = this.list[0].content.inputs
+					this.inputForm = this.list[0].content.inputForm
+					this.searchDate = this.list[0].checkDate
+				}
+				this.initPDF();
+			}
+			this.loading = false;
+		}).catch(err => { this.loading = false; });
+		
+		
 	},
 	methods: {
 		initPDF() {
 			fetch(`/assets/pdf/PI2_1-Main.json?t=${Date.now()}`).then(async (response) => {
+				
 				const domContainer = this.$refs.container.$el;
 				this.template = await response.json();
 
@@ -299,7 +313,7 @@ export default {
 			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
 			//紀錄編號
-			this.inputs.serialNumber = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
+			this.inputs.serialNumber_21Main = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
 			//查核人次數(資料轉換)
 			for(const key of [
 				'informed_Num21',
@@ -320,7 +334,6 @@ export default {
 			if(A==0){
 				this.inputs.EFA_21=''
 			}else{
-				console.log(E,F,A);
 				this.inputs.EFA_21=String(((E-F)/A)*100)
 			}
 			//計算所有通報數(A) && (E)=(A)
@@ -334,27 +347,27 @@ export default {
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},
+		storeData(){
+			const storedContent = {
+				pageCount:1,
+				inputForm:this.inputForm,
+				inputs:this.inputs
+			}
+			setPerfContent(this.perfContentId,{
+				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent)
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "提交成功",
+						type: "success",
+					});
+				} 
+			}).catch(err => {
+				console.log(err);
+			})
+		},
 		
-		handleDownload() {
-			// console.log(this.form);
-			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
-				// console.log(pdf);
-				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
-				// window.open(URL.createObjectURL(blob));
-
-				const filename = "成效式契約指標檢核表PI-2-1.pdf"; 
-				const file = new File([blob], filename, { type: 'application/pdf' });
-				const link = document.createElement('a');
-				const url = URL.createObjectURL(file);
-				link.href = url;
-				console.log(link,url);
-				link.download = file.name;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				URL.revokeObjectURL(url);
-			});
-		}
 	},
 };
 </script>

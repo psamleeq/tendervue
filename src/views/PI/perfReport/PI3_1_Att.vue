@@ -1,34 +1,34 @@
 <template>
 	<div class="app-container PI3_1-Att" v-loading="loading">
 		<h2>PI3.1附件</h2>
-		<div class="filter-container">
+		<!-- <div class="filter-container">
 			<el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				@click="handleDownload"
 			>輸出PDF</el-button>
-			<!-- <el-button class="filter-item" type="info" @click="setPDFinputs">更新內容</el-button> -->
-		</div>
+		</div> -->
 
 		<el-row :gutter="24">
 			<el-col :span="10">
 				<el-card shadow="never" style="width: 400px; margin: 40px auto; padding: 5px 10px;">
 					<el-form label-width="100px">
-						<h2>工安登錄</h2>
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h2>工安登錄</h2>
+							<el-button
+								class="filter-item"
+								type="success"
+								icon="el-icon-document"
+								@click="storeData"
+								style="height:40px"
+							>儲存</el-button>
+						</div>
 						<el-divider />
 						<el-form-item label="起始頁碼">
 							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
 						</el-form-item>
-						<el-form-item label="頁數調整">
-							<el-button-group>
-								<el-button type="success" size="small" icon="el-icon-plus" @click="addPage()" />
-								<el-button type="danger" size="small" icon="el-icon-minus" :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage()" />
-								<span v-if="template.schemas != undefined" style="margin-left: 5px">(目前頁數: {{ template.schemas.length }})</span>
-							</el-button-group>
-						</el-form-item>
-						<el-divider />
-						<el-form-item label="日期">
+						<el-form-item label="檢查日期">
 							<el-date-picker
 								v-model="searchDate"
 								type="date"
@@ -44,6 +44,15 @@
 								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
 							</el-select>
 							<!-- <el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" /> -->
+						</el-form-item>
+						
+						<el-divider />
+						<el-form-item label="頁數調整">
+							<el-button-group>
+								<el-button type="success" size="small" icon="el-icon-plus" @click="addPage()" />
+								<el-button type="danger" size="small" icon="el-icon-minus" :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage()" />
+								<span v-if="template.schemas != undefined" style="margin-left: 5px">(目前頁數: {{ template.schemas.length }})</span>
+							</el-button-group>
 						</el-form-item>
 						<!-- <span v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`"> -->
 						<el-collapse v-model="activeName">
@@ -87,7 +96,7 @@ import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
 import { PDFDocument } from 'pdf-lib';
-// import { getCaseCount } from "@/api/PI";
+import { getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
 	name: "PI3_1_Att",
@@ -208,7 +217,9 @@ export default {
 				info1: '無未滿足',
 				info2: '無未滿足',
 				info3: '無未滿足'
-			}
+			},
+			perfContentId:null,
+			list:[],
 		};
 	},
 	computed: { },
@@ -218,6 +229,31 @@ export default {
 		// this.form = {};
 	},
 	mounted() {
+		this.perfContentId = this.$route.query.row.id
+		getPerfContent({
+			contentId: this.perfContentId
+		}).then((response) => {
+			if (response.data.list.length == 0) {
+				this.$message({
+					message: "查無資料",
+					type: "error",
+				});
+			} else {
+				this.list = response.data.list;
+				if(this.list[0].content.length!=0){
+					this.inputs = this.list[0].content.inputs
+					// 
+					// if(this.list[0].content.inputForm.length>1){
+					// 	this.editAddPage()
+						this.inputFormArr = this.list[0].content.inputForm
+					// }
+					this.searchDate = this.list[0].checkDate
+					
+				}
+				this.initPDF();
+			}
+			this.loading = false;
+		}).catch(err => { this.loading = false; });
 		this.initPDF();
 	},
 	methods: {
@@ -307,6 +343,35 @@ export default {
 
 			this.setTemplate();
 		},
+		async editAddPage() {
+			this.loading = true;
+
+			//Step1: 合併PDF
+			const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+			const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
+
+			const addTemplate = await fetch(`/assets/pdf/PI3_1-Att_1.json?t=${Date.now()}`).then(response => response.json());
+			const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+			const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
+			// const addPdfBytes = await fetch(`/assets/pdf/PI3_1-Att_1.pdf?t=${Date.now()}`).then(res => res.arrayBuffer());
+			// const add_pdf = await PDFDocument.load(addPdfBytes);
+			const mergedPdf = await PDFDocument.create();
+
+			const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
+			const [ add_copiedPage ] = await mergedPdf.copyPages(add_pdf, [0]);
+			ori_copiedPages.forEach(page => mergedPdf.addPage(page));
+			mergedPdf.insertPage(ori_pdf.getPageCount()-1, add_copiedPage);
+
+			// const mergedPdfFile = await mergedPdf.save();
+			// const blob = new Blob([mergedPdfFile.buffer], { type: 'application/pdf' });
+			// window.open(URL.createObjectURL(blob));
+			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
+
+			//Step2: 調整欄位
+			this.template.schemas.splice(this.template.schemas.length-1, 0, addTemplate.schemas[0]);
+
+			this.setTemplate();
+		},
 		async removePage(index) {
 			this.loading = true;
 
@@ -378,6 +443,26 @@ export default {
 		// 		this.loading = false;
 		// 	}).catch(err => this.loading = false);
 		// },
+		storeData(){
+			const storedContent = {
+				pageCount:1,
+				inputForm:this.inputFormArr,
+				inputs:this.inputs
+			}
+			setPerfContent(this.perfContentId,{
+				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent)
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "提交成功",
+						type: "success",
+					});
+				} 
+			}).catch(err => {
+				console.log(err);
+			})
+		},
 		handleDownload() {
 			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {

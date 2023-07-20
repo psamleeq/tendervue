@@ -2,7 +2,7 @@
 	<div class="app-container PI2_1-Att" v-loading="loading">
 		<h2>PI2.1附件</h2>
 		<div class="filter-container">
-			<span class="time-picker">
+			<!-- <span class="time-picker">
 				<el-button-group v-if="!dateTimePickerVisible">
 					<el-button
 						v-for="(t, i) in pickerOptions.shortcuts"
@@ -30,13 +30,13 @@
 					@click="dateTimePickerVisible = !dateTimePickerVisible"
 				>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
 				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			</span>
-			<el-button
+			</span> -->
+			<!-- <el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				@click="handleDownload"
-			>輸出PDF</el-button>
+			>輸出PDF</el-button> -->
 			<!-- <el-button class="filter-item" type="info" @click="setPDFinputs">更新內容</el-button> -->
 		</div>
 
@@ -44,14 +44,34 @@
 			<el-col :span="10">
 				<el-card shadow="never" style="width: 400px; margin: 40px auto; padding: 5px 10px;">
 					<el-form :model="inputForm" label-width="100px">
-						<h2>通報資訊</h2>
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h2>通報資訊</h2>
+							<el-button
+								class="filter-item"
+								type="success"
+								icon="el-icon-document"
+								@click="storeData"
+								style="height:40px"
+							>儲存</el-button>
+						</div>
+						
 						<el-divider />
 						<el-form-item label="起始頁碼">
 							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
 						</el-form-item>
-						<!-- <h3>廠商通報</h3> -->
+						<el-form-item label="檢查日期" >
+							<el-date-picker
+								v-model="searchDate"
+								type="date"
+								placeholder="日期"
+								:picker-options="pickerOptions"
+								:clearable="false"
+								style="width: 200px"
+								@change="setPDFinputs"
+							/>
+						</el-form-item>
 						<el-form-item label="行政區">
-							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="getList()">
+							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="getList()" style="width: 200px">
 								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
 							</el-select>
 							<!-- <el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" /> -->
@@ -89,7 +109,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
-import { getCaseCount } from "@/api/PI";
+import { getCaseCount,getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
 	name: "PI2_1_Att",
@@ -180,8 +200,8 @@ export default {
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約', 
 				companyName: '聖東營造股份有限公司',
-				serialNumber1: '1111102102',
-				serialNumber2: '1111102103',
+				serialNumber_21Att_1: '1111102102',
+				serialNumber_21Att_2: '1111102103',
 				date: '111年11月02日',
 				zipCode: '104',
 				district: '中山區',
@@ -191,8 +211,14 @@ export default {
 				facTotal_Obs: '0',
 				facTotal_Reg: '0',
 				info1_21Att: '無',
-				info2_21Att: '無'
+				info2_21Att: '無',
+				caseReportImg: '', 
+				caseReportImg_neo1: '',
+				caseReportImg_neo2: '',
+				caseReportImg_neo3: ''
 			},
+			perfContentId:null,
+			list:[],
 		};
 	},
 	computed: { },
@@ -202,7 +228,29 @@ export default {
 		// this.form = {};
 	},
 	mounted() {
-		this.initPDF();
+		this.perfContentId = this.$route.query.row.id
+		// console.log(this.perfContentId);
+
+		getPerfContent({
+			contentId: this.perfContentId
+		}).then((response) => {
+			if (response.data.list.length == 0) {
+				this.$message({
+					message: "查無資料",
+					type: "error",
+				});
+			} else {
+				this.list = response.data.list;
+				if(this.list[0].content.length!=0){
+					this.inputs = this.list[0].content.inputs
+					this.inputForm = this.list[0].content.inputForm
+					this.searchDate = this.list[0].checkDate
+				}
+				this.initPDF();
+			}
+			this.loading = false;
+		}).catch(err => { this.loading = false; });
+		
 	},
 	methods: {
 		dateShortcuts(index) {
@@ -249,6 +297,7 @@ export default {
 					// if(['contractName', 'companyName', 'serialNumber', 'date', 'district'].includes(arg.key)) this.inputs[arg.key] = arg.value;
 					if(['caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 					if(['caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2','caseReportImg_neo3'].includes(arg.key)) {
+						console.log(arg);
 						const img = new Image();
 						img.onload = () => {
 							// console.log(img.width, img.height);
@@ -276,7 +325,7 @@ export default {
 			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
 			//紀錄編號
 			for(let i=0; i < this.template.schemas.length; i++) {
-				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
+				this.inputs[`serialNumber_21Att_${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
 			//資料數轉換
 			let sum = 0
@@ -312,6 +361,26 @@ export default {
 				this.setPDFinputs();
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		storeData(){
+			const storedContent = {
+				pageCount:2,
+				inputForm:this.inputForm,
+				inputs:this.inputs
+			}
+			setPerfContent(this.perfContentId,{
+				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent)
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "提交成功",
+						type: "success",
+					});
+				} 
+			}).catch(err => {
+				console.log(err);
+			})
 		},
 		handleDownload() {
 			// console.log(this.form);

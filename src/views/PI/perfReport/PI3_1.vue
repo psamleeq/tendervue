@@ -1,22 +1,33 @@
 <template>
 	<div class="app-container PI3_1-Att" v-loading="loading">
 		<h2>PI3.1</h2>
-		<div class="filter-container">
+		<!-- <div class="filter-container">
 			<el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				@click="handleDownload"
 			>輸出PDF</el-button>
-			<!-- <el-button class="filter-item" type="info" @click="setPDFinputs">更新內容</el-button> -->
-		</div>
+		</div> -->
 
 		<el-row :gutter="24">
 			<el-col :span="11">
-				<el-card shadow="never" style="width: 500px; margin: 40px auto; padding: 5px 10px; ">
+				<el-card shadow="never" style="width: 450px; margin: 40px auto; padding: 5px 10px; ">
 					<el-form :model="inputForm" >
-						<h2>檢核資訊</h2>
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h2>檢核資訊</h2>
+							<el-button
+								class="filter-item"
+								type="success"
+								icon="el-icon-document"
+								@click="storeData"
+								style="height:40px"
+							>儲存</el-button>
+						</div>
 						<el-divider />
+						<el-form-item label="起始頁碼" :label-width="labelWidth1">
+							<el-input-number v-model="initPage"  :min="1" @change="setPDFinputs" />
+						</el-form-item>
 						<el-form-item label="檢查日期" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="searchDate"
@@ -28,7 +39,6 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<el-divider />
 						<el-form-item label="行政區" :label-width="labelWidth1">
 							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()" style="width: 200px">
 								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
@@ -105,13 +115,14 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
+import { getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
 	name: "PI3_1",
 	components: { },
 	data() {
 		return {
-			labelWidth1:'200px',
+			labelWidth1:'170px',
 			labelWidth2:'10px',
 			loading: false,
 			screenWidth: window.innerWidth,
@@ -208,7 +219,7 @@ export default {
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
-				serialNumber: '1111102104',//紀錄編號
+				serialNumber_31: '1111102104',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
 				zipCode: '104',//行政區
@@ -235,6 +246,8 @@ export default {
 				// fail:'',
 				// failReson: '',
 			},
+			perfContentId:null,
+			list:[],
 		};
 	},
 	computed: { },
@@ -244,7 +257,29 @@ export default {
 		// this.form = {};
 	},
 	mounted() {
-		this.initPDF();
+		this.perfContentId = this.$route.query.row.id
+		// console.log(this.perfContentId);
+
+		getPerfContent({
+			contentId: this.perfContentId
+		}).then((response) => {
+			if (response.data.list.length == 0) {
+				this.$message({
+					message: "查無資料",
+					type: "error",
+				});
+			} else {
+				this.list = response.data.list;
+				if(this.list[0].content.length!=0){
+					this.inputs = this.list[0].content.inputs
+					this.inputForm = this.list[0].content.inputForm
+					this.searchDate = this.list[0].checkDate
+				}
+				this.initPDF();
+			}
+			this.loading = false;
+		}).catch(err => { this.loading = false; });
+		
 	},
 	methods: {
 		initPDF() {
@@ -280,7 +315,7 @@ export default {
 			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
 			//紀錄編號
-			this.inputs.serialNumber = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
+			this.inputs.serialNumber_31 = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
 			//查核人次數
 			for(const key of [ 
 				'dailyReport_Num31',
@@ -312,6 +347,26 @@ export default {
 			
 			this.form.setInputs([this.inputs]);
 			this.form.render();
+		},
+		storeData(){
+			const storedContent = {
+				pageCount:1,
+				inputForm:this.inputForm,
+				inputs:this.inputs
+			}
+			setPerfContent(this.perfContentId,{
+				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent)
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "提交成功",
+						type: "success",
+					});
+				} 
+			}).catch(err => {
+				console.log(err);
+			})
 		},
 		handleDownload() {
 			// console.log(this.form);

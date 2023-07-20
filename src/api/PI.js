@@ -82,3 +82,44 @@ export function delCaseWarrantyList(data) {
 		data
 	})
 }
+
+//日報表
+export function getPerfReport(query) {
+	return request({
+		url: '/PI/perfReport',
+		method: 'get',
+		params: query
+	})
+}
+
+export function addPerfReport(data) {
+	return request({
+		url: `/PI/perfReport`,
+		method: 'post',
+		data
+	})
+}
+
+export function getPerfReportList(query) {
+	return request({
+		url: '/PI/perfReportList',
+		method: 'get',
+		params: query
+	})
+}
+
+export function getPerfContent(query) {
+	return request({
+		url: '/PI/perfContent',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setPerfContent(id,data) {
+	return request({
+		url: `/PI/perfContent/${id}`,
+		method: 'put',
+		data
+	})
+}
