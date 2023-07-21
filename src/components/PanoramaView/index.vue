@@ -20,7 +20,7 @@
 				<el-form :model="caseInfo" label-width="70px" size="small">
 					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
 						<span v-if="isReview">{{ caseInfo.trackingId }}</span>
-						<el-input v-else v-model="caseInfo.trackingId" size="mini" style="width: 130px" />
+						<el-input v-else v-model="caseInfo.trackingId" size="mini" style="width: 130px" @change="trackingCase()" />
 					</el-form-item>
 					<el-form-item prop="dateReport" label="通報時間">
 						<span v-if="isReview">{{ formatTime(caseInfo.dateReport) }}</span>
@@ -397,6 +397,28 @@ export default {
 				this.panorama.setYaw(-80);
 				this.panorama.startAutoRotate(-20);
 			} else this.panorama.stopAutoRotate();
+		},
+		trackingCase() {
+			const caseFilter = this.caseGeoJson.casePrev.features.filter(caseSpec => caseSpec.properties.Id == Number(this.caseInfo.trackingId));
+
+			if(caseFilter.length > 0) {
+				const caseSpec = caseFilter[0].properties;
+				this.caseInfo = Object.assign({}, this.caseInfo, {
+					distressType: Number(caseSpec.DistressType),
+					distressLevel: Number(caseSpec.DistressLevel),
+					place: caseSpec.Place,
+					direction: caseSpec.Direction,
+					lane: caseSpec.Lane,
+					isPrev: caseSpec.isPrev,
+					imgZoomIn: caseSpec.ImgZoomIn,
+					imgZoomOut: caseSpec.ImgZoomOut
+				});
+			} else {
+				this.$message({
+					message: "查無此追蹤Id",
+					type: "error",
+				});
+			}
 		},
 		uploadCase() {
 			this.$confirm(`確定上傳缺失?`, "確認", { showClose: false }).then(() => {
