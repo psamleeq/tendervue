@@ -905,7 +905,7 @@ export default {
 			.el-card__body
 				position: relative
 				padding: 5px
-				max-height: 680px
+				max-height: calc(100vh - 50px - 160px)
 				overflow-x: hidden
 				overflow-y: auto
 				.el-form-item
