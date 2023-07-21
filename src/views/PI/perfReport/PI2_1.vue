@@ -222,18 +222,18 @@ export default {
 				district: '中山區',
 				requiredStandard:'完成巡查工作後必須及時登錄資料',//要求標準
 				measurement:'廠商於系統當天登錄資料數量/廠商當天通報數',//量測方式
-				sumInform_Num: '0件',//A
-				informed_Num: '0件',//B
-				companyInform_Num: '0件',//C
-				unreasonable_Num: '0件',//D
-				roadSystem_Num:'0件',//E
-				incomplete_Num: '0件',//F
-				companyCheck_Num: '0件',
-				supervisionCheckPass_Num: '0件',
-				supervisionCheckFail_Num: '0件',//G
-				organCheckPass_Num: '0件',
-				organCheckFail_Num: '0件',//H
-				totalIncomplete_Num: '0件',
+				sumInform_Num: '0',//A
+				informed_Num: '0',//B
+				companyInform_Num: '0',//C
+				unreasonable_Num: '0',//D
+				roadSystem_Num:'0',//E
+				incomplete_Num: '0',//F
+				companyCheck_Num: '0',
+				supervisionCheckPass_Num: '0',
+				supervisionCheckFail_Num: '0',//G
+				organCheckPass_Num: '0',
+				organCheckFail_Num: '0',//H
+				totalIncomplete_Num: '0',
 				EFA:'',
 				EFGA:'',
 				EFGHA:'',
@@ -316,27 +316,29 @@ export default {
 				'organCheckPass_Num',
 				'organCheckFail_Num',
 				'totalIncomplete_Num']) {
-				this.inputs[key] = this.inputForm[key] + ' 件';
+				this.inputs[key] = String(this.inputForm[key]);
 			}
 			//廠商自主檢查件數 = 廠商通報數(C)
-			 this.inputs.companyCheck_Num = this.inputForm.companyInform_Num + ' 件'
+			this.inputs.companyCheck_Num = String(this.inputForm.companyInform_Num);
 			
 			//計算指標數值
 			const A = this.inputForm.informed_Num+this.inputForm.companyInform_Num;
-			const E = this.inputForm.roadSystem_Num;
+			const E = this.inputForm.roadSystem_Num = A;
 			const F = this.inputForm.incomplete_Num;
 			const G = this.inputForm.supervisionCheckFail_Num;
 			const H = this.inputForm.organCheckFail_Num;
 			if(A==0){
 				this.inputs.EFA='';this.inputs.EFGA='';this.inputs.EFGHA='';
 			}else{
+				console.log(E, F, A);
 				this.inputs.EFA=String(((E-F)/A)*100)
 				this.inputs.EFGA=String(((E-F-G)/A)*100)
 				this.inputs.EFGHA=String(((E-F-G-H)/A)*100)
 			}
 			//計算所有通報數(A) && (E)=(A)
-			this.inputs.sumInform_Num = A+ ' 件';
-			this.inputs.roadSystem_Num = A+ ' 件';
+			this.inputs.sumInform_Num = String(A);
+			this.inputs.roadSystem_Num = String(A);
+
 			//應檢附文件
 			for(const key of ['checkCo_dailyInform','checkCo_dailyLogin','checkPeriod_Complete','checkPeriod_IncompleteLogin','pass','fail']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';

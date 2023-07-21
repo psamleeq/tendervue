@@ -215,15 +215,15 @@ export default {
 				district: '中山區',
 				requiredStandard:'廠商人員執行工作應滿足安全性要求',//要求標準
 				measurement:'當天滿足要求人次數/當日工作執行日報填寫人數',//量測方式
-				dailyReport_Num: '0 件',//A
-				qualifiedSafety_Num: '0 件',//B
-				unqualifiedSafety_Num: '0 件',//C
-				companyCheck_Num:'0 件',
-				supervisionCheckPass_Num: '0 件',
-				supervisionCheckFail_Num: '0 件',//D
-				organCheckPass_Num: '0 件',
-				organCheckFail_Num: '0 件',//E
-				totalUnqualified_Num: '0 件',
+				dailyReport_Num: '0',//A
+				qualifiedSafety_Num: '0',//B
+				unqualifiedSafety_Num: '0',//C
+				companyCheck_Num:'0',
+				supervisionCheckPass_Num: '0',
+				supervisionCheckFail_Num: '0',//D
+				organCheckPass_Num: '0',
+				organCheckFail_Num: '0',//E
+				totalUnqualified_Num: '0',
 				BCA:'',
 				BCDA:'',
 				BCDEA:'',
@@ -290,11 +290,11 @@ export default {
 				'organCheckPass_Num',
 				'organCheckFail_Num',
 				'totalUnqualified_Num']) {
-				this.inputs[key] = this.inputForm[key] + ' 件';
+				this.inputs[key] = String(this.inputForm[key]);
 			}
 			//計算當日工作執行日報填寫人次數(A) = 滿足安全性巡查人數(B) = 廠商自主檢查人次數
-			this.inputs.qualifiedSafety_Num = this.inputForm.dailyReport_Num+ ' 件';
-			this.inputs.companyCheck_Num = this.inputForm.dailyReport_Num+ ' 件';
+			this.inputs.qualifiedSafety_Num = String(this.inputForm.dailyReport_Num);
+			this.inputs.companyCheck_Num = String(this.inputForm.dailyReport_Num);
 			//計算指標數值
 			const A = this.inputForm.dailyReport_Num;
 			const B = this.inputForm.qualifiedSafety_Num = this.inputForm.dailyReport_Num;
