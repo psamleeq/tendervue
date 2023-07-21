@@ -18,6 +18,7 @@
 				</el-input>
 			</div>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
+			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 			<br>
 			<div class="filter-item">
 				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
@@ -29,7 +30,7 @@
 					</el-select>
 				</div>
 			</div>
-			<el-button type="success" :disabled="tableSelect.length == 0 || isUpload" @click="uploadCase()">上傳</el-button>
+			<el-button v-if="!filterNow" type="success" :disabled="tableSelect.length == 0 || isUpload" @click="uploadCase()">上傳</el-button>
 		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
@@ -52,7 +53,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && !importCaseObj[listQuery.tenderId].includes(row.id))" />
+			<el-table-column v-if="!filterNow" type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && !importCaseObj[listQuery.tenderId].includes(row.id))" />
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"
@@ -102,7 +103,9 @@
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.isEdit">
-						<el-button v-if="!Object.values(importCaseObj).flat().includes(row.id)" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
+						<el-button v-if="row.IsActive && !Object.values(importCaseObj).flat().includes(row.id)" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
+						<el-button v-if="row.IsActive && !Object.values(importCaseObj).flat().includes(row.id)" class="btn-action" type="danger" plain size="mini" round @click="setCaseState(row, 0)">刪除</el-button>
+						<el-button v-else-if="!row.IsActive && !Object.values(importCaseObj).flat().includes(row.id)" class="btn-action" type="success" plain size="mini" round @click="setCaseState(row, 1)">復原</el-button>
 						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
 					</el-button-group>
 					<span v-else> - </span>
@@ -142,6 +145,7 @@ export default {
 			isUpload: false,
 			showImgViewer: false,
 			dialogMapVisible: true,
+			filterNow: false,
 			map: {},
 			imgUrls: "",
 			// timeTabId: moment().year(),
@@ -152,6 +156,7 @@ export default {
 			// 	moment().endOf("year").toDate(),
 			// ],
 			listQuery: {
+				filter: false,
 				filterId: "",
 				filterType: 1,
 				caseInspectId: "",
@@ -408,6 +413,7 @@ export default {
 				}
 
 				getInspectionCaseList({
+					filter: this.listQuery.filter,
 					inspectId: inspectId,
 					caseId: caseId,
 					trackingId: trackingId,
@@ -415,6 +421,7 @@ export default {
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
+					this.filterNow = this.listQuery.filter;
 					if (response.data.list.length == 0) {
 						this.$message({
 							message: "查無資料",
@@ -456,6 +463,22 @@ export default {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",
+						type: "success",
+					});
+					this.getList();
+				} 
+			}).catch(err => {
+				console.log(err);
+				this.getList();
+			})
+		},
+		setCaseState(row, isActive) {
+			this.loading = true;
+
+			setInspectionCaseList(row.id, { isActive }).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: isActive ? "復原成功" : "刪除成功",
 						type: "success",
 					});
 					this.getList();
