@@ -409,9 +409,7 @@ export default {
 					place: caseSpec.Place,
 					direction: caseSpec.Direction,
 					lane: caseSpec.Lane,
-					isPrev: caseSpec.isPrev,
-					imgZoomIn: caseSpec.ImgZoomIn,
-					imgZoomOut: caseSpec.ImgZoomOut
+					isPrev: caseSpec.isPrev
 				});
 			} else {
 				this.$message({
