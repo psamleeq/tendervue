@@ -320,7 +320,7 @@ export default {
 				'companyInform_Num21',
 				'unreasonable_Num21',
 				'incomplete_Num21']) {
-				this.inputs[key] = this.inputForm[key] + ' 件';
+				this.inputs[key] = String(this.inputForm[key]);
 			}
 			//廠商自主檢查件數 = 廠商通報數(C)
 			 this.inputs.companyCheck_Num21 = String(this.inputForm.companyInform_Num21)

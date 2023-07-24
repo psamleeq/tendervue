@@ -320,7 +320,7 @@ export default {
 			for(const key of [ 
 				'dailyReport_Num31',
 				'unqualifiedSafety_Num31']) {
-				this.inputs[key] = this.inputForm[key] + ' 件';
+				this.inputs[key] = String(this.inputForm[key]);
 			}
 			//計算當日工作執行日報填寫人次數(A) = 滿足安全性巡查人數(B) = 廠商自主檢查人次數
 			this.inputs.qualifiedSafety_Num31 = String(this.inputForm.dailyReport_Num31);
