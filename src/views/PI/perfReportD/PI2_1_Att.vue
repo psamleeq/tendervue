@@ -1,6 +1,12 @@
 <template>
 	<div class="app-container PI2_1-Att" v-loading="loading">
 		<h2>PI2.1附件</h2>
+		<el-button-group>
+			<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
+			<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
+		</el-button-group>
+		<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
+
 		<div class="filter-container">
 			<!-- <span class="time-picker">
 				<el-button-group v-if="!dateTimePickerVisible">
@@ -119,8 +125,11 @@ export default {
 			loading: false,
 			timeTabId: 1,
 			initPage: 2,
+			listQuery: {
+				reportId: 0,
+				perfContentId: null
+			},
 			dateTimePickerVisible: false,
-			screenWidth: window.innerWidth,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -151,6 +160,7 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
+			list:[],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
@@ -189,6 +199,7 @@ export default {
 				// 	"name": "文山區"
 				// }
 			},
+			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
 				caseReportTotal: 0,
@@ -217,42 +228,48 @@ export default {
 				caseReportImg_neo2: '',
 				caseReportImg_neo3: ''
 			},
-			perfContentId:null,
-			list:[],
 		};
 	},
 	computed: { },
 	watch: {},
-	async created() {	
+	created() {	
 		// this.template = {};
 		this.schemasOri = {};
 		// this.form = {};
-	},
-	mounted() {
-		this.perfContentId = this.$route.query.row.id
-		// console.log(this.perfContentId);
 
-		getPerfContent({
-			contentId: this.perfContentId
-		}).then((response) => {
-			if (response.data.list.length == 0) {
-				this.$message({
-					message: "查無資料",
-					type: "error",
-				});
-			} else {
-				this.list = response.data.list;
-				if(this.list[0].content.length!=0){
-					this.inputs = this.list[0].content.inputs
-					this.inputForm = this.list[0].content.inputForm
-					this.searchDate = this.list[0].checkDate
+		if(this.$route.query.contentId) {
+			this.listQuery.reportId = this.$route.query.reportId;
+			this.listQuery.perfContentId = this.$route.query.contentId;
+
+			const cidList = this.$route.query.cidList.split(",");
+			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.pageTurn = [ 
+				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			];
+
+			getPerfContent({
+				contentId: this.listQuery.perfContentId
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list;
+					if(this.list[0].content.length!=0){
+						this.inputs = this.list[0].content.inputs
+						this.inputForm = this.list[0].content.inputForm
+						this.searchDate = this.list[0].checkDate
+					}
+					this.initPDF();
 				}
-				this.initPDF();
-			}
-			this.loading = false;
-		}).catch(err => { this.loading = false; });
-		
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
 	},
+	mounted() {},
 	methods: {
 		dateShortcuts(index) {
 			this.timeTabId = index;
@@ -377,7 +394,7 @@ export default {
 				inputForm:this.inputForm,
 				inputs:this.inputs
 			}
-			setPerfContent(this.perfContentId,{
+			setPerfContent(this.listQuery.perfContentId, {
 				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
 				content: JSON.stringify(storedContent)
 			}).then(response => {
@@ -409,8 +426,30 @@ export default {
 				document.body.removeChild(link);
 				URL.revokeObjectURL(url);
 			});
+		},
+		handlePageTurn(type) {
+			switch(type) {
+				case 0:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/edit",
+						query: { reportId: this.listQuery.reportId }
+					})
+					return;
+				case -1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI2_1",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+					})
+					return;
+				case 1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI2_1_Att_2",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+					})
+					return;
+			}
 		}
-	},
+	}
 };
 </script>
 

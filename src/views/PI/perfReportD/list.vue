@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container perfReportD-List" v-loading="loading">
-		<h2>日報表列表</h2>
+		<h2>日報表 - 列表</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
@@ -126,9 +126,8 @@ export default {
 			},
 			loading: false,
 			showNewPdf:false,
-			timeTabId: 1,
-			
-			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
+			timeTabId: 4,
+			dateRange: [ moment().startOf("month").toDate(), moment().endOf("month").toDate() ],
 			showPdfDialog:false,
 			pickerOptions: {
 				firstDayOfWeek: 1,
@@ -294,7 +293,9 @@ export default {
 	},
 	computed: { },
 	watch: { },
-	mounted() { },
+	mounted() { 
+		this.getList();
+	},
 	methods: {
 		formatDate(row,column){
 			const propertyName = column.property;
@@ -366,7 +367,7 @@ export default {
 			// console.log(row);
 			this.$router.push({
 				path: "/PIIndex/perfReportD/edit",
-				query: { row },
+				query: { reportId: row.id }
 			})
 		},
 		async previewPdf(row) {

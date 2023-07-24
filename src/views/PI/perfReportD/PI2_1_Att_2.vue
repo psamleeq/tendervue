@@ -1,6 +1,12 @@
 <template>
 	<div class="app-container">
-		<h2>PI-2.1附件</h2>
+		<h2>PI-2.1附件-2</h2>
+		<el-button-group>
+			<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
+			<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
+		</el-button-group>
+		<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
+
 		<el-row :gutter="24">
 			<!-- <div class="filter-container"> -->
 			
@@ -106,9 +112,13 @@ export default {
 	components: {TimePicker },
 	data() {
 		return {
-			imageUrl: '',
-			initPage:2,
 			timeTabId: 1,
+			imageUrl: '',
+			initPage: 2,
+			listQuery: {
+				reportId: 0,
+				perfContentId: null
+			},
 			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
 			searchDate: moment().startOf("d").subtract(1, "d"),
 			pickerOptions: {
@@ -189,6 +199,7 @@ export default {
 				// 	"name": "文山區"
 				// }
 			},
+			pageTurn: [-1, -1],
 			options: {
 				DeviceType: {},
 			},
@@ -218,13 +229,62 @@ export default {
 			this.pdfSetting.lineHeight = (this.pdfSetting.fontSize + 2) * 0.35;
 		}
 	},
-	created() {},
-	mounted() {
-		this.perfContentId = this.$route.query.row.id
-		// const row = this.$route.query.row
-		this.init(this.perfContentId);
-		
+	created() {
+		if(this.$route.query.contentId) {
+			this.listQuery.reportId = this.$route.query.reportId;
+			this.listQuery.perfContentId = this.$route.query.contentId;
+
+			const cidList = this.$route.query.cidList.split(",");
+			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.pageTurn = [ 
+				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			];
+			
+			// 讀入字型
+			const readBlob = (blob) => {
+				return new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onloadend = () => resolve(reader.result);
+					reader.readAsDataURL(blob);
+				});
+			};
+			fetch('/assets/font/edukai-4.0.ttf')
+			// .then(res => res.arrayBuffer())
+			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
+			.then(res => res.blob())
+			.then(async(blob) => {
+				this.viewer = new Viewer({
+					domContainer: this.$refs.pdfViewer,
+					template: {
+						basePdf: BLANK_PDF,
+						schemas: [{ }]
+					},
+					inputs: [{ }],
+					options: {
+						font:{
+							edukai: {
+								data: await blob.arrayBuffer(),
+								fallback: true
+							}
+						}
+					}
+				});
+				return readBlob(blob);
+			})
+			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
+			.then(fontBString => {
+				// init jsPDF
+				this.pdfDoc = new jsPDF();
+				this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+				this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+				this.pdfDoc.setFont("edukai");
+
+				this.init();
+			});
+		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
 	},
+	mounted() { },
 	methods: {
 		formatFormData(){
 			const date = moment(this.searchDate).subtract(1911, 'year');
@@ -238,10 +298,10 @@ export default {
 			//行政區
 			this.inputForm.district = this.districtList[this.inputForm.zipCode].name		
 		},
-		async init(id){
+		async init(){
 			new Promise((resolve, reject) => {
 				getPerfContent({
-					contentId: id
+					contentId: this.listQuery.perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
 						this.$message({
@@ -278,7 +338,7 @@ export default {
 					zipCode: this.inputForm.zipCode,
 					timeStart: startDate,
 					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-				}).then((response) => {
+				}).then(async (response) => {
 					if (response.data.list.length == 0) {
 						this.$message({
 							message: "查無資料",
@@ -289,47 +349,10 @@ export default {
 						this.list = response.data.list;
 						this.listNo1999 =this.list.filter(l => l.DistressSrc!=="1999交辦案件");
 						this.listUnreason = this.list.filter(l => l.State&16);
-						// 讀入字型
-						const readBlob = (blob) => {
-							return new Promise((resolve, reject) => {
-								const reader = new FileReader();
-								reader.onloadend = () => resolve(reader.result);
-								reader.readAsDataURL(blob);
-							});
-						};
-						fetch('/assets/font/edukai-4.0.ttf')
-						// .then(res => res.arrayBuffer())
-						// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
-						.then(res => res.blob())
-						.then(async(blob) => {
-							this.viewer = new Viewer({
-								domContainer: this.$refs.pdfViewer,
-								template: {
-									basePdf: BLANK_PDF,
-									schemas: [{ }]
-								},
-								inputs: [{ }],
-								options: {
-									font:{
-										edukai: {
-											data: await blob.arrayBuffer(),
-											fallback: true
-										}
-									}
-								}
-							});
-							return readBlob(blob);
-						})
-						.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
-						.then(async fontBString => {
-							// init jsPDF
-							this.pdfDoc = new jsPDF();
-							this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
-							this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
-							this.pdfDoc.setFont("edukai");
-							await this.previewPdf()
-							resolve();
-						});
+
+						await this.previewPdf()
+						resolve();
+						
 					}
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
@@ -515,21 +538,7 @@ export default {
 				this.loading = true;
 				this.formatFormData();
 				this.createPdf().then(() => {
-					const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => (
-						{
-							"OrderSN": {
-								"type": "text",
-								"position": {
-									"x": 10,
-									"y": 10
-								},
-								"width": 27.24,
-								"height": 6.12,
-								"fontSize": 14,
-								"alignment": "center"
-							}
-						}
-					));
+					const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => ({}));
 
 					this.viewer.updateTemplate({ basePdf: this.pdfDoc.output('bloburl'), schemas });
 					this.result = this.pdfDoc.output('dataurlstring');
@@ -589,6 +598,28 @@ export default {
 				URL.revokeObjectURL(url);
 			});
 		},
+		handlePageTurn(type) {
+			switch(type) {
+				case 0:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/edit",
+						query: { reportId: this.listQuery.reportId }
+					})
+					return;
+				case -1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI2_1_Att",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+					})
+					return;
+				case 1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI3_1",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+					})
+					return;
+			}
+		}
 	}
 }
 </script>

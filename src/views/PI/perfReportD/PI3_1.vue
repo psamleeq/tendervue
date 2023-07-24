@@ -1,14 +1,11 @@
 <template>
-	<div class="app-container PI3_1-Att" v-loading="loading">
+	<div class="app-container PI3_1" v-loading="loading">
 		<h2>PI3.1</h2>
-		<!-- <div class="filter-container">
-			<el-button
-				class="filter-item"
-				type="info"
-				icon="el-icon-document"
-				@click="handleDownload"
-			>輸出PDF</el-button>
-		</div> -->
+			<el-button-group>
+			<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
+			<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
+		</el-button-group>
+		<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
 
 		<el-row :gutter="24">
 			<el-col :span="11">
@@ -125,7 +122,6 @@ export default {
 			labelWidth1:'170px',
 			labelWidth2:'10px',
 			loading: false,
-			screenWidth: window.innerWidth,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -156,7 +152,12 @@ export default {
 				},
 			},
 			initPage:4,
+			listQuery: {
+				reportId: 0,
+				perfContentId: null
+			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
+			list:[],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
@@ -195,6 +196,7 @@ export default {
 				// 	"name": "文山區"
 				// }
 			},
+			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
 				dailyReport_Num31: 0,
@@ -246,41 +248,47 @@ export default {
 				// fail:'',
 				// failReson: '',
 			},
-			perfContentId:null,
-			list:[],
 		};
 	},
 	computed: { },
 	watch: {},
-	async created() {	
+	created() {	
 		// this.template = {};
 		// this.form = {};
-	},
-	mounted() {
-		this.perfContentId = this.$route.query.row.id
-		// console.log(this.perfContentId);
 
-		getPerfContent({
-			contentId: this.perfContentId
-		}).then((response) => {
-			if (response.data.list.length == 0) {
-				this.$message({
-					message: "查無資料",
-					type: "error",
-				});
-			} else {
-				this.list = response.data.list;
-				if(this.list[0].content.length!=0){
-					this.inputs = this.list[0].content.inputs
-					this.inputForm = this.list[0].content.inputForm
-					this.searchDate = this.list[0].checkDate
+		if(this.$route.query.contentId) {
+			this.listQuery.reportId = this.$route.query.reportId;
+			this.listQuery.perfContentId = this.$route.query.contentId;
+
+			const cidList = this.$route.query.cidList.split(",");
+			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.pageTurn = [ 
+				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			];
+
+			getPerfContent({
+				contentId: this.listQuery.perfContentId
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list;
+					if(this.list[0].content.length!=0){
+						this.inputs = this.list[0].content.inputs
+						this.inputForm = this.list[0].content.inputForm
+						this.searchDate = this.list[0].checkDate
+					}
+					this.initPDF();
 				}
-				this.initPDF();
-			}
-			this.loading = false;
-		}).catch(err => { this.loading = false; });
-		
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
 	},
+	mounted() { },
 	methods: {
 		initPDF() {
 			fetch(`/assets/pdf/PI3_1-Main.json?t=${Date.now()}`).then(async (response) => {
@@ -386,6 +394,28 @@ export default {
 				document.body.removeChild(link);
 				URL.revokeObjectURL(url);
 			});
+		},
+			handlePageTurn(type) {
+			switch(type) {
+				case 0:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/edit",
+						query: { reportId: this.listQuery.reportId }
+					})
+					return;
+				case -1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI2_1_Att_2",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+					})
+					return;
+				case 1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI3_1_Att",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+					})
+					return;
+			}
 		}
 	},
 };
@@ -395,7 +425,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PI3_1-Att
+.PI3_1
 	position: relative
 	.filter-container 
 		.filter-item
