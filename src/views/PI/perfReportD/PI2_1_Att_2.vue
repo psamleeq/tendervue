@@ -55,7 +55,7 @@
 								/>
 							</el-select>
 						</el-form-item>
-						<el-form-item label="通報日期">
+						<!-- <el-form-item label="通報日期">
 							<time-picker
 								class="filter-item"
 								:hasWeek="false"
@@ -63,7 +63,7 @@
 								:dateRange.sync="dateRange"
 								style="width: 200px"
 							/>
-						</el-form-item>
+						</el-form-item> -->
 						
 						<!-- <el-form-item label="施工廠商">
 							<el-input v-model="inputForm.companyName" controls-position="right" :min="1" style="width: 200px"/>
@@ -119,7 +119,6 @@ export default {
 				reportId: 0,
 				perfContentId: null
 			},
-			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
 			searchDate: moment().startOf("d").subtract(1, "d"),
 			pickerOptions: {
 				firstDayOfWeek: 1,
@@ -309,12 +308,13 @@ export default {
 							type: "error",
 						});
 					} else {
-						const l = response.data.list;
-						if(l[0].content.inputForm.length!=0){
+						const list = response.data.list;
+						if(list[0].content.length!=0){
 						// 	// this.inputs = l[0].content.inputs
-							this.inputForm = l[0].content.inputForm
-							this.searchDate = l[0].checkDate
+							this.inputForm = list[0].content.inputForm
 						}
+
+						this.searchDate = list[0].reportDate
 						// console.log(this.inputForm);
 						await this.getList();
 						resolve();
@@ -327,9 +327,9 @@ export default {
 		async getList() {
 			new Promise((resolve, reject) => {
 				this.loading = true;
-				dateWatcher(this.districtList[this.inputForm.zipCode].start, this.dateRange);
-				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
-				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+				dateWatcher(this.districtList[this.inputForm.zipCode].start, [this.searchDate, this.searchDate]);
+				let startDate = moment(this.searchDate).format("YYYY-MM-DD");
+				let endDate = moment(this.searchDate).add(1, "day").format("YYYY-MM-DD");
 				this.searchRange = startDate + " - " + endDate;
 				this.list = [];
 				getCaseList({

@@ -448,7 +448,7 @@ export default {
 				const [ add_copiedPage_13Att ] = await mergedPdf.copyPages(add_pdf_13Att, [0]);
 				const [ add_copiedPage_1 ] = await mergedPdf.copyPages(add_pdf_1, [0]);
 				const [ add_copiedPage_2 ] = await mergedPdf.copyPages(add_pdf_2, [0]);
-				const [ add_copiedPagef_jspdf1,add_copiedPagef_jspdf2 ] = await mergedPdf.copyPages(add_pdf_jspdf, [0,1]);
+				const [ add_copiedPagef_jspdf1, add_copiedPagef_jspdf2 ] = await mergedPdf.copyPages(add_pdf_jspdf, [0,1]);
 				const [ add_copiedPage_3 ] = await mergedPdf.copyPages(add_pdf_3, [0]);
 				const [ add_copiedPage_4 ] = await mergedPdf.copyPages(add_pdf_4, [0]);
 

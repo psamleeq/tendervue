@@ -246,7 +246,6 @@ export default {
 
 			const cidList = this.$route.query.cidList.split(",");
 			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
-			console.log(typeof pageIndex, pageIndex);
 			this.pageTurn = [ 
 				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 

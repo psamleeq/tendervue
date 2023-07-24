@@ -82,7 +82,9 @@ export default {
 			listQuery: {
 				reportId: 0
 			},
-			reportInfo: {},
+			reportInfo: {
+				zipCode: 104
+			},
 			list:[],
 			itemMap:{
 				201:{
