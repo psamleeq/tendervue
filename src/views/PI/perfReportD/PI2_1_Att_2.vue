@@ -240,49 +240,49 @@ export default {
 				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
+		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
 			
-			// 讀入字型
-			const readBlob = (blob) => {
-				return new Promise((resolve, reject) => {
-					const reader = new FileReader();
-					reader.onloadend = () => resolve(reader.result);
-					reader.readAsDataURL(blob);
-				});
-			};
-			fetch('/assets/font/edukai-4.0.ttf')
-			// .then(res => res.arrayBuffer())
-			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
-			.then(res => res.blob())
-			.then(async(blob) => {
-				this.viewer = new Viewer({
-					domContainer: this.$refs.pdfViewer,
-					template: {
-						basePdf: BLANK_PDF,
-						schemas: [{ }]
-					},
-					inputs: [{ }],
-					options: {
-						font:{
-							edukai: {
-								data: await blob.arrayBuffer(),
-								fallback: true
-							}
+		// 讀入字型
+		const readBlob = (blob) => {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onloadend = () => resolve(reader.result);
+				reader.readAsDataURL(blob);
+			});
+		};
+		fetch('/assets/font/edukai-4.0.ttf')
+		// .then(res => res.arrayBuffer())
+		// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
+		.then(res => res.blob())
+		.then(async(blob) => {
+			this.viewer = new Viewer({
+				domContainer: this.$refs.pdfViewer,
+				template: {
+					basePdf: BLANK_PDF,
+					schemas: [{ }]
+				},
+				inputs: [{ }],
+				options: {
+					font:{
+						edukai: {
+							data: await blob.arrayBuffer(),
+							fallback: true
 						}
 					}
-				});
-				return readBlob(blob);
-			})
-			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
-			.then(fontBString => {
-				// init jsPDF
-				this.pdfDoc = new jsPDF();
-				this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
-				this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
-				this.pdfDoc.setFont("edukai");
-
-				this.init();
+				}
 			});
-		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
+			return readBlob(blob);
+		})
+		.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
+		.then(fontBString => {
+			// init jsPDF
+			this.pdfDoc = new jsPDF();
+			this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+			this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+			this.pdfDoc.setFont("edukai");
+
+			if(this.listQuery.perfContentId) this.init();
+		});
 	},
 	mounted() { },
 	methods: {
@@ -298,10 +298,10 @@ export default {
 			//行政區
 			this.inputForm.district = this.districtList[this.inputForm.zipCode].name		
 		},
-		async init(){
+		async init(contentId){
 			new Promise((resolve, reject) => {
 				getPerfContent({
-					contentId: this.listQuery.perfContentId
+					contentId: contentId || this.listQuery.perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
 						this.$message({
@@ -563,7 +563,7 @@ export default {
 				inputForm:this.inputForm,
 				// inputs:this.inputs
 			}
-			setPerfContent(this.perfContentId,{
+			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
 				content: JSON.stringify(storedContent)
 			}).then(response => {

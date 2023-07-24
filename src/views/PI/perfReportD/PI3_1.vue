@@ -362,7 +362,7 @@ export default {
 				inputForm:this.inputForm,
 				inputs:this.inputs
 			}
-			setPerfContent(this.perfContentId,{
+			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
 				content: JSON.stringify(storedContent)
 			}).then(response => {

@@ -250,11 +250,7 @@ export default {
 					this.list = response.data.list;
 					if(this.list[0].content.length!=0){
 						this.inputs = this.list[0].content.inputs
-						// 
-						// if(this.list[0].content.inputForm.length>1){
-						// 	this.editAddPage()
-							this.inputFormArr = this.list[0].content.inputForm
-						// }
+						this.inputFormArr = this.list[0].content.inputForm
 						this.searchDate = this.list[0].checkDate
 						
 					}
@@ -281,6 +277,8 @@ export default {
 					// 	fallback: true
 					// }
 				};
+
+				if(this.list[0].content.inputForm.length > 1) this.addPage(false);
 
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {
@@ -324,7 +322,7 @@ export default {
 				// this.getList();
 			})
 		},
-		async addPage() {
+		async addPage(isAddInputFormArr = true) {
 			this.loading = true;
 
 			//Step1: 合併PDF
@@ -350,7 +348,9 @@ export default {
 
 			//Step2: 調整欄位
 			this.template.schemas.splice(this.template.schemas.length-1, 0, addTemplate.schemas[0]);
-			this.inputFormArr.push({
+
+			if(isAddInputFormArr) {
+				this.inputFormArr.push({
 					serialNumber: "",
 					checkVest: true,		// 反光背心
 					checkIdCard: true,	// 識別證
@@ -358,37 +358,8 @@ export default {
 					checkNum: 0,
 					failNum: 0,
 					reason: "無"
-			})
-
-			this.setTemplate();
-		},
-		async editAddPage() {
-			this.loading = true;
-
-			//Step1: 合併PDF
-			const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-			const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
-
-			const addTemplate = await fetch(`/assets/pdf/PI3_1-Att_1.json?t=${Date.now()}`).then(response => response.json());
-			const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-			const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
-			// const addPdfBytes = await fetch(`/assets/pdf/PI3_1-Att_1.pdf?t=${Date.now()}`).then(res => res.arrayBuffer());
-			// const add_pdf = await PDFDocument.load(addPdfBytes);
-			const mergedPdf = await PDFDocument.create();
-
-			const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
-			const [ add_copiedPage ] = await mergedPdf.copyPages(add_pdf, [0]);
-			ori_copiedPages.forEach(page => mergedPdf.addPage(page));
-			mergedPdf.insertPage(ori_pdf.getPageCount()-1, add_copiedPage);
-
-			// const mergedPdfFile = await mergedPdf.save();
-			// const blob = new Blob([mergedPdfFile.buffer], { type: 'application/pdf' });
-			// window.open(URL.createObjectURL(blob));
-			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
-
-			//Step2: 調整欄位
-			this.template.schemas.splice(this.template.schemas.length-1, 0, addTemplate.schemas[0]);
-
+				})
+			}
 			this.setTemplate();
 		},
 		async removePage(index) {
@@ -468,7 +439,7 @@ export default {
 				inputForm:this.inputFormArr,
 				inputs:this.inputs
 			}
-			setPerfContent(this.perfContentId,{
+			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
 				content: JSON.stringify(storedContent)
 			}).then(response => {
