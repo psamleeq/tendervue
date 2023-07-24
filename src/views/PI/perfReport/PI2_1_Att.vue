@@ -225,6 +225,7 @@ export default {
 	watch: {},
 	async created() {	
 		// this.template = {};
+		this.schemasOri = {};
 		// this.form = {};
 	},
 	mounted() {
@@ -297,7 +298,12 @@ export default {
 					// if(['contractName', 'companyName', 'serialNumber', 'date', 'district'].includes(arg.key)) this.inputs[arg.key] = arg.value;
 					if(['caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 					if(['caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2','caseReportImg_neo3'].includes(arg.key)) {
-						console.log(arg);
+						if(arg.value.length == 0) {
+							this.template.schemas[0][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[arg.key]));
+							delete this.schemasOri[arg.key];
+							this.form.updateTemplate(this.template);
+						}
+
 						const img = new Image();
 						img.onload = () => {
 							// console.log(img.width, img.height);
@@ -307,6 +313,9 @@ export default {
 							const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
 							// console.log(ratio);
 
+							this.schemasOri[arg.key] = JSON.parse(JSON.stringify(this.template.schemas[0][arg.key]));
+							this.template.schemas[0][arg.key].position.x = this.template.schemas[0][arg.key].position.x + (this.template.schemas[0][arg.key].width - img.width * ratio) / 2;
+							this.template.schemas[0][arg.key].position.y = this.template.schemas[0][arg.key].position.y + (this.template.schemas[0][arg.key].height - img.height * ratio) / 2;
 							this.template.schemas[0][arg.key].width = img.width * ratio;
 							this.template.schemas[0][arg.key].height = img.height * ratio;
 							this.form.updateTemplate(this.template);

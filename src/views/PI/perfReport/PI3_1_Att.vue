@@ -226,6 +226,7 @@ export default {
 	watch: {},
 	async created() {	
 		// this.template = {};
+		this.schemasOri = {};
 		// this.form = {};
 	},
 	mounted() {
@@ -285,6 +286,12 @@ export default {
 					if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
 					if(['checkNum', 'failNum', 'passNum'].includes(key)) this.inputFormArr[index-1][key] = Number(arg.value);
 					if(['checkImg'].includes(key)) {
+						if(arg.value.length == 0) {
+							this.template.schemas[index-1][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[index-1][arg.key]));
+							delete this.schemasOri[index-1][arg.key];
+							this.form.updateTemplate(this.template);
+						}
+
 						const img = new Image();
 						img.onload = () => {
 							// console.log(img.width, img.height);
@@ -294,6 +301,10 @@ export default {
 							const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
 							// console.log(ratio);
 
+							if(!this.schemasOri.hasOwnProperty(index-1)) this.schemasOri[index-1] = {};
+							this.schemasOri[index-1][arg.key] = JSON.parse(JSON.stringify(this.template.schemas[index-1][arg.key]));
+							this.template.schemas[index-1][arg.key].position.x = this.template.schemas[index-1][arg.key].position.x + (this.template.schemas[index-1][arg.key].width - img.width * ratio) / 2;
+							this.template.schemas[index-1][arg.key].position.y = this.template.schemas[index-1][arg.key].position.y + (this.template.schemas[index-1][arg.key].height - img.height * ratio) / 2;
 							this.template.schemas[index-1][arg.key].width = img.width * ratio;
 							this.template.schemas[index-1][arg.key].height = img.height * ratio;
 							this.form.updateTemplate(this.template);
