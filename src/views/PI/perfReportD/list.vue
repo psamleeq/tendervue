@@ -1,13 +1,13 @@
 <template>
-	<div class="app-container PI2_1-Att" v-loading="loading">
-		<h2>日報表編輯列表</h2>
+	<div class="app-container perfReportD-List" v-loading="loading">
+		<h2>日報表列表</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
 				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">檢查日期</div>
-				<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+				<div style="font-size: 12px; color: #909399">報告日期</div>
+				<time-picker class="filter-item" shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
@@ -60,16 +60,19 @@
 				<el-table-column
 					prop="reportDate"
 					label="報告日期"
-					:formatter="formatDate">
+					:formatter="formatDate"
+					align="center">
 				</el-table-column>
 				<el-table-column
 					prop="dutyWithName"
-					label="編輯人員">
+					label="編輯人員"
+					align="center">
 				</el-table-column>
 				<el-table-column
 					prop="dateComplete_At"
 					label="完成日期"
-					:formatter="formatDate">
+					:formatter="formatDate"
+					align="center">
 				</el-table-column>
 				<el-table-column label="動作" align="center">
 					<template slot-scope="{ row }">
@@ -106,11 +109,11 @@ import { getPerfReport, addPerfReport, getPerfReportList } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 // import PI21Att2 from '@/views/PI/perfReport/component/PI21Att2.vue'
-import PI21Att2 from '@/views/PI/perfReport/PI2_1_Att_2.vue'
+import PI21Att2 from '@/views/PI/perfReportD/PI2_1_Att_2.vue'
 
 export default {
-	name: "perfReportList",
-	components:{PI21Att2, TimePicker},
+	name: "perfReportDList",
+	components:{ PI21Att2, TimePicker },
 	data() {
 		return {
 			message:{
@@ -290,9 +293,8 @@ export default {
 		};
 	},
 	computed: { },
-	watch: {},
-	mounted() {
-	},
+	watch: { },
+	mounted() { },
 	methods: {
 		formatDate(row,column){
 			const propertyName = column.property;
@@ -303,7 +305,7 @@ export default {
 				return moment(row.reportDate).format('YYYY-MM-DD');
 			}
 			
-			return '';
+			return '-';
 		},
 		getList() {
 			this.loading = true;
@@ -348,7 +350,13 @@ export default {
 					}
 				]
 			}).then((response) => {
-				console.log(response);
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "新增成功",
+						type: "success",
+					});
+				}
+				this.getList();
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 			this.showNewPdf = false;
@@ -357,7 +365,7 @@ export default {
 		beforeEdit(row){
 			// console.log(row);
 			this.$router.push({
-				path: "/PIIndex/perfReportD/perfReportList",
+				path: "/PIIndex/perfReportD/edit",
 				query: { row },
 			})
 		},
@@ -376,8 +384,8 @@ export default {
 					this.targetId = this.listContent.find(obj => obj.perfItem === 201 && obj.perfAtt === 2).id;
 					
 					//把獲取回來的資料填進this.inputs
-					const mappedContents = this.listContent.map(l =>l.content.inputs).filter(content => content !== undefined);
-					console.log(mappedContents);
+					const mappedContents = this.listContent.map(l => l.content.inputs).filter(content => content !== undefined);
+					// console.log(mappedContents);
 					for (const obj of mappedContents) {
 						for (const key in obj) {
 							if (this.inputs.hasOwnProperty(key)) {

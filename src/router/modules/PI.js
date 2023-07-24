@@ -86,131 +86,76 @@ const PIRouter = {
 				vTag: 'Alpha' 
 			},
 			children: [
-				// {
-				// 	path: 'perfList',
-				// 	component: () => import('@/views/PI/expAnalysis/estimate'),
-				// 	name: 'perfList',
-				// 	meta: { 
-				// 		title: '成效資訊', 
-				// 		roles: ['beta'],
-				// 		vTag: 'Alpha' 
-				// 	}
-				// },
 				{
-					path: 'download',
-					component: () => import('@/views/PI/perfReport/download'),
-					name: 'download',
+					path: 'list',
+					component: () => import('@/views/PI/perfReportD/list'),
+					name: 'list',
 					meta: { 
-						title: '日報表總表', 
+						title: '日報表', 
 						roles: ['PIreport.21'],
 						vTag: 'Alpha' 
 					}
 				},
 				{
-					path: 'perfReportList',
-					component: () => import('@/views/PI/perfReport/perfReportList'),
-					name: 'perfReportList',
+					path: 'edit',
+					component: () => import('@/views/PI/perfReportD/edit'),
+					name: 'edit',
 					meta: { 
-						title: '日報表編輯列表', 
-						roles: ['PIreport.21'],
-						vTag: 'Alpha' 
-					}
+						title: '日報表編輯', 
+						roles: ['PIreport.21']
+					},
+					hidden: true
 				},
 				{
 					path: 'PI2_1',
-					component: () => import('@/views/PI/perfReport/PI2_1'),
+					component: () => import('@/views/PI/perfReportD/PI2_1'),
 					name: 'PI2_1',
 					meta: { 
 						title: 'PI2.1', 
-						roles: ['PIreport.21'],
-						vTag: 'Alpha' 
-					}
+						roles: ['PIreport.21']
+					},
+					hidden: true
 				},
 				{
 					path: 'PI2_1_Att',
-					component: () => import('@/views/PI/perfReport/PI2_1_Att'),
+					component: () => import('@/views/PI/perfReportD/PI2_1_Att'),
 					name: 'PI2_1_Att',
 					meta: { 
 						title: 'PI2.1附件', 
-						roles: ['PIreport.21'],
-						vTag: 'Alpha' 
-					}
+						roles: ['PIreport.21'] 
+					},
+					hidden: true
 				},
 				{
 					path: 'PI2_1_Att_2',
-					component: () => import('@/views/PI/perfReport/PI2_1_Att_2'),
+					component: () => import('@/views/PI/perfReportD/PI2_1_Att_2'),
 					name: 'PI2_1_Att_2',
 					meta: { 
 						title: 'PI2.1附件-2', 
-						roles: ['PIreport.21'],
-						vTag: 'Alpha' 
-					}
+						roles: ['PIreport.21']
+					},
+					hidden: true
 				},
 				{
 					path: 'PI3_1',
-					component: () => import('@/views/PI/perfReport/PI3_1'),
+					component: () => import('@/views/PI/perfReportD/PI3_1'),
 					name: 'PI3_1',
 					meta: {
 						title: 'PI3.1',
-						roles: ['PIreport.31'],
-						vTag: 'Alpha'
-					}
+						roles: ['PIreport.31']
+					},
+					hidden: true
 				},
 				{
 					path: 'PI3_1_Att',
-					component: () => import('@/views/PI/perfReport/PI3_1_Att'),
+					component: () => import('@/views/PI/perfReportD/PI3_1_Att'),
 					name: 'PI3_1_Att',
 					meta: {
 						title: 'PI3.1附件',
-						roles: ['PIreport.31'],
-						vTag: 'Alpha'
-					}
+						roles: ['PIreport.31']
+					},
+					hidden: true
 				}
-			]
-		},
-		{
-			path: 'perfReportW',
-			component: {
-				render: (c) => c('router-view')
-			},
-			name: 'perfReportW',
-			redirect: 'noRedirect',
-			meta: { 
-				title: '周報表', 
-				roles: ['PIreport'],
-				vTag: 'Alpha' 
-			},
-			children: [
-				{
-					path: 'PI2_2',
-					component: () => import('@/views/PI/perfReportW/PI2_2'),
-					name: 'PI2_2',
-					meta: { 
-						title: 'PI2.2', 
-						roles: ['PIreport.21'],
-						vTag: 'Alpha' 
-					}
-				},
-				{
-					path: 'PI3_2',
-					component: () => import('@/views/PI/perfReportW/PI3_2'),
-					name: 'PI3_2',
-					meta: { 
-						title: 'PI3.2', 
-						roles: ['PIreport.21'],
-						vTag: 'Alpha' 
-					}
-				},
-				{
-					path: 'PI4_1',
-					component: () => import('@/views/PI/perfReportW/PI4_1'),
-					name: 'PI4_1',
-					meta: { 
-						title: 'PI4.1', 
-						roles: ['PIreport.21'],
-						vTag: 'Alpha' 
-					}
-				},
 			]
 		},
 		{

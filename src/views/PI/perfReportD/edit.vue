@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container PI2_1-Att" v-loading="loading">
-		<h2>日報表編輯列表</h2>
+	<div class="app-container perfReportD-Edit" v-loading="loading">
+		<h2>日報表編輯</h2>
 		<el-table 
 		:data="list"
 		empty-text="目前沒有資料"
@@ -69,7 +69,7 @@
 import { getPerfReportList } from "@/api/PI";
 
 export default {
-	name: "perfReportList",
+	name: "perfReportDEdit",
 	components: { },
 	data() {
 		return {
