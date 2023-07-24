@@ -220,13 +220,13 @@ export default {
 				district: '中山區',
 				requiredStandard_21:'完成巡查工作後必須及時登錄資料',//要求標準
 				measurement_21:'廠商於系統當天登錄資料數量/廠商當天通報數',//量測方式
-				sumInform_Num21: '0件',//A
-				informed_Num21: '0件',//B
-				companyInform_Num21: '0件',//C
-				unreasonable_Num21: '0件',//D
-				roadSystem_Num21:'0件',//E
-				incomplete_Num21: '0件',//F
-				companyCheck_Num21: '0件',
+				sumInform_Num21: '0',//A
+				informed_Num21: '0',//B
+				companyInform_Num21: '0',//C
+				unreasonable_Num21: '0',//D
+				roadSystem_Num21:'0',//E
+				incomplete_Num21: '0',//F
+				companyCheck_Num21: '0',
 				EFA_21:'',
 				checkCo_dailyInform21:'',
 				checkCo_dailyLogin21:'',
@@ -323,7 +323,7 @@ export default {
 				this.inputs[key] = this.inputForm[key] + ' 件';
 			}
 			//廠商自主檢查件數 = 廠商通報數(C)
-			 this.inputs.companyCheck_Num21 = this.inputForm.companyInform_Num21 + ' 件'
+			 this.inputs.companyCheck_Num21 = String(this.inputForm.companyInform_Num21)
 			
 			//計算指標數值(A=E)
 			const A = this.inputForm.informed_Num21+this.inputForm.companyInform_Num21;
@@ -336,9 +336,9 @@ export default {
 			}else{
 				this.inputs.EFA_21=String(((E-F)/A)*100)
 			}
-			//計算所有通報數(A) && (E)=(A)
-			this.inputs.sumInform_Num21 = A+ ' 件';
-			this.inputs.roadSystem_Num21 = A+ ' 件';
+			//計算所有通報數(A) && (E)=(A)xw
+			this.inputs.sumInform_Num21 = String(A);
+			this.inputs.roadSystem_Num21 = String(A);
 			//應檢附文件
 			for(const key of ['checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';

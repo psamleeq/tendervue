@@ -226,10 +226,10 @@ export default {
 				district: '中山區',
 				requiredStandard_31:'廠商人員執行工作應滿足安全性要求',//要求標準
 				measurement_31:'當天滿足要求人次數/當日工作執行日報填寫人數',//量測方式
-				dailyReport_Num31: '0 件',//A
-				qualifiedSafety_Num31: '0 件',//B
-				unqualifiedSafety_Num31: '0 件',//C
-				companyCheck_Num31:'0 件',
+				dailyReport_Num31: '0',//A
+				qualifiedSafety_Num31: '0',//B
+				unqualifiedSafety_Num31: '0',//C
+				companyCheck_Num31:'0',
 				// supervisionCheckPass_Num: '0 件',
 				// supervisionCheckFail_Num: '0 件',//D
 				// organCheckPass_Num: '0 件',
@@ -323,8 +323,8 @@ export default {
 				this.inputs[key] = this.inputForm[key] + ' 件';
 			}
 			//計算當日工作執行日報填寫人次數(A) = 滿足安全性巡查人數(B) = 廠商自主檢查人次數
-			this.inputs.qualifiedSafety_Num31 = this.inputForm.dailyReport_Num31+ ' 件';
-			this.inputs.companyCheck_Num31 = this.inputForm.dailyReport_Num31+ ' 件';
+			this.inputs.qualifiedSafety_Num31 = String(this.inputForm.dailyReport_Num31);
+			this.inputs.companyCheck_Num31 = String(this.inputForm.dailyReport_Num31);
 			//計算指標數值
 			const A = this.inputForm.dailyReport_Num31;
 			const B = this.inputForm.qualifiedSafety_Num31 = this.inputForm.dailyReport_Num31;
