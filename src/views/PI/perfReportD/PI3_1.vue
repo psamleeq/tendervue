@@ -278,7 +278,7 @@ export default {
 					});
 				} else {
 					this.list = response.data.list;
-					if(this.list[0].content.length != 0){
+					if(Object.keys(this.list[0].content).length != 0) {
 						this.inputs = this.list[0].content.inputs;
 						this.inputForm = this.list[0].content.inputForm;
 					}

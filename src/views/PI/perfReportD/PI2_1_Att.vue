@@ -219,7 +219,7 @@ export default {
 					});
 				} else {
 					this.list = response.data.list;
-					if(this.list[0].content.length!=0){
+					if(Object.keys(this.list[0].content).length != 0) {
 						this.inputs = this.list[0].content.inputs;
 						this.inputForm = this.list[0].content.inputForm;
 					}
@@ -233,28 +233,6 @@ export default {
 	},
 	mounted() {},
 	methods: {
-		dateShortcuts(index) {
-			this.timeTabId = index;
-
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
-			};
-
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.checkDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.checkDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.checkDate = moment().subtract(2, "d");
-					break;
-			}
-			this.getList();
-		},
 		initPDF() {
 			fetch(`/assets/pdf/PI2_1-Att.json?t=${Date.now()}`).then(async (response) => {
 				const domContainer = this.$refs.container.$el;

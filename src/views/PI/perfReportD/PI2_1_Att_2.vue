@@ -312,7 +312,7 @@ export default {
 						});
 					} else {
 						this.list = response.data.list;
-						if(this.list[0].content.length!=0){
+						if(Object.keys(this.list[0].content).length != 0) {
 						// 	// this.inputs = l[0].content.inputs
 							this.inputForm = this.list[0].content.inputForm
 						}
@@ -563,8 +563,8 @@ export default {
 		},
 		storeData(){
 			const storedContent = {
-				pageCount:2,
-				inputForm:this.inputForm,
+				pageCount: this.pdfDoc.internal.getNumberOfPages(),
+				inputForm: this.inputForm,
 				// inputs:this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId,{

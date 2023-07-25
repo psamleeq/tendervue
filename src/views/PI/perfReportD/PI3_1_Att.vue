@@ -248,7 +248,7 @@ export default {
 					});
 				} else {
 					this.list = response.data.list;
-					if(this.list[0].content.length != 0){
+					if(Object.keys(this.list[0].content).length != 0){
 						this.inputs = this.list[0].content.inputs;
 						this.inputFormArr = this.list[0].content.inputForm;
 						
@@ -421,25 +421,9 @@ export default {
 			// this.form.render();
 			this.loading = false;
 		},
-		// getList() {
-		// 	this.loading = true;
-
-		// 	const date = moment(this.checkDate).format("YYYY-MM-DD");
-		// 	this.list = [];
-
-		// 	getCaseCount({
-		// 		timeStart: date,
-		// 		timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
-		// 	}).then(response => {
-		// 		this.inputForm.caseReportTotal = Number(response.data.result.caseReportTotal);
-
-		// 		this.setPDFinputs();
-		// 		this.loading = false;
-		// 	}).catch(err => this.loading = false);
-		// },
 		storeData(){
 			const storedContent = {
-				pageCount:1,
+				pageCount: this.inputFormArr.length + 1,
 				inputForm:this.inputFormArr,
 				inputs:this.inputs
 			}
