@@ -249,22 +249,21 @@ export default {
 					// }
 				};
 
-				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => {
-					// console.log(arg);
-					// if(['contractName', 'companyName', 'serialNumber', 'date', 'district'].includes(arg.key)) this.inputs[arg.key] = arg.value;
+				const changeInput = (arg) => {
 					if(['caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 					if(['caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2','caseReportImg_neo3'].includes(arg.key)) {
-						if(arg.value.length == 0) {
+						// console.log(arg);
+						if(this.schemasOri[arg.key]) {
 							this.template.schemas[0][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[arg.key]));
 							delete this.schemasOri[arg.key];
 							this.form.updateTemplate(this.template);
 						}
 
+						this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
+
 						const img = new Image();
 						img.onload = () => {
 							// console.log(img.width, img.height);
-							this.inputForm[arg.key] = arg.value;
 							const templateWidth = this.template.schemas[0][arg.key].width;
 							const templateHeight = this.template.schemas[0][arg.key].height;
 							const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
@@ -279,7 +278,12 @@ export default {
 						}
 						img.src = arg.value;
 					}
-				});
+				}
+
+				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+				this.form.onChangeInput(arg => changeInput(arg));
+
+				for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
 				this.getList();
 			})
 		},

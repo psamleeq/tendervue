@@ -279,30 +279,26 @@ export default {
 					// }
 				};
 
-				if(Object.keys(this.list[0].content).length > 0 && this.list[0].content.inputForm.length > 1) this.addPage(false);
-
-				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => {
-					// console.log(arg);
-					// const key = arg.key.slice(0, arg.key.length-1);
-					// const index = arg.key.slice(arg.key.length-1);
+				const changeInput = (arg) => {
+					// console.log(arg)
 					const [key, index] = arg.key.split(/([a-zA-Z]+)(\d?)/g).filter(s => s.length > 0);
 					// console.log(key, index);
 					// if(index == undefined) this.inputs[arg.key] = arg.value;
 					if(['serialNumber', 'reason'].includes(key)) this.inputFormArr[index-1][key] = arg.value;
 					if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
 					if(['checkNum', 'failNum', 'passNum'].includes(key)) this.inputFormArr[index-1][key] = Number(arg.value);
-					if(['checkImg'].includes(key)) {
-						if(arg.value.length == 0) {
+					if(key.includes('checkImg')) {
+						if(this.schemasOri[index-1] && this.schemasOri[index-1][arg.key]) {
 							this.template.schemas[index-1][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[index-1][arg.key]));
 							delete this.schemasOri[index-1][arg.key];
 							this.form.updateTemplate(this.template);
 						}
 
+						this.inputs[arg.key] = this.inputFormArr[index-1][key] = arg.value;
+
 						const img = new Image();
 						img.onload = () => {
 							// console.log(img.width, img.height);
-							this.inputFormArr[index-1][key] = arg.value;
 							const templateWidth = this.template.schemas[index-1][arg.key].width;
 							const templateHeight = this.template.schemas[index-1][arg.key].height;
 							const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
@@ -318,7 +314,14 @@ export default {
 						}
 						img.src = arg.value;
 					}
-				});
+				}
+
+				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+				this.form.onChangeInput(arg => changeInput(arg));
+
+				for(let i = 0; i < this.inputFormArr.length - 1; i++) await this.addPage(false);
+
+				for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
 				this.setPDFinputs();
 				// this.getList();
 			})
