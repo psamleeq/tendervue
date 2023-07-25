@@ -40,7 +40,7 @@
 								style="width: 200px"
 							/>
 						</el-form-item>
-						<el-form-item label="行政區">
+						<!-- <el-form-item label="行政區">
 							<el-select
 								class="filter-item"
 								v-model="inputForm.zipCode"
@@ -54,7 +54,7 @@
 									:value="Number(zip)"
 								/>
 							</el-select>
-						</el-form-item>
+						</el-form-item> -->
 						<!-- <el-form-item label="通報日期">
 							<time-picker
 								class="filter-item"
@@ -313,8 +313,9 @@ export default {
 						// 	// this.inputs = l[0].content.inputs
 							this.inputForm = list[0].content.inputForm
 						}
+						this.searchDate = list[0].reportDate;
+						this.inputForm.zipCode = list[0].zipCode;
 
-						this.searchDate = list[0].reportDate
 						// console.log(this.inputForm);
 						await this.getList();
 						resolve();

@@ -7,45 +7,6 @@
 		</el-button-group>
 		<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
 
-		<div class="filter-container">
-			<!-- <span class="time-picker">
-				<el-button-group v-if="!dateTimePickerVisible">
-					<el-button
-						v-for="(t, i) in pickerOptions.shortcuts"
-						:key="i"
-						type="primary"
-						:plain="i != timeTabId"
-						size="mini"
-						@click="dateShortcuts(i)"
-					>{{ t.text }}</el-button>
-				</el-button-group>
-				<el-date-picker
-					v-else
-					class="filter-item"
-					v-model="searchDate"
-					type="date"
-					placeholder="日期"
-					:picker-options="pickerOptions"
-					:clearable="false"
-					@change="timeTabId = -1"
-				/>
-				<el-button
-					:type="dateTimePickerVisible ? 'info' : 'primary'"
-					plain
-					size="mini"
-					@click="dateTimePickerVisible = !dateTimePickerVisible"
-				>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
-				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			</span> -->
-			<!-- <el-button
-				class="filter-item"
-				type="info"
-				icon="el-icon-document"
-				@click="handleDownload"
-			>輸出PDF</el-button> -->
-			<!-- <el-button class="filter-item" type="info" @click="setPDFinputs">更新內容</el-button> -->
-		</div>
-
 		<el-row :gutter="24">
 			<el-col :span="10">
 				<el-card shadow="never" style="width: 400px; margin: 40px auto; padding: 5px 10px;">
@@ -76,12 +37,11 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<el-form-item label="行政區">
+						<!-- <el-form-item label="行政區">
 							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="getList()" style="width: 200px">
 								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
 							</el-select>
-							<!-- <el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" /> -->
-						</el-form-item>
+						</el-form-item> -->
 						<!-- <el-form-item label="本日通報">
 							<el-input-number v-model="inputForm.caseReportTotal" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item> -->
@@ -259,10 +219,11 @@ export default {
 				} else {
 					this.list = response.data.list;
 					if(this.list[0].content.length!=0){
-						this.inputs = this.list[0].content.inputs
-						this.inputForm = this.list[0].content.inputForm
-						this.searchDate = this.list[0].checkDate
+						this.inputs = this.list[0].content.inputs;
+						this.inputForm = this.list[0].content.inputForm;
 					}
+					this.searchDate = this.list[0].reportDate;
+					this.inputs.zipCode = String(this.list[0].zipCode);
 					this.initPDF();
 				}
 				this.loading = false;

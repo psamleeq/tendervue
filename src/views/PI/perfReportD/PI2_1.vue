@@ -37,11 +37,11 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<el-form-item label="行政區" :label-width="labelWidth1">
+						<!-- <el-form-item label="行政區" :label-width="labelWidth1">
 							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()" style="width: 200px">
 								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
 							</el-select>
-						</el-form-item>
+						</el-form-item> -->
 						<el-divider />
 						<h4>所有通報數</h4>
 						<el-form-item label="被通報案件數" :label-width="labelWidth1">
@@ -262,10 +262,11 @@ export default {
 				} else {
 					this.list = response.data.list;
 					if(this.list[0].content.length != 0){
-						this.inputs = this.list[0].content.inputs
-						this.inputForm = this.list[0].content.inputForm
-						this.searchDate = this.list[0].checkDate
+						this.inputs = this.list[0].content.inputs;
+						this.inputForm = this.list[0].content.inputForm;
 					}
+					this.searchDate = this.list[0].reportDate;
+					this.inputs.zipCode = String(this.list[0].zipCode);
 					this.initPDF();
 				}
 
