@@ -6,22 +6,15 @@
 			<div>報告日期: {{ reportInfo.reportDate }}</div>
 		</aside>
 		<el-table 
-		:data="list"
-		empty-text="目前沒有資料"
-		border
-		fit
-		:header-cell-style="{ 'background-color': '#F2F6FC' }"
-		style="width: 100%"
+			:data="list"
+			empty-text="目前沒有資料"
+			border
+			fit
+			:header-cell-style="{ 'background-color': '#F2F6FC' }"
+			style="width: 100%"
 		>
-			<el-table-column
-				type="index"
-				label="序號"
-				width="60"
-				align="center">
-			</el-table-column>
-			<el-table-column
-				label="項目"
-				width="200">
+			<el-table-column type="index" label="序號" width="60" align="center" />
+			<el-table-column label="項目" width="200">
 				<template slot-scope="{ row }">
 					{{ formatItem(row.perfItem, row.perfAtt) }}
 				</template>
@@ -31,41 +24,18 @@
 					{{ getDescription(row.perfItem, row.perfAtt) }}
 				</template>
 			</el-table-column>
+			<el-table-column label="完成" align="center">
+					<template slot-scope="{ row }">
+						<span v-if="row.IsFinished" style="color: #67C23A"> V </span>
+						<span v-else style="color: #F56C6C"> X </span>
+					</template>
+				</el-table-column>
 			<el-table-column label="動作" align="center" width="100">
 				<template slot-scope="{ row }">
 					<el-button type="success" plain size="mini" @click="beforeEdit(row)"><i class="el-icon-edit"></i>編輯</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
-		<!-- <el-table 
-		:data="pdfList"
-		empty-text="目前沒有資料"
-		border
-		fit
-		:header-cell-style="{ 'background-color': '#F2F6FC' }"
-		style="width: 100%"
-		>
-			<el-table-column
-				type="index"
-				label="序號"
-				width="60"
-				align="center">
-			</el-table-column>
-			<el-table-column
-				prop="pdfPage"
-				label="項目"
-				width="200">
-			</el-table-column>
-			<el-table-column
-				prop="name"
-				label="說明">
-			</el-table-column>
-			<el-table-column label="動作" align="center" width="100">
-				<template slot-scope="{ row }">
-					<el-button type="success" plain size="mini" @click="beforeEdit(row)"><i class="el-icon-edit"></i>編輯</el-button>
-				</template>
-			</el-table-column>
-		</el-table> -->
 	</div>
 </template>
 

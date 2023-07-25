@@ -51,34 +51,20 @@
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
 			style="width: 100%"
 			>
-				<el-table-column
-					type="index"
-					label="序號"
-					width="60"
-					align="center">
+				<el-table-column type="index" label="序號" width="60" align="center" />
+				<el-table-column prop="reportDate" label="報告日期" :formatter="formatDate" align="center" />
+				<el-table-column prop="dutyWithName" label="編輯人員" align="center" />
+				<el-table-column label="進度" align="center">
+					<template slot-scope="{ row }">
+						<span :style="row.contentFin == row.contentTotal ? 'color: #67C23A' : 'color: #F56C6C'">{{ row.contentFin }}</span><span> / {{ row.contentTotal }}</span>
+					</template>
 				</el-table-column>
-				<el-table-column
-					prop="reportDate"
-					label="報告日期"
-					:formatter="formatDate"
-					align="center">
-				</el-table-column>
-				<el-table-column
-					prop="dutyWithName"
-					label="編輯人員"
-					align="center">
-				</el-table-column>
-				<el-table-column
-					prop="dateComplete_At"
-					label="完成日期"
-					:formatter="formatDate"
-					align="center">
-				</el-table-column>
+				<el-table-column prop="dateComplete_At" label="完成日期" :formatter="formatDate" align="center" />
 				<el-table-column label="動作" align="center">
 					<template slot-scope="{ row }">
 						<el-button-group>
 							<el-button type="success" plain size="mini" @click="beforeEdit(row)"><i class="el-icon-edit"></i>編輯</el-button>
-							<el-button type="info" plain size="mini" @click="previewPdf(row)" ><i class="el-icon-download"></i>下載</el-button>
+							<el-button type="info" plain size="mini" :disabled="row.contentFin != row.contentTotal" @click="previewPdf(row)" ><i class="el-icon-download"></i>下載</el-button>
 						</el-button-group>
 					</template>
 				</el-table-column>
@@ -335,10 +321,10 @@ export default {
 		},
 		addNewPdf(){
 			addPerfReport({
-				zipCode:this.addList.zipCode,
-				reportType:1,
-				reportDate:moment(this.addList.searchDate).format('YYYY-MM-DD'),//報告日期
-				perfItems:[
+				zipCode: this.addList.zipCode,
+				reportType: 1,
+				reportDate: moment(this.addList.searchDate).format('YYYY-MM-DD'),//報告日期
+				perfItems: [
 					{
 						"perfItem": 201,
 						"perfAtt": [0,1,2],
@@ -359,7 +345,21 @@ export default {
 				}
 				this.getList();
 				this.loading = false;
-			}).catch(err => { this.loading = false; });
+			}).catch(error => { 
+				let messageText = error.response.data.message;
+				if (messageText) {
+					switch (messageText) {
+						case "Duplicate!":
+							messageText = "重複";
+							break;
+					}
+					this.$message({
+						message: messageText,
+						type: "error",
+					});
+				}
+				this.loading = false; 
+			});
 			this.showNewPdf = false;
 			this.getList();
 		},
@@ -503,7 +503,6 @@ export default {
 			// console.log(this.inputs.caseReportImg);
 		},
 		downloadPdf() {
-			this.viewer.setInputs([{ "OrderSN": '' }]);
 			this.showPdfDialog = false;
 			this.handleDownload(`日報表.pdf`);
 		},
