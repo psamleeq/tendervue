@@ -158,7 +158,7 @@ export default {
 			},
 			checkDate: moment().startOf("d").subtract(1, "d"),
 			reportDate: null,
-			list:[],
+			// list:[],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"

@@ -121,7 +121,7 @@ export default {
 			},
 			checkDate: moment().startOf("d").subtract(1, "d"),
 			reportDate: null,
-			list:[],
+			// list:[],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
@@ -335,9 +335,7 @@ export default {
 		},
 		getList() {
 			this.loading = true;
-
 			const date = moment(this.checkDate).format("YYYY-MM-DD");
-			this.list = [];
 
 			getCaseCount({
 				zipCode: Number(this.inputs.zipCode),

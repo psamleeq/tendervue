@@ -133,6 +133,9 @@ export default {
 	mounted() { },
 	methods: {
 		getList(){
+			this.loading = true;
+			this.list = [];
+			
 			getPerfReportList({
 				reportId: this.listQuery.reportId
 			}).then((response) => {

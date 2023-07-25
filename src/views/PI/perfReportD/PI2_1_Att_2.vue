@@ -156,7 +156,7 @@ export default {
 				lineHeight: (14 + 2) * 0.35,
 				orientation: 'p'
 			},
-			list:[],
+			// list:[],
 			listNo1999:[],
 			listUnreason:[],
 			districtList: {
@@ -311,13 +311,13 @@ export default {
 							type: "error",
 						});
 					} else {
-						const list = response.data.list;
-						if(list[0].content.length!=0){
+						this.list = response.data.list;
+						if(this.list[0].content.length!=0){
 						// 	// this.inputs = l[0].content.inputs
-							this.inputForm = list[0].content.inputForm
+							this.inputForm = this.list[0].content.inputForm
 						}
-						this.checkDate = this.reportDate = list[0].reportDate;
-						this.inputForm.zipCode = list[0].zipCode;
+						this.checkDate = this.reportDate = this.list[0].reportDate;
+						this.inputForm.zipCode = this.list[0].zipCode;
 
 						// console.log(this.inputForm);
 						await this.getList();
@@ -334,7 +334,7 @@ export default {
 				dateWatcher(this.districtList[this.inputForm.zipCode].start, [this.reportDate, this.reportDate]);
 				let startDate = moment(this.reportDate).format("YYYY-MM-DD");
 				let endDate = moment(this.reportDate).add(1, "day").format("YYYY-MM-DD");
-				this.list = [];
+
 				getCaseList({
 					filterType: 2,
 					caseType: 2,
@@ -348,10 +348,9 @@ export default {
 							type: "error",
 						});
 					} else {
-						this.zipCodeNow = this.inputForm.zipCode;
-						this.list = response.data.list;
-						this.listNo1999 =this.list.filter(l => l.DistressSrc!=="1999交辦案件");
-						this.listUnreason = this.list.filter(l => l.State&16);
+						const list = response.data.list;
+						this.listNo1999 = list.filter(l => l.DistressSrc !== "1999交辦案件");
+						this.listUnreason = list.filter(l => l.State & 16);
 
 						await this.previewPdf()
 						resolve();
