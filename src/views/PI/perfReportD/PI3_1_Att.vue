@@ -279,7 +279,7 @@ export default {
 					// }
 				};
 
-				if(this.list[0].content.length > 0 && this.list[0].content.inputForm.length > 1) this.addPage(false);
+				if(Object.keys(this.list[0].content).length > 0 && this.list[0].content.inputForm.length > 1) this.addPage(false);
 
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {

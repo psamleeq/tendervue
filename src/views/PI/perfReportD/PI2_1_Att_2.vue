@@ -28,7 +28,7 @@
 						
 						<el-divider />
 						<el-form-item label="起始頁碼">
-							<el-input-number v-model="initPage" controls-position="right" :min="1" style="width: 200px" @change="getList()"/>
+							<el-input-number v-model="initPage" controls-position="right" :min="1" style="width: 200px" @change="previewPdf()"/>
 						</el-form-item>
 						<el-form-item label="檢查日期">
 							<el-date-picker
@@ -38,6 +38,7 @@
 								:picker-options="pickerOptions"
 								:clearable="false"
 								style="width: 200px"
+								@change="previewPdf()"
 							/>
 						</el-form-item>
 						<!-- <el-form-item label="行政區">
@@ -71,16 +72,17 @@
 						
 						<el-form-item label="1999通報" style="width: 400px">
 							<el-upload
-								class="upload-demo"
-								action="#"
+								list-type="picture"
+								action
+								accept=".jpg" 
+								:multiple="false" 
+								:limit="1" 
+								:auto-upload="false"
 								:on-change="handleChange"
 								:on-remove="handleRemove"
-								:auto-upload="false"
-								:multiple="false"
-								list-type="picture"
 								:file-list="inputForm.fileList"
 							>
-								<el-button type="primary" :disabled="imageUrl!=''">上傳圖片</el-button>
+								<el-button type="primary" :disabled="inputForm.fileList.length >= 1">上傳圖片</el-button>
 							</el-upload>
 						</el-form-item>
 					</el-form>
@@ -112,8 +114,6 @@ export default {
 	components: {TimePicker },
 	data() {
 		return {
-			timeTabId: 1,
-			imageUrl: '',
 			initPage: 2,
 			listQuery: {
 				reportId: 0,
@@ -360,19 +360,26 @@ export default {
 				}).catch(err => { this.loading = false; });
 			})
 		},
-		handleChange(file, fileList) {
-			this.imageUrl = URL.createObjectURL(file.raw);
-			// 在文件上傳時更新 fileList
-			this.inputForm.fileList = fileList.map((item) => ({
-				name: item.name,
-				size: item.size,
-				type: item.type,
-				url: item.url
-			}));
+		async handleChange(file, fileList) {
+			if(fileList.length > 1) fileList.shift();
+
+			const reader = new FileReader();
+			reader.readAsDataURL(file.raw);
+			reader.onloadend = (evt) => {
+				this.inputForm.fileList = [{
+					name: file.name,
+					size: file.size,
+					type: file.type,
+					url: evt.target.result
+				}];
+
+				this.previewPdf();
+			};
 		},
 		handleRemove(file, fileList) {
-			this.imageUrl ='';
 			this.inputForm.fileList = [];
+
+			this.previewPdf();
 		},
 		headRows() {
 			return [
@@ -406,10 +413,10 @@ export default {
 			return body
 		},
 		async createPdf() {
-			if(this.imageUrl!=''){
+			if(this.inputForm.fileList.length != 0){
 				// 獲取圖片實際高度寬度
 				const image = new Image();
-				image.src = this.imageUrl;
+				image.src = this.inputForm.fileList[0].url;
 				await image.decode();
 				this.imageWidth = image.width;
 				this.imageHeight = image.height;
@@ -417,6 +424,8 @@ export default {
 			
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
+				this.pdfDoc.addPage();
+				while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 
 				//第一頁
 				this.pdfDoc.setFontSize(15)
@@ -463,7 +472,7 @@ export default {
 					body: [[{content: '',styles: { minCellHeight: 40 }}]],
 					didDrawCell: async (data) => {
 						// 添加圖片到PDF中
-						if (data.column.index === 0 && data.row.index === 0 && this.imageUrl!='') {
+						if (data.column.index === 0 && data.row.index === 0 && this.inputForm.fileList.length != 0) {
 							const cellWidth = data.cell.width;
 							const cellHeight = data.cell.height;
 
@@ -481,7 +490,7 @@ export default {
 							const x = data.cell.x + (cellWidth - scaledWidth) / 2;
 							const y = data.cell.y + (cellHeight - scaledHeight) / 2;
 
-							await this.pdfDoc.addImage(this.imageUrl, 'JPEG', x, y, scaledWidth, scaledHeight);
+							await this.pdfDoc.addImage(this.inputForm.fileList[0].url, 'JPEG', x, y, scaledWidth, scaledHeight);
 						}
 						
 					},
@@ -535,24 +544,17 @@ export default {
 			})
 		},
 
-		async previewPdf(isInstant = false) {
+		async previewPdf() {
 			return new Promise((resolve, reject) => {
 				this.loading = true;
 				this.formatFormData();
 				this.createPdf().then(() => {
 					const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => ({}));
 
-					this.viewer.updateTemplate({ basePdf: this.pdfDoc.output('bloburl'), schemas });
 					this.result = this.pdfDoc.output('dataurlstring');
+					this.viewer.updateTemplate({ basePdf: this.result, schemas });
 					// console.log(this.result);
 					resolve();
-					
-					
-
-					// if(isInstant) this.downloadPdf();
-					// else {
-					// 	this.viewer.setInputs([{ "OrderSN": "(預覽列印)" }]);
-					// }
 				})
 				this.loading = false;
 				
