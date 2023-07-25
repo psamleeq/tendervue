@@ -1,6 +1,7 @@
 <template>
 	<div class="app-container perfReportD-Edit" v-loading="loading">
 		<h2>{{ options.reportTypeMap[reportInfo.reportType] }} - 編輯</h2>
+		<el-button type="info" size="mini" style="margin-bottom: 12px" @click="handlePageTurn()">返回</el-button>
 		<aside>
 			<div>區域: {{ options.districtList[reportInfo.zipCode].name }}</div>
 			<div>報告日期: {{ reportInfo.reportDate }}</div>
@@ -191,6 +192,11 @@ export default {
 			if (path !== '') {
 				this.$router.push({ path, query: { reportId: this.listQuery.reportId, contentId: row.id, cidList: this.list.map(l => l.id).join(",") } });
 			}
+		},
+		handlePageTurn() {
+			this.$router.push({
+				path: "/PIIndex/perfReportD/list",
+			})
 		}
 	}
 };
