@@ -382,7 +382,9 @@ export default {
 			}).then(response => {
 				this.inputForm.caseReportTotal = Number(response.data.result.caseReportTotal);
 				this.inputForm.ACTotal_Obs = Number(response.data.result.ACTotal_Obs);
+				this.inputForm.ACTotal_Reg = Number(response.data.result.ACTotal_Reg);
 				this.inputForm.facTotal_Obs = Number(response.data.result.facTotal_Obs);
+				this.inputForm.facTotal_Reg = Number(response.data.result.facTotal_Reg);
 
 				this.setPDFinputs();
 				this.loading = false;
