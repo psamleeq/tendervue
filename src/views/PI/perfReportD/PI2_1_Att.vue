@@ -28,7 +28,7 @@
 						</el-form-item>
 						<el-form-item label="檢查日期" >
 							<el-date-picker
-								v-model="searchDate"
+								v-model="checkDate"
 								type="date"
 								placeholder="日期"
 								:picker-options="pickerOptions"
@@ -119,7 +119,8 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
-			searchDate: moment().startOf("d").subtract(1, "d"),
+			checkDate: moment().startOf("d").subtract(1, "d"),
+			reportDate: null,
 			list:[],
 			districtList: {
 				// 100: {
@@ -222,7 +223,7 @@ export default {
 						this.inputs = this.list[0].content.inputs;
 						this.inputForm = this.list[0].content.inputForm;
 					}
-					this.searchDate = this.list[0].reportDate;
+					this.checkDate = this.reportDate = this.list[0].reportDate;
 					this.inputs.zipCode = String(this.list[0].zipCode);
 					this.initPDF();
 				}
@@ -243,13 +244,13 @@ export default {
 
 			switch (index) {
 				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
+					this.checkDate = moment();
 					break;
 				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
+					this.checkDate = moment().subtract(1, "d");
 					break;
 				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
+					this.checkDate = moment().subtract(2, "d");
 					break;
 			}
 			this.getList();
@@ -305,15 +306,17 @@ export default {
 			})
 		},
 		setPDFinputs() {
-			const date = moment(this.searchDate).subtract(1911, 'year');
-			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			//工程名稱
-			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
+			const reportDate = moment(this.reportDate).subtract(1911, 'year');
+			this.inputs.district = this.districtList[this.inputs.zipCode].name;
+			this.inputs.contractName = reportDate.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
 			//紀錄編號
 			for(let i=0; i < this.template.schemas.length; i++) {
-				this.inputs[`serialNumber_21Att_${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
+				this.inputs[`serialNumber_21Att_${i+1}`] = reportDate.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
+			//檢查日期
+			const checkDate = moment(this.checkDate).subtract(1911, 'year');
+			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
 			//資料數轉換
 			let sum = 0
 			for(const key of [ 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg' ]) {
@@ -333,7 +336,7 @@ export default {
 		getList() {
 			this.loading = true;
 
-			const date = moment(this.searchDate).format("YYYY-MM-DD");
+			const date = moment(this.checkDate).format("YYYY-MM-DD");
 			this.list = [];
 
 			getCaseCount({
@@ -358,7 +361,7 @@ export default {
 				inputs:this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId, {
-				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
+				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
 				content: JSON.stringify(storedContent)
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {

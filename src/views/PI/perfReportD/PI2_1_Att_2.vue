@@ -32,7 +32,7 @@
 						</el-form-item>
 						<el-form-item label="檢查日期">
 							<el-date-picker
-								v-model="searchDate"
+								v-model="checkDate"
 								type="date"
 								placeholder="日期"
 								:picker-options="pickerOptions"
@@ -119,7 +119,8 @@ export default {
 				reportId: 0,
 				perfContentId: null
 			},
-			searchDate: moment().startOf("d").subtract(1, "d"),
+			checkDate: moment().startOf("d").subtract(1, "d"),
+			reportDate: null,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -286,14 +287,16 @@ export default {
 	mounted() { },
 	methods: {
 		formatFormData(){
-			const date = moment(this.searchDate).subtract(1911, 'year');
 			//日期格式
-			this.inputForm.formatDate = date.format("YYYY年MM月DD日").slice(1);
+			const checkDate = moment(this.checkDate).subtract(1911, 'year');
+			this.inputForm.formatDate = checkDate.format("YYYY年MM月DD日").slice(1);
+			
+			const reportDate = moment(this.reportDate).subtract(1911, 'year');
 			//民國年份
-			this.inputForm.dateYear = date.year()
+			this.inputForm.dateYear = reportDate.year()
 			//紀錄編號
-			this.inputForm.serialNumber1 = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
-			this.inputForm.serialNumber2 = date.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
+			this.inputForm.serialNumber1 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
+			this.inputForm.serialNumber2 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
 			//行政區
 			this.inputForm.district = this.districtList[this.inputForm.zipCode].name		
 		},
@@ -313,7 +316,7 @@ export default {
 						// 	// this.inputs = l[0].content.inputs
 							this.inputForm = list[0].content.inputForm
 						}
-						this.searchDate = list[0].reportDate;
+						this.checkDate = this.reportDate = list[0].reportDate;
 						this.inputForm.zipCode = list[0].zipCode;
 
 						// console.log(this.inputForm);
@@ -328,10 +331,9 @@ export default {
 		async getList() {
 			new Promise((resolve, reject) => {
 				this.loading = true;
-				dateWatcher(this.districtList[this.inputForm.zipCode].start, [this.searchDate, this.searchDate]);
-				let startDate = moment(this.searchDate).format("YYYY-MM-DD");
-				let endDate = moment(this.searchDate).add(1, "day").format("YYYY-MM-DD");
-				this.searchRange = startDate + " - " + endDate;
+				dateWatcher(this.districtList[this.inputForm.zipCode].start, [this.reportDate, this.reportDate]);
+				let startDate = moment(this.reportDate).format("YYYY-MM-DD");
+				let endDate = moment(this.reportDate).add(1, "day").format("YYYY-MM-DD");
 				this.list = [];
 				getCaseList({
 					filterType: 2,
@@ -565,7 +567,7 @@ export default {
 				// inputs:this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId,{
-				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
+				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
 				content: JSON.stringify(storedContent)
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
