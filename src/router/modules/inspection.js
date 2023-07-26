@@ -20,8 +20,7 @@ const inspectionRouter = {
 			name: 'caseInspectionRoute',
 			meta: {
 				title: '巡查路線',
-				roles: ['inspection.editor'],
-				isNew: true
+				roles: ['inspection.editor']
 			}
 		},
 		{
@@ -30,8 +29,7 @@ const inspectionRouter = {
 			name: 'inspectionProgress',
 			meta: {
 				title: '巡查歷程',
-				roles: ['inspection.viewer'],
-				isNew: true
+				roles: ['inspection.viewer']
 			}
 		},
 		{
@@ -41,7 +39,6 @@ const inspectionRouter = {
 			meta: {
 				title: '缺失標記',
 				roles: ['inspection.marker'],
-				isNew: true
 			}
 		},
 		{
@@ -50,8 +47,7 @@ const inspectionRouter = {
 			name: 'caseMarkList',
 			meta: {
 				title: '標記列表',
-				roles: ['inspection.marker'],
-				isNew: true
+				roles: ['inspection.marker']
 			}
 		},
 		{
@@ -60,8 +56,7 @@ const inspectionRouter = {
 			name: 'caseTrackingList',
 			meta: {
 				title: '追蹤列表',
-				roles: ['inspection.marker'],
-				isNew: true
+				roles: ['inspection.marker']
 			}
 		},
 		{
