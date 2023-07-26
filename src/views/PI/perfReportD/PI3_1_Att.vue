@@ -203,7 +203,6 @@ export default {
 				companyName: '聖東營造股份有限公司',
 				serialNumber1: '1111102105',
 				serialNumber2: '1111102106',
-				serialNumber3: '1111102107',
 				date: '111年11月02日',
 				zipCode: '104',
 				district: '中山區',
@@ -247,15 +246,8 @@ export default {
 						type: "error",
 					});
 				} else {
-					this.list = response.data.list;
-					if(Object.keys(this.list[0].content).length != 0){
-						this.inputs = this.list[0].content.inputs;
-						this.inputFormArr = this.list[0].content.inputForm;
-						
-					}
-					this.checkDate = this.reportDate = this.list[0].reportDate;
-					this.inputs.zipCode = String(this.list[0].zipCode);
-					this.initPDF();
+					this.list = response.data.list[0];
+					this.setData(this.list);
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
@@ -263,67 +255,82 @@ export default {
 	},
 	mounted() { },
 	methods: {
+		async setData(dataObj) {
+			this.list = dataObj;
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
+				this.inputFormArr= this.list.content.inputFormArr;
+			}
+			this.reportDate = dataObj.reportDate;
+			if(!this.checkDate) this.checkDate = dataObj.reportDate;
+			this.inputs.zipCode = String(dataObj.zipCode);
+
+			await this.initPDF();
+		},
 		initPDF() {
-			fetch(`/assets/pdf/PI3_1-Att.json?t=${Date.now()}`).then(async (response) => {
-				const domContainer = this.$refs.container.$el;
-				this.template = await response.json();
+			return new Promise(resolve => {
+				fetch(`/assets/pdf/PI3_1-Att.json?t=${Date.now()}`).then(async (response) => {
+					const domContainer = this.$refs.container.$el;
+					this.template = await response.json();
 
-				const font = {
-					edukai: {
-						data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-						fallback: true
-					},
-					// NotoSansTC: {
-					// 	data: await fetch('/assets/font/NotoSansTC-Regular.ttf').then(res => res.arrayBuffer()),
-					// 	fallback: true
-					// }
-				};
+					const font = {
+						edukai: {
+							data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+							fallback: true
+						},
+						// NotoSansTC: {
+						// 	data: await fetch('/assets/font/NotoSansTC-Regular.ttf').then(res => res.arrayBuffer()),
+						// 	fallback: true
+						// }
+					};
 
-				const changeInput = (arg) => {
-					// console.log(arg)
-					const [key, index] = arg.key.split(/([a-zA-Z]+)(\d?)/g).filter(s => s.length > 0);
-					// console.log(key, index);
-					// if(index == undefined) this.inputs[arg.key] = arg.value;
-					if(['serialNumber', 'reason'].includes(key)) this.inputFormArr[index-1][key] = arg.value;
-					if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
-					if(['checkNum', 'failNum', 'passNum'].includes(key)) this.inputFormArr[index-1][key] = Number(arg.value);
-					if(key.includes('checkImg')) {
-						if(this.schemasOri[index-1] && this.schemasOri[index-1][arg.key]) {
-							this.template.schemas[index-1][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[index-1][arg.key]));
-							delete this.schemasOri[index-1][arg.key];
-							this.form.updateTemplate(this.template);
+					const changeInput = (arg) => {
+						// console.log(arg)
+						const [key, index] = arg.key.split(/([a-zA-Z]+)(\d?)/g).filter(s => s.length > 0);
+						// console.log(key, index);
+						// if(index == undefined) this.inputs[arg.key] = arg.value;
+						if( index < this.inputFormArr.length && ['serialNumber'].includes(key)) this.inputFormArr[index-1][key] = arg.value;
+						if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
+						if(['checkNum', 'failNum', 'passNum'].includes(key)) this.inputFormArr[index-1][key] = Number(arg.value);
+						if(key.includes('checkImg')) {
+							if(this.schemasOri[index-1] && this.schemasOri[index-1][arg.key]) {
+								this.template.schemas[index-1][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[index-1][arg.key]));
+								delete this.schemasOri[index-1][arg.key];
+								this.form.updateTemplate(this.template);
+							}
+
+							this.inputs[arg.key] = this.inputFormArr[index-1][key] = arg.value;
+
+							const img = new Image();
+							img.onload = () => {
+								// console.log(img.width, img.height);
+								const templateWidth = this.template.schemas[index-1][arg.key].width;
+								const templateHeight = this.template.schemas[index-1][arg.key].height;
+								const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
+								// console.log(ratio);
+
+								if(!this.schemasOri.hasOwnProperty(index-1)) this.schemasOri[index-1] = {};
+								this.schemasOri[index-1][arg.key] = JSON.parse(JSON.stringify(this.template.schemas[index-1][arg.key]));
+								this.template.schemas[index-1][arg.key].position.x = this.template.schemas[index-1][arg.key].position.x + (this.template.schemas[index-1][arg.key].width - img.width * ratio) / 2;
+								this.template.schemas[index-1][arg.key].position.y = this.template.schemas[index-1][arg.key].position.y + (this.template.schemas[index-1][arg.key].height - img.height * ratio) / 2;
+								this.template.schemas[index-1][arg.key].width = img.width * ratio;
+								this.template.schemas[index-1][arg.key].height = img.height * ratio;
+								this.form.updateTemplate(this.template);
+							}
+							img.src = arg.value;
 						}
-
-						this.inputs[arg.key] = this.inputFormArr[index-1][key] = arg.value;
-
-						const img = new Image();
-						img.onload = () => {
-							// console.log(img.width, img.height);
-							const templateWidth = this.template.schemas[index-1][arg.key].width;
-							const templateHeight = this.template.schemas[index-1][arg.key].height;
-							const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
-							// console.log(ratio);
-
-							if(!this.schemasOri.hasOwnProperty(index-1)) this.schemasOri[index-1] = {};
-							this.schemasOri[index-1][arg.key] = JSON.parse(JSON.stringify(this.template.schemas[index-1][arg.key]));
-							this.template.schemas[index-1][arg.key].position.x = this.template.schemas[index-1][arg.key].position.x + (this.template.schemas[index-1][arg.key].width - img.width * ratio) / 2;
-							this.template.schemas[index-1][arg.key].position.y = this.template.schemas[index-1][arg.key].position.y + (this.template.schemas[index-1][arg.key].height - img.height * ratio) / 2;
-							this.template.schemas[index-1][arg.key].width = img.width * ratio;
-							this.template.schemas[index-1][arg.key].height = img.height * ratio;
-							this.form.updateTemplate(this.template);
-						}
-						img.src = arg.value;
 					}
-				}
 
-				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => changeInput(arg));
+					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+					this.form.onChangeInput(arg => changeInput(arg));
 
-				for(let i = 0; i < this.inputFormArr.length - 1; i++) await this.addPage(false);
+					for(let i = 1; i < this.inputFormArr.length; i++) await this.addPage(false);
 
-				for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
-				this.setPDFinputs();
-				// this.getList();
+					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
+					this.setPDFinputs();
+					
+					resolve();
+				})
 			})
 		},
 		async addPage(isAddInputFormArr = true) {
@@ -427,7 +434,7 @@ export default {
 		storeData(){
 			const storedContent = {
 				pageCount: this.inputFormArr.length + 1,
-				inputForm:this.inputFormArr,
+				inputFormArr: this.inputFormArr,
 				inputs:this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId,{
@@ -443,6 +450,13 @@ export default {
 			}).catch(err => {
 				console.log(err);
 			})
+		},
+		async getPDF() {
+			return new Promise(resolve =>{
+				generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
+					resolve(pdf);
+				});
+			});
 		},
 		handleDownload() {
 			// console.log(this.form);

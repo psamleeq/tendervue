@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container">
+	<div class="app-container PI2_1-Att_2">
 		<h2>PI-2.1附件-2</h2>
 		<el-button-group>
 			<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
@@ -22,6 +22,7 @@
 								@click="storeData"
 								style="height:40px"
 							>儲存</el-button>
+							<!-- <el-button type="info" @click="handleDownload()" style="margin: 10px" icon="el-icon-document">輸出PDF</el-button> -->
 						</div>
 						<!-- <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="getList()">預覽</el-button> -->
 						<!-- <el-button type="success" @click="storeData" style="margin: 10px" icon="el-icon-document">儲存</el-button> -->
@@ -64,10 +65,6 @@
 								:dateRange.sync="dateRange"
 								style="width: 200px"
 							/>
-						</el-form-item> -->
-						
-						<!-- <el-form-item label="施工廠商">
-							<el-input v-model="inputForm.companyName" controls-position="right" :min="1" style="width: 200px"/>
 						</el-form-item> -->
 						
 						<el-form-item label="1999通報" style="width: 400px">
@@ -286,19 +283,17 @@ export default {
 	},
 	mounted() { },
 	methods: {
-		formatFormData(){
-			//日期格式
-			const checkDate = moment(this.checkDate).subtract(1911, 'year');
-			this.inputForm.formatDate = checkDate.format("YYYY年MM月DD日").slice(1);
-			
-			const reportDate = moment(this.reportDate).subtract(1911, 'year');
-			//民國年份
-			this.inputForm.dateYear = reportDate.year()
-			//紀錄編號
-			this.inputForm.serialNumber1 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
-			this.inputForm.serialNumber2 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
-			//行政區
-			this.inputForm.district = this.districtList[this.inputForm.zipCode].name		
+		async setData(dataObj) {
+			this.list = dataObj;
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputForm = this.list.content.inputForm
+			}
+			this.reportDate = this.list.reportDate;
+			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.inputForm.zipCode = this.list.zipCode;
+
+			if(Object.keys(this.list.content).length == 0) await this.getList();
+			else await this.previewPdf();
 		},
 		async init(contentId){
 			new Promise((resolve, reject) => {
@@ -311,16 +306,9 @@ export default {
 							type: "error",
 						});
 					} else {
-						this.list = response.data.list;
-						if(Object.keys(this.list[0].content).length != 0) {
-						// 	// this.inputs = l[0].content.inputs
-							this.inputForm = this.list[0].content.inputForm
-						}
-						this.checkDate = this.reportDate = this.list[0].reportDate;
-						this.inputForm.zipCode = this.list[0].zipCode;
+						this.list = response.data.list[0];
+						this.setData(this.list);
 
-						// console.log(this.inputForm);
-						await this.getList();
 						resolve();
 					}
 					this.loading = false;
@@ -543,7 +531,20 @@ export default {
 				resolve();
 			})
 		},
-
+		formatFormData(){
+			//日期格式
+			const checkDate = moment(this.checkDate).subtract(1911, 'year');
+			this.inputForm.formatDate = checkDate.format("YYYY年MM月DD日").slice(1);
+			
+			const reportDate = moment(this.reportDate).subtract(1911, 'year');
+			//民國年份
+			this.inputForm.dateYear = reportDate.year()
+			//紀錄編號
+			this.inputForm.serialNumber1 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
+			this.inputForm.serialNumber2 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
+			//行政區
+			this.inputForm.district = this.districtList[this.inputForm.zipCode].name		
+		},
 		async previewPdf() {
 			return new Promise((resolve, reject) => {
 				this.loading = true;
@@ -581,26 +582,13 @@ export default {
 				console.log(err);
 			})
 		},
-		downloadPdf() {
-			this.viewer.setInputs([{ "OrderSN": '' }]);
-			this.handleDownload(`PI2.1附件.pdf`);
-		},
-		handleDownload(filename) {
-			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
-				console.log(pdf);
-				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
-				// window.open(URL.createObjectURL(blob));
-
-				const file = new File([blob], filename, { type: 'application/pdf' });
-				const link = document.createElement('a');
-				const url = URL.createObjectURL(file);
-				link.href = url;
-				link.download = file.name;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				URL.revokeObjectURL(url);
+		async getPDF() {
+			return new Promise(resolve =>{
+				resolve(this.pdfDoc.output('arraybuffer'));
 			});
+		},
+		handleDownload() {
+			this.pdfDoc.save(`PI2.1附件-2.pdf`);
 		},
 		handlePageTurn(type) {
 			switch(type) {

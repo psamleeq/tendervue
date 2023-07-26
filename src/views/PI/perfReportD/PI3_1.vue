@@ -277,14 +277,8 @@ export default {
 						type: "error",
 					});
 				} else {
-					this.list = response.data.list;
-					if(Object.keys(this.list[0].content).length != 0) {
-						this.inputs = this.list[0].content.inputs;
-						this.inputForm = this.list[0].content.inputForm;
-					}
-					this.checkDate = this.reportDate = this.list[0].reportDate;
-					this.inputs.zipCode = String(this.list[0].zipCode);
-					this.initPDF();
+					this.list = response.data.list[0];
+					this.setData(this.list);
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
@@ -292,29 +286,44 @@ export default {
 	},
 	mounted() { },
 	methods: {
-		initPDF() {
-			fetch(`/assets/pdf/PI3_1-Main.json?t=${Date.now()}`).then(async (response) => {
-				const domContainer = this.$refs.container.$el;
-				this.template = await response.json();
+		async setData(dataObj) {
+			this.list = dataObj;
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
+				this.inputForm = this.list.content.inputForm;
+			}
+			this.reportDate = this.list.reportDate;
+			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.inputs.zipCode = String(this.list.zipCode);
 
-				const font = {
-					edukai: {
-						data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-						fallback: true
-					},
-				};
+			await this.initPDF();
+		},
+		async initPDF() {
+			return new Promise(resolve => {
+				fetch(`/assets/pdf/PI3_1-Main.json?t=${Date.now()}`).then(async (response) => {
+					const domContainer = this.$refs.container.$el;
+					this.template = await response.json();
 
-				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => {
-					if(['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31'].includes(arg.key)){
-						this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
-					}
-					if(['dailyReport_Num31','qualifiedSafety_Num31','unqualifiedSafety_Num31','companyCheck_Num31'].includes(arg.key)) {
-						this.inputForm[arg.key] = parseInt(arg.value)
-					}
+					const font = {
+						edukai: {
+							data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+							fallback: true
+						},
+					};
+
+					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+					this.form.onChangeInput(arg => {
+						if(['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31'].includes(arg.key)){
+							this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
+						}
+						if(['dailyReport_Num31','qualifiedSafety_Num31','unqualifiedSafety_Num31','companyCheck_Num31'].includes(arg.key)) {
+							this.inputForm[arg.key] = parseInt(arg.value)
+						}
+						this.setPDFinputs();
+					});
 					this.setPDFinputs();
-				});
-				this.setPDFinputs();
+					resolve();
+				})
 			})
 		},
 		setPDFinputs() {
@@ -378,6 +387,13 @@ export default {
 			}).catch(err => {
 				console.log(err);
 			})
+		},
+		async getPDF() {
+			return new Promise(resolve =>{
+				generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
+					resolve(pdf);
+				});
+			});
 		},
 		handleDownload() {
 			// console.log(this.form);

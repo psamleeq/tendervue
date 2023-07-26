@@ -75,11 +75,15 @@
 			<div ref="pdfViewer" />
 			<div slot="footer" class="dialog-footer">
 				<el-button @click="showPdfDialog = false">取消</el-button>
-				<el-button type="primary" @click="downloadPdf()">確定列印</el-button>
+				<el-button type="primary" @click="handleDownload()">下載</el-button>
 			</div>
 		</el-dialog>
 		
-		<PI21Att2 ref="PI21Att2" :message="message" style="display:none"></PI21Att2>
+		<PI21 v-show="false" ref="PI21" />
+		<PI21Att v-show="false" ref="PI21Att" />
+		<PI21Att2 v-show="false" ref="PI21Att2" />
+		<PI31 v-show="false" ref="PI31" />
+		<PI31Att v-show="false" ref="PI31Att" />
 	</div>
 </template>
 
@@ -94,27 +98,22 @@ import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getPerfReport, addPerfReport, getPerfReportList } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
-// import PI21Att2 from '@/views/PI/perfReport/component/PI21Att2.vue'
-import PI21Att2 from '@/views/PI/perfReportD/PI2_1_Att_2.vue'
+import PI21 from '@/views/PI/perfReportD/PI2_1.vue';
+import PI21Att from '@/views/PI/perfReportD/PI2_1_Att.vue';
+import PI21Att2 from '@/views/PI/perfReportD/PI2_1_Att_2.vue';
+import PI31 from '@/views/PI/perfReportD/PI3_1.vue';
+import PI31Att from '@/views/PI/perfReportD/PI3_1_Att.vue';
 
 export default {
 	name: "perfReportDList",
-	components:{ PI21Att2, TimePicker },
+	components:{ TimePicker, PI21, PI21Att, PI21Att2, PI31, PI31Att },
 	data() {
 		return {
-			message:{
-				zipCode:103,
-				searchDate:'2023-07-18',
-				startDate:'2023-06-01',
-				endDate:'2023-06-01',
-				imageUrl:'',
-				initPage:3,
-			},
 			loading: false,
 			showNewPdf:false,
 			timeTabId: 4,
 			dateRange: [ moment().startOf("month").toDate(), moment().endOf("month").toDate() ],
-			showPdfDialog:false,
+			showPdfDialog: true,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -280,6 +279,7 @@ export default {
 	computed: { },
 	watch: { },
 	mounted() { 
+		this.showPdfDialog = false;
 		this.getList();
 	},
 	methods: {
@@ -372,9 +372,10 @@ export default {
 		},
 		async previewPdf(row) {
 			this.loading = true;
+			
 			await getPerfReportList({
 				reportId: row.id
-			}).then((response) => {
+			}).then(async (response) => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
@@ -382,18 +383,14 @@ export default {
 					});
 				} else {
 					this.listContent = response.data.list;
-					this.targetId = this.listContent.find(obj => obj.perfItem === 201 && obj.perfAtt === 2).id;
-					
-					//把獲取回來的資料填進this.inputs
-					const mappedContents = this.listContent.map(l => l.content.inputs).filter(content => content !== undefined);
-					// console.log(mappedContents);
-					for (const obj of mappedContents) {
-						for (const key in obj) {
-							if (this.inputs.hasOwnProperty(key)) {
-								this.inputs[key] = obj[key];
-							}
-						}
-					}
+					const reportInfo = response.data.reportInfo;
+
+					// 代入個別報表
+					await this.$refs.PI21.setData(Object.assign(this.listContent[0], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
+					await this.$refs.PI21Att.setData(Object.assign(this.listContent[1], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
+					await this.$refs.PI21Att2.setData(Object.assign(this.listContent[2], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
+					await this.$refs.PI31.setData(Object.assign(this.listContent[3], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
+					await this.$refs.PI31Att.setData(Object.assign(this.listContent[4], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
 
 					//處理serialNumber
 					// console.log(this.inputs);
@@ -401,118 +398,59 @@ export default {
 					
 				}
 				this.loading = false;
-			}).catch(err => { this.loading = false; });
-			
-			//找到PI2.1附件-2那個obj，並獲取其id
-			await this.$refs.PI21Att2.init(this.targetId);
-			// console.log(this.$refs.PI21Att2);
-			setTimeout(()=>{
 				this.fetchPdf();
-			}, 1000)
-			this.showPdfDialog = true;
+				this.showPdfDialog = true;
+			}).catch(err => { this.loading = false; });
+
+			
 		},
-		fetchPdf(){
-			fetch(`/assets/pdf/PI3_1-Att.json?t=${Date.now()}`).then(async (response) => {
-				const domContainer = this.$refs.pdfViewer;
-				this.template = await response.json();
-				//PI3.1
-				//Step1: 合併PDF
-				const ori_pdfUint8_1 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-				const ori_pdf = await PDFDocument.load(ori_pdfUint8_1.buffer);
+		async fetchPdf(){
+			const domContainer = this.$refs.pdfViewer;
+			this.template = { "schemas": [], "basePdf": "" };
+			
+			const add_pdfUint8_21 = await this.$refs.PI21.getPDF();
+			const add_pdfUint8_21Att = await this.$refs.PI21Att.getPDF();
+			const add_arrayBuffer_21Att2 = await this.$refs.PI21Att2.getPDF();
+			const add_pdfUint8_31 = await this.$refs.PI31.getPDF();
+			const add_pdfUint8_31Att = await this.$refs.PI31Att.getPDF(); 
 
-				const addTemplate13Att = await fetch(`/assets/pdf/PI3_1-Att_2.json?t=${Date.now()}`).then(response => response.json());
-				const addTemplate_1 = await fetch(`/assets/pdf/PI3_1-Main.json?t=${Date.now()}`).then(response => response.json());
-				const addTemplate_2 = await fetch(`/assets/pdf/PI2_1-Att_3.json?t=${Date.now()}`).then(response => response.json());
-				const addTemplate_3 = await fetch(`/assets/pdf/PI2_1-Att.json?t=${Date.now()}`).then(response => response.json());
-				const addTemplate_4 = await fetch(`/assets/pdf/PI2_1-Main.json?t=${Date.now()}`).then(response => response.json());
-				// console.log(addTemplate_1);
-				
-				const add_pdfUint8_13Att = Uint8Array.from(window.atob(addTemplate13Att.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-				const add_pdfUint8_1 = Uint8Array.from(window.atob(addTemplate_1.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-				const add_pdfUint8_2 = Uint8Array.from(window.atob(addTemplate_2.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-				const add_pdfUint8_jspdf = Uint8Array.from(window.atob(this.$refs.PI21Att2.result.replace(/^data:application\/pdf;filename=generated.pdf;base64,/, '')), c => c.charCodeAt(0));
-				const add_pdfUint8_3 = Uint8Array.from(window.atob(addTemplate_3.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-				const add_pdfUint8_4 = Uint8Array.from(window.atob(addTemplate_4.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+			const add_pdf_21 = await PDFDocument.load(add_pdfUint8_21.buffer);
+			const add_pdf_21Att = await PDFDocument.load(add_pdfUint8_21Att.buffer);
+			const add_pdf_21Att2 = await PDFDocument.load(add_arrayBuffer_21Att2);
+			const add_pdf_31 = await PDFDocument.load(add_pdfUint8_31.buffer);
+			const add_pdf_31Att = await PDFDocument.load(add_pdfUint8_31Att.buffer);
 
-				const add_pdf_13Att = await PDFDocument.load(add_pdfUint8_13Att.buffer);
-				const add_pdf_1 = await PDFDocument.load(add_pdfUint8_1.buffer);
-				const add_pdf_2 = await PDFDocument.load(add_pdfUint8_2.buffer);
-				const add_pdf_jspdf = await PDFDocument.load(add_pdfUint8_jspdf.buffer);
-				const add_pdf_3 = await PDFDocument.load(add_pdfUint8_3.buffer);
-				const add_pdf_4 = await PDFDocument.load(add_pdfUint8_4.buffer);
+			const mergedPdf = await PDFDocument.create();
+			const add_copiedPage_21 = await mergedPdf.copyPages(add_pdf_21, add_pdf_21.getPageIndices());
+			const add_copiedPage_21Att = await mergedPdf.copyPages(add_pdf_21Att, add_pdf_21Att.getPageIndices());
+			const add_copiedPage_21Att2 = await mergedPdf.copyPages(add_pdf_21Att2, add_pdf_21Att2.getPageIndices());
+			const add_copiedPage_31 = await mergedPdf.copyPages(add_pdf_31, add_pdf_31.getPageIndices());
+			const add_copiedPage_31Att = await mergedPdf.copyPages(add_pdf_31Att, add_pdf_31Att.getPageIndices());
+			
+			for(const copiedPage of add_copiedPage_21) mergedPdf.addPage(copiedPage);
+			for(const copiedPage of add_copiedPage_21Att) mergedPdf.addPage(copiedPage);
+			for(const copiedPage of add_copiedPage_21Att2) mergedPdf.addPage(copiedPage);
+			for(const copiedPage of add_copiedPage_31) mergedPdf.addPage(copiedPage);
+			for(const copiedPage of add_copiedPage_31Att) mergedPdf.addPage(copiedPage);
 
-				const mergedPdf = await PDFDocument.create();
+			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
 
-				const ori_copiedPages_1 = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
-
-				const [ add_copiedPage_13Att ] = await mergedPdf.copyPages(add_pdf_13Att, [0]);
-				const [ add_copiedPage_1 ] = await mergedPdf.copyPages(add_pdf_1, [0]);
-				const [ add_copiedPage_2 ] = await mergedPdf.copyPages(add_pdf_2, [0]);
-				const [ add_copiedPagef_jspdf1, add_copiedPagef_jspdf2 ] = await mergedPdf.copyPages(add_pdf_jspdf, [0,1]);
-				const [ add_copiedPage_3 ] = await mergedPdf.copyPages(add_pdf_3, [0]);
-				const [ add_copiedPage_4 ] = await mergedPdf.copyPages(add_pdf_4, [0]);
-
-				ori_copiedPages_1.forEach(page => mergedPdf.addPage(page));
-				// console.log(this.listContent);
-				if(this.listContent[4].content.inputForm.length>1){
-					for (let i = 0; i < this.listContent[4].content.inputForm.length-2; i++) {
-						console.log(i);
-						// const element = array[index];
-						
-					}
-					mergedPdf.insertPage(ori_pdf.getPageCount()-1, add_copiedPage_13Att);
-				}
-				mergedPdf.insertPage(0, add_copiedPage_1);//PI13-Main
-				mergedPdf.insertPage(0, add_copiedPage_2);//PI12-Att(2)
-				mergedPdf.insertPage(0, add_copiedPagef_jspdf2);//PI12-Att_2(2)
-				mergedPdf.insertPage(0, add_copiedPagef_jspdf1);//PI12-Att_2(1)
-				mergedPdf.insertPage(0, add_copiedPage_3);//PI12-Att(1)
-				mergedPdf.insertPage(0, add_copiedPage_4);//PI12-Main
-				
-	
-				this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
-				// //Step2: 調整欄位
-				if(this.listContent[4].content.inputForm.length>1){
-					this.template.schemas.splice(this.template.schemas.length-1, 0, addTemplate13Att.schemas[0]);
-				}
-				
-				this.template.schemas.splice(0, 0, addTemplate_1.schemas[0]);
-				this.template.schemas.splice(0, 0, addTemplate_2.schemas[0]);
-				this.template.schemas.splice(0, 0, {});
-				this.template.schemas.splice(0, 0, {});
-				this.template.schemas.splice(0, 0, addTemplate_3.schemas[0]);
-				this.template.schemas.splice(0, 0, addTemplate_4.schemas[0]);
-				
-				// console.log(this.template);
-
-				
-
-				this.setTemplate();
-
-				const font = {
-					edukai: {
-						data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-						fallback: true
-					},
-				};
-				this.viewer = new Viewer({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				// console.log(this.viewer);
-			});
+			const font = {
+				edukai: {
+					data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+					fallback: true
+				},
+			};
+			this.viewer = new Viewer({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 		},
-		async setTemplate(){
-			// console.log(this.inputs.caseReportImg);
-		},
-		downloadPdf() {
+		handleDownload() {
 			this.showPdfDialog = false;
-			this.handleDownload(`日報表.pdf`);
-		},
-		handleDownload(filename) {
 			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
 				// console.log(pdf);
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
-				const file = new File([blob], filename, { type: 'application/pdf' });
+				const file = new File([blob], `日報表.pdf`, { type: 'application/pdf' });
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
 				link.href = url;

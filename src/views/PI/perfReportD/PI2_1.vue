@@ -109,6 +109,7 @@
 
 <script>
 import moment from "moment";
+import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
 import { getPerfContent, setPerfContent } from "@/api/PI";
 
@@ -261,14 +262,8 @@ export default {
 						type: "error",
 					});
 				} else {
-					this.list = response.data.list;
-					if(Object.keys(this.list[0].content).length != 0) {
-						this.inputs = this.list[0].content.inputs;
-						this.inputForm = this.list[0].content.inputForm;
-					}
-					this.checkDate = this.reportDate = this.list[0].reportDate;
-					this.inputs.zipCode = String(this.list[0].zipCode);
-					this.initPDF();
+					this.list = response.data.list[0];
+					this.setData(this.list);
 				}
 
 				this.loading = false;
@@ -277,39 +272,54 @@ export default {
 	},
 	mounted() { },
 	methods: {
-		initPDF() {
-			fetch(`/assets/pdf/PI2_1-Main.json?t=${Date.now()}`).then(async (response) => {
-				
-				const domContainer = this.$refs.container.$el;
-				this.template = await response.json();
+		async setData(dataObj) {
+			this.list = dataObj;
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
+				this.inputForm = this.list.content.inputForm;
+			}
+			this.reportDate = this.list.reportDate;
+			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.inputs.zipCode = String(this.list.zipCode);
 
-				const font = {
-					edukai: {
-						data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-						fallback: true
-					}
-				};
+			await this.initPDF();
+		},
+		async initPDF() {
+			return new Promise(resolve => {
+				fetch(`/assets/pdf/PI2_1-Main.json?t=${Date.now()}`).then(async (response) => {
+					const domContainer = this.$refs.container.$el;
+					this.template = await response.json();
 
-				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => {
-					// console.log(arg);
-					if(['checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21'].includes(arg.key)){
-						this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
-					}
-					if([
-						'informed_Num21',
-						'companyInform_Num21',
-						'unreasonable_Num21',
-						'incomplete_Num21',
-						'companyCheck_Num21'].includes(arg.key)) {
-						this.inputForm[arg.key] = parseInt(arg.value)
-					}
-					if(['failReason'].includes(arg.key)){
-						this.inputForm[arg.key] = arg.value
-					}
+					const font = {
+						edukai: {
+							data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+							fallback: true
+						}
+					};
+
+					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+					this.form.onChangeInput(arg => {
+						// console.log(arg);
+						if(['checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21'].includes(arg.key)){
+							this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
+						}
+						if([
+							'informed_Num21',
+							'companyInform_Num21',
+							'unreasonable_Num21',
+							'incomplete_Num21',
+							'companyCheck_Num21'].includes(arg.key)) {
+							this.inputForm[arg.key] = parseInt(arg.value)
+						}
+						if(['failReason'].includes(arg.key)){
+							this.inputForm[arg.key] = arg.value
+						}
+						this.setPDFinputs();
+					});
 					this.setPDFinputs();
-				});
-				this.setPDFinputs();
+
+					resolve();
+				})
 			})
 		},
 		setPDFinputs() {
@@ -374,6 +384,32 @@ export default {
 			}).catch(err => {
 				console.log(err);
 			})
+		},
+		async getPDF() {
+			return new Promise(resolve =>{
+				generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
+					resolve(pdf);
+				});
+			});
+		},
+		handleDownload() {
+			// console.log(this.form);
+			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
+				// console.log(pdf);
+				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
+				// window.open(URL.createObjectURL(blob));
+
+				const filename = "成效式契約指標檢核表PI-2-1.pdf"; 
+				const file = new File([blob], filename, { type: 'application/pdf' });
+				const link = document.createElement('a');
+				const url = URL.createObjectURL(file);
+				link.href = url;
+				link.download = file.name;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+			});
 		},
 		handlePageTurn(type) {
 			switch(type) {
