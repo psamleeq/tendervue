@@ -2,8 +2,8 @@
 	<div class="app-container perfReportD-List" v-loading="loading">
 		<h2>日報表 - 列表</h2>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
-				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(options.districtList).length <= 1">
+				<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 			</el-select>
 			<span class="filter-item">
 				<div style="font-size: 12px; color: #909399">報告日期</div>
@@ -13,14 +13,13 @@
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 			<el-button @click="showNewPdf = true" type="success" icon="el-icon-plus">新增</el-button>
 		</div>
-		
 
 		<el-dialog width="400px" title="新增" :visible.sync="showNewPdf">
 			<div>
 				<el-form :model="addList" label-width="80px">
 					<el-form-item label="行政區">
-						<el-select class="filter-item" v-model="addList.zipCode" :disabled="Object.keys(districtList).length <= 1" style="width: 250px;margin-bottom:15px">
-							<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+						<el-select class="filter-item" v-model="addList.zipCode" :disabled="Object.keys(options.districtList).length <= 1" style="width: 250px;margin-bottom:15px">
+							<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item label="報告日期">
@@ -52,19 +51,23 @@
 			style="width: 100%"
 			>
 				<el-table-column type="index" label="序號" width="60" align="center" />
-				<el-table-column prop="reportDate" label="報告日期" :formatter="formatDate" align="center" />
+				<el-table-column prop="reportDate" label="報告日期" align="center">
+					<template slot-scope="{ row, column }"> {{ formatDate(row[column.property]) }}</template>
+				</el-table-column>
 				<el-table-column prop="dutyWithName" label="編輯人員" align="center" />
 				<el-table-column label="進度" align="center">
 					<template slot-scope="{ row }">
 						<span :style="row.contentFin == row.contentTotal ? 'color: #67C23A' : 'color: #F56C6C'">{{ row.contentFin }}</span><span> / {{ row.contentTotal }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="dateComplete_At" label="完成日期" :formatter="formatDate" align="center" />
+				<el-table-column prop="dateComplete_At" label="完成日期" align="center">
+					<template slot-scope="{ row, column }"> {{ formatDate(row[column.property]) }}</template>
+				</el-table-column>
 				<el-table-column label="動作" align="center">
 					<template slot-scope="{ row }">
 						<el-button-group>
 							<el-button type="success" plain size="mini" @click="beforeEdit(row)"><i class="el-icon-edit"></i>編輯</el-button>
-							<el-button type="info" plain size="mini" :disabled="row.contentFin != row.contentTotal" @click="previewPdf(row)" ><i class="el-icon-download"></i>下載</el-button>
+							<el-button type="info" plain size="mini" :disabled="row.contentFin != row.contentTotal" @click="previewPdf(row)" ><i class="el-icon-download"></i>預覽</el-button>
 						</el-button-group>
 					</template>
 				</el-table-column>
@@ -89,9 +92,6 @@
 
 <script>
 import moment from "moment";
-import { jsPDF } from 'jspdf';
-import { applyPlugin } from 'jspdf-autotable';
-applyPlugin(jsPDF);
 import { PDFDocument } from 'pdf-lib';
 import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
@@ -150,48 +150,55 @@ export default {
 			listQuery:{
 				zipCode: 104
 			},
-			districtList: {
-				// 100: {
-				// 	"name": "中正區"
-				// },
-				103: {
-					"name": "大同區"
-				},
-				104: {
-					"name": "中山區"
-				},
-				// 105: {
-				// 	"name": "松山區"
-				// },
-				// 106: {
-				// 	"name": "大安區"
-				// },
-				// 108: {
-				// 	"name": "萬華區"
-				// },
-				// 110: {
-				// 	"name": "信義區"
-				// },
-				// 111: {
-				// 	"name": "士林區"
-				// },
-				// 112: {
-				// 	"name": "北投區"
-				// },
-				// 114: {
-				// 	"name": "內湖區"
-				// },
-				// 115: {
-				// 	"name": "南港區"
-				// },
-				// 116: {
-				// 	"name": "文山區"
-				// }
-			},
 			template:{},
+			rowActive: {},
 			list:[],
-			listContent:[]
-			// result: ''
+			listContent:[],
+			options: {
+				districtList: {
+					// 100: {
+					// 	"name": "中正區"
+					// },
+					103: {
+						"name": "大同區"
+					},
+					104: {
+						"name": "中山區"
+					},
+					// 105: {
+					// 	"name": "松山區"
+					// },
+					// 106: {
+					// 	"name": "大安區"
+					// },
+					// 108: {
+					// 	"name": "萬華區"
+					// },
+					// 110: {
+					// 	"name": "信義區"
+					// },
+					// 111: {
+					// 	"name": "士林區"
+					// },
+					// 112: {
+					// 	"name": "北投區"
+					// },
+					// 114: {
+					// 	"name": "內湖區"
+					// },
+					// 115: {
+					// 	"name": "南港區"
+					// },
+					// 116: {
+					// 	"name": "文山區"
+					// }
+				},
+				reportTypeMap: {
+					1: "日報表",
+					2: "週報表",
+					3: "月報表"
+				}
+			}
 		};
 	},
 	computed: { },
@@ -209,20 +216,9 @@ export default {
 		this.getList();
 	},
 	methods: {
-		formatDate(row,column){
-			const propertyName = column.property;
-
-			if (propertyName === 'dateComplete_At'&& row.propertyName!=null) {
-				return moment(row.dateComplete_At).format('YYYY-MM-DD');
-			} else if (propertyName === 'reportDate') {
-				return moment(row.reportDate).format('YYYY-MM-DD');
-			}
-			
-			return '-';
-		},
 		getList() {
 			this.loading = true;
-			dateWatcher(this.districtList[this.listQuery.zipCode].start, this.dateRange);
+			dateWatcher(this.options.districtList[this.listQuery.zipCode].start, this.dateRange);
 			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
@@ -298,6 +294,7 @@ export default {
 		},
 		async previewPdf(row) {
 			this.loading = true;
+			this.rowActive = row;
 			
 			await getPerfReportList({
 				reportId: row.id
@@ -368,24 +365,29 @@ export default {
 			this.showPdfDialog = true;
 		},
 		handleDownload() {
-			this.showPdfDialog = false;
-			generate({ template: this.viewer.getTemplate(), inputs: [{}], options: { font: this.viewer.getFont() } }).then(pdf => {
-				// console.log(pdf);
-				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
-				// window.open(URL.createObjectURL(blob));
+			this.$confirm(`<p>確定下載 ${this.formatDate(this.rowActive.reportDate)} ${this.options.reportTypeMap[this.rowActive.reportType]}? <br/>(下載封存後將<span style="color: #F56C6C">無法修改</span>。)</p>`, "確認", { dangerouslyUseHTMLString: true, showClose: false }).then(() => {
+				this.showPdfDialog = false;
+				generate({ template: this.viewer.getTemplate(), inputs: [{}], options: { font: this.viewer.getFont() } }).then(pdf => {
+					// console.log(pdf);
+					const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
+					// window.open(URL.createObjectURL(blob));
 
-				const file = new File([blob], `日報表.pdf`, { type: 'application/pdf' });
-				const link = document.createElement('a');
-				const url = URL.createObjectURL(file);
-				link.href = url;
-				link.download = file.name;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				URL.revokeObjectURL(url);
-			});
+					const file = new File([blob], `日報表.pdf`, { type: 'application/pdf' });
+					const link = document.createElement('a');
+					const url = URL.createObjectURL(file);
+					link.href = url;
+					link.download = file.name;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+					URL.revokeObjectURL(url);
+				});
+			})
 		},
-		
+		formatDate(date){
+			const momentDate = moment(date);
+			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
+		},
 	}
 };
 </script>
