@@ -190,89 +190,7 @@ export default {
 			},
 			template:{},
 			list:[],
-			listContent:[],
-			inputs: {
-				//共同
-				contractName: '111年度中山區道路巡查維護修繕成效式契約', 
-				companyName: '聖東營造股份有限公司',
-				// serialNumber: '',
-				date: '111年11月02日',
-				zipCode: '104',
-				district: '中山區',
-
-				//PI3.1_Att
-				serialNumber1:'',
-				serialNumber2:'',
-				serialNumber3:'',
-				checkVest1: 'V',		// 反光背心
-				checkIdCard1: 'V',	// 識別證
-				checkWhistle1: 'V',	// 哨子
-				checkVest2: 'V',
-				checkIdCard2: 'V',	
-				checkWhistle2: 'V',	// 工程帽
-				checkNum1: '0',
-				passNum1: '0',
-				failNum1: '0',
-				reason1: '無',
-				checkNum2: '0',
-				passNum2: '0',
-				failNum2: '0',
-				reason2: '無',
-				info1: '無未滿足',
-				info2: '無未滿足',
-				info3: '無未滿足',
-
-
-				//PI3.1
-				serialNumber_31:'',
-				requiredStandard_31:'廠商人員執行工作應滿足安全性要求',//要求標準
-				measurement_31:'當天滿足要求人次數/當日工作執行日報填寫人數',//量測方式
-				dailyReport_Num31: '0 件',//A
-				qualifiedSafety_Num31: '0 件',//B
-				unqualifiedSafety_Num31: '0 件',//C
-				companyCheck_Num31:'0 件',
-				BCA_31:'',
-				checkCo_dailyInspectAll31:'',
-				checkCo_discoverUnSafety31:'',
-				checkOr_discoverUnSafety31:'',
-				checkCo_unreasonable31:'',
-
-				//PI2.1_Att_3
-				
-				info1_21Att: '無',
-				info2_21Att: '無',
-
-				//PI2.1_Att_1
-				serialNumber_21Att_1:'',
-				serialNumber_21Att_2:'',
-				caseReportTotal: '0',
-				ACTotal_Obs: '0',
-				ACTotal_Reg: '0',
-				facTotal_Obs: '0',
-				facTotal_Reg: '0',
-				caseReportImg:'',
-				caseReportImg_neo1:'',
-				caseReportImg_neo2:'',
-				caseReportImg_neo3:'',
-
-				//PI2.1
-				serialNumber_21Main:'',
-				requiredStandard_21:'完成巡查工作後必須及時登錄資料',//要求標準
-				measurement_21:'廠商於系統當天登錄資料數量/廠商當天通報數',//量測方式
-				sumInform_Num21: '0件',//A
-				informed_Num21: '0件',//B
-				companyInform_Num21: '0件',//C
-				unreasonable_Num21: '0件',//D
-				roadSystem_Num21:'0件',//E
-				incomplete_Num21: '0件',//F
-				companyCheck_Num21: '0件',
-				EFA_21:'',
-				checkCo_dailyInform21:'',
-				checkCo_dailyLogin21:'',
-				checkPeriod_Complete21:'',
-				checkPeriod_IncompleteLogin21:'',
-			},
-			targetId:null
+			listContent:[]
 			// result: ''
 		};
 	},
@@ -441,11 +359,11 @@ export default {
 					fallback: true
 				},
 			};
-			this.viewer = new Viewer({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+			this.viewer = new Viewer({ domContainer, template: this.template, inputs: [{}], options: { font } });
 		},
 		handleDownload() {
 			this.showPdfDialog = false;
-			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
+			generate({ template: this.viewer.getTemplate(), inputs: [{}], options: { font: this.viewer.getFont() } }).then(pdf => {
 				// console.log(pdf);
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));

@@ -13,15 +13,12 @@
 			<el-col :span="11">
 				<el-card shadow="never" style="width: 500px; margin: 40px auto; padding: 5px 10px; ">
 					<el-form :model="inputForm" label-width="100px">
-					<div style="display:flex;justify-content:space-between;align-items: center">
+						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h2>通報資訊</h2>
-							<el-button
-								class="filter-item"
-								type="success"
-								icon="el-icon-document"
-								@click="storeData"
-								style="height:40px"
-							>儲存</el-button>
+							<el-button-group>
+								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
+							</el-button-group>
 							<!-- <el-button type="info" @click="handleDownload()" style="margin: 10px" icon="el-icon-document">輸出PDF</el-button> -->
 						</div>
 						<!-- <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="getList()">預覽</el-button> -->
@@ -100,7 +97,6 @@ import moment from "moment";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
-import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getCaseList,getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
@@ -248,38 +244,49 @@ export default {
 			});
 		};
 		fetch('/assets/font/edukai-4.0.ttf')
-		// .then(res => res.arrayBuffer())
-		// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
-		.then(res => res.blob())
-		.then(async(blob) => {
-			this.viewer = new Viewer({
-				domContainer: this.$refs.pdfViewer,
-				template: {
-					basePdf: BLANK_PDF,
-					schemas: [{ }]
-				},
-				inputs: [{ }],
-				options: {
-					font:{
-						edukai: {
-							data: await blob.arrayBuffer(),
-							fallback: true
+			.then(res => res.blob())
+			.then(async(blob) => {
+				this.viewer = new Viewer({
+					domContainer: this.$refs.pdfViewer,
+					template: {
+						basePdf: BLANK_PDF,
+						schemas: [{ }]
+					},
+					inputs: [{ }],
+					options: {
+						font:{
+							edukai: {
+								data: await blob.arrayBuffer(),
+								fallback: true
+							}
 						}
 					}
-				}
-			});
-			return readBlob(blob);
-		})
-		.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
-		.then(fontBString => {
-			// init jsPDF
-			this.pdfDoc = new jsPDF();
-			this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
-			this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
-			this.pdfDoc.setFont("edukai");
+				});
+				return readBlob(blob);
+			})
+			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
+			.then(fontBString => {
+				// init jsPDF
+				this.pdfDoc = new jsPDF();
+				this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+				this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+				this.pdfDoc.setFont("edukai");
 
-			if(this.listQuery.perfContentId) this.init();
-		});
+				getPerfContent({
+					contentId: this.listQuery.perfContentId
+				}).then(async(response) => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.list = response.data.list[0];
+						this.setData(this.list);
+					}
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
+			});
 	},
 	mounted() { },
 	methods: {
@@ -294,27 +301,6 @@ export default {
 
 			if(Object.keys(this.list.content).length == 0) await this.getList();
 			else await this.previewPdf();
-		},
-		async init(contentId){
-			new Promise((resolve, reject) => {
-				getPerfContent({
-					contentId: contentId || this.listQuery.perfContentId
-				}).then(async(response) => {
-					if (response.data.list.length == 0) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-					} else {
-						this.list = response.data.list[0];
-						this.setData(this.list);
-
-						resolve();
-					}
-					this.loading = false;
-				}).catch(err => { this.loading = false; });
-				
-			})
 		},
 		async getList() {
 			new Promise((resolve, reject) => {

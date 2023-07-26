@@ -13,13 +13,10 @@
 					<el-form :model="inputForm" label-width="100px">
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h2>通報資訊</h2>
-							<el-button
-								class="filter-item"
-								type="success"
-								icon="el-icon-document"
-								@click="storeData"
-								style="height:40px"
-							>儲存</el-button>
+							<el-button-group>
+								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
+							</el-button-group>
 						</div>
 						
 						<el-divider />
@@ -328,7 +325,7 @@ export default {
 		},
 		getList() {
 			this.loading = true;
-			const date = moment(this.checkDate).format("YYYY-MM-DD");
+			const date = moment(this.reportDate).format("YYYY-MM-DD");
 
 			getCaseCount({
 				zipCode: Number(this.inputs.zipCode),

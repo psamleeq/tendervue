@@ -13,13 +13,10 @@
 					<el-form label-width="100px">
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h2>工安登錄</h2>
-							<el-button
-								class="filter-item"
-								type="success"
-								icon="el-icon-document"
-								@click="storeData"
-								style="height:40px"
-							>儲存</el-button>
+							<el-button-group>
+								<!-- <el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button> -->
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
+							</el-button-group>
 						</div>
 						<el-divider />
 						<el-form-item label="起始頁碼">
