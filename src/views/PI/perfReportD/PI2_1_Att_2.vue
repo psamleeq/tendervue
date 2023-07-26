@@ -98,7 +98,7 @@ import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
-import { getCaseList,getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseList, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
@@ -233,46 +233,8 @@ export default {
 				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
-		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
-			
-		// 讀入字型
-		const readBlob = (blob) => {
-			return new Promise((resolve, reject) => {
-				const reader = new FileReader();
-				reader.onloadend = () => resolve(reader.result);
-				reader.readAsDataURL(blob);
-			});
-		};
-		fetch('/assets/font/edukai-4.0.ttf')
-			.then(res => res.blob())
-			.then(async(blob) => {
-				this.viewer = new Viewer({
-					domContainer: this.$refs.pdfViewer,
-					template: {
-						basePdf: BLANK_PDF,
-						schemas: [{ }]
-					},
-					inputs: [{ }],
-					options: {
-						font:{
-							edukai: {
-								data: await blob.arrayBuffer(),
-								fallback: true
-							}
-						}
-					}
-				});
-				return readBlob(blob);
-			})
-			.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
-			.then(fontBString => {
-				// init jsPDF
-				this.pdfDoc = new jsPDF();
-				this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
-				this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
-				this.pdfDoc.setFont("edukai");
 
-				getPerfContent({
+			getPerfContent({
 					contentId: this.listQuery.perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
@@ -286,7 +248,8 @@ export default {
 					}
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
-			});
+
+		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
 	},
 	mounted() { },
 	methods: {
@@ -299,8 +262,54 @@ export default {
 			if(!this.checkDate) this.checkDate = this.list.reportDate;
 			this.inputForm.zipCode = this.list.zipCode;
 
+			await this.initPDF();
+
 			if(Object.keys(this.list.content).length == 0) await this.getList();
 			else await this.previewPdf();
+		},
+		async initPDF() {
+			return new Promise(resolve => {
+				// 讀入字型
+				const readBlob = (blob) => {
+					return new Promise((resolve, reject) => {
+						const reader = new FileReader();
+						reader.onloadend = () => resolve(reader.result);
+						reader.readAsDataURL(blob);
+					});
+				};
+				
+				fetch('/assets/font/edukai-4.0.ttf')
+					.then(res => res.blob())
+					.then(async(blob) => {
+						this.viewer = new Viewer({
+							domContainer: this.$refs.pdfViewer,
+							template: {
+								basePdf: BLANK_PDF,
+								schemas: [{ }]
+							},
+							inputs: [{ }],
+							options: {
+								font:{
+									edukai: {
+										data: await blob.arrayBuffer(),
+										fallback: true
+									}
+								}
+							}
+						});
+						return readBlob(blob);
+					})
+					.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
+					.then(fontBString => {
+						// init jsPDF
+						this.pdfDoc = new jsPDF();
+						this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+						this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+						this.pdfDoc.setFont("edukai");
+
+						resolve();
+					});
+			})
 		},
 		async getList() {
 			new Promise((resolve, reject) => {
