@@ -196,8 +196,16 @@ export default {
 	},
 	computed: { },
 	watch: { },
-	mounted() { 
+	async mounted() { 
 		this.showPdfDialog = false;
+		const font = {
+			edukai: {
+				data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+				fallback: true
+			},
+		};
+		this.template = { "schemas": [], "basePdf": BLANK_PDF };
+		this.viewer = new Viewer({ domContainer: this.$refs.pdfViewer, template: this.template, inputs: [{}], options: { font } });
 		this.getList();
 	},
 	methods: {
@@ -303,29 +311,32 @@ export default {
 					this.listContent = response.data.list;
 					const reportInfo = response.data.reportInfo;
 
-					// 代入個別報表
+					// 計算頁數
+					const initPageArr = this.listContent
+						.map(l => (l.perfAtt == 2 ? 0 : l.content.pageCount))
+						.map((pageCount, index, array) => array.slice(0, index+1).reduce((acc, cur) => acc+cur) - pageCount + 1)
+
+					initPageArr.forEach((initPage, index) => { 
+						if(this.listContent[index].perfAtt == 2) this.listContent[index].content.initPage = this.listContent[index-1].content.initPage; 
+						else this.listContent[index].content.initPage = initPage; 
+					});
+
+					// 匯入個別報表
 					await this.$refs.PI21.setData(Object.assign(this.listContent[0], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
 					await this.$refs.PI21Att.setData(Object.assign(this.listContent[1], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
 					await this.$refs.PI21Att2.setData(Object.assign(this.listContent[2], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
 					await this.$refs.PI31.setData(Object.assign(this.listContent[3], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
 					await this.$refs.PI31Att.setData(Object.assign(this.listContent[4], { reportDate: reportInfo.reportDate, zipCode: String(reportInfo.zipCode) }));
-
-					//處理serialNumber
-					// console.log(this.inputs);
-					// this.inputs
 					
 				}
-				this.loading = false;
 				this.fetchPdf();
-				this.showPdfDialog = true;
+				
 			}).catch(err => { this.loading = false; });
 
 			
 		},
 		async fetchPdf(){
-			const domContainer = this.$refs.pdfViewer;
 			this.template = { "schemas": [], "basePdf": "" };
-			
 			const add_pdfUint8_21 = await this.$refs.PI21.getPDF();
 			const add_pdfUint8_21Att = await this.$refs.PI21Att.getPDF();
 			const add_arrayBuffer_21Att2 = await this.$refs.PI21Att2.getPDF();
@@ -347,19 +358,14 @@ export default {
 			
 			for(const copiedPage of add_copiedPage_21) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_21Att) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_21Att2) mergedPdf.addPage(copiedPage);
+			for(const copiedPage of add_copiedPage_21Att2) mergedPdf.insertPage(mergedPdf.getPageCount() - 1, copiedPage);
 			for(const copiedPage of add_copiedPage_31) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_31Att) mergedPdf.addPage(copiedPage);
 
 			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
-
-			const font = {
-				edukai: {
-					data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-					fallback: true
-				},
-			};
-			this.viewer = new Viewer({ domContainer, template: this.template, inputs: [{}], options: { font } });
+			this.viewer.updateTemplate(this.template);
+			this.loading = false;
+			this.showPdfDialog = true;
 		},
 		handleDownload() {
 			this.showPdfDialog = false;

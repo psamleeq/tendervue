@@ -274,6 +274,7 @@ export default {
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
 				this.inputForm = this.list.content.inputForm;
+				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
 			if(!this.checkDate) this.checkDate = this.list.reportDate;
@@ -349,7 +350,7 @@ export default {
 			if(A==0){
 				this.inputs.EFA_21=''
 			}else{
-				this.inputs.EFA_21=String(((E-F)/A)*100)
+				this.inputs.EFA_21 = String( Math.round(((E-F)/A)*10000) / 100)
 			}
 			//計算所有通報數(A) && (E)=(A)xw
 			this.inputs.sumInform_Num21 = String(A);
@@ -364,9 +365,10 @@ export default {
 		},
 		storeData(){
 			const storedContent = {
-				pageCount:1,
-				inputForm:this.inputForm,
-				inputs:this.inputs
+				pageCount: 1,
+				initPage: this.initPage,
+				inputForm: this.inputForm,
+				inputs: this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId, {
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),

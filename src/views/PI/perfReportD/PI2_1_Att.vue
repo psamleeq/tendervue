@@ -229,10 +229,11 @@ export default {
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
 				this.inputForm = this.list.content.inputForm;
+				this.initPage = this.list.content.initPage;
 			}
-			this.reportDate = dataObj.reportDate;
-			if(!this.checkDate) this.checkDate = dataObj.reportDate;
-			this.inputs.zipCode = String(dataObj.zipCode);
+			this.reportDate = this.list.reportDate;
+			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.inputs.zipCode = String(this.list.zipCode);
 
 			await this.initPDF();
 		},
@@ -344,9 +345,10 @@ export default {
 		},
 		storeData(){
 			const storedContent = {
-				pageCount:2,
-				inputForm:this.inputForm,
-				inputs:this.inputs
+				pageCount: 2,
+				initPage: this.initPage,
+				inputForm: this.inputForm,
+				inputs: this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId, {
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),

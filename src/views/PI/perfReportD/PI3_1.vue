@@ -288,6 +288,7 @@ export default {
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
 				this.inputForm = this.list.content.inputForm;
+				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
 			if(!this.checkDate) this.checkDate = this.list.reportDate;
@@ -349,9 +350,9 @@ export default {
 			// const D = this.inputForm.supervisionCheckFail_Num;
 			// const E = this.inputForm.organCheckFail_Num;
 			if(A==0){
-				this.inputs.BCA_31=''
+				this.inputs.BCA_31 = ''
 			}else{
-				this.inputs.BCA_31=String(((B-C)/A)*100)
+				this.inputs.BCA_31 = String( Math.round(((B-C)/A)*10000) /100 )
 				// this.inputs.BCDA=String(((B-C-D)/A)*100)
 				// this.inputs.BCDEA=String(((B-C-D-E)/A)*100)
 			}
@@ -367,9 +368,10 @@ export default {
 		},
 		storeData(){
 			const storedContent = {
-				pageCount:1,
-				inputForm:this.inputForm,
-				inputs:this.inputs
+				pageCount: 1,
+				initPage: this.initPage,
+				inputForm: this.inputForm,
+				inputs: this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
@@ -411,7 +413,7 @@ export default {
 				URL.revokeObjectURL(url);
 			});
 		},
-			handlePageTurn(type) {
+		handlePageTurn(type) {
 			switch(type) {
 				case 0:
 					this.$router.push({

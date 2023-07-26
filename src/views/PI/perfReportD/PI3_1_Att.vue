@@ -257,6 +257,7 @@ export default {
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
 				this.inputFormArr= this.list.content.inputFormArr;
+				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = dataObj.reportDate;
 			if(!this.checkDate) this.checkDate = dataObj.reportDate;
@@ -431,6 +432,7 @@ export default {
 		storeData(){
 			const storedContent = {
 				pageCount: this.inputFormArr.length + 1,
+				initPage: this.initPage,
 				inputFormArr: this.inputFormArr,
 				inputs:this.inputs
 			}

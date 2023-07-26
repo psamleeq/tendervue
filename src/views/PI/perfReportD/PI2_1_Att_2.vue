@@ -256,7 +256,8 @@ export default {
 		async setData(dataObj) {
 			this.list = dataObj;
 			if(Object.keys(this.list.content).length != 0) {
-				this.inputForm = this.list.content.inputForm
+				this.inputForm = this.list.content.inputForm;
+				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
 			if(!this.checkDate) this.checkDate = this.list.reportDate;
@@ -560,6 +561,7 @@ export default {
 		storeData(){
 			const storedContent = {
 				pageCount: this.pdfDoc.internal.getNumberOfPages(),
+				initPage: this.initPage,
 				inputForm: this.inputForm,
 				// inputs:this.inputs
 			}
