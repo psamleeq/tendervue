@@ -18,6 +18,19 @@
 				</el-input>
 			</div>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
+			<el-button
+				class="filter-item"
+				:type="listQuery.caseType.length == 0 ? 'success' : 'danger'"
+				:plain="listQuery.caseType.length != 0"
+				icon="el-icon-s-order"
+				@click="filterDialogOpen"
+				>過濾</el-button>
+			<el-button
+				v-if="listQuery.caseType.length != 0"
+				type="text"
+				size="mini"
+				@click="filterClear"
+				>清空過濾條件</el-button>
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 			<br>
 			<div class="filter-item">
@@ -41,6 +54,8 @@
 				<el-checkbox v-for="(value, key) in headers" :key="key" :label="key">{{ value.name }}</el-checkbox>
 			</el-checkbox-group>
 		</div>
+
+		<h5 v-if="list.length != 0">總案件：{{ total }}</h5>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -122,6 +137,28 @@
 			:url-list="imgUrls"
 		/>
 
+		<el-dialog
+			class="dialog-filter"
+			:visible.sync="dialogFilterVisible"
+			title="過濾條件"
+			width="800px"
+			:show-close="false"
+			center
+		>
+			<el-row>
+				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId">
+					<el-checkbox v-model="listQuery.caseType" :label="distressId">
+						{{ options.distressType[distressId] }} ({{ caseInfo[distressId] || 0 }})
+					</el-checkbox>
+				</el-col>
+			</el-row>
+
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="filterCancel">取消</el-button>
+				<el-button type="primary" @click="filterConfirm">確定</el-button>
+			</span>
+		</el-dialog>
+
 		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px">
 			<map-viewer :map.sync="map"/>
 		</el-dialog>
@@ -145,6 +182,7 @@ export default {
 			isUpload: false,
 			showImgViewer: false,
 			dialogMapVisible: true,
+			dialogFilterVisible: false,
 			filterNow: false,
 			map: {},
 			imgUrls: "",
@@ -161,6 +199,7 @@ export default {
 				filterType: 1,
 				caseInspectId: "",
 				tenderId: 91,
+				caseType: [],
 				pageCurrent: 1,
 				pageSize: 50,
 			},
@@ -231,12 +270,13 @@ export default {
 			total: 0,
 			importCaseObj: {},
 			list: [],
+			caseInfo: {},
 			tableSelect: [],
 			headersCheckVal: [],
 			allHeaders: true,
 			options: {
 				tenderMap: {},
-				DistressType: {
+				distressType: {
 					15: "坑洞",
 					29: "縱向及橫向裂縫",
 					16: "龜裂",
@@ -255,6 +295,7 @@ export default {
 					66: "骨材剝落",
 					58: "人孔高差"
 				},
+				distressTypeOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58 ],
 				pciCaseTypeMap: {
 					15: "坑洞",
 					29: "縱橫裂縫",
@@ -298,7 +339,7 @@ export default {
 				result[key] = this.headers[key];
 				return result;
 			}, {});
-		},
+		}
 	},
 	watch: {
 		allHeaders(val) {
@@ -309,6 +350,7 @@ export default {
 	created() {
 		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
 		else this.headersCheckVal = [];
+
 		getTenderMap().then(response => {
 			this.options.tenderMap = response.data.tenderMap;
 			if(Object.keys(this.options.tenderMap).length > 0) {
@@ -418,6 +460,7 @@ export default {
 					caseId: caseId,
 					trackingId: trackingId,
 					dutyWith: dutyWith,
+					caseType: this.listQuery.caseType.join(","),
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
@@ -429,6 +472,7 @@ export default {
 						});
 						this.total = 0;
 					} else {
+						this.caseInfo = response.data.caseInfo;
 						this.total = response.data.total;
 						this.list = response.data.list;
 						this.list.forEach(l => {
@@ -444,6 +488,24 @@ export default {
 					this.loading = false;
 				}).catch(err => this.loading = false);
 			}
+		},
+		filterDialogOpen() {
+			this.dialogFilterVisible = true;
+			this.caseTypeTemp = JSON.parse(JSON.stringify(this.listQuery.caseType));
+		},
+		filterConfirm() {
+			this.listQuery.pageCurrent = 1;
+			this.dialogFilterVisible = false;
+			this.getList();
+		},
+		filterCancel() {
+			this.dialogFilterVisible = false;
+			this.listQuery.caseType = JSON.parse(JSON.stringify(this.caseTypeTemp));
+		},
+		filterClear() {
+			this.listQuery.caseType = [];
+			this.listQuery.pageCurrent = 1;
+			this.getList();
 		},
 		setCaseInfo(row) {
 			this.loading = true;
@@ -529,7 +591,7 @@ export default {
 			row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
 		},
 		formatter(row, column) {
-			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
+			if (["DistressType"].includes(column.property)) return this.options.distressType[row.DistressType];
 			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
 			else if (["roadDir"].includes(column.property)) return `${this.options.roadDir[row.Direction]}-${row.Lane}`;
 			else if (!["id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
