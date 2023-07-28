@@ -144,10 +144,12 @@ export default {
 				// },
 				103: {
 					"name": "大同區",
+					"tenderName": "112年度大同區道路巡查維護修繕成效式契約",
 					"start": "2023/2/1"
 				},
 				104: {
 					"name": "中山區",
+					"tenderName": "111年度中山區道路巡查維護修繕成效式契約",
 					"start": "2022/6/1"
 				},
 				// 105: {
@@ -217,7 +219,7 @@ export default {
 			this.inputForm.serialNumber1 = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
 			this.inputForm.serialNumber2 = date.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
 			//行政區
-			this.district = this.districtList[this.listQuery.zipCode].name		
+			this.inputForm.district = this.districtList[this.listQuery.zipCode].name		
 		},
 		getList() {
 			this.loading = true;
@@ -350,7 +352,7 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.inputForm.dateYear+"年度"+this.inputForm.district+"道路巡查維護修繕成效式契約"}`,'紀錄編號',`${this.inputForm.serialNumber1+'-1'}`]],
+					head: [['工程名稱',`${this.districtList[this.listQuery.zipCode].tenderName}`,'紀錄編號',`${this.inputForm.serialNumber1+'-1'}`]],
 					body: [['施工廠商',`${this.inputForm.companyName}`,'檢查日期',`${this.inputForm.formatDate}`]],
 					startY: height-265,
 				})
@@ -427,7 +429,7 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.inputForm.dateYear+"年度"+this.inputForm.district+"道路巡查維護修繕成效式契約"}`,'紀錄編號',`${this.inputForm.serialNumber1+'-2'}`]],
+					head: [['工程名稱',`${this.districtList[this.listQuery.zipCode].tenderName}`,'紀錄編號',`${this.inputForm.serialNumber1+'-2'}`]],
 					body: [['施工廠商',`${this.inputForm.companyName}`,'檢查日期',`${this.inputForm.formatDate}`]],
 					startY: height-265,
 				})

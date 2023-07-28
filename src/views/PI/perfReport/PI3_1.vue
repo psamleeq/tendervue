@@ -151,10 +151,12 @@ export default {
 				// 	"name": "中正區"
 				// },
 				103: {
-					"name": "大同區"
+					"name": "大同區",
+					"tenderName": "112年度大同區道路巡查維護修繕成效式契約"
 				},
 				104: {
-					"name": "中山區"
+					"name": "中山區",
+					"tenderName": "111年度中山區道路巡查維護修繕成效式契約"
 				},
 				// 105: {
 				// 	"name": "松山區"
@@ -276,9 +278,9 @@ export default {
 			//檢查日期
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			//工程名稱
 			this.inputs.district = this.districtList[this.inputs.zipCode].name;
-			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
+			//工程名稱
+			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
 			this.inputs.serialNumber = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');			
 			//查核人次數
