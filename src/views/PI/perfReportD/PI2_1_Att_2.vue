@@ -1,11 +1,21 @@
 <template>
 	<div class="app-container PI2_1-Att_2">
-		<h2>PI-2.1附件-2</h2>
-		<el-button-group>
-			<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
-			<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
-		</el-button-group>
-		<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
+		<h2>PI-2.1附件-2
+			<el-button-group>
+				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
+				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />
+			</el-button-group>
+			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
+		</h2>
+		<!-- <div style="margin-bottom: 5px">
+			<el-button-group>
+				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
+				<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
+			</el-button-group>
+			<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
+		</div> -->
+
+		<aside>{{ districtList[this.inputForm.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 
 		<el-row :gutter="24">
 			<!-- <div class="filter-container"> -->
@@ -14,7 +24,7 @@
 				<el-card shadow="never" style="width: 500px; margin: 40px auto; padding: 5px 10px; ">
 					<el-form :model="inputForm" label-width="100px">
 						<div style="display:flex;justify-content:space-between;align-items: center">
-							<h2>通報資訊</h2>
+							<h3>通報資訊</h3>
 							<el-button-group>
 								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
@@ -610,6 +620,10 @@ export default {
 					})
 					return;
 			}
+		},
+		formatDate(date){
+			const momentDate = moment(date);
+			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
 		}
 	}
 }

@@ -1,18 +1,28 @@
 <template>
 	<div class="app-container PI3_1-Att" v-loading="loading">
-		<h2>PI3.1附件</h2>
-		<el-button-group>
-			<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
-			<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
-		</el-button-group>
-		<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
+		<h2>PI3.1附件
+			<el-button-group>
+				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
+				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />
+			</el-button-group>
+			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
+		</h2>
+		<!-- <div style="margin-bottom: 5px">
+			<el-button-group>
+				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
+				<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
+			</el-button-group>
+			<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
+		</div> -->
+
+		<aside>{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 
 		<el-row :gutter="24">
 			<el-col :span="10">
 				<el-card shadow="never" style="width: 400px; margin: 40px auto; padding: 5px 10px;">
 					<el-form label-width="100px">
 						<div style="display:flex;justify-content:space-between;align-items: center">
-							<h2>工安登錄</h2>
+							<h3>工安登錄</h3>
 							<el-button-group>
 								<!-- <el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button> -->
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
@@ -51,11 +61,9 @@
 						<el-collapse v-model="activeName">
 							<el-collapse-item v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`" class="collapse-label" :title="`${inputForm.serialNumber} (P${index+1})`" :name="index">
 								<template slot="title">
-									<span>{{ inputForm.serialNumber }} (P{{ index+1 }})</span>
+									<span>{{ inputForm.serialNumber }}</span>
 									<el-button class="btn-remove" type="danger" size="mini" plain :disabled="template.schemas != undefined && template.schemas.length <= 2||index==0" @click="removePage(index)">刪除</el-button>
-									<!-- <el-button type="text" style="margin-left: 5px" :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage"><i class="el-icon-close" style="color: #F56C6C" /></el-button> -->
 								</template>
-								<!-- <el-divider>{{ inputForm.serialNumber }} (P{{ index+1 }})</el-divider> -->
 								<el-form-item label="項目">
 									<el-checkbox v-model="inputForm.checkVest" @change="setPDFinputs">反光背心</el-checkbox>
 									<br/>
@@ -495,6 +503,10 @@ export default {
 				case 1:
 					return;
 			}
+		},
+		formatDate(date){
+			const momentDate = moment(date);
+			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
 		}
 	},
 };

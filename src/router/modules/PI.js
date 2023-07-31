@@ -79,7 +79,7 @@ const PIRouter = {
 				render: (c) => c('router-view')
 			},
 			name: 'perfReportD',
-			redirect: 'noRedirect',
+			redirect: '/PIIndex/perfReportD/list',
 			meta: { 
 				title: '日報表', 
 				roles: ['PIreport'],

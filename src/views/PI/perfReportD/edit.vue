@@ -1,11 +1,9 @@
 <template>
 	<div class="app-container perfReportD-Edit" v-loading="loading">
-		<h2>{{ options.reportTypeMap[reportInfo.reportType] }} - 編輯</h2>
-		<el-button type="info" size="mini" style="margin-bottom: 12px" @click="handlePageTurn()">返回</el-button>
-		<aside>
-			<div>區域: {{ options.districtList[reportInfo.zipCode].name }}</div>
-			<div>報告日期: {{ reportInfo.reportDate }}</div>
-		</aside>
+		<h2>{{ options.reportTypeMap[reportInfo.reportType] }} - 編輯
+			<!-- <el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px;" @click="handlePageTurn()" /> -->
+		</h2>
+		<aside>{{ options.districtList[reportInfo.zipCode].name }} ({{ reportInfo.reportDate }})</aside>
 		<el-table 
 			:data="list"
 			empty-text="目前沒有資料"
