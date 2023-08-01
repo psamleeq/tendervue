@@ -15,14 +15,14 @@
 			<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
 		</div> -->
 
-		<aside>{{ districtList[this.inputForm.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
+		<aside>{{ districtList[this.inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 
 		<el-row :gutter="24">
 			<!-- <div class="filter-container"> -->
 			
 			<el-col :span="11">
 				<el-card shadow="never" style="width: 500px; margin: 40px auto; padding: 5px 10px; ">
-					<el-form :model="inputForm" label-width="100px">
+					<el-form :model="inputs" label-width="100px">
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h3>通報資訊</h3>
 							<el-button-group>
@@ -49,30 +49,6 @@
 								@change="previewPdf()"
 							/>
 						</el-form-item>
-						<!-- <el-form-item label="行政區">
-							<el-select
-								class="filter-item"
-								v-model="inputForm.zipCode"
-								:disabled="Object.keys(districtList).length <= 1"
-								style="width: 200px"
-							>
-								<el-option
-									v-for="(info, zip) in districtList"
-									:key="zip"
-									:label="info.name"
-									:value="Number(zip)"
-								/>
-							</el-select>
-						</el-form-item> -->
-						<!-- <el-form-item label="通報日期">
-							<time-picker
-								class="filter-item"
-								:hasWeek="false"
-								:timeTabId.sync="timeTabId"
-								:dateRange.sync="dateRange"
-								style="width: 200px"
-							/>
-						</el-form-item> -->
 						
 						<el-form-item label="1999通報" style="width: 400px">
 							<el-upload
@@ -84,9 +60,9 @@
 								:auto-upload="false"
 								:on-change="handleChange"
 								:on-remove="handleRemove"
-								:file-list="inputForm.fileList"
+								:file-list="imgList"
 							>
-								<el-button type="primary" :disabled="inputForm.fileList.length >= 1">上傳圖片</el-button>
+								<el-button type="primary" :disabled="imgList.length >= 1">上傳圖片</el-button>
 							</el-upload>
 						</el-form-item>
 					</el-form>
@@ -159,9 +135,6 @@ export default {
 				lineHeight: (14 + 2) * 0.35,
 				orientation: 'p'
 			},
-			// list:[],
-			listNo1999:[],
-			listUnreason:[],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
@@ -210,15 +183,18 @@ export default {
 			},
 			imageWidth:null,
 			imageHeight:null,
-			inputForm: {
+			imgList: [],
+			inputs: {
 				companyName: '聖東營造股份有限公司',
 				formatDate:'',
 				dateYear:'',
 				zipCode: 104,
 				district: '中山區',
-				serialNumber1:'',
-				serialNumber2:'',
-				fileList:[],
+				serialNumber1: '',
+				serialNumber2: '',
+				case1999Img: '',
+				listNo1999: [],
+				listUnreason: []
 			},
 			deviceType:{
 				1:'AC路面',
@@ -267,13 +243,15 @@ export default {
 	methods: {
 		async setData(dataObj) {
 			this.list = dataObj;
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputForm = this.list.content.inputForm;
-				this.initPage = this.list.content.initPage;
-			}
 			this.reportDate = this.list.reportDate;
 			if(!this.checkDate) this.checkDate = this.list.reportDate;
-			this.inputForm.zipCode = this.list.zipCode;
+			this.inputs.zipCode = this.list.zipCode;
+
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
+				if(this.inputs.case1999Img.length != 0) this.imgList = [{ url: this.inputs.case1999Img }];
+				this.initPage = this.list.content.initPage;
+			} else this.getList();
 
 			await this.initPDF();
 
@@ -327,14 +305,14 @@ export default {
 		async getList() {
 			new Promise((resolve, reject) => {
 				this.loading = true;
-				dateWatcher(this.districtList[this.inputForm.zipCode].start, [this.reportDate, this.reportDate]);
+				dateWatcher(this.districtList[this.inputs.zipCode].start, [this.reportDate, this.reportDate]);
 				let startDate = moment(this.reportDate).format("YYYY-MM-DD");
 				let endDate = moment(this.reportDate).add(1, "day").format("YYYY-MM-DD");
 
 				getCaseList({
 					filterType: 2,
 					caseType: 2,
-					zipCode: this.inputForm.zipCode,
+					zipCode: this.inputs.zipCode,
 					timeStart: startDate,
 					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 				}).then(async (response) => {
@@ -345,8 +323,8 @@ export default {
 						});
 					} else {
 						const list = response.data.list;
-						this.listNo1999 = list.filter(l => l.DistressSrc !== "1999交辦案件");
-						this.listUnreason = list.filter(l => l.State & 16);
+						this.inputs.listNo1999 = list.filter(l => l.DistressSrc !== "1999交辦案件");
+						this.inputs.listUnreason = list.filter(l => l.State & 16);
 
 						await this.previewPdf()
 						resolve();
@@ -362,19 +340,17 @@ export default {
 			const reader = new FileReader();
 			reader.readAsDataURL(file.raw);
 			reader.onloadend = (evt) => {
-				this.inputForm.fileList = [{
-					name: file.name,
-					size: file.size,
-					type: file.type,
+				this.imgList = [{
 					url: evt.target.result
 				}];
+				this.inputs.case1999Img = evt.target.result;
 
 				this.previewPdf();
 			};
 		},
 		handleRemove(file, fileList) {
-			this.inputForm.fileList = [];
-
+			this.imgList = [];
+			this.inputs.case1999Img = "";
 			this.previewPdf();
 		},
 		headRows() {
@@ -382,11 +358,10 @@ export default {
 				{ id: '案件編號', name: '通報者', item: '缺失項目', address:'地 點', reason:'原 因' },
 			]
 		},
-		bodyRows(rowCount, data) {
+		bodyRows(data) {
 			// console.log(data);
-			rowCount = rowCount 
 			var body = []
-			for (var j = 0; j <= rowCount; j++) {
+			for (var j = 0; j <= data.length; j++) {
 				if (data[j]) {
 					// console.log(data[j]);
 					body.push({
@@ -409,10 +384,10 @@ export default {
 			return body
 		},
 		async createPdf() {
-			if(this.inputForm.fileList.length != 0){
+			if(this.inputs.case1999Img.length != 0){
 				// 獲取圖片實際高度寬度
 				const image = new Image();
-				image.src = this.inputForm.fileList[0].url;
+				image.src = this.inputs.case1999Img;
 				await image.decode();
 				this.imageWidth = image.width;
 				this.imageHeight = image.height;
@@ -432,8 +407,8 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.districtList[this.inputForm.zipCode].tenderName}`,'紀錄編號',`${this.inputForm.serialNumber1+'-1'}`]],
-					body: [['施工廠商',`${this.inputForm.companyName}`,'檢查日期',`${this.inputForm.formatDate}`]],
+					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber1+'-1'}`]],
+					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
 					startY: height-265,
 				})
 				this.pdfDoc.autoTable({
@@ -442,7 +417,7 @@ export default {
 					head: [['當日被通報案件(議員、單一陳情、管區……等)']],
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
-				let body1 = this.bodyRows(this.listNo1999.length,this.listNo1999)
+				let body1 = this.bodyRows(this.inputs.listNo1999)
 				this.pdfDoc.autoTable({
 					columns: [
 						{ dataKey: 'id', header: '案件編號' },
@@ -468,7 +443,7 @@ export default {
 					body: [[{content: '',styles: { minCellHeight: 40 }}]],
 					didDrawCell: async (data) => {
 						// 添加圖片到PDF中
-						if (data.column.index === 0 && data.row.index === 0 && this.inputForm.fileList.length != 0) {
+						if (data.column.index === 0 && data.row.index === 0 && this.inputs.case1999Img.length != 0) {
 							const cellWidth = data.cell.width;
 							const cellHeight = data.cell.height;
 
@@ -486,7 +461,7 @@ export default {
 							const x = data.cell.x + (cellWidth - scaledWidth) / 2;
 							const y = data.cell.y + (cellHeight - scaledHeight) / 2;
 
-							await this.pdfDoc.addImage(this.inputForm.fileList[0].url, 'JPEG', x, y, scaledWidth, scaledHeight);
+							await this.pdfDoc.addImage(this.inputs.case1999Img, 'JPEG', x, y, scaledWidth, scaledHeight);
 						}
 						
 					},
@@ -509,8 +484,8 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.districtList[this.inputForm.zipCode].tenderName}`,'紀錄編號',`${this.inputForm.serialNumber1+'-2'}`]],
-					body: [['施工廠商',`${this.inputForm.companyName}`,'檢查日期',`${this.inputForm.formatDate}`]],
+					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber1+'-2'}`]],
+					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
 					startY: height-265,
 				})
 				this.pdfDoc.autoTable({
@@ -520,7 +495,7 @@ export default {
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
 				let head2 = this.headRows()
-				let body2 = this.bodyRows(this.listUnreason.length,this.listUnreason)
+				let body2 = this.bodyRows(this.inputs.listUnreason)
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, halign: 'center'},
@@ -542,16 +517,16 @@ export default {
 		formatFormData(){
 			//日期格式
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
-			this.inputForm.formatDate = checkDate.format("YYYY年MM月DD日").slice(1);
+			this.inputs.formatDate = checkDate.format("YYYY年MM月DD日").slice(1);
 			
 			const reportDate = moment(this.reportDate).subtract(1911, 'year');
 			//民國年份
-			this.inputForm.dateYear = reportDate.year()
+			this.inputs.dateYear = reportDate.year()
 			//紀錄編號
-			this.inputForm.serialNumber1 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
-			this.inputForm.serialNumber2 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
+			this.inputs.serialNumber1 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
+			this.inputs.serialNumber2 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
 			//行政區
-			this.inputForm.district = this.districtList[this.inputForm.zipCode].name		
+			this.inputs.district = this.districtList[this.inputs.zipCode].name		
 		},
 		async previewPdf() {
 			return new Promise((resolve, reject) => {
@@ -571,15 +546,28 @@ export default {
 			
 		},
 		storeData(){
+			let imgObj = {}; 
+			let inputs = JSON.parse(JSON.stringify(this.inputs));
+
+			Object.keys(this.inputs).forEach(key => {
+				if(key.includes('Img')) {
+					imgObj[key] = this.inputs[key];
+					inputs[key] = "";
+				}
+			})
+
+
 			const storedContent = {
 				pageCount: this.pdfDoc.internal.getNumberOfPages(),
 				initPage: this.initPage,
-				inputForm: this.inputForm,
-				// inputs:this.inputs
+				inputs
 			}
+			// console.log(storedContent, imgObj);
+
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				content: JSON.stringify(storedContent)
+				content: JSON.stringify(storedContent),
+				imgObj
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({

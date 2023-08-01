@@ -266,6 +266,20 @@ export default {
 			this.list = dataObj;
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
+
+				// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
+				Object.keys(this.inputs).forEach(key => {
+					if(key.includes('Img')) {
+						fetch(this.inputs[key])
+							.then(res => res.blob())
+							.then(blob => {
+								const reader = new FileReader();
+								reader.onloadend = () => { this.inputs[key] = reader.result };
+								reader.readAsDataURL(blob);
+							})
+					}
+				})
+
 				this.inputFormArr= this.list.content.inputFormArr;
 				this.initPage = this.list.content.initPage;
 			}
@@ -307,7 +321,7 @@ export default {
 								this.form.updateTemplate(this.template);
 							}
 
-							this.inputs[arg.key] = this.inputFormArr[index-1][key] = arg.value;
+							this.inputs[arg.key] = arg.value;
 
 							const img = new Image();
 							img.onload = () => {
@@ -440,15 +454,26 @@ export default {
 			this.loading = false;
 		},
 		storeData(){
+			let imgObj = {}; 
+			let inputs = JSON.parse(JSON.stringify(this.inputs));
+
+			Object.keys(this.inputs).forEach(key => {
+				if(key.includes('Img')) {
+					imgObj[key] = this.inputs[key];
+					inputs[key] = "";
+				}
+			})
 			const storedContent = {
 				pageCount: this.inputFormArr.length + 1,
 				initPage: this.initPage,
 				inputFormArr: this.inputFormArr,
-				inputs:this.inputs
+				inputs
 			}
+
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				content: JSON.stringify(storedContent)
+				content: JSON.stringify(storedContent),
+				imgObj
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
