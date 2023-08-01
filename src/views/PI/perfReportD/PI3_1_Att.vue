@@ -439,6 +439,12 @@ export default {
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
 
+			for(const key of [ 'checkVest', 'checkIdCard', 'checkWhistle', 'checkNum', 'failNum', 'passNum', 'reason' ]) {
+				for(const inputKey in this.inputs) {
+					if(inputKey.includes(key)) delete this.inputs[inputKey];
+				}
+			}
+
 			for(let [ i, inputForm ] of this.inputFormArr.entries()) {
 				inputForm.serialNumber = this.inputs[`serialNumber${i+1}`];
 				if(inputForm.checkImg) this.inputs[`checkImg${i+1}`] = inputForm.checkImg;
