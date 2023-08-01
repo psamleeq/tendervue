@@ -7,13 +7,6 @@
 			</el-button-group>
 			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
 		</h2>
-		<!-- <div style="margin-bottom: 5px">
-			<el-button-group>
-				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
-				<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
-			</el-button-group>
-			<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
-		</div> -->
 
 		<aside>{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 
@@ -43,12 +36,6 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<!-- <el-form-item label="行政區">
-							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()">
-								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
-							</el-select>
-						</el-form-item> -->
-						
 						<el-divider />
 						<el-form-item label="頁數調整">
 							<el-button-group>
@@ -57,7 +44,6 @@
 								<span v-if="template.schemas != undefined" style="margin-left: 5px">(目前頁數: {{ template.schemas.length }})</span>
 							</el-button-group>
 						</el-form-item>
-						<!-- <span v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`"> -->
 						<el-collapse v-model="activeName">
 							<el-collapse-item v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`" class="collapse-label" :title="`${inputForm.serialNumber} (P${index+1})`" :name="index">
 								<template slot="title">
@@ -83,7 +69,6 @@
 								</el-form-item>
 							</el-collapse-item>
 						</el-collapse>
-						<!-- </span> -->
 					</el-form>
 				</el-card>
 			</el-col>
@@ -194,16 +179,7 @@ export default {
 					checkNum: 0,
 					failNum: 0,
 					reason: "無"
-				},
-				// {
-				// 	serialNumber: "",
-				// 	checkVest: false,		// 反光背心
-				// 	checkIdCard: false,	// 識別證
-				// 	checkWhistle: false,	// 工作帽
-				// 	checkNum: 0,
-				// 	failNum: 0,
-				// 	reason: "無"
-				// }
+				}
 			],
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約', 
@@ -229,9 +205,7 @@ export default {
 	computed: { },
 	watch: {},
 	async created() {	
-		// this.template = {};
 		this.schemasOri = {};
-		// this.form = {};
 
 			if(this.$route.query.contentId) {
 			this.listQuery.reportId = this.$route.query.reportId;
@@ -280,7 +254,6 @@ export default {
 					}
 				})
 
-				this.inputFormArr= this.list.content.inputFormArr;
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = dataObj.reportDate;
@@ -307,13 +280,26 @@ export default {
 					};
 
 					const changeInput = (arg) => {
-						// console.log(arg)
+						// console.log(arg);
 						const [key, index] = arg.key.split(/([a-zA-Z]+)(\d?)/g).filter(s => s.length > 0);
 						// console.log(key, index);
-						// if(index == undefined) this.inputs[arg.key] = arg.value;
-						if( index < this.inputFormArr.length && ['serialNumber'].includes(key)) this.inputFormArr[index-1][key] = arg.value;
-						if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
-						if(['checkNum', 'failNum', 'passNum'].includes(key)) this.inputFormArr[index-1][key] = Number(arg.value);
+						if( index < this.inputFormArr.length && ['serialNumber'].includes(key)) {
+							if(this.inputFormArr[index-1] == undefined) this.inputFormArr[index-1] = {};
+							this.inputFormArr[index-1][key] = arg.value;
+						}
+						if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) {
+							if(this.inputFormArr[index-1] == undefined) this.inputFormArr[index-1] = {};
+							this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
+						}
+						if(['checkNum', 'failNum', 'passNum'].includes(key)) {
+							if(this.inputFormArr[index-1] == undefined) this.inputFormArr[index-1] = {};
+							this.inputFormArr[index-1][key] = Number(arg.value);
+						}
+						if(['reason'].includes(key)) {
+							if(this.inputFormArr[index-1] == undefined) this.inputFormArr[index-1] = {};
+							this.inputFormArr[index-1][key] = arg.value;
+						}
+
 						if(key.includes('checkImg')) {
 							if(this.schemasOri[index-1] && this.schemasOri[index-1][arg.key]) {
 								this.template.schemas[index-1][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[index-1][arg.key]));
@@ -346,8 +332,9 @@ export default {
 					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 					this.form.onChangeInput(arg => changeInput(arg));
 
-					for(let i = 1; i < this.inputFormArr.length; i++) await this.addPage(false);
-
+					if(Object.keys(this.list.content).length != 0) {
+						for(let i = 1; i < this.list.content.pageCount-1; i++) await this.addPage(false);
+					}
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
 					this.setPDFinputs();
 					
@@ -365,8 +352,6 @@ export default {
 			const addTemplate = await fetch(`/assets/pdf/PI3_1-Att_1.json?t=${Date.now()}`).then(response => response.json());
 			const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
-			// const addPdfBytes = await fetch(`/assets/pdf/PI3_1-Att_1.pdf?t=${Date.now()}`).then(res => res.arrayBuffer());
-			// const add_pdf = await PDFDocument.load(addPdfBytes);
 			const mergedPdf = await PDFDocument.create();
 
 			const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
@@ -374,9 +359,6 @@ export default {
 			ori_copiedPages.forEach(page => mergedPdf.addPage(page));
 			mergedPdf.insertPage(ori_pdf.getPageCount()-1, add_copiedPage);
 
-			// const mergedPdfFile = await mergedPdf.save();
-			// const blob = new Blob([mergedPdfFile.buffer], { type: 'application/pdf' });
-			// window.open(URL.createObjectURL(blob));
 			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
 
 			//Step2: 調整欄位
@@ -402,7 +384,6 @@ export default {
 			const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
 			index = (index != undefined) ? index : ori_pdf.getPageCount()-2;
-			// const lastIndex = ori_pdf.getPageCount()-2;
 			ori_pdf.removePage(index);
 
 			this.template.basePdf = await ori_pdf.saveAsBase64({ dataUri: true });
@@ -428,22 +409,23 @@ export default {
 		},
 		setPDFinputs() {
 			//工程名稱
-			const reportDate = moment(this.reportDate).subtract(1911, 'year');
 			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
+
+			for(const key of [ 'serialNumber', 'checkVest', 'checkIdCard', 'checkWhistle', 'checkNum', 'failNum', 'passNum', 'reason' ]) {
+				for(const inputKey in this.inputs) {
+					if(inputKey.includes(key)) delete this.inputs[inputKey];
+				}
+			}
+
 			//紀錄編號
+			const reportDate = moment(this.reportDate).subtract(1911, 'year');
 			for(let i=0; i < this.template.schemas.length; i++) {
 				this.inputs[`serialNumber${i+1}`] = reportDate.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
 			//檢查日期
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
-
-			for(const key of [ 'checkVest', 'checkIdCard', 'checkWhistle', 'checkNum', 'failNum', 'passNum', 'reason' ]) {
-				for(const inputKey in this.inputs) {
-					if(inputKey.includes(key)) delete this.inputs[inputKey];
-				}
-			}
 
 			for(let [ i, inputForm ] of this.inputFormArr.entries()) {
 				inputForm.serialNumber = this.inputs[`serialNumber${i+1}`];
@@ -456,10 +438,10 @@ export default {
 			}
 
 			this.form.setInputs([this.inputs]);
-			// this.form.render();
 			this.loading = false;
 		},
 		storeData(){
+			this.loading = true;
 			let imgObj = {}; 
 			let inputs = JSON.parse(JSON.stringify(this.inputs));
 
@@ -472,7 +454,6 @@ export default {
 			const storedContent = {
 				pageCount: this.inputFormArr.length + 1,
 				initPage: this.initPage,
-				inputFormArr: this.inputFormArr,
 				inputs
 			}
 
@@ -487,8 +468,10 @@ export default {
 						type: "success",
 					});
 				} 
+				this.loading = false;
 			}).catch(err => {
 				console.log(err);
+				this.loading = false;
 			})
 		},
 		async getPDF() {
@@ -499,9 +482,7 @@ export default {
 			});
 		},
 		handleDownload() {
-			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
-				// console.log(pdf);
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
@@ -568,11 +549,4 @@ export default {
 		.el-collapse-item__content
 			height: 100%
 			padding-bottom: 5px
-					
-	// .el-row
-	// 	position: relative
-	// 	height: 100%
-	// 	#container
-	// 		position: relative
-	// 		height: 100%
 </style>

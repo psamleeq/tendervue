@@ -7,13 +7,6 @@
 			</el-button-group>
 			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
 		</h2>
-		<!-- <div style="margin-bottom: 5px">
-			<el-button-group>
-				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
-				<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
-			</el-button-group>
-			<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
-		</div> -->
 
 		<aside>{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 
@@ -44,14 +37,6 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<!-- <el-form-item label="行政區">
-							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="getList()" style="width: 200px">
-								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
-							</el-select>
-						</el-form-item> -->
-						<!-- <el-form-item label="本日通報">
-							<el-input-number v-model="inputForm.caseReportTotal" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item> -->
 						<el-divider />
 
 						<h3>系統登錄</h3>
@@ -90,7 +75,6 @@ export default {
 	data() {
 		return {
 			loading: false,
-			timeTabId: 1,
 			initPage: 2,
 			listQuery: {
 				reportId: 0,
@@ -203,9 +187,7 @@ export default {
 	computed: { },
 	watch: {},
 	created() {	
-		// this.template = {};
 		this.schemasOri = {};
-		// this.form = {};
 
 		if(this.$route.query.contentId) {
 			this.listQuery.reportId = this.$route.query.reportId;
@@ -254,7 +236,6 @@ export default {
 					}
 				})
 				
-				this.inputForm = this.list.content.inputForm;
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
@@ -370,6 +351,7 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		storeData(){
+			this.loading = true;
 			let imgObj = {}; 
 			let inputs = JSON.parse(JSON.stringify(this.inputs));
 
@@ -383,7 +365,6 @@ export default {
 			const storedContent = {
 				pageCount: 2,
 				initPage: this.initPage,
-				inputForm: this.inputForm,
 				inputs
 			}
 			// console.log(storedContent, imgObj);
@@ -399,8 +380,10 @@ export default {
 						type: "success",
 					});
 				} 
+				this.loading = false;
 			}).catch(err => {
 				console.log(err);
+				this.loading = false;
 			})
 		},
 		async getPDF() {

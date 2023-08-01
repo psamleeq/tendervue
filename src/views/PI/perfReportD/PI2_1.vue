@@ -7,13 +7,6 @@
 			</el-button-group>
 			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin: -5px 0 0 5px" @click="handlePageTurn(0)" />
 		</h2>
-		<!-- <div style="margin-bottom: 5px">
-			<el-button-group>
-				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
-				<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
-			</el-button-group>
-			<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
-		</div> -->
 
 		<aside>{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 		
@@ -30,9 +23,6 @@
 						</div>
 						
 						<el-divider />
-						<!-- <el-form-item label="起始頁碼">
-							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
-						</el-form-item> -->
 						<el-form-item label="檢查日期" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="checkDate"
@@ -44,11 +34,6 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<!-- <el-form-item label="行政區" :label-width="labelWidth1">
-							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()" style="width: 200px">
-								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
-							</el-select>
-						</el-form-item> -->
 						<el-divider />
 						<h4>所有通報數</h4>
 						<el-form-item label="被通報案件數" :label-width="labelWidth1">
@@ -64,26 +49,6 @@
 						<el-form-item label="未登入或登入不完整案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.incomplete_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<!-- <el-divider />
-						<h4>監造自主檢查件數</h4>
-						<el-form-item label="合格件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.supervisionCheckPass_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="不合格件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.supervisionCheckFail_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<h4>機關自主檢查件數</h4>
-						<el-form-item label="合格件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.organCheckPass_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="不合格件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.organCheckFail_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<el-form-item label="未登入或登入不完整案件總數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.totalIncomplete_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item> -->
 						<el-divider />
 						<h4>應檢附文件</h4>
 						<el-form-item label="" :label-width="labelWidth2">
@@ -95,17 +60,6 @@
 							<br/>
 							<el-checkbox v-model="inputForm.checkPeriod_IncompleteLogin21" @change="setPDFinputs">期間系統資料登錄不完整案件資訊</el-checkbox>
 						</el-form-item>
-						<!-- <el-divider />
-						<h4>是否合格</h4>
-						<el-form-item label="" :label-width="labelWidth2">
-							<el-checkbox v-model="inputForm.pass" @change="setPDFinputs">是</el-checkbox>
-							<br/>
-							<el-checkbox v-model="inputForm.fail" @change="setPDFinputs">否，原因:(請填寫原因)</el-checkbox>
-							<br/>
-							<el-input type="text" v-model="inputForm.failReason" @change="setPDFinputs" size="small" style="width:300px">
-								<template slot="prepend">原因</template>
-							</el-input>
-						</el-form-item> -->
 					</el-form>
 				</el-card>
 			</el-col>
@@ -209,14 +163,10 @@ export default {
 			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
-				// sumInform_Num21:0,
 				informed_Num21: 0,
 				companyInform_Num21: 0,
 				unreasonable_Num21: 0,
-				// roadSystem_Num21:0,
 				incomplete_Num21: 0,
-				// companyCheck_Num21: 0,
-				// EFA_21:0,
 				checkCo_dailyInform21:true,
 				checkCo_dailyLogin21:true,
 				checkPeriod_Complete21:true,
@@ -239,18 +189,16 @@ export default {
 				incomplete_Num21: '0',//F
 				companyCheck_Num21: '0',
 				EFA_21:'',
-				checkCo_dailyInform21:'',
-				checkCo_dailyLogin21:'',
-				checkPeriod_Complete21:'',
-				checkPeriod_IncompleteLogin21:'',
+				checkCo_dailyInform21: 'V',
+				checkCo_dailyLogin21: 'V',
+				checkPeriod_Complete21: 'V',
+				checkPeriod_IncompleteLogin21: 'V',
 			}
 		};
 	},
 	computed: {},
 	watch: {},
 	async created() {	
-		// this.template = {};
-		// this.form = {};
 		if(this.$route.query.reportId && this.$route.query.contentId) {
 			this.listQuery.reportId = this.$route.query.reportId;
 			this.listQuery.perfContentId = this.$route.query.contentId;
@@ -285,7 +233,6 @@ export default {
 			this.list = dataObj;
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
-				this.inputForm = this.list.content.inputForm;
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
@@ -307,26 +254,17 @@ export default {
 						}
 					};
 
-					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-					this.form.onChangeInput(arg => {
+					const changeInput = (arg) => {
 						// console.log(arg);
-						if(['checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21'].includes(arg.key)){
-							this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
-						}
-						if([
-							'informed_Num21',
-							'companyInform_Num21',
-							'unreasonable_Num21',
-							'incomplete_Num21',
-							'companyCheck_Num21'].includes(arg.key)) {
-							this.inputForm[arg.key] = parseInt(arg.value)
-						}
-						if(['failReason'].includes(arg.key)){
-							this.inputForm[arg.key] = arg.value
-						}
+						if([ 'checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
+						if([ 'informed_Num21', 'companyInform_Num21', 'unreasonable_Num21', 'incomplete_Num21', 'companyCheck_Num21'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+						if(['failReason'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
 						this.setPDFinputs();
-					});
-					this.setPDFinputs();
+					}
+
+					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+					this.form.onChangeInput(arg => changeInput(arg));
+					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
 
 					resolve();
 				})
@@ -357,8 +295,6 @@ export default {
 			const A = this.inputForm.informed_Num21+this.inputForm.companyInform_Num21;
 			const E = this.inputForm.roadSystem_Num21 = this.inputForm.informed_Num21+this.inputForm.companyInform_Num21
 			const F = this.inputForm.incomplete_Num21;
-			// const G = this.inputForm.supervisionCheckFail_Num;
-			// const H = this.inputForm.organCheckFail_Num;
 			if(A==0){
 				this.inputs.EFA_21=''
 			}else{
@@ -376,10 +312,10 @@ export default {
 			this.form.render();
 		},
 		storeData(){
+			this.loading = true;
 			const storedContent = {
 				pageCount: 1,
 				initPage: this.initPage,
-				inputForm: this.inputForm,
 				inputs: this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId, {
@@ -392,8 +328,10 @@ export default {
 						type: "success",
 					});
 				} 
+				this.loading = false;
 			}).catch(err => {
 				console.log(err);
+				this.loading = false;
 			})
 		},
 		async getPDF() {
@@ -404,9 +342,7 @@ export default {
 			});
 		},
 		handleDownload() {
-			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
-				// console.log(pdf);
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
@@ -459,8 +395,4 @@ export default {
 	.filter-container 
 		.filter-item
 			margin-right: 5px
-	// .container
-	// 	position: fixed
-	// 	top:30px
-	// 	right:0
 </style>

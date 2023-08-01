@@ -7,13 +7,6 @@
 			</el-button-group>
 			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
 		</h2>
-		<!-- <div style="margin-bottom: 5px">
-			<el-button-group>
-				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
-				<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
-			</el-button-group>
-			<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
-		</div> -->
 
 		<aside>{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 
@@ -43,47 +36,14 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<!-- <el-form-item label="行政區" :label-width="labelWidth1">
-							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()" style="width: 200px">
-								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
-							</el-select>
-						</el-form-item> -->
 						<el-divider />
 						<el-form-item label="當日工作執行日報填寫人次數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.dailyReport_Num31" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
-						<!-- <el-form-item label="滿足安全性巡查人數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.qualifiedSafety_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider /> -->
 						<el-form-item label="未滿足基本安全要求人數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.unqualifiedSafety_Num31" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<!-- <el-divider />
-						<el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.companyCheck_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<h4>監造抽查人次數</h4>
-						<el-form-item label="合格人次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.supervisionCheckPass_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="不合格人次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.supervisionCheckFail_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<h4>機關抽查人次數</h4>
-						<el-form-item label="合格人次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.organCheckPass_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="不合格人次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.organCheckFail_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<el-form-item label="確定不合格總人次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.totalUnqualified_Num" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item> -->
 						<el-divider />
 						<h4>應檢附文件</h4>
 						<el-form-item label="" :label-width="labelWidth2">
@@ -95,18 +55,6 @@
 							<br/>
 							<el-checkbox v-model="inputForm.checkCo_unreasonable31" @change="setPDFinputs">廠商認為查檢核發現未滿足不合理資訊</el-checkbox>
 						</el-form-item>
-						<!-- <el-divider />
-						<h4>是否合格</h4>
-						<el-form-item label="" :label-width="labelWidth2">
-							<el-checkbox v-model="inputForm.pass" @change="setPDFinputs">是</el-checkbox>
-							<br/>
-							<el-checkbox v-model="inputForm.fail" @change="setPDFinputs">否，原因:(請填寫原因)</el-checkbox>
-							<br/>
-							<el-input type="text" v-model="inputForm.failReson" @change="setPDFinputs" size="small" style="width:350px">
-								<template slot="prepend">原因</template>
-							</el-input>
-
-						</el-form-item> -->
 					</el-form>
 				</el-card>
 			</el-col>
@@ -213,21 +161,11 @@ export default {
 				qualifiedSafety_Num31: 0,
 				unqualifiedSafety_Num31: 0,
 				companyCheck_Num31:0,
-				// supervisionCheckPass_Num: 0,
-				// supervisionCheckFail_Num: 0,
-				// organCheckPass_Num: 0,
-				// organCheckFail_Num: 0,
-				// totalUnqualified_Num: 0,
 				BCA_31:0,
-				// BCDA:0,
-				// BCDEA:0,
 				checkCo_dailyInspectAll31:true,
 				checkCo_discoverUnSafety31:true,
 				checkOr_discoverUnSafety31:true,
-				checkCo_unreasonable31:true,
-				// pass:false,
-				// fail:false,
-				// failReson: ''
+				checkCo_unreasonable31:true
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
@@ -242,30 +180,17 @@ export default {
 				qualifiedSafety_Num31: '0',//B
 				unqualifiedSafety_Num31: '0',//C
 				companyCheck_Num31:'0',
-				// supervisionCheckPass_Num: '0 件',
-				// supervisionCheckFail_Num: '0 件',//D
-				// organCheckPass_Num: '0 件',
-				// organCheckFail_Num: '0 件',//E
-				// totalUnqualified_Num: '0 件',
 				BCA_31:'',
-				// BCDA:'',
-				// BCDEA:'',
-				checkCo_dailyInspectAll31:'',
-				checkCo_discoverUnSafety31:'',
-				checkOr_discoverUnSafety31:'',
-				checkCo_unreasonable31:'',
-				// pass:'',
-				// fail:'',
-				// failReson: '',
+				checkCo_dailyInspectAll31: 'V',
+				checkCo_discoverUnSafety31: 'V',
+				checkOr_discoverUnSafety31: 'V',
+				checkCo_unreasonable31: 'V'
 			},
 		};
 	},
 	computed: { },
 	watch: {},
 	created() {	
-		// this.template = {};
-		// this.form = {};
-
 		if(this.$route.query.contentId) {
 			this.listQuery.reportId = this.$route.query.reportId;
 			this.listQuery.perfContentId = this.$route.query.contentId;
@@ -299,7 +224,7 @@ export default {
 			this.list = dataObj;
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
-				this.inputForm = this.list.content.inputForm;
+				// this.inputForm = this.list.content.inputForm;
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
@@ -321,17 +246,16 @@ export default {
 						},
 					};
 
-					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-					this.form.onChangeInput(arg => {
-						if(['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31'].includes(arg.key)){
-							this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
-						}
-						if(['dailyReport_Num31','qualifiedSafety_Num31','unqualifiedSafety_Num31','companyCheck_Num31'].includes(arg.key)) {
-							this.inputForm[arg.key] = parseInt(arg.value)
-						}
+					const changeInput = (arg) => {
+						if(['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
+						if(['dailyReport_Num31','qualifiedSafety_Num31','unqualifiedSafety_Num31','companyCheck_Num31'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 						this.setPDFinputs();
-					});
-					this.setPDFinputs();
+					}
+
+					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+					this.form.onChangeInput(arg => changeInput(arg));
+					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
+
 					resolve();
 				})
 			})
@@ -347,11 +271,7 @@ export default {
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
 			//查核人次數
-			for(const key of [ 
-				'dailyReport_Num31',
-				'unqualifiedSafety_Num31']) {
-				this.inputs[key] = String(this.inputForm[key]);
-			}
+			for(const key of [ 'dailyReport_Num31', 'unqualifiedSafety_Num31']) this.inputs[key] = String(this.inputForm[key]);
 			//計算當日工作執行日報填寫人次數(A) = 滿足安全性巡查人數(B) = 廠商自主檢查人次數
 			this.inputs.qualifiedSafety_Num31 = String(this.inputForm.dailyReport_Num31);
 			this.inputs.companyCheck_Num31 = String(this.inputForm.dailyReport_Num31);
@@ -359,30 +279,24 @@ export default {
 			const A = this.inputForm.dailyReport_Num31;
 			const B = this.inputForm.qualifiedSafety_Num31 = this.inputForm.dailyReport_Num31;
 			const C = this.inputForm.unqualifiedSafety_Num31;
-			// const D = this.inputForm.supervisionCheckFail_Num;
-			// const E = this.inputForm.organCheckFail_Num;
 			if(A==0){
 				this.inputs.BCA_31 = ''
 			}else{
-				this.inputs.BCA_31 = String( Math.round(((B-C)/A)*10000) /100 )
-				// this.inputs.BCDA=String(((B-C-D)/A)*100)
-				// this.inputs.BCDEA=String(((B-C-D-E)/A)*100)
+				this.inputs.BCA_31 = String( Math.round(((B-C)/A)*10000) /100 );
 			}
 			//應檢附文件
 			for(const key of ['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			}
-			//否定原因填寫
-			// this.inputs.failReson=this.inputForm.failReson
 			
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},
 		storeData(){
+			this.loading = true;
 			const storedContent = {
 				pageCount: 1,
 				initPage: this.initPage,
-				inputForm: this.inputForm,
 				inputs: this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId,{
@@ -395,8 +309,10 @@ export default {
 						type: "success",
 					});
 				} 
+				this.loading = false;
 			}).catch(err => {
 				console.log(err);
+				this.loading = false;
 			})
 		},
 		async getPDF() {
@@ -407,9 +323,7 @@ export default {
 			});
 		},
 		handleDownload() {
-			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
-				// console.log(pdf);
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
@@ -464,10 +378,4 @@ export default {
 	.filter-container 
 		.filter-item
 			margin-right: 5px
-	// .container
-	// 	position: fixed
-	// 	top:30px
-	// 	right:0
-	// 	z-index: index -100 
-	
 </style>

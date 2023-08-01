@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container PI2_1-Att_2">
+	<div class="app-container PI2_1-Att_2" v-loading="loading">
 		<h2>PI-2.1附件-2
 			<el-button-group>
 				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
@@ -7,18 +7,10 @@
 			</el-button-group>
 			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
 		</h2>
-		<!-- <div style="margin-bottom: 5px">
-			<el-button-group>
-				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">上一頁</el-button>
-				<el-button type="primary" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">下一頁<i class="el-icon-arrow-right el-icon--right" /></el-button>
-			</el-button-group>
-			<el-button type="info" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)">返回</el-button>
-		</div> -->
 
 		<aside>{{ districtList[this.inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 
 		<el-row :gutter="24">
-			<!-- <div class="filter-container"> -->
 			
 			<el-col :span="11">
 				<el-card shadow="never" style="width: 500px; margin: 40px auto; padding: 5px 10px; ">
@@ -93,6 +85,7 @@ export default {
 	components: {TimePicker },
 	data() {
 		return {
+			loading: false,
 			initPage: 2,
 			listQuery: {
 				reportId: 0,
@@ -546,6 +539,7 @@ export default {
 			
 		},
 		storeData(){
+			this.loading = true;
 			let imgObj = {}; 
 			let inputs = JSON.parse(JSON.stringify(this.inputs));
 
@@ -575,8 +569,10 @@ export default {
 						type: "success",
 					});
 				} 
+				this.loading = false;
 			}).catch(err => {
 				console.log(err);
+				this.loading = false;
 			})
 		},
 		async getPDF() {
