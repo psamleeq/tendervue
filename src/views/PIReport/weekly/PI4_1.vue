@@ -153,10 +153,10 @@ export default {
 				failContractRequire_Num41: '0',//C
 				companyCheck_Num41: '0',
 				BCA_41:'',
-				checkInTime_doc41:'',
-				checkCoFail_doc41:'',
-				checkSandOFail_doc41:'',
-				checkCoUnreason_doc41:'',
+				checkInTime_doc41:'V',
+				checkCoFail_doc41:'V',
+				checkSandOFail_doc41:'V',
+				checkCoUnreason_doc41:'V',
 			},
 		};
 	},
