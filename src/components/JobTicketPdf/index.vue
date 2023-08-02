@@ -6,11 +6,11 @@
 		</el-button-group>
 
 		<!-- Dialog: PDF預覽 -->
-		<el-dialog width="800px" title="預覽" :visible.sync="showJobTicket">
+		<el-dialog class="pdf-preview" width="800px" :visible.sync="showJobTicket">
 			<div ref="pdfViewer" />
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showJobTicket = false">取消</el-button>
-				<el-button type="primary" @click="downloadPdf()">確定列印</el-button>
+				<el-button size="small" @click="showJobTicket = false">取消</el-button>
+				<el-button type="primary" size="small" @click="downloadPdf()">確定列印</el-button>
 			</div>
 		</el-dialog>
 	</div>
@@ -691,4 +691,16 @@ export default {
 </script>
 
 <style lang="sass">
+.job-ticket-pdf
+	.pdf-preview .el-dialog
+		margin-top: 30px !important
+		max-height: calc(100vh - 50px)
+		.el-dialog__header, .el-dialog__body, .el-dialog__footer
+			padding: 2px 10px
+		.el-dialog__body > div > div
+			max-height: calc(100vh - 100px)
+		.el-dialog__footer
+			position: absolute
+			right: 5px
+			bottom: 5px
 </style>

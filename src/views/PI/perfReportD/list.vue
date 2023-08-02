@@ -74,11 +74,11 @@
 			</el-table>
 		</div>
 		<!-- Dialog: PDF預覽 -->
-		<el-dialog width="800px" title="預覽" :visible.sync="showPdfDialog">
+		<el-dialog class="pdf-preview" width="800px" :visible.sync="showPdfDialog">
 			<div ref="pdfViewer" />
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showPdfDialog = false">取消</el-button>
-				<el-button type="primary" @click="handleDownload()">下載</el-button>
+				<el-button size="small" @click="showPdfDialog = false">取消</el-button>
+				<el-button type="primary" size="small" @click="handleDownload()">下載</el-button>
 			</div>
 		</el-dialog>
 		
@@ -372,7 +372,7 @@ export default {
 					const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 					// window.open(URL.createObjectURL(blob));
 
-					const file = new File([blob], `日報表.pdf`, { type: 'application/pdf' });
+					const file = new File([blob], `日報表_${this.formatDate(this.rowActive.reportDate)}.pdf`, { type: 'application/pdf' });
 					const link = document.createElement('a');
 					const url = URL.createObjectURL(file);
 					link.href = url;
@@ -393,4 +393,16 @@ export default {
 </script>
 
 <style lang="sass">
+	.perfReportD-List
+		.pdf-preview .el-dialog
+			margin-top: 30px !important
+			max-height: calc(100vh - 50px)
+			.el-dialog__header, .el-dialog__body, .el-dialog__footer
+				padding: 2px 10px
+			.el-dialog__body > div > div
+				max-height: calc(100vh - 100px)
+			.el-dialog__footer
+				position: absolute
+				right: 5px
+				bottom: 5px
 </style>
