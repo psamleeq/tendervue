@@ -1,28 +1,25 @@
 <template>
 	<div class="app-container PI3_1-Att" v-loading="loading">
-		<h2>PI3.1附件</h2>
-		<!-- <div class="filter-container">
-			<el-button
-				class="filter-item"
-				type="info"
-				icon="el-icon-document"
-				@click="handleDownload"
-			>輸出PDF</el-button>
-		</div> -->
+		<h2>PI3.1附件
+			<el-button-group>
+				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
+				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />
+			</el-button-group>
+			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
+		</h2>
+
+		<aside>{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
 
 		<el-row :gutter="24">
 			<el-col :span="10">
 				<el-card shadow="never" style="width: 400px; margin: 40px auto; padding: 5px 10px;">
 					<el-form label-width="100px">
 						<div style="display:flex;justify-content:space-between;align-items: center">
-							<h2>工安登錄</h2>
-							<el-button
-								class="filter-item"
-								type="success"
-								icon="el-icon-document"
-								@click="storeData"
-								style="height:40px"
-							>儲存</el-button>
+							<h3>工安登錄</h3>
+							<el-button-group>
+								<!-- <el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button> -->
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
+							</el-button-group>
 						</div>
 						<el-divider />
 						<el-form-item label="起始頁碼">
@@ -30,7 +27,7 @@
 						</el-form-item>
 						<el-form-item label="檢查日期">
 							<el-date-picker
-								v-model="searchDate"
+								v-model="checkDate"
 								type="date"
 								placeholder="日期"
 								:picker-options="pickerOptions"
@@ -39,13 +36,6 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<el-form-item label="行政區">
-							<el-select class="filter-item" v-model="inputs.zipCode" :disabled="Object.keys(districtList).length <= 1" @change="setPDFinputs()">
-								<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="zip" />
-							</el-select>
-							<!-- <el-input v-model="inputs.district" style="width: 200px" @change="setPDFinputs" /> -->
-						</el-form-item>
-						
 						<el-divider />
 						<el-form-item label="頁數調整">
 							<el-button-group>
@@ -54,15 +44,12 @@
 								<span v-if="template.schemas != undefined" style="margin-left: 5px">(目前頁數: {{ template.schemas.length }})</span>
 							</el-button-group>
 						</el-form-item>
-						<!-- <span v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`"> -->
 						<el-collapse v-model="activeName">
 							<el-collapse-item v-for="(inputForm, index) in inputFormArr" :key="`form_${index}`" class="collapse-label" :title="`${inputForm.serialNumber} (P${index+1})`" :name="index">
 								<template slot="title">
-									<span>{{ inputForm.serialNumber }} (P{{ index+1 }})</span>
+									<span>{{ inputForm.serialNumber }}</span>
 									<el-button class="btn-remove" type="danger" size="mini" plain :disabled="template.schemas != undefined && template.schemas.length <= 2||index==0" @click="removePage(index)">刪除</el-button>
-									<!-- <el-button type="text" style="margin-left: 5px" :disabled="template.schemas != undefined && template.schemas.length <= 2" @click="removePage"><i class="el-icon-close" style="color: #F56C6C" /></el-button> -->
 								</template>
-								<!-- <el-divider>{{ inputForm.serialNumber }} (P{{ index+1 }})</el-divider> -->
 								<el-form-item label="項目">
 									<el-checkbox v-model="inputForm.checkVest" @change="setPDFinputs">反光背心</el-checkbox>
 									<br/>
@@ -82,7 +69,6 @@
 								</el-form-item>
 							</el-collapse-item>
 						</el-collapse>
-						<!-- </span> -->
 					</el-form>
 				</el-card>
 			</el-col>
@@ -104,10 +90,11 @@ export default {
 	data() {
 		return {
 			loading: false,
-			timeTabId: 1,
 			initPage: 5,
-			dateTimePickerVisible: false,
-			screenWidth: window.innerWidth,
+			listQuery: {
+				reportId: 0,
+				perfContentId: null
+			},
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -137,16 +124,20 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
-			searchDate: moment().startOf("d").subtract(1, "d"),
+			checkDate: moment().startOf("d").subtract(1, "d"),
+			reportDate: null,
+			// list:[],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
 				// },
 				103: {
-					"name": "大同區"
+					"name": "大同區",
+					"tenderName": "112年度大同區道路巡查維護修繕成效式契約"
 				},
 				104: {
-					"name": "中山區"
+					"name": "中山區",
+					"tenderName": "111年度中山區道路巡查維護修繕成效式契約"
 				},
 				// 105: {
 				// 	"name": "松山區"
@@ -177,6 +168,7 @@ export default {
 				// }
 			},
 			activeName: [0],
+			pageTurn: [-1, -1],
 			template: {},
 			inputFormArr: [
 				{
@@ -187,23 +179,13 @@ export default {
 					checkNum: 0,
 					failNum: 0,
 					reason: "無"
-				},
-				// {
-				// 	serialNumber: "",
-				// 	checkVest: false,		// 反光背心
-				// 	checkIdCard: false,	// 識別證
-				// 	checkWhistle: false,	// 工作帽
-				// 	checkNum: 0,
-				// 	failNum: 0,
-				// 	reason: "無"
-				// }
+				}
 			],
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約', 
 				companyName: '聖東營造股份有限公司',
 				serialNumber1: '1111102105',
 				serialNumber2: '1111102106',
-				serialNumber3: '1111102107',
 				date: '111年11月02日',
 				zipCode: '104',
 				district: '中山區',
@@ -217,95 +199,152 @@ export default {
 				info1: '無未滿足',
 				info2: '無未滿足',
 				info3: '無未滿足'
-			},
-			perfContentId:null,
-			list:[],
+			}			
 		};
 	},
 	computed: { },
 	watch: {},
 	async created() {	
-		// this.template = {};
-		// this.form = {};
-	},
-	mounted() {
-		this.perfContentId = this.$route.query.row.id
-		getPerfContent({
-			contentId: this.perfContentId
-		}).then((response) => {
-			if (response.data.list.length == 0) {
-				this.$message({
-					message: "查無資料",
-					type: "error",
-				});
-			} else {
-				this.list = response.data.list;
-				if(this.list[0].content.length!=0){
-					this.inputs = this.list[0].content.inputs
-					// 
-					// if(this.list[0].content.inputForm.length>1){
-					// 	this.editAddPage()
-						this.inputFormArr = this.list[0].content.inputForm
-					// }
-					this.searchDate = this.list[0].checkDate
-					
+		this.schemasOri = {};
+
+			if(this.$route.query.contentId) {
+			this.listQuery.reportId = this.$route.query.reportId;
+			this.listQuery.perfContentId = this.$route.query.contentId;
+
+			const cidList = this.$route.query.cidList.split(",");
+			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.pageTurn = [ 
+				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			];
+
+			getPerfContent({
+				contentId: this.listQuery.perfContentId
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list[0];
+					this.setData(this.list);
 				}
-				this.initPDF();
-			}
-			this.loading = false;
-		}).catch(err => { this.loading = false; });
-		this.initPDF();
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
 	},
+	mounted() { },
 	methods: {
-		initPDF() {
-			fetch(`/assets/pdf/PI3_1-Att.json?t=${Date.now()}`).then(async (response) => {
-				const domContainer = this.$refs.container.$el;
-				this.template = await response.json();
+		async setData(dataObj) {
+			this.list = dataObj;
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
 
-				const font = {
-					edukai: {
-						data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-						fallback: true
-					},
-					// NotoSansTC: {
-					// 	data: await fetch('/assets/font/NotoSansTC-Regular.ttf').then(res => res.arrayBuffer()),
-					// 	fallback: true
-					// }
-				};
-
-				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => {
-					// console.log(arg);
-					// const key = arg.key.slice(0, arg.key.length-1);
-					// const index = arg.key.slice(arg.key.length-1);
-					const [key, index] = arg.key.split(/([a-zA-Z]+)(\d?)/g).filter(s => s.length > 0);
-					// console.log(key, index);
-					// if(index == undefined) this.inputs[arg.key] = arg.value;
-					if(['serialNumber', 'reason'].includes(key)) this.inputFormArr[index-1][key] = arg.value;
-					if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
-					if(['checkNum', 'failNum', 'passNum'].includes(key)) this.inputFormArr[index-1][key] = Number(arg.value);
-					if(['checkImg'].includes(key)) {
-						const img = new Image();
-						img.onload = () => {
-							// console.log(img.width, img.height);
-							this.inputFormArr[index-1][key] = arg.value;
-							const templateWidth = this.template.schemas[0][arg.key].width;
-							const templateHeight = this.template.schemas[0][arg.key].height;
-							const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
-							// console.log(ratio);
-
-							this.template.schemas[0][arg.key].width = img.width * ratio;
-							this.template.schemas[0][arg.key].height = img.height * ratio;
-							this.form.updateTemplate(this.template);
-						}
-						img.src = arg.value;
+				// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
+				Object.keys(this.inputs).forEach(key => {
+					if(key.includes('Img')) {
+						fetch(this.inputs[key])
+							.then(res => res.blob())
+							.then(blob => {
+								const reader = new FileReader();
+								reader.onloadend = () => { this.inputs[key] = reader.result };
+								reader.readAsDataURL(blob);
+							})
 					}
-				});
-				this.setPDFinputs();
-				// this.getList();
+				})
+
+				this.initPage = this.list.content.initPage;
+			}
+			this.reportDate = dataObj.reportDate;
+			if(!this.checkDate) this.checkDate = dataObj.reportDate;
+			this.inputs.zipCode = String(dataObj.zipCode);
+
+			await this.initPDF();
+		},
+		initPDF() {
+			return new Promise(resolve => {
+				fetch(`/assets/pdf/PI3_1-Att.json?t=${Date.now()}`).then(async (response) => {
+					const domContainer = this.$refs.container.$el;
+					this.template = await response.json();
+
+					const font = {
+						edukai: {
+							data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+							fallback: true
+						},
+						// NotoSansTC: {
+						// 	data: await fetch('/assets/font/NotoSansTC-Regular.ttf').then(res => res.arrayBuffer()),
+						// 	fallback: true
+						// }
+					};
+
+					const changeInput = (arg) => {
+						// console.log(arg);
+						const [key, index] = arg.key.split(/([a-zA-Z]+)(\d?)/g).filter(s => s.length > 0);
+						// console.log(key, index);
+						if( index < this.inputFormArr.length && ['serialNumber'].includes(key)) {
+							if(this.inputFormArr[index-1] == undefined) this.inputFormArr[index-1] = {};
+							this.inputFormArr[index-1][key] = arg.value;
+						}
+						if(['checkVest', 'checkIdCard', 'checkWhistle'].includes(key)) {
+							if(this.inputFormArr[index-1] == undefined) this.inputFormArr[index-1] = {};
+							this.inputFormArr[index-1][key] = (arg.value == 'V' || arg.value == 'v');
+						}
+						if(['checkNum', 'failNum', 'passNum'].includes(key)) {
+							if(this.inputFormArr[index-1] == undefined) this.inputFormArr[index-1] = {};
+							this.inputFormArr[index-1][key] = Number(arg.value);
+						}
+						if(['reason'].includes(key)) {
+							if(this.inputFormArr[index-1] == undefined) this.inputFormArr[index-1] = {};
+							this.inputFormArr[index-1][key] = arg.value;
+						}
+
+						if(key.includes('checkImg')) {
+							if(this.schemasOri[index-1] && this.schemasOri[index-1][arg.key]) {
+								this.template.schemas[index-1][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[index-1][arg.key]));
+								delete this.schemasOri[index-1][arg.key];
+								this.form.updateTemplate(this.template);
+							}
+
+							this.inputs[arg.key] = arg.value;
+
+							const img = new Image();
+							img.onload = () => {
+								// console.log(img.width, img.height);
+								const templateWidth = this.template.schemas[index-1][arg.key].width;
+								const templateHeight = this.template.schemas[index-1][arg.key].height;
+								const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
+								// console.log(ratio);
+
+								if(!this.schemasOri.hasOwnProperty(index-1)) this.schemasOri[index-1] = {};
+								this.schemasOri[index-1][arg.key] = JSON.parse(JSON.stringify(this.template.schemas[index-1][arg.key]));
+								this.template.schemas[index-1][arg.key].position.x = this.template.schemas[index-1][arg.key].position.x + (this.template.schemas[index-1][arg.key].width - img.width * ratio) / 2;
+								this.template.schemas[index-1][arg.key].position.y = this.template.schemas[index-1][arg.key].position.y + (this.template.schemas[index-1][arg.key].height - img.height * ratio) / 2;
+								this.template.schemas[index-1][arg.key].width = img.width * ratio;
+								this.template.schemas[index-1][arg.key].height = img.height * ratio;
+								this.form.updateTemplate(this.template);
+							}
+							img.src = arg.value;
+						}
+					}
+
+					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+					this.form.onChangeInput(arg => changeInput(arg));
+
+					if(Object.keys(this.list.content).length != 0) {
+						for(let i = 1; i < this.list.content.pageCount-1; i++) await this.addPage(true);
+					}
+
+					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
+
+					this.setPDFinputs();
+					
+					resolve();
+				})
 			})
 		},
-		async addPage() {
+		async addPage(init = false) {
 			this.loading = true;
 
 			//Step1: 合併PDF
@@ -315,8 +354,6 @@ export default {
 			const addTemplate = await fetch(`/assets/pdf/PI3_1-Att_1.json?t=${Date.now()}`).then(response => response.json());
 			const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
-			// const addPdfBytes = await fetch(`/assets/pdf/PI3_1-Att_1.pdf?t=${Date.now()}`).then(res => res.arrayBuffer());
-			// const add_pdf = await PDFDocument.load(addPdfBytes);
 			const mergedPdf = await PDFDocument.create();
 
 			const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
@@ -324,53 +361,22 @@ export default {
 			ori_copiedPages.forEach(page => mergedPdf.addPage(page));
 			mergedPdf.insertPage(ori_pdf.getPageCount()-1, add_copiedPage);
 
-			// const mergedPdfFile = await mergedPdf.save();
-			// const blob = new Blob([mergedPdfFile.buffer], { type: 'application/pdf' });
-			// window.open(URL.createObjectURL(blob));
 			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
 
 			//Step2: 調整欄位
 			this.template.schemas.splice(this.template.schemas.length-1, 0, addTemplate.schemas[0]);
+
 			this.inputFormArr.push({
-					serialNumber: "",
-					checkVest: true,		// 反光背心
-					checkIdCard: true,	// 識別證
-					checkWhistle: true,	// 工程帽
-					checkNum: 0,
-					failNum: 0,
-					reason: "無"
-			})
+				serialNumber: "",
+				checkVest: true,		// 反光背心
+				checkIdCard: true,	// 識別證
+				checkWhistle: true,	// 工程帽
+				checkNum: 0,
+				failNum: 0,
+				reason: "無"
+			});
 
-			this.setTemplate();
-		},
-		async editAddPage() {
-			this.loading = true;
-
-			//Step1: 合併PDF
-			const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-			const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
-
-			const addTemplate = await fetch(`/assets/pdf/PI3_1-Att_1.json?t=${Date.now()}`).then(response => response.json());
-			const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
-			const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
-			// const addPdfBytes = await fetch(`/assets/pdf/PI3_1-Att_1.pdf?t=${Date.now()}`).then(res => res.arrayBuffer());
-			// const add_pdf = await PDFDocument.load(addPdfBytes);
-			const mergedPdf = await PDFDocument.create();
-
-			const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
-			const [ add_copiedPage ] = await mergedPdf.copyPages(add_pdf, [0]);
-			ori_copiedPages.forEach(page => mergedPdf.addPage(page));
-			mergedPdf.insertPage(ori_pdf.getPageCount()-1, add_copiedPage);
-
-			// const mergedPdfFile = await mergedPdf.save();
-			// const blob = new Blob([mergedPdfFile.buffer], { type: 'application/pdf' });
-			// window.open(URL.createObjectURL(blob));
-			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
-
-			//Step2: 調整欄位
-			this.template.schemas.splice(this.template.schemas.length-1, 0, addTemplate.schemas[0]);
-
-			this.setTemplate();
+			this.setTemplate(init);
 		},
 		async removePage(index) {
 			this.loading = true;
@@ -379,7 +385,6 @@ export default {
 			const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
 			index = (index != undefined) ? index : ori_pdf.getPageCount()-2;
-			// const lastIndex = ori_pdf.getPageCount()-2;
 			ori_pdf.removePage(index);
 
 			this.template.basePdf = await ori_pdf.saveAsBase64({ dataUri: true });
@@ -389,7 +394,7 @@ export default {
 			this.inputFormArr.splice(index, 1);
 			this.setTemplate();
 		},
-		setTemplate() {
+		setTemplate(init) {
 			for(let i=0; i<this.template.schemas.length; i++) {
 				for(const keySpec of [ 'serialNumber', 'checkImg', 'checkVest', 'checkIdCard', 'checkWhistle', 'checkNum', 'failNum', 'passNum', 'reason' ]) {
 					if(keySpec != 'serialNumber' && i == this.template.schemas.length-1) continue;
@@ -401,17 +406,27 @@ export default {
 			}
 
 			this.form.updateTemplate(this.template);
-			this.setPDFinputs();
+			if(!init) this.setPDFinputs();
 		},
 		setPDFinputs() {
-			const date = moment(this.searchDate).subtract(1911, 'year');
-			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			//工程名稱
-			this.inputs.contractName = date.year()+"年度"+this.inputs.district+"道路巡查維護修繕成效式契約";
-			for(let i=0; i < this.template.schemas.length; i++) {
-				this.inputs[`serialNumber${i+1}`] = date.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
+			this.inputs.district = this.districtList[this.inputs.zipCode].name;
+			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
+
+			for(const key of [ 'serialNumber', 'checkVest', 'checkIdCard', 'checkWhistle', 'checkNum', 'failNum', 'passNum', 'reason' ]) {
+				for(const inputKey in this.inputs) {
+					if(inputKey.includes(key)) delete this.inputs[inputKey];
+				}
 			}
+
+			//紀錄編號
+			const reportDate = moment(this.reportDate).subtract(1911, 'year');
+			for(let i=0; i < this.template.schemas.length; i++) {
+				this.inputs[`serialNumber${i+1}`] = reportDate.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
+			}
+			//檢查日期
+			const checkDate = moment(this.checkDate).subtract(1911, 'year');
+			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
 
 			for(let [ i, inputForm ] of this.inputFormArr.entries()) {
 				inputForm.serialNumber = this.inputs[`serialNumber${i+1}`];
@@ -424,34 +439,29 @@ export default {
 			}
 
 			this.form.setInputs([this.inputs]);
-			// this.form.render();
 			this.loading = false;
 		},
-		// getList() {
-		// 	this.loading = true;
-
-		// 	const date = moment(this.searchDate).format("YYYY-MM-DD");
-		// 	this.list = [];
-
-		// 	getCaseCount({
-		// 		timeStart: date,
-		// 		timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
-		// 	}).then(response => {
-		// 		this.inputForm.caseReportTotal = Number(response.data.result.caseReportTotal);
-
-		// 		this.setPDFinputs();
-		// 		this.loading = false;
-		// 	}).catch(err => this.loading = false);
-		// },
 		storeData(){
+			this.loading = true;
+			let imgObj = {}; 
+			let inputs = JSON.parse(JSON.stringify(this.inputs));
+
+			Object.keys(this.inputs).forEach(key => {
+				if(key.includes('Img')) {
+					imgObj[key] = this.inputs[key];
+					inputs[key] = "";
+				}
+			})
 			const storedContent = {
-				pageCount:1,
-				inputForm:this.inputFormArr,
-				inputs:this.inputs
+				pageCount: this.inputFormArr.length + 1,
+				initPage: this.initPage,
+				inputs
 			}
-			setPerfContent(this.perfContentId,{
-				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
-				content: JSON.stringify(storedContent)
+
+			setPerfContent(this.listQuery.perfContentId,{
+				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent),
+				imgObj
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -459,14 +469,21 @@ export default {
 						type: "success",
 					});
 				} 
+				this.loading = false;
 			}).catch(err => {
 				console.log(err);
+				this.loading = false;
 			})
 		},
+		async getPDF() {
+			return new Promise(resolve =>{
+				generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
+					resolve(pdf);
+				});
+			});
+		},
 		handleDownload() {
-			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
-				// console.log(pdf);
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
@@ -481,6 +498,28 @@ export default {
 				document.body.removeChild(link);
 				URL.revokeObjectURL(url);
 			});
+		},
+		handlePageTurn(type) {
+			switch(type) {
+				case 0:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/edit",
+						query: { reportId: this.listQuery.reportId }
+					})
+					return;
+				case -1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI3_1",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+					})
+					return;
+				case 1:
+					return;
+			}
+		},
+		formatDate(date){
+			const momentDate = moment(date);
+			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
 		}
 	},
 };
@@ -511,11 +550,4 @@ export default {
 		.el-collapse-item__content
 			height: 100%
 			padding-bottom: 5px
-					
-	// .el-row
-	// 	position: relative
-	// 	height: 100%
-	// 	#container
-	// 		position: relative
-	// 		height: 100%
 </style>

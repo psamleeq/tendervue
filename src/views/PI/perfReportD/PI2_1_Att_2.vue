@@ -1,80 +1,60 @@
 <template>
-	<div class="app-container">
-		<h2>PI-2.1附件</h2>
+	<div class="app-container PI2_1-Att_2" v-loading="loading">
+		<h2>PI-2.1附件-2
+			<el-button-group>
+				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
+				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />
+			</el-button-group>
+			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
+		</h2>
+
+		<aside>{{ districtList[this.inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
+
 		<el-row :gutter="24">
-			<!-- <div class="filter-container"> -->
 			
 			<el-col :span="11">
 				<el-card shadow="never" style="width: 500px; margin: 40px auto; padding: 5px 10px; ">
-					<el-form :model="inputForm" label-width="100px">
-					<div style="display:flex;justify-content:space-between;align-items: center">
-							<h2>通報資訊</h2>
-							<el-button
-								class="filter-item"
-								type="success"
-								icon="el-icon-document"
-								@click="storeData"
-								style="height:40px"
-							>儲存</el-button>
+					<el-form :model="inputs" label-width="100px">
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h3>通報資訊</h3>
+							<el-button-group>
+								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
+							</el-button-group>
+							<!-- <el-button type="info" @click="handleDownload()" style="margin: 10px" icon="el-icon-document">輸出PDF</el-button> -->
 						</div>
 						<!-- <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="getList()">預覽</el-button> -->
 						<!-- <el-button type="success" @click="storeData" style="margin: 10px" icon="el-icon-document">儲存</el-button> -->
 						
 						<el-divider />
 						<el-form-item label="起始頁碼">
-							<el-input-number v-model="initPage" controls-position="right" :min="1" style="width: 200px" @change="getList()"/>
+							<el-input-number v-model="initPage" controls-position="right" :min="1" style="width: 200px" @change="previewPdf()"/>
 						</el-form-item>
 						<el-form-item label="檢查日期">
 							<el-date-picker
-								v-model="searchDate"
+								v-model="checkDate"
 								type="date"
 								placeholder="日期"
 								:picker-options="pickerOptions"
 								:clearable="false"
 								style="width: 200px"
+								@change="previewPdf()"
 							/>
 						</el-form-item>
-						<el-form-item label="行政區">
-							<el-select
-								class="filter-item"
-								v-model="inputForm.zipCode"
-								:disabled="Object.keys(districtList).length <= 1"
-								style="width: 200px"
-							>
-								<el-option
-									v-for="(info, zip) in districtList"
-									:key="zip"
-									:label="info.name"
-									:value="Number(zip)"
-								/>
-							</el-select>
-						</el-form-item>
-						<el-form-item label="通報日期">
-							<time-picker
-								class="filter-item"
-								:hasWeek="false"
-								:timeTabId.sync="timeTabId"
-								:dateRange.sync="dateRange"
-								style="width: 200px"
-							/>
-						</el-form-item>
-						
-						<!-- <el-form-item label="施工廠商">
-							<el-input v-model="inputForm.companyName" controls-position="right" :min="1" style="width: 200px"/>
-						</el-form-item> -->
 						
 						<el-form-item label="1999通報" style="width: 400px">
 							<el-upload
-								class="upload-demo"
-								action="#"
+								list-type="picture"
+								action
+								accept=".jpg" 
+								:multiple="false" 
+								:limit="1" 
+								:auto-upload="false"
 								:on-change="handleChange"
 								:on-remove="handleRemove"
-								:auto-upload="false"
-								:multiple="false"
-								list-type="picture"
-								:file-list="inputForm.fileList"
+								:file-list="imgList"
 							>
-								<el-button type="primary" :disabled="imageUrl!=''">上傳圖片</el-button>
+								<el-button type="primary" :disabled="imgList.length >= 1">上傳圖片</el-button>
 							</el-upload>
 						</el-form-item>
 					</el-form>
@@ -95,9 +75,8 @@ import moment from "moment";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
-import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
-import { getCaseList,getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseList, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
@@ -106,11 +85,14 @@ export default {
 	components: {TimePicker },
 	data() {
 		return {
-			imageUrl: '',
-			initPage:2,
-			timeTabId: 1,
-			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
-			searchDate: moment().startOf("d").subtract(1, "d"),
+			loading: false,
+			initPage: 2,
+			listQuery: {
+				reportId: 0,
+				perfContentId: null
+			},
+			checkDate: moment().startOf("d").subtract(1, "d"),
+			reportDate: null,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -146,19 +128,18 @@ export default {
 				lineHeight: (14 + 2) * 0.35,
 				orientation: 'p'
 			},
-			list:[],
-			listNo1999:[],
-			listUnreason:[],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
 				// },
 				103: {
 					"name": "大同區",
+					"tenderName": "112年度大同區道路巡查維護修繕成效式契約",
 					"start": "2023/2/1"
 				},
 				104: {
 					"name": "中山區",
+					"tenderName": "111年度中山區道路巡查維護修繕成效式契約",
 					"start": "2022/6/1"
 				},
 				// 105: {
@@ -189,20 +170,24 @@ export default {
 				// 	"name": "文山區"
 				// }
 			},
+			pageTurn: [-1, -1],
 			options: {
 				DeviceType: {},
 			},
 			imageWidth:null,
 			imageHeight:null,
-			inputForm: {
+			imgList: [],
+			inputs: {
 				companyName: '聖東營造股份有限公司',
 				formatDate:'',
 				dateYear:'',
 				zipCode: 104,
 				district: '中山區',
-				serialNumber1:'',
-				serialNumber2:'',
-				fileList:[],
+				serialNumber1: '',
+				serialNumber2: '',
+				case1999Img: '',
+				listNo1999: [],
+				listUnreason: []
 			},
 			deviceType:{
 				1:'AC路面',
@@ -218,30 +203,20 @@ export default {
 			this.pdfSetting.lineHeight = (this.pdfSetting.fontSize + 2) * 0.35;
 		}
 	},
-	created() {},
-	mounted() {
-		this.perfContentId = this.$route.query.row.id
-		// const row = this.$route.query.row
-		this.init(this.perfContentId);
-		
-	},
-	methods: {
-		formatFormData(){
-			const date = moment(this.searchDate).subtract(1911, 'year');
-			//日期格式
-			this.inputForm.formatDate = date.format("YYYY年MM月DD日").slice(1);
-			//民國年份
-			this.inputForm.dateYear = date.year()
-			//紀錄編號
-			this.inputForm.serialNumber1 = date.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
-			this.inputForm.serialNumber2 = date.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
-			//行政區
-			this.inputForm.district = this.districtList[this.inputForm.zipCode].name		
-		},
-		async init(id){
-			new Promise((resolve, reject) => {
-				getPerfContent({
-					contentId: id
+	created() {
+		if(this.$route.query.contentId) {
+			this.listQuery.reportId = this.$route.query.reportId;
+			this.listQuery.perfContentId = this.$route.query.contentId;
+
+			const cidList = this.$route.query.cidList.split(",");
+			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.pageTurn = [ 
+				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			];
+
+			getPerfContent({
+					contentId: this.listQuery.perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
 						this.$message({
@@ -249,116 +224,133 @@ export default {
 							type: "error",
 						});
 					} else {
-						const l = response.data.list;
-						if(l[0].content.inputForm.length!=0){
-						// 	// this.inputs = l[0].content.inputs
-							this.inputForm = l[0].content.inputForm
-							this.searchDate = l[0].checkDate
-						}
-						// console.log(this.inputForm);
-						await this.getList();
-						resolve();
+						this.list = response.data.list[0];
+						this.setData(this.list);
 					}
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
+
+		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
+	},
+	mounted() { },
+	methods: {
+		async setData(dataObj) {
+			this.list = dataObj;
+			this.reportDate = this.list.reportDate;
+			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.inputs.zipCode = this.list.zipCode;
+
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
+				if(this.inputs.case1999Img.length != 0) this.imgList = [{ url: this.inputs.case1999Img }];
+				this.initPage = this.list.content.initPage;
+			} else this.getList();
+
+			await this.initPDF();
+
+			if(Object.keys(this.list.content).length == 0) await this.getList();
+			else await this.previewPdf();
+		},
+		async initPDF() {
+			return new Promise(resolve => {
+				// 讀入字型
+				const readBlob = (blob) => {
+					return new Promise((resolve, reject) => {
+						const reader = new FileReader();
+						reader.onloadend = () => resolve(reader.result);
+						reader.readAsDataURL(blob);
+					});
+				};
 				
+				fetch('/assets/font/edukai-4.0.ttf')
+					.then(res => res.blob())
+					.then(async(blob) => {
+						this.viewer = new Viewer({
+							domContainer: this.$refs.pdfViewer,
+							template: {
+								basePdf: BLANK_PDF,
+								schemas: [{ }]
+							},
+							inputs: [{ }],
+							options: {
+								font:{
+									edukai: {
+										data: await blob.arrayBuffer(),
+										fallback: true
+									}
+								}
+							}
+						});
+						return readBlob(blob);
+					})
+					.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
+					.then(fontBString => {
+						// init jsPDF
+						this.pdfDoc = new jsPDF();
+						this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
+						this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
+						this.pdfDoc.setFont("edukai");
+
+						resolve();
+					});
 			})
 		},
 		async getList() {
 			new Promise((resolve, reject) => {
 				this.loading = true;
-				dateWatcher(this.districtList[this.inputForm.zipCode].start, this.dateRange);
-				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
-				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-				this.searchRange = startDate + " - " + endDate;
-				this.list = [];
+				dateWatcher(this.districtList[this.inputs.zipCode].start, [this.reportDate, this.reportDate]);
+				let startDate = moment(this.reportDate).format("YYYY-MM-DD");
+				let endDate = moment(this.reportDate).add(1, "day").format("YYYY-MM-DD");
+
+				this.inputs.listNo1999 = [];
+				this.inputs.listUnreason = [];
+
 				getCaseList({
 					filterType: 2,
 					caseType: 2,
-					zipCode: this.inputForm.zipCode,
+					zipCode: this.inputs.zipCode,
 					timeStart: startDate,
-					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
-				}).then((response) => {
-					if (response.data.list.length == 0) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-					} else {
-						this.zipCodeNow = this.inputForm.zipCode;
-						this.list = response.data.list;
-						this.listNo1999 =this.list.filter(l => l.DistressSrc!=="1999交辦案件");
-						this.listUnreason = this.list.filter(l => l.State&16);
-						// 讀入字型
-						const readBlob = (blob) => {
-							return new Promise((resolve, reject) => {
-								const reader = new FileReader();
-								reader.onloadend = () => resolve(reader.result);
-								reader.readAsDataURL(blob);
-							});
-						};
-						fetch('/assets/font/edukai-4.0.ttf')
-						// .then(res => res.arrayBuffer())
-						// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
-						.then(res => res.blob())
-						.then(async(blob) => {
-							this.viewer = new Viewer({
-								domContainer: this.$refs.pdfViewer,
-								template: {
-									basePdf: BLANK_PDF,
-									schemas: [{ }]
-								},
-								inputs: [{ }],
-								options: {
-									font:{
-										edukai: {
-											data: await blob.arrayBuffer(),
-											fallback: true
-										}
-									}
-								}
-							});
-							return readBlob(blob);
-						})
-						.then(dataUri => dataUri.substr(dataUri.indexOf('base64,') + 7))
-						.then(async fontBString => {
-							// init jsPDF
-							this.pdfDoc = new jsPDF();
-							this.pdfDoc.addFileToVFS("edukai.ttf", fontBString);
-							this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
-							this.pdfDoc.setFont("edukai");
-							await this.previewPdf()
-							resolve();
-						});
+					timeEnd: endDate
+				}).then(async (response) => {
+					if (response.data.list.length != 0) {
+						const list = response.data.list;
+						this.inputs.listNo1999 = list.filter(l => l.DistressSrc !== "1999交辦案件");
+						this.inputs.listUnreason = list.filter(l => l.State & 16);
 					}
+					await this.previewPdf()
+					resolve();
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
 			})
 		},
-		handleChange(file, fileList) {
-			this.imageUrl = URL.createObjectURL(file.raw);
-			// 在文件上傳時更新 fileList
-			this.inputForm.fileList = fileList.map((item) => ({
-				name: item.name,
-				size: item.size,
-				type: item.type,
-				url: item.url
-			}));
+		async handleChange(file, fileList) {
+			if(fileList.length > 1) fileList.shift();
+
+			const reader = new FileReader();
+			reader.readAsDataURL(file.raw);
+			reader.onloadend = (evt) => {
+				this.imgList = [{
+					url: evt.target.result
+				}];
+				this.inputs.case1999Img = evt.target.result;
+
+				this.previewPdf();
+			};
 		},
 		handleRemove(file, fileList) {
-			this.imageUrl ='';
-			this.inputForm.fileList = [];
+			this.imgList = [];
+			this.inputs.case1999Img = "";
+			this.previewPdf();
 		},
 		headRows() {
 			return [
 				{ id: '案件編號', name: '通報者', item: '缺失項目', address:'地 點', reason:'原 因' },
 			]
 		},
-		bodyRows(rowCount, data) {
+		bodyRows(data) {
 			// console.log(data);
-			rowCount = rowCount 
 			var body = []
-			for (var j = 0; j <= rowCount; j++) {
+			for (var j = 0; j <= data.length; j++) {
 				if (data[j]) {
 					// console.log(data[j]);
 					body.push({
@@ -381,10 +373,10 @@ export default {
 			return body
 		},
 		async createPdf() {
-			if(this.imageUrl!=''){
+			if(this.inputs.case1999Img.length != 0){
 				// 獲取圖片實際高度寬度
 				const image = new Image();
-				image.src = this.imageUrl;
+				image.src = this.inputs.case1999Img;
 				await image.decode();
 				this.imageWidth = image.width;
 				this.imageHeight = image.height;
@@ -392,6 +384,8 @@ export default {
 			
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
+				this.pdfDoc.addPage();
+				while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 
 				//第一頁
 				this.pdfDoc.setFontSize(15)
@@ -402,8 +396,8 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.inputForm.dateYear+"年度"+this.inputForm.district+"道路巡查維護修繕成效式契約"}`,'紀錄編號',`${this.inputForm.serialNumber1+'-1'}`]],
-					body: [['施工廠商',`${this.inputForm.companyName}`,'檢查日期',`${this.inputForm.formatDate}`]],
+					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber1+'-1'}`]],
+					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
 					startY: height-265,
 				})
 				this.pdfDoc.autoTable({
@@ -412,7 +406,7 @@ export default {
 					head: [['當日被通報案件(議員、單一陳情、管區……等)']],
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
-				let body1 = this.bodyRows(this.listNo1999.length,this.listNo1999)
+				let body1 = this.bodyRows(this.inputs.listNo1999)
 				this.pdfDoc.autoTable({
 					columns: [
 						{ dataKey: 'id', header: '案件編號' },
@@ -438,7 +432,7 @@ export default {
 					body: [[{content: '',styles: { minCellHeight: 40 }}]],
 					didDrawCell: async (data) => {
 						// 添加圖片到PDF中
-						if (data.column.index === 0 && data.row.index === 0 && this.imageUrl!='') {
+						if (data.column.index === 0 && data.row.index === 0 && this.inputs.case1999Img.length != 0) {
 							const cellWidth = data.cell.width;
 							const cellHeight = data.cell.height;
 
@@ -456,7 +450,7 @@ export default {
 							const x = data.cell.x + (cellWidth - scaledWidth) / 2;
 							const y = data.cell.y + (cellHeight - scaledHeight) / 2;
 
-							await this.pdfDoc.addImage(this.imageUrl, 'JPEG', x, y, scaledWidth, scaledHeight);
+							await this.pdfDoc.addImage(this.inputs.case1999Img, 'JPEG', x, y, scaledWidth, scaledHeight);
 						}
 						
 					},
@@ -479,8 +473,8 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.inputForm.dateYear+"年度"+this.inputForm.district+"道路巡查維護修繕成效式契約"}`,'紀錄編號',`${this.inputForm.serialNumber1+'-2'}`]],
-					body: [['施工廠商',`${this.inputForm.companyName}`,'檢查日期',`${this.inputForm.formatDate}`]],
+					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber1+'-2'}`]],
+					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
 					startY: height-265,
 				})
 				this.pdfDoc.autoTable({
@@ -490,7 +484,7 @@ export default {
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
 				let head2 = this.headRows()
-				let body2 = this.bodyRows(this.listUnreason.length,this.listUnreason)
+				let body2 = this.bodyRows(this.inputs.listUnreason)
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, halign: 'center'},
@@ -509,39 +503,31 @@ export default {
 				resolve();
 			})
 		},
-
-		async previewPdf(isInstant = false) {
+		formatFormData(){
+			//日期格式
+			const checkDate = moment(this.checkDate).subtract(1911, 'year');
+			this.inputs.formatDate = checkDate.format("YYYY年MM月DD日").slice(1);
+			
+			const reportDate = moment(this.reportDate).subtract(1911, 'year');
+			//民國年份
+			this.inputs.dateYear = reportDate.year()
+			//紀錄編號
+			this.inputs.serialNumber1 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
+			this.inputs.serialNumber2 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
+			//行政區
+			this.inputs.district = this.districtList[this.inputs.zipCode].name		
+		},
+		async previewPdf() {
 			return new Promise((resolve, reject) => {
 				this.loading = true;
 				this.formatFormData();
 				this.createPdf().then(() => {
-					const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => (
-						{
-							"OrderSN": {
-								"type": "text",
-								"position": {
-									"x": 10,
-									"y": 10
-								},
-								"width": 27.24,
-								"height": 6.12,
-								"fontSize": 14,
-								"alignment": "center"
-							}
-						}
-					));
+					const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => ({}));
 
-					this.viewer.updateTemplate({ basePdf: this.pdfDoc.output('bloburl'), schemas });
 					this.result = this.pdfDoc.output('dataurlstring');
+					this.viewer.updateTemplate({ basePdf: this.result, schemas });
 					// console.log(this.result);
 					resolve();
-					
-					
-
-					// if(isInstant) this.downloadPdf();
-					// else {
-					// 	this.viewer.setInputs([{ "OrderSN": "(預覽列印)" }]);
-					// }
 				})
 				this.loading = false;
 				
@@ -549,14 +535,29 @@ export default {
 			
 		},
 		storeData(){
+			this.loading = true;
+			let imgObj = {}; 
+			let inputs = JSON.parse(JSON.stringify(this.inputs));
+
+			Object.keys(this.inputs).forEach(key => {
+				if(key.includes('Img')) {
+					imgObj[key] = this.inputs[key];
+					inputs[key] = "";
+				}
+			})
+
+
 			const storedContent = {
-				pageCount:2,
-				inputForm:this.inputForm,
-				// inputs:this.inputs
+				pageCount: this.pdfDoc.internal.getNumberOfPages(),
+				initPage: this.initPage,
+				inputs
 			}
-			setPerfContent(this.perfContentId,{
-				checkDate: moment(this.searchDate).format("YYYY-MM-DD"),
-				content: JSON.stringify(storedContent)
+			// console.log(storedContent, imgObj);
+
+			setPerfContent(this.listQuery.perfContentId,{
+				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent),
+				imgObj
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -564,31 +565,46 @@ export default {
 						type: "success",
 					});
 				} 
+				this.loading = false;
 			}).catch(err => {
 				console.log(err);
+				this.loading = false;
 			})
 		},
-		downloadPdf() {
-			this.viewer.setInputs([{ "OrderSN": '' }]);
-			this.handleDownload(`PI2.1附件.pdf`);
-		},
-		handleDownload(filename) {
-			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then(pdf => {
-				console.log(pdf);
-				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
-				// window.open(URL.createObjectURL(blob));
-
-				const file = new File([blob], filename, { type: 'application/pdf' });
-				const link = document.createElement('a');
-				const url = URL.createObjectURL(file);
-				link.href = url;
-				link.download = file.name;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				URL.revokeObjectURL(url);
+		async getPDF() {
+			return new Promise(resolve =>{
+				resolve(this.pdfDoc.output('arraybuffer'));
 			});
 		},
+		handleDownload() {
+			this.pdfDoc.save(`PI2.1附件-2.pdf`);
+		},
+		handlePageTurn(type) {
+			switch(type) {
+				case 0:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/edit",
+						query: { reportId: this.listQuery.reportId }
+					})
+					return;
+				case -1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI2_1_Att",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+					})
+					return;
+				case 1:
+					this.$router.push({
+						path: "/PIIndex/perfReportD/PI3_1",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+					})
+					return;
+			}
+		},
+		formatDate(date){
+			const momentDate = moment(date);
+			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
+		}
 	}
 }
 </script>
