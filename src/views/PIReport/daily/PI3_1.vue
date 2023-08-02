@@ -1,29 +1,31 @@
 <template>
-	<div class="app-container PI2_1" v-loading="loading">
+	<div class="app-container PI3_1" v-loading="loading">
 		<h2>
-			<span style="display: inline-block; width: 145px;">PI2.1</span>
+			<span style="display: inline-block; width: 145px;">PI3.1</span>
 			<el-button-group>
 				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
 				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />
 			</el-button-group>
-			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin: -5px 0 0 5px" @click="handlePageTurn(0)" />
+			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
 		</h2>
 
 		<aside>{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
-		
+
 		<el-row :gutter="24">
 			<el-col :span="11">
-				<el-card shadow="never" style="width: 480px; margin: 20px auto; padding: 5px 10px;">
-					<el-form :model="inputForm">
+				<el-card shadow="never" style="width: 450px; margin: 40px auto; padding: 5px 10px; ">
+					<el-form :model="inputForm" >
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h3>檢核資訊</h3>
 							<el-button-group>
-								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
+								<!-- <el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button> -->
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
 							</el-button-group>
 						</div>
-						
 						<el-divider />
+						<el-form-item label="起始頁碼" :label-width="labelWidth1">
+							<el-input-number v-model="initPage"  :min="1" @change="setPDFinputs" />
+						</el-form-item>
 						<el-form-item label="檢查日期" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="checkDate"
@@ -36,30 +38,23 @@
 							/>
 						</el-form-item>
 						<el-divider />
-						<h4>所有通報數</h4>
-						<el-form-item label="被通報案件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.informed_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="廠商通報數(查報數)" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.companyInform_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="不合理案件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.unreasonable_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
+						<el-form-item label="當日工作執行日報填寫人次數" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.dailyReport_Num31" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
-						<el-form-item label="未登入或登入不完整案件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.incomplete_Num21" controls-position="right" :min="0" @change="setPDFinputs" />
+						<el-form-item label="未滿足基本安全要求人數" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.unqualifiedSafety_Num31" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
 						<h4>應檢附文件</h4>
 						<el-form-item label="" :label-width="labelWidth2">
-							<el-checkbox v-model="inputForm.checkCo_dailyInform21" @change="setPDFinputs">廠商每天通報資訊(巡查日誌)</el-checkbox>
+							<el-checkbox v-model="inputForm.checkCo_dailyInspectAll31" @change="setPDFinputs" >廠商每日完成自主檢查資訊</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkCo_dailyLogin21" @change="setPDFinputs">廠商於系統每天登錄資料數量資訊(道管系統案件處理+觀察案件)</el-checkbox>
+							<el-checkbox v-model="inputForm.checkCo_discoverUnSafety31" @change="setPDFinputs">廠商自主發現未滿足基本安全要求人次數資訊</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkPeriod_Complete21" @change="setPDFinputs">期間有完成巡查工作但未登錄之資訊</el-checkbox>
+							<el-checkbox v-model="inputForm.checkOr_discoverUnSafety31" @change="setPDFinputs">機關或監造於抽查檢核後發現為滿足基本安全要求人次數資訊</el-checkbox>
 							<br/>
-							<el-checkbox v-model="inputForm.checkPeriod_IncompleteLogin21" @change="setPDFinputs">期間系統資料登錄不完整案件資訊</el-checkbox>
+							<el-checkbox v-model="inputForm.checkCo_unreasonable31" @change="setPDFinputs">廠商認為查檢核發現未滿足不合理資訊</el-checkbox>
 						</el-form-item>
 					</el-form>
 				</el-card>
@@ -73,22 +68,16 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
-import { getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
+import { getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
-	name: "PI2_1",
+	name: "PI3_1",
 	components: { },
 	data() {
 		return {
-			labelWidth1:'150px',
-			labelWidth2:'20px',
+			labelWidth1:'170px',
+			labelWidth2:'10px',
 			loading: false,
-			initPage: 1,
-			listQuery: {
-				reportId: 0,
-				perfContentId: null
-			},
-			dateTimePickerVisible: false,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -117,6 +106,11 @@ export default {
 				disabledDate(date) {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
+			},
+			initPage:4,
+			listQuery: {
+				reportId: 0,
+				perfContentId: null
 			},
 			checkDate: moment().startOf("d").subtract(1, "d"),
 			reportDate: null,
@@ -164,43 +158,41 @@ export default {
 			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
-				informed_Num21: 0,
-				companyInform_Num21: 0,
-				unreasonable_Num21: 0,
-				incomplete_Num21: 0,
-				checkCo_dailyInform21:true,
-				checkCo_dailyLogin21:true,
-				checkPeriod_Complete21:true,
-				checkPeriod_IncompleteLogin21:true,
+				dailyReport_Num31: 0,
+				qualifiedSafety_Num31: 0,
+				unqualifiedSafety_Num31: 0,
+				companyCheck_Num31:0,
+				BCA_31:0,
+				checkCo_dailyInspectAll31:true,
+				checkCo_discoverUnSafety31:true,
+				checkOr_discoverUnSafety31:true,
+				checkCo_unreasonable31:true
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
-				serialNumber_21Main: '1111102101',//紀錄編號
+				serialNumber_31: '1111102104',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
-				zipCode: '104',
+				zipCode: '104',//行政區
 				district: '中山區',
-				requiredStandard_21:'完成巡查工作後必須及時登錄資料',//要求標準
-				measurement_21:'廠商於系統當天登錄資料數量/廠商當天通報數',//量測方式
-				sumInform_Num21: '0',//A
-				informed_Num21: '0',//B
-				companyInform_Num21: '0',//C
-				unreasonable_Num21: '0',//D
-				roadSystem_Num21:'0',//E
-				incomplete_Num21: '0',//F
-				companyCheck_Num21: '0',
-				EFA_21:'',
-				checkCo_dailyInform21: 'V',
-				checkCo_dailyLogin21: 'V',
-				checkPeriod_Complete21: 'V',
-				checkPeriod_IncompleteLogin21: 'V',
-			}
+				requiredStandard_31:'廠商人員執行工作應滿足安全性要求',//要求標準
+				measurement_31:'當天滿足要求人次數/當日工作執行日報填寫人數',//量測方式
+				dailyReport_Num31: '0',//A
+				qualifiedSafety_Num31: '0',//B
+				unqualifiedSafety_Num31: '0',//C
+				companyCheck_Num31:'0',
+				BCA_31:'',
+				checkCo_dailyInspectAll31: 'V',
+				checkCo_discoverUnSafety31: 'V',
+				checkOr_discoverUnSafety31: 'V',
+				checkCo_unreasonable31: 'V'
+			},
 		};
 	},
-	computed: {},
+	computed: { },
 	watch: {},
-	async created() {	
-		if(this.$route.query.reportId && this.$route.query.contentId) {
+	created() {	
+		if(this.$route.query.contentId) {
 			this.listQuery.reportId = this.$route.query.reportId;
 			this.listQuery.perfContentId = this.$route.query.contentId;
 
@@ -223,10 +215,9 @@ export default {
 					this.list = response.data.list[0];
 					this.setData(this.list);
 				}
-
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
-		} else this.$router.push({ path: "/PIReport/perfReportD/list" });
+		} else this.$router.push({ path: "/PIReport/daily/list" });
 	},
 	mounted() { },
 	methods: {
@@ -234,6 +225,7 @@ export default {
 			this.list = dataObj;
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
+				// this.inputForm = this.list.content.inputForm;
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
@@ -244,7 +236,7 @@ export default {
 		},
 		async initPDF() {
 			return new Promise(resolve => {
-				fetch(`/assets/pdf/daily/PI2_1-Main.json?t=${Date.now()}`).then(async (response) => {
+				fetch(`/assets/pdf/daily/PI3_1-Main.json?t=${Date.now()}`).then(async (response) => {
 					const domContainer = this.$refs.container.$el;
 					this.template = await response.json();
 
@@ -252,21 +244,18 @@ export default {
 						edukai: {
 							data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
 							fallback: true
-						}
+						},
 					};
 
 					const changeInput = (arg) => {
-						// console.log(arg);
-						if([ 'checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
-						if([ 'informed_Num21', 'companyInform_Num21', 'unreasonable_Num21', 'incomplete_Num21', 'companyCheck_Num21'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
-						if(['failReason'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
+						if(['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
+						if(['dailyReport_Num31','qualifiedSafety_Num31','unqualifiedSafety_Num31','companyCheck_Num31'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 					}
 
 					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 					this.form.onChangeInput(arg => changeInput(arg));
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
-					if(Object.keys(this.list.content).length == 0) this.getList();
-					else this.setPDFinputs();
+					this.setPDFinputs();
 
 					resolve();
 				})
@@ -278,58 +267,31 @@ export default {
 			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
-			this.inputs.serialNumber_21Main = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');	
+			this.inputs.serialNumber_31 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
 			//檢查日期
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
-			//查核人次數(資料轉換)
-			for(const key of [
-				'informed_Num21',
-				'companyInform_Num21',
-				'unreasonable_Num21',
-				'incomplete_Num21']) {
-				this.inputs[key] = String(this.inputForm[key]);
-			}
-			//廠商自主檢查件數 = 廠商通報數(C)
-			this.inputs.companyCheck_Num21 = String(this.inputForm.companyInform_Num21)
-			
-			//計算指標數值(A=E)
-			const A = this.inputForm.informed_Num21+this.inputForm.companyInform_Num21;
-			const E = this.inputForm.roadSystem_Num21 = this.inputForm.informed_Num21+this.inputForm.companyInform_Num21
-			const F = this.inputForm.incomplete_Num21;
+			//查核人次數
+			for(const key of [ 'dailyReport_Num31', 'unqualifiedSafety_Num31']) this.inputs[key] = String(this.inputForm[key]);
+			//計算當日工作執行日報填寫人次數(A) = 滿足安全性巡查人數(B) = 廠商自主檢查人次數
+			this.inputs.qualifiedSafety_Num31 = String(this.inputForm.dailyReport_Num31);
+			this.inputs.companyCheck_Num31 = String(this.inputForm.dailyReport_Num31);
+			//計算指標數值
+			const A = this.inputForm.dailyReport_Num31;
+			const B = this.inputForm.qualifiedSafety_Num31 = this.inputForm.dailyReport_Num31;
+			const C = this.inputForm.unqualifiedSafety_Num31;
 			if(A==0){
-				this.inputs.EFA_21=''
+				this.inputs.BCA_31 = ''
 			}else{
-				this.inputs.EFA_21 = String( Math.round(((E-F)/A)*10000) / 100)
+				this.inputs.BCA_31 = String( Math.round(((B-C)/A)*10000) /100 );
 			}
-			//計算所有通報數(A) && (E)=(A)xw
-			this.inputs.sumInform_Num21 = String(A);
-			this.inputs.roadSystem_Num21 = String(A);
 			//應檢附文件
-			for(const key of ['checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21']){
+			for(const key of ['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			}
-
+			
 			this.form.setInputs([this.inputs]);
 			this.form.render();
-		},
-		getList() {
-			this.loading = true;
-			const date = moment(this.reportDate).format("YYYY-MM-DD");
-			this.inputForm.companyInform_Num21 = 0;
-			this.inputForm.unreasonable_Num21 = 0;
-
-			getCaseCount({
-				zipCode: Number(this.inputs.zipCode),
-				timeStart: date,
-				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
-			}).then(response => {
-				this.inputForm.companyInform_Num21 = Number(response.data.result.caseReportTotal);
-				this.inputForm.unreasonable_Num21 = Number(response.data.result.caseTotal_unreasonable);
-
-				this.setPDFinputs();
-				this.loading = false;
-			}).catch(err => this.loading = false);
 		},
 		storeData(){
 			this.loading = true;
@@ -338,7 +300,7 @@ export default {
 				initPage: this.initPage,
 				inputs: this.inputs
 			}
-			setPerfContent(this.listQuery.perfContentId, {
+			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
 				content: JSON.stringify(storedContent)
 			}).then(response => {
@@ -366,7 +328,7 @@ export default {
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
-				const filename = "成效式契約指標檢核表PI-2-1.pdf"; 
+				const filename = "成效式契約指標檢核表PI-3-1.pdf"; 
 				const file = new File([blob], filename, { type: 'application/pdf' });
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
@@ -382,15 +344,19 @@ export default {
 			switch(type) {
 				case 0:
 					this.$router.push({
-						path: "/PIReport/perfReportD/edit",
+						path: "/PIReport/daily/edit",
 						query: { reportId: this.listQuery.reportId }
 					})
 					return;
 				case -1:
+					this.$router.push({
+						path: "/PIReport/daily/PI2_1_Att_2",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+					})
 					return;
 				case 1:
 					this.$router.push({
-						path: "/PIReport/perfReportD/PI2_1_Att",
+						path: "/PIReport/daily/PI3_1_Att",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					return;
@@ -400,7 +366,7 @@ export default {
 			const momentDate = moment(date);
 			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
 		}
-	}
+	},
 };
 </script>
 
@@ -408,9 +374,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.el-checkbox
-	overflow-wrap: normal
-.PI2_1
+.PI3_1
 	position: relative
 	.filter-container 
 		.filter-item

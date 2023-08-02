@@ -233,7 +233,7 @@ export default {
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
-		} else this.$router.push({ path: "/PIReport/perfReportD/list" });
+		} else this.$router.push({ path: "/PIReport/daily/list" });
 	},
 	mounted() { },
 	methods: {
@@ -504,13 +504,13 @@ export default {
 			switch(type) {
 				case 0:
 					this.$router.push({
-						path: "/PIReport/perfReportD/edit",
+						path: "/PIReport/daily/edit",
 						query: { reportId: this.listQuery.reportId }
 					})
 					return;
 				case -1:
 					this.$router.push({
-						path: "/PIReport/perfReportD/PI3_1",
+						path: "/PIReport/daily/PI3_1",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
 					})
 					return;
