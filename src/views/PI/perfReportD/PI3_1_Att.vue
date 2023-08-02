@@ -333,16 +333,18 @@ export default {
 					this.form.onChangeInput(arg => changeInput(arg));
 
 					if(Object.keys(this.list.content).length != 0) {
-						for(let i = 1; i < this.list.content.pageCount-1; i++) await this.addPage(false);
+						for(let i = 1; i < this.list.content.pageCount-1; i++) await this.addPage(true);
 					}
+
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
+
 					this.setPDFinputs();
 					
 					resolve();
 				})
 			})
 		},
-		async addPage(isAddInputFormArr = true) {
+		async addPage(init = false) {
 			this.loading = true;
 
 			//Step1: 合併PDF
@@ -364,18 +366,17 @@ export default {
 			//Step2: 調整欄位
 			this.template.schemas.splice(this.template.schemas.length-1, 0, addTemplate.schemas[0]);
 
-			if(isAddInputFormArr) {
-				this.inputFormArr.push({
-					serialNumber: "",
-					checkVest: true,		// 反光背心
-					checkIdCard: true,	// 識別證
-					checkWhistle: true,	// 工程帽
-					checkNum: 0,
-					failNum: 0,
-					reason: "無"
-				})
-			}
-			this.setTemplate();
+			this.inputFormArr.push({
+				serialNumber: "",
+				checkVest: true,		// 反光背心
+				checkIdCard: true,	// 識別證
+				checkWhistle: true,	// 工程帽
+				checkNum: 0,
+				failNum: 0,
+				reason: "無"
+			});
+
+			this.setTemplate(init);
 		},
 		async removePage(index) {
 			this.loading = true;
@@ -393,7 +394,7 @@ export default {
 			this.inputFormArr.splice(index, 1);
 			this.setTemplate();
 		},
-		setTemplate() {
+		setTemplate(init) {
 			for(let i=0; i<this.template.schemas.length; i++) {
 				for(const keySpec of [ 'serialNumber', 'checkImg', 'checkVest', 'checkIdCard', 'checkWhistle', 'checkNum', 'failNum', 'passNum', 'reason' ]) {
 					if(keySpec != 'serialNumber' && i == this.template.schemas.length-1) continue;
@@ -405,7 +406,7 @@ export default {
 			}
 
 			this.form.updateTemplate(this.template);
-			this.setPDFinputs();
+			if(!init) this.setPDFinputs();
 		},
 		setPDFinputs() {
 			//工程名稱
