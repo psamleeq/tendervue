@@ -17,7 +17,7 @@
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h3>檢核資訊</h3>
 							<el-button-group>
-								<!-- <el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button> -->
+								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
 							</el-button-group>
 						</div>
@@ -72,7 +72,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
-import { getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
 	name: "PI2_1",
@@ -259,12 +259,13 @@ export default {
 						if([ 'checkCo_dailyInform21','checkCo_dailyLogin21','checkPeriod_Complete21','checkPeriod_IncompleteLogin21'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
 						if([ 'informed_Num21', 'companyInform_Num21', 'unreasonable_Num21', 'incomplete_Num21', 'companyCheck_Num21'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 						if(['failReason'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
-						this.setPDFinputs();
 					}
 
 					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 					this.form.onChangeInput(arg => changeInput(arg));
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
+					if(Object.keys(this.list.content).length == 0) this.getList();
+					else this.setPDFinputs();
 
 					resolve();
 				})
@@ -310,6 +311,24 @@ export default {
 
 			this.form.setInputs([this.inputs]);
 			this.form.render();
+		},
+		getList() {
+			this.loading = true;
+			const date = moment(this.reportDate).format("YYYY-MM-DD");
+			this.inputForm.companyInform_Num21 = 0;
+			this.inputForm.unreasonable_Num21 = 0;
+
+			getCaseCount({
+				zipCode: Number(this.inputs.zipCode),
+				timeStart: date,
+				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+			}).then(response => {
+				this.inputForm.companyInform_Num21 = Number(response.data.result.caseReportTotal);
+				this.inputForm.unreasonable_Num21 = Number(response.data.result.caseTotal_unreasonable);
+
+				this.setPDFinputs();
+				this.loading = false;
+			}).catch(err => this.loading = false);
 		},
 		storeData(){
 			this.loading = true;

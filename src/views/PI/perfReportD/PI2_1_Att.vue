@@ -67,7 +67,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
-import { getCaseCount,getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
 	name: "PI2_1_Att",

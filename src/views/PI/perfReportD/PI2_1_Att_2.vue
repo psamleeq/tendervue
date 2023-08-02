@@ -302,27 +302,23 @@ export default {
 				let startDate = moment(this.reportDate).format("YYYY-MM-DD");
 				let endDate = moment(this.reportDate).add(1, "day").format("YYYY-MM-DD");
 
+				this.inputs.listNo1999 = [];
+				this.inputs.listUnreason = [];
+
 				getCaseList({
 					filterType: 2,
 					caseType: 2,
 					zipCode: this.inputs.zipCode,
 					timeStart: startDate,
-					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+					timeEnd: endDate
 				}).then(async (response) => {
-					if (response.data.list.length == 0) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-					} else {
+					if (response.data.list.length != 0) {
 						const list = response.data.list;
 						this.inputs.listNo1999 = list.filter(l => l.DistressSrc !== "1999交辦案件");
 						this.inputs.listUnreason = list.filter(l => l.State & 16);
-
-						await this.previewPdf()
-						resolve();
-						
 					}
+					await this.previewPdf()
+					resolve();
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
 			})

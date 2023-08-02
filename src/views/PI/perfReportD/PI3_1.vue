@@ -249,12 +249,12 @@ export default {
 					const changeInput = (arg) => {
 						if(['checkCo_dailyInspectAll31','checkCo_discoverUnSafety31','checkOr_discoverUnSafety31','checkCo_unreasonable31'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
 						if(['dailyReport_Num31','qualifiedSafety_Num31','unqualifiedSafety_Num31','companyCheck_Num31'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
-						this.setPDFinputs();
 					}
 
 					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 					this.form.onChangeInput(arg => changeInput(arg));
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
+					this.setPDFinputs();
 
 					resolve();
 				})
