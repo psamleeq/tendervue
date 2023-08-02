@@ -395,7 +395,7 @@ export default {
 					const date = moment(this.reportDate).format("YYYY-MM-DD");
 					this.$router.push({
 						path: "/PIReport/daily/list",
-						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD") }
+						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: date }
 					})
 					break;
 			}

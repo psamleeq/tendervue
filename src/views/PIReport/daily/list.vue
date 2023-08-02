@@ -208,8 +208,9 @@ export default {
 			this.listQuery.zipCode = this.$route.query.zipCode;
 			this.dateRange = [ this.$route.query.timeStart, this.$route.query.timeEnd ];
 			this.timeTabId = -1;
-			this.getList();
 		}
+		
+		this.getList();
 	},
 	async mounted() { 
 		this.showPdfDialog = false;
