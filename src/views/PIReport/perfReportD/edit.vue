@@ -131,7 +131,7 @@ export default {
 		if(this.$route.query.reportId) {
 			this.listQuery.reportId = this.$route.query.reportId;
 			this.getList();
-		} else this.$router.push({ path: "/PIIndex/perfReportD/list" });
+		} else this.$router.push({ path: "/PIReport/perfReportD/list" });
 	},
 	mounted() { },
 	methods: {
@@ -181,17 +181,17 @@ export default {
 			let path = '';
 			if (row.perfItem === 201) {
 				if (row.perfAtt === 0) {
-					path = "/PIIndex/perfReportD/PI2_1";
+					path = "/PIReport/perfReportD/PI2_1";
 				} else if (row.perfAtt === 1) {
-					path = "/PIIndex/perfReportD/PI2_1_Att";
+					path = "/PIReport/perfReportD/PI2_1_Att";
 				} else if (row.perfAtt === 2) {
-					path = "/PIIndex/perfReportD/PI2_1_Att_2";
+					path = "/PIReport/perfReportD/PI2_1_Att_2";
 				}
 			} else if (row.perfItem === 301) {
 				if (row.perfAtt === 0) {
-					path = "/PIIndex/perfReportD/PI3_1";
+					path = "/PIReport/perfReportD/PI3_1";
 				} else if (row.perfAtt === 1) {
-					path = "/PIIndex/perfReportD/PI3_1_Att";
+					path = "/PIReport/perfReportD/PI3_1_Att";
 				}
 			}
 
@@ -201,7 +201,7 @@ export default {
 		},
 		handlePageTurn() {
 			this.$router.push({
-				path: "/PIIndex/perfReportD/list",
+				path: "/PIReport/perfReportD/list",
 			})
 		}
 	}
