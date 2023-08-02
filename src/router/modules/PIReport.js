@@ -15,12 +15,12 @@ const PIReportRouter = {
 	},
 	children: [
 		{
-			path: 'perfReportD',
+			path: 'daily',
 			component: {
 				render: (c) => c('router-view')
 			},
-			name: 'perfReportD',
-			redirect: '/PIReport/perfReportD/list',
+			name: 'daily',
+			redirect: '/PIReport/daily/list',
 			meta: { 
 				title: '日報表', 
 				roles: ['PIreport'],
@@ -29,7 +29,7 @@ const PIReportRouter = {
 			children: [
 				{
 					path: 'list',
-					component: () => import('@/views/PIReport/perfReportD/list'),
+					component: () => import('@/views/PIReport/daily/list'),
 					name: 'list',
 					meta: { 
 						title: '日報表', 
@@ -39,7 +39,7 @@ const PIReportRouter = {
 				},
 				{
 					path: 'edit',
-					component: () => import('@/views/PIReport/perfReportD/edit'),
+					component: () => import('@/views/PIReport/daily/edit'),
 					name: 'edit',
 					meta: { 
 						title: '日報表編輯', 
@@ -49,7 +49,7 @@ const PIReportRouter = {
 				},
 				{
 					path: 'PI2_1',
-					component: () => import('@/views/PIReport/perfReportD/PI2_1'),
+					component: () => import('@/views/PIReport/daily/PI2_1'),
 					name: 'PI2_1',
 					meta: { 
 						title: 'PI2.1', 
@@ -59,7 +59,7 @@ const PIReportRouter = {
 				},
 				{
 					path: 'PI2_1_Att',
-					component: () => import('@/views/PIReport/perfReportD/PI2_1_Att'),
+					component: () => import('@/views/PIReport/daily/PI2_1_Att'),
 					name: 'PI2_1_Att',
 					meta: { 
 						title: 'PI2.1附件', 
@@ -69,7 +69,7 @@ const PIReportRouter = {
 				},
 				{
 					path: 'PI2_1_Att_2',
-					component: () => import('@/views/PIReport/perfReportD/PI2_1_Att_2'),
+					component: () => import('@/views/PIReport/daily/PI2_1_Att_2'),
 					name: 'PI2_1_Att_2',
 					meta: { 
 						title: 'PI2.1附件-2', 
@@ -79,7 +79,7 @@ const PIReportRouter = {
 				},
 				{
 					path: 'PI3_1',
-					component: () => import('@/views/PIReport/perfReportD/PI3_1'),
+					component: () => import('@/views/PIReport/daily/PI3_1'),
 					name: 'PI3_1',
 					meta: {
 						title: 'PI3.1',
@@ -89,7 +89,7 @@ const PIReportRouter = {
 				},
 				{
 					path: 'PI3_1_Att',
-					component: () => import('@/views/PIReport/perfReportD/PI3_1_Att'),
+					component: () => import('@/views/PIReport/daily/PI3_1_Att'),
 					name: 'PI3_1_Att',
 					meta: {
 						title: 'PI3.1附件',

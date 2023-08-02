@@ -98,11 +98,11 @@ import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getPerfReport, addPerfReport, getPerfReportList } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
-import PI21 from '@/views/PIReport/perfReportD/PI2_1.vue';
-import PI21Att from '@/views/PIReport/perfReportD/PI2_1_Att.vue';
-import PI21Att2 from '@/views/PIReport/perfReportD/PI2_1_Att_2.vue';
-import PI31 from '@/views/PIReport/perfReportD/PI3_1.vue';
-import PI31Att from '@/views/PIReport/perfReportD/PI3_1_Att.vue';
+import PI21 from '@/views/PIReport/daily/PI2_1.vue';
+import PI21Att from '@/views/PIReport/daily/PI2_1_Att.vue';
+import PI21Att2 from '@/views/PIReport/daily/PI2_1_Att_2.vue';
+import PI31 from '@/views/PIReport/daily/PI3_1.vue';
+import PI31Att from '@/views/PIReport/daily/PI3_1_Att.vue';
 
 export default {
 	name: "perfReportDList",
@@ -288,7 +288,7 @@ export default {
 		beforeEdit(row){
 			// console.log(row);
 			this.$router.push({
-				path: "/PIReport/perfReportD/edit",
+				path: "/PIReport/daily/edit",
 				query: { reportId: row.id }
 			})
 		},
