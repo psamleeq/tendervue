@@ -10,7 +10,7 @@ const PIRouter = {
 	meta: {
 		title: '成效指標',
 		icon: 'el-icon-s-check',
-		roles: ['PIcase', 'PIreport']
+		roles: ['PIcase']
 	},
 	children: [
 		{
@@ -71,91 +71,6 @@ const PIRouter = {
 						isNew: true
 					}
 				},
-			]
-		},
-		{
-			path: 'perfReportD',
-			component: {
-				render: (c) => c('router-view')
-			},
-			name: 'perfReportD',
-			redirect: '/PIIndex/perfReportD/list',
-			meta: { 
-				title: '日報表', 
-				roles: ['PIreport'],
-				vTag: 'Alpha' 
-			},
-			children: [
-				{
-					path: 'list',
-					component: () => import('@/views/PI/perfReportD/list'),
-					name: 'list',
-					meta: { 
-						title: '日報表', 
-						roles: ['PIreport.21'],
-						vTag: 'Alpha' 
-					}
-				},
-				{
-					path: 'edit',
-					component: () => import('@/views/PI/perfReportD/edit'),
-					name: 'edit',
-					meta: { 
-						title: '日報表編輯', 
-						roles: ['PIreport.21']
-					},
-					hidden: true
-				},
-				{
-					path: 'PI2_1',
-					component: () => import('@/views/PI/perfReportD/PI2_1'),
-					name: 'PI2_1',
-					meta: { 
-						title: 'PI2.1', 
-						roles: ['PIreport.21']
-					},
-					hidden: true
-				},
-				{
-					path: 'PI2_1_Att',
-					component: () => import('@/views/PI/perfReportD/PI2_1_Att'),
-					name: 'PI2_1_Att',
-					meta: { 
-						title: 'PI2.1附件', 
-						roles: ['PIreport.21'] 
-					},
-					hidden: true
-				},
-				{
-					path: 'PI2_1_Att_2',
-					component: () => import('@/views/PI/perfReportD/PI2_1_Att_2'),
-					name: 'PI2_1_Att_2',
-					meta: { 
-						title: 'PI2.1附件-2', 
-						roles: ['PIreport.21']
-					},
-					hidden: true
-				},
-				{
-					path: 'PI3_1',
-					component: () => import('@/views/PI/perfReportD/PI3_1'),
-					name: 'PI3_1',
-					meta: {
-						title: 'PI3.1',
-						roles: ['PIreport.31']
-					},
-					hidden: true
-				},
-				{
-					path: 'PI3_1_Att',
-					component: () => import('@/views/PI/perfReportD/PI3_1_Att'),
-					name: 'PI3_1_Att',
-					meta: {
-						title: 'PI3.1附件',
-						roles: ['PIreport.31']
-					},
-					hidden: true
-				}
 			]
 		},
 		{

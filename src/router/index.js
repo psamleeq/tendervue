@@ -17,6 +17,7 @@ import dispatchRouter from './modules/dispatch';
 import PCIRouter from './modules/PCI';
 import expAnalysisRouter from './modules/expAnalysis';
 import PIRouter from './modules/PI';
+import PIReportRouter from './modules/PIReport';
 import otherRouter from './modules/other';
 import carRouter from './modules/car';
 import priceRouter from './modules/price';
@@ -112,6 +113,7 @@ export const asyncRoutes = [
   priceRouter,
 	PCIRouter,
 	PIRouter,
+	PIReportRouter,
 	expAnalysisRouter,
 	otherRouter,
 	carRouter,
