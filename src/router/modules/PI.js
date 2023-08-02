@@ -159,6 +159,51 @@ const PIRouter = {
 			]
 		},
 		{
+			path: 'perfReportW',
+			component: {
+				render: (c) => c('router-view')
+			},
+			name: 'perfReportW',
+			redirect: 'noRedirect',
+			meta: {
+				title: '週報表',
+				roles: ['PIreport'],
+				vTag: 'Alpha'
+			},
+			children: [
+				{
+					path: 'PI2_2',
+					component: () => import('@/views/PI/perfReportW/PI2_2'),
+					name: 'PI2_2',
+					meta: {
+						title: 'PI2.2',
+						roles: ['PIreport.21'],
+						vTag: 'Alpha'
+					}
+				},
+				{
+					path: 'PI3_2',
+					component: () => import('@/views/PI/perfReportW/PI3_2'),
+					name: 'PI3_2',
+					meta: {
+						title: 'PI3.2',
+						roles: ['PIreport.21'],
+						vTag: 'Alpha'
+					}
+				},
+				{
+					path: 'PI4_1',
+					component: () => import('@/views/PI/perfReportW/PI4_1'),
+					name: 'PI4_1',
+					meta: {
+						title: 'PI4.1',
+						roles: ['PIreport.21'],
+						vTag: 'Alpha'
+					}
+				},
+			]
+		},
+		{
 			path: 'caseWarrantyList',
 			component: () => import('@/views/PI/caseWarrantyList'),
 			name: 'caseWarrantyList',
