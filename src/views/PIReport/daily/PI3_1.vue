@@ -1,15 +1,12 @@
 <template>
 	<div class="app-container PI3_1" v-loading="loading">
-		<h2>
-			<span style="display: inline-block; width: 145px;">PI3.1</span>
-			<el-button-group>
-				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
-				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />
-			</el-button-group>
-			<el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px" @click="handlePageTurn(0)" />
-		</h2>
+		<h2>PI3.1</h2>
 
-		<aside>{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</aside>
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.1附件-2</el-button>
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">日報表</el-button>
+		<span> > </span>
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI3.1附件</el-button>
 
 		<el-row :gutter="24">
 			<el-col :span="11">
@@ -347,19 +344,26 @@ export default {
 						path: "/PIReport/daily/edit",
 						query: { reportId: this.listQuery.reportId }
 					})
-					return;
+					break;
 				case -1:
 					this.$router.push({
 						path: "/PIReport/daily/PI2_1_Att_2",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
 					})
-					return;
+					break;
 				case 1:
 					this.$router.push({
 						path: "/PIReport/daily/PI3_1_Att",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
-					return;
+					break;
+				default:
+					const date = moment(this.reportDate).format("YYYY-MM-DD");
+					this.$router.push({
+						path: "/PIReport/daily/list",
+						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD") }
+					})
+					break;
 			}
 		},
 		formatDate(date){

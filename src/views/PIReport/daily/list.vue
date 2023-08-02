@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container perfReportD-List" v-loading="loading">
-		<h2>日報表 - 列表</h2>
+		<h2>{{ options.reportTypeMap[listQuery.reportType] }} - 列表</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(options.districtList).length <= 1">
 				<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
@@ -97,7 +97,6 @@ import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getPerfReport, addPerfReport, getPerfReportList } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
-import { dateWatcher } from "@/utils/pickerOptions";
 import PI21 from '@/views/PIReport/daily/PI2_1.vue';
 import PI21Att from '@/views/PIReport/daily/PI2_1_Att.vue';
 import PI21Att2 from '@/views/PIReport/daily/PI2_1_Att_2.vue';
@@ -148,6 +147,7 @@ export default {
 				searchDate: moment().startOf("d").subtract(1, "d"),
 			},
 			listQuery:{
+				reportType: 1,
 				zipCode: 104
 			},
 			template:{},
@@ -203,6 +203,14 @@ export default {
 	},
 	computed: { },
 	watch: { },
+	created() {
+		if(this.$route.query.zipCode && this.$route.query.timeStart && this.$route.query.timeEnd) {
+			this.listQuery.zipCode = this.$route.query.zipCode;
+			this.dateRange = [ this.$route.query.timeStart, this.$route.query.timeEnd ];
+			this.timeTabId = -1;
+			this.getList();
+		}
+	},
 	async mounted() { 
 		this.showPdfDialog = false;
 		const font = {
@@ -213,12 +221,10 @@ export default {
 		};
 		this.template = { "schemas": [], "basePdf": BLANK_PDF };
 		this.viewer = new Viewer({ domContainer: this.$refs.pdfViewer, template: this.template, inputs: [{}], options: { font } });
-		this.getList();
 	},
 	methods: {
 		getList() {
 			this.loading = true;
-			dateWatcher(this.options.districtList[this.listQuery.zipCode].start, this.dateRange);
 			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
