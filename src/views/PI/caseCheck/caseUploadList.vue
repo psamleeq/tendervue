@@ -174,6 +174,10 @@ export default {
 				BrokeStatus: {
 					name: "損壞狀況",
 					sortable: false
+				},
+				IsObserve: {
+					name: "是否觀察",
+					sortable: false
 				}
 			},
 			list: [],
@@ -293,7 +297,8 @@ export default {
 			})
 		},
 		formatter(row, column) {
-			if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];
+			if([ 'organAssign', 'IsObserve' ].includes(column.property)) return row[column.property] == 1 ? '是' : '-';
+			else if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
 			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
 			else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];

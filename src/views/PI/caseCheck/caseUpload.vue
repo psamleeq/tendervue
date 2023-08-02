@@ -233,6 +233,9 @@
 						<span v-if="row[column.property] == 1">是</span>
 						<span v-else> - </span>
 					</span>
+					<span v-else-if="[ 'IsObserve' ].includes(column.property)">
+						<el-checkbox v-model.number="row[column.property]" :true-label="1" :false-label="0" />
+					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
@@ -373,10 +376,14 @@ export default {
 				BrokeStatus: {
 					name: "損壞狀況",
 					sortable: false
+				},
+				IsObserve: {
+					name: "是否觀察",
+					sortable: false
 				}
 			},
 			csvHeader: [ "案件編號", "查報日期", "來源編號", "查報地點", "損壞情形", "查報來源" ],
-			apiHeader: [ "UploadCaseNo", "DistressSrc", "CaseSN", "CaseDate", "ReportDate", "DeviceType", "rDeviceType", "organAssign", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
+			apiHeader: [ "UploadCaseNo", "DistressSrc", "CaseSN", "CaseDate", "ReportDate", "DeviceType", "rDeviceType", "organAssign", "IsObserve", "CaseName", "CaseNo", "BType", "BrokeType", "CaseType", "lat", "lng" ],
 			tableSelect: [],
 			list: [],
 			uploadedIdList: [],
@@ -732,6 +739,7 @@ export default {
 							l.CaseName = data["查報地點"];
 							l.CaseType = data["損壞情形"];
 							csvRepeat[index] = true;
+							if(data["案件狀態"]) l.IsObserve = Number(data["案件狀態"] == '觀察');
 						}
 					})
 				})

@@ -20,7 +20,7 @@
 				<el-form :model="caseInfo" label-width="70px" size="small">
 					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
 						<span v-if="isReview">{{ caseInfo.trackingId }}</span>
-						<el-input v-else v-model="caseInfo.trackingId" size="mini" style="width: 130px" />
+						<el-input v-else v-model="caseInfo.trackingId" size="mini" style="width: 130px" @change="trackingCase()" />
 					</el-form-item>
 					<el-form-item prop="dateReport" label="通報時間">
 						<span v-if="isReview">{{ formatTime(caseInfo.dateReport) }}</span>
@@ -173,7 +173,7 @@ export default {
 				millingWidth: 0,
 				millingArea: 0,
 				place: "",
-				direction: 0,
+				direction: 1,
 				lane: 1,
 				imgZoomIn: "",
 				imgZoomOut: ""
@@ -258,6 +258,28 @@ export default {
 			this.panoramaTestInfo = { Pitch: this.panorama.getPitch(), Yaw: this.panorama.getYaw(), Hfov: this.panorama.getHfov(), position: panoramaInfo.position };
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		});
+
+		this.$refs.panoramaView.addEventListener("keydown", (evt) => {
+			// console.log(evt);
+			// w
+			if(evt.keyCode == 87) this.forwardPanorama();
+			// s
+			if(evt.keyCode == 83) this.backwardPanorama();
+			// q
+			if(evt.keyCode == 81) {
+				const northOffset = this.panorama.getNorthOffset();
+				this.panorama.setYaw(-northOffset);
+				this.$emit('setHeading', 0);
+			}
+			// e
+			if(evt.keyCode == 69) {
+				const northOffset = this.panorama.getNorthOffset();
+				this.panorama.setYaw(0);
+				this.$emit('setHeading', northOffset);
+			}
+
+			evt.stopPropagation();
+		})
 
 		this.$el.querySelector("#panorama .pnlm-compass").addEventListener("click", (evt) => {
 			const northOffset = this.panorama.getNorthOffset();
@@ -375,6 +397,26 @@ export default {
 				this.panorama.setYaw(-80);
 				this.panorama.startAutoRotate(-20);
 			} else this.panorama.stopAutoRotate();
+		},
+		trackingCase() {
+			const caseFilter = this.caseGeoJson.casePrev.features.filter(caseSpec => caseSpec.properties.Id == Number(this.caseInfo.trackingId));
+
+			if(caseFilter.length > 0) {
+				const caseSpec = caseFilter[0].properties;
+				this.caseInfo = Object.assign({}, this.caseInfo, {
+					distressType: Number(caseSpec.DistressType),
+					distressLevel: Number(caseSpec.DistressLevel),
+					place: caseSpec.Place,
+					direction: caseSpec.Direction,
+					lane: caseSpec.Lane,
+					isPrev: caseSpec.isPrev
+				});
+			} else {
+				this.$message({
+					message: "查無此追蹤Id",
+					type: "error",
+				});
+			}
 		},
 		uploadCase() {
 			this.$confirm(`確定上傳缺失?`, "確認", { showClose: false }).then(() => {
@@ -699,7 +741,7 @@ export default {
 				millingWidth: 0,
 				millingArea: 0,
 				place: "",
-				direction: 0,
+				direction: 1,
 				lane: 1,
 				isPrev: false,
 				imgZoomIn: "",
@@ -883,7 +925,7 @@ export default {
 			.el-card__body
 				position: relative
 				padding: 5px
-				max-height: 680px
+				max-height: calc(100vh - 50px - 160px)
 				overflow-x: hidden
 				overflow-y: auto
 				.el-form-item
