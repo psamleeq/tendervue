@@ -144,14 +144,14 @@ export default {
 				date: '',//檢查日期
 				requiredStandard_41:'判定道路維護處理(放入觀察區與查報區)必須正確',//要求標準
 				measurement_41:'當周正確判定處理原則之案件數/廠商當周通報數',//量測方式
-				maintainAll_Num41: '0 件',//A
-				hole_Num41: '0 件',
-				sidewalk_Num41: '0 件',
-				crack_Num41: '0 件',
-				uplift_Num41:'0 件',
-				sumQualified_Num41:'0 件',
-				failContractRequire_Num41: '0 件',//C
-				companyCheck_Num41: '0 件',
+				maintainAll_Num41: '0',//A
+				hole_Num41: '0',
+				sidewalk_Num41: '0',
+				crack_Num41: '0',
+				uplift_Num41:'0',
+				sumQualified_Num41:'0',
+				failContractRequire_Num41: '0',//C
+				companyCheck_Num41: '0',
 				BCA_41:'',
 				checkInTime_doc41:'',
 				checkCoFail_doc41:'',
@@ -226,7 +226,7 @@ export default {
 			})
 		},
 		setPDFinputs() {
-			console.log('setPDFinputs');
+			// console.log('setPDFinputs');
 			//檢查日期
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
@@ -239,10 +239,10 @@ export default {
 				'uplift_Num41',
 				'failContractRequire_Num41',
 				'companyCheck_Num41']) {
-				this.inputs[key] = this.inputForm[key] + ' 件';
+				this.inputs[key] = String(this.inputForm[key]);
 			}
 			//計算(B)
-			this.inputs.sumQualified_Num41 = (this.inputForm.hole_Num41+this.inputForm.sidewalk_Num41+this.inputForm.crack_Num41+this.inputForm.uplift_Num41)+ ' 件';
+			this.inputs.sumQualified_Num41 = String(this.inputForm.hole_Num41+this.inputForm.sidewalk_Num41+this.inputForm.crack_Num41+this.inputForm.uplift_Num41);
 			//計算指標數值
 			const A = this.inputForm.maintainAll_Num41;
 			const B = this.inputForm.hole_Num41+this.inputForm.sidewalk_Num41+this.inputForm.crack_Num41+this.inputForm.uplift_Num41;
@@ -250,7 +250,7 @@ export default {
 			if(A==0){
 				this.inputs.BCA_41=''
 			}else{
-				this.inputs.BCA_41=String(((B-C)/A)*100)
+				this.inputs.BCA_41 = String(Math.round(((B-C)/A)*10000) / 100)
 			}
 			//應檢附文件
 			for(const key of ['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41']){

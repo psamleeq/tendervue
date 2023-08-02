@@ -144,19 +144,19 @@ export default {
 				date: '',//檢查日期
 				requiredStandard_32:'判定道路維護處理(放入觀察區與查報區)必須正確',//要求標準
 				measurement_32:'當周正確判定處理原則之案件數/廠商當周通報數',//量測方式
-				maintainAll_Num32: '0 件',//A
-				Hr1_Num32: '0 件',
-				Hr4_Num32: '0 件',
-				Day15_Num32: '0 件',
-				Day2_Num32:'0 件',
-				sumCompleteMaintain_Num32:'0 件',
-				failTime_Num32: '0 件',//C
-				companyCheck_Num32: '0 件',
+				maintainAll_Num32: '0',//A
+				Hr1_Num32: '0',
+				Hr4_Num32: '0',
+				Day15_Num32: '0',
+				Day2_Num32:'0',
+				sumCompleteMaintain_Num32:'0',
+				failTime_Num32: '0',//C
+				companyCheck_Num32: '0',
 				EFA_32:'',
-				checkInTime_doc32:'',
-				checkCoFail_doc32:'',
-				checkSandOFail_doc32:'',
-				checkCoUnreason_doc32:'',
+				checkInTime_doc32:'V',
+				checkCoFail_doc32:'V',
+				checkSandOFail_doc32:'V',
+				checkCoUnreason_doc32:'V',
 			},
 		};
 	},
@@ -206,18 +206,18 @@ export default {
 
 				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 				this.form.onChangeInput(arg => {
-					console.log(arg);
-					if(['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41'].includes(arg.key)){
+					// console.log(arg);
+					if(['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32'].includes(arg.key)){
 						this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
 					}
 					if([
-						'maintainAll_Num41',
-						'hole_Num41',
-						'sidewalk_Num41',
-						'crack_Num41',
-						'uplift_Num41',
-						'failContractRequire_Num41',
-						'companyCheck_Num41'].includes(arg.key)) {
+						'maintainAll_Num32',
+						'Hr1_Num32',
+						'Hr4_Num32',
+						'Day15_Num32',
+						'Day2_Num32',
+						'failTime_Num32',
+						'companyCheck_Num32'].includes(arg.key)) {
 						this.inputForm[arg.key] = parseInt(arg.value)
 					}
 					this.setPDFinputs();
@@ -226,34 +226,34 @@ export default {
 			})
 		},
 		setPDFinputs() {
-			console.log('setPDFinputs');
+			// console.log('setPDFinputs');
 			//檢查日期
 			const date = moment(this.searchDate).subtract(1911, 'year');
 			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
 			//查核人次數
 			for(const key of [
-				'maintainAll_Num41',
-				'hole_Num41',
-				'sidewalk_Num41',
-				'crack_Num41',
-				'uplift_Num41',
-				'failContractRequire_Num41',
-				'companyCheck_Num41']) {
-				this.inputs[key] = this.inputForm[key] + ' 件';
+				'maintainAll_Num32',
+				'Hr1_Num32',
+				'Hr4_Num32',
+				'Day15_Num32',
+				'Day2_Num32',
+				'failTime_Num32',
+				'companyCheck_Num32']) {
+				this.inputs[key] = String(this.inputForm[key]);
 			}
 			//計算(B)
-			this.inputs.sumQualified_Num41 = (this.inputForm.hole_Num41+this.inputForm.sidewalk_Num41+this.inputForm.crack_Num41+this.inputForm.uplift_Num41)+ ' 件';
+			this.inputs.sumCompleteMaintain_Num32 = String(this.inputForm.Hr1_Num32+this.inputForm.Hr4_Num32+this.inputForm.Day15_Num32+this.inputForm.Day2_Num32);
 			//計算指標數值
-			const A = this.inputForm.maintainAll_Num41;
-			const B = this.inputForm.hole_Num41+this.inputForm.sidewalk_Num41+this.inputForm.crack_Num41+this.inputForm.uplift_Num41;
-			const C = this.inputForm.failContractRequire_Num41;
+			const A = this.inputForm.maintainAll_Num32;
+			const B = this.inputForm.Hr1_Num32+this.inputForm.Hr4_Num32+this.inputForm.Day15_Num32+this.inputForm.Day2_Num32;
+			const C = this.inputForm.failTime_Num32;
 			if(A==0){
-				this.inputs.BCA_41=''
+				this.inputs.BCA_32=''
 			}else{
-				this.inputs.BCA_41=String(((B-C)/A)*100)
+				this.inputs.BCA_32 = String(Math.round(((B-C)/A)*10000) / 100)
 			}
 			//應檢附文件
-			for(const key of ['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41']){
+			for(const key of ['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32']){
 				this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			}
 			this.form.setInputs([this.inputs]);
