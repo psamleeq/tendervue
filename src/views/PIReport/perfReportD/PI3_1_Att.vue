@@ -1,6 +1,7 @@
 <template>
 	<div class="app-container PI3_1-Att" v-loading="loading">
-		<h2>PI3.1附件
+		<h2>
+			<span style="display: inline-block; width: 145px;">PI3.1附件</span>
 			<el-button-group>
 				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
 				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />
@@ -264,7 +265,7 @@ export default {
 		},
 		initPDF() {
 			return new Promise(resolve => {
-				fetch(`/assets/pdf/PI3_1-Att.json?t=${Date.now()}`).then(async (response) => {
+				fetch(`/assets/pdf/daily/PI3_1-Att.json?t=${Date.now()}`).then(async (response) => {
 					const domContainer = this.$refs.container.$el;
 					this.template = await response.json();
 
@@ -351,7 +352,7 @@ export default {
 			const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
 
-			const addTemplate = await fetch(`/assets/pdf/PI3_1-Att_1.json?t=${Date.now()}`).then(response => response.json());
+			const addTemplate = await fetch(`/assets/pdf/daily/PI3_1-Att_1.json?t=${Date.now()}`).then(response => response.json());
 			const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 			const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
 			const mergedPdf = await PDFDocument.create();

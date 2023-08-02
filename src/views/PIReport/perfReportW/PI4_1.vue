@@ -193,7 +193,7 @@ export default {
 			this.getList();
 		},
 		initPDF() {
-			fetch(`/assets/pdfW/PI4_1-Main.json?t=${Date.now()}`).then(async (response) => {
+			fetch(`/assets/pdf/weekly/PI4_1-Main.json?t=${Date.now()}`).then(async (response) => {
 				const domContainer = this.$refs.container.$el;
 				this.template = await response.json();
 

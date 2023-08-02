@@ -1,6 +1,7 @@
 <template>
 	<div class="app-container PI2_1-Att_2" v-loading="loading">
-		<h2>PI-2.1附件-2
+		<h2>
+			<span style="display: inline-block; width: 145px;">PI-2.1附件-2</span>
 			<el-button-group>
 				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
 				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />

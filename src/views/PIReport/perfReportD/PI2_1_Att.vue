@@ -1,6 +1,7 @@
 <template>
 	<div class="app-container PI2_1-Att" v-loading="loading">
-		<h2>PI2.1附件
+		<h2>
+			<span style="display: inline-block; width: 145px;">PI2.1附件</span>
 			<el-button-group>
 				<el-button icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
 				<el-button type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)" />
@@ -246,7 +247,7 @@ export default {
 		},
 		async initPDF() {
 			return new Promise(resolve => {
-				fetch(`/assets/pdf/PI2_1-Att.json?t=${Date.now()}`).then(async (response) => {
+				fetch(`/assets/pdf/daily/PI2_1-Att.json?t=${Date.now()}`).then(async (response) => {
 					const domContainer = this.$refs.container.$el;
 					this.template = await response.json();
 
