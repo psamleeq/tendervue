@@ -299,7 +299,7 @@ export default {
 			}else{
 				this.inputs.EFA_21 = String( Math.round(((E-F)/A)*10000) / 100)
 			}
-			//計算所有通報數(A) && (E)=(A)xw
+			//計算所有通報數(A) && (E)=(A)
 			this.inputs.sumInform_Num21 = String(A);
 			this.inputs.roadSystem_Num21 = String(A);
 			//應檢附文件
@@ -321,7 +321,8 @@ export default {
 				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
-				this.inputForm.companyInform_Num21 = Number(response.data.result.caseReportTotal);
+				this.inputForm.informed_Num21 = Number(response.data.result.caseTotal_inform);
+				this.inputForm.companyInform_Num21 = Number(response.data.result.caseTotal_report);
 				this.inputForm.unreasonable_Num21 = Number(response.data.result.caseTotal_unreasonable);
 
 				this.setPDFinputs();
