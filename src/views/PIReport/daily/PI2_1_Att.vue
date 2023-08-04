@@ -223,7 +223,7 @@ export default {
 
 				// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
 				Object.keys(this.inputs).forEach(key => {
-					if(key.includes('Img')) {
+					if(key.includes('Img') && this.inputs[key].length != 0) {
 						fetch(this.inputs[key])
 							.then(res => res.blob())
 							.then(blob => {
