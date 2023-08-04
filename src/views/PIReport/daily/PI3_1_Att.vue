@@ -240,9 +240,9 @@ export default {
 				this.inputs = this.list.content.inputs;
 
 				// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
-				Object.keys(this.inputs).forEach(key => {
+				for(const key in this.inputs) {
 					if(key.includes('Img') && this.inputs[key].length != 0) {
-						fetch(this.inputs[key])
+						await fetch(this.inputs[key])
 							.then(res => res.blob())
 							.then(blob => {
 								const reader = new FileReader();
@@ -250,12 +250,12 @@ export default {
 								reader.readAsDataURL(blob);
 							})
 					}
-				})
+				}
 
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = dataObj.reportDate;
-			if(!this.checkDate) this.checkDate = dataObj.reportDate;
+			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = String(dataObj.zipCode);
 
 			await this.initPDF();
