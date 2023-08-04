@@ -1,6 +1,13 @@
 <template>
-	<div class="app-container PI2_1-Att" v-loading="loading">
+	<div class="app-container PI2_2" v-loading="loading">
 		<h2>PI2.2</h2>
+
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">日報表</el-button>
+		<span> > </span>
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.1附件</el-button>
+
 		<div class="filter-container">
 			<el-button
 				class="filter-item"
@@ -14,11 +21,13 @@
 			<el-col :span="11">
 				<el-card shadow="never" style="width: 450px; margin: 20px auto; padding: 5px 10px;">
 					<el-form :model="inputForm">
-						<h3>檢核資訊</h3>
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h3>檢核資訊</h3>
 							<el-button-group>
 								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
-								<!-- <el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button> -->
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
 							</el-button-group>
+						</div>
 						<el-divider />
 						<el-form-item label="檢查日期" :label-width="labelWidth1">
 							<el-date-picker
@@ -79,7 +88,7 @@ import { Form } from '@pdfme/ui';
 import { getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
-	name: "PI2_1",
+	name: "PI2_2",
 	components: { },
 	data() {
 		return {
@@ -122,7 +131,7 @@ export default {
 				},
 			},
 			checkDate: moment().startOf("d").subtract(1, "d"),
-			reportDate: '2023-05-31',
+			reportDate: null,
 			// list:[],
 			districtList: {
 				// 100: {
@@ -205,12 +214,48 @@ export default {
 	computed: {},
 	watch: {},
 	async created() {	
+		// if(this.$route.query.reportId && this.$route.query.contentId) {
+			// this.listQuery.reportId = this.$route.query.reportId;
+			// this.listQuery.perfContentId = this.$route.query.contentId;
 
+			// const cidList = this.$route.query.cidList.split(",");
+			// const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			// this.pageTurn = [ 
+			// 	Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+			// 	Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			// ];
+
+			// getPerfContent({
+			// 	contentId: this.listQuery.perfContentId
+			// }).then((response) => {
+			// 	if (response.data.list.length == 0) {
+			// 		this.$message({
+			// 			message: "查無資料",
+			// 			type: "error",
+			// 		});
+			// 	} else {
+			// 		this.list = response.data.list[0];
+					this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
+			// 	}
+
+			// 	this.loading = false;
+			// }).catch(err => { this.loading = false; });
+		// } else this.$router.push({ path: "/PIReport/weekly/list" });	
 	},
-	mounted() {
-		this.initPDF();
-	},
+	mounted() { },
 	methods: {
+		async setData(dataObj) {
+			this.list = dataObj;
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
+				this.initPage = this.list.content.initPage;
+			}
+			this.reportDate = this.list.reportDate;
+			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.inputs.zipCode = String(this.list.zipCode);
+
+			await this.initPDF();
+		},
 		async initPDF() {
 			return new Promise(resolve => {
 				fetch(`/assets/pdf/weekly/PI2_2-Main.json?t=${Date.now()}`).then(async (response) => {
@@ -270,9 +315,7 @@ export default {
 			this.inputs.sumInform_Num22 = String(A);
 			this.inputs.correct_Num22 = String(A);
 			//應檢附文件
-			for(const key of ['checkCorrect_doc22','checkIncorrect_doc22','checkSupervisionOrgan_doc22']){
-				this.inputs[key] = this.inputForm[key] ? 'V' : '';
-			}
+			for(const key of ['checkCorrect_doc22','checkIncorrect_doc22','checkSupervisionOrgan_doc22']) this.inputs[key] = this.inputForm[key] ? 'V' : '';
 
 			this.form.setInputs([this.inputs]);
 			this.form.render();
@@ -296,7 +339,36 @@ export default {
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
-		
+		storeData(){
+			this.loading = true;
+			const storedContent = {
+				pageCount: 1,
+				initPage: this.initPage,
+				inputs: this.inputs
+			}
+			setPerfContent(this.listQuery.perfContentId, {
+				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent)
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "提交成功",
+						type: "success",
+					});
+				} 
+				this.loading = false;
+			}).catch(err => {
+				console.log(err);
+				this.loading = false;
+			})
+		},
+		async getPDF() {
+			return new Promise(resolve =>{
+				generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
+					resolve(pdf);
+				});
+			});
+		},
 		handleDownload() {
 			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
@@ -316,24 +388,24 @@ export default {
 				URL.revokeObjectURL(url);
 			});
 		},
-		// handlePageTurn(type) {
-		// 	switch(type) {
-		// 		case 0:
-		// 			this.$router.push({
-		// 				path: "/PIReport/weekly/edit",
-		// 				query: { reportId: this.listQuery.reportId }
-		// 			})
-		// 			return;
-		// 		case -1:
-		// 			return;
-		// 		case 1:
-		// 			this.$router.push({
-		// 				path: "/PIReport/weekly/PI2_2_Att",
-		// 				query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
-		// 			})
-		// 			return;
-		// 	}
-		// },
+		handlePageTurn(type) {
+			switch(type) {
+				case 0:
+					this.$router.push({
+						path: "/PIReport/weekly/edit",
+						query: { reportId: this.listQuery.reportId }
+					})
+					return;
+				case -1:
+					return;
+				case 1:
+					this.$router.push({
+						path: "/PIReport/weekly/PI2_2_Att",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+					})
+					return;
+			}
+		},
 		formatDate(date){
 			const momentDate = moment(date);
 			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
@@ -348,7 +420,7 @@ export default {
 // 	box-sizing: border-box
 .el-checkbox
 	overflow-wrap: normal
-.PI2_1-Att
+.PI2_2
 	position: relative
 	.filter-container 
 		.filter-item
