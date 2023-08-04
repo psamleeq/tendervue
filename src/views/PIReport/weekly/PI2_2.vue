@@ -6,7 +6,7 @@
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">日報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
-		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.1附件</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.2附件</el-button>
 
 		<div class="filter-container">
 			<el-button
@@ -251,7 +251,7 @@ export default {
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
-			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = String(this.list.zipCode);
 
 			await this.initPDF();
@@ -292,7 +292,7 @@ export default {
 			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
-			this.inputs.serialNumber = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');	
+			this.inputs.serialNumber = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
 			//檢查日期
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);

@@ -2,11 +2,11 @@
 	<div class="app-container PI2_2-Att" v-loading="loading">
 		<h2>PI2.2附件</h2>
 
-		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.1</el-button>
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.2</el-button>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">日報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
-		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.1附件-2</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.2附件-2</el-button>
 
 		<el-row :gutter="24">
 			<el-col :span="10">
@@ -244,9 +244,9 @@ export default {
 				this.inputs = this.list.content.inputs;
 
 				// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
-				Object.keys(this.inputs).forEach(key => {
+				for(const key in this.inputs) {
 					if(key.includes('Img') && this.inputs[key].length != 0) {
-						fetch(this.inputs[key])
+						await fetch(this.inputs[key])
 							.then(res => res.blob())
 							.then(blob => {
 								const reader = new FileReader();
@@ -254,12 +254,12 @@ export default {
 								reader.readAsDataURL(blob);
 							})
 					}
-				})
+				}
 				
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = this.list.reportDate;
-			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = String(this.list.zipCode);
 
 			await this.initPDF();
@@ -326,7 +326,7 @@ export default {
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
 			for(let i=0; i < this.template.schemas.length; i++) {
-				this.inputs.serialNumber = reportDate.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
+				this.inputs.serialNumber = reportDate.format("YYYYMMDD02").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
 			//檢查日期
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
@@ -435,26 +435,26 @@ export default {
 			switch(type) {
 				case 0:
 					this.$router.push({
-						path: "/PIReport/daily/edit",
+						path: "/PIReport/weekly/edit",
 						query: { reportId: this.listQuery.reportId }
 					})
 					break;
 				case -1:
 					this.$router.push({
-						path: "/PIReport/daily/PI2_1",
+						path: "/PIReport/weekly/PI2_2",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
 					})
 					break;
 				case 1:
 					this.$router.push({
-						path: "/PIReport/daily/PI2_1_Att_2",
+						path: "/PIReport/weekly/PI2_2_Att_2",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					break;
 				default:
 					const date = moment(this.reportDate).format("YYYY-MM-DD");
 					this.$router.push({
-						path: "/PIReport/daily/list",
+						path: "/PIReport/weekly/list",
 						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: date }
 					})
 					break;
