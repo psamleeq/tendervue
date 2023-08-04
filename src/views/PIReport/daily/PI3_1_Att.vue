@@ -255,7 +255,7 @@ export default {
 				this.initPage = this.list.content.initPage;
 			}
 			this.reportDate = dataObj.reportDate;
-			if(!this.checkDate) this.checkDate = dataObj.reportDate;
+			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = String(dataObj.zipCode);
 
 			await this.initPDF();

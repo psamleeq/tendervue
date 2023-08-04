@@ -235,7 +235,7 @@ export default {
 		async setData(dataObj) {
 			this.list = dataObj;
 			this.reportDate = this.list.reportDate;
-			if(!this.checkDate) this.checkDate = this.list.reportDate;
+			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = this.list.zipCode;
 
 			if(Object.keys(this.list.content).length != 0) {
