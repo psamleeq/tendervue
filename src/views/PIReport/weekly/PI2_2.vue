@@ -288,7 +288,8 @@ export default {
 				timeStart: moment(date).day(1).format("YYYY-MM-DD"),
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
-				this.inputForm.companyInform_Num22 = Number(response.data.result.caseReportTotal);
+				this.inputForm.informed_Num22 = Number(response.data.result.caseTotal_inform);
+				this.inputForm.companyInform_Num22 = Number(response.data.result.caseTotal_report);
 				this.inputForm.unreasonable_Num22 = Number(response.data.result.caseTotal_unreasonable);
 
 				this.setPDFinputs();
