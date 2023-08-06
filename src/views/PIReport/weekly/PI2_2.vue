@@ -328,7 +328,7 @@ export default {
 
 			getCaseCount({
 				zipCode: Number(this.inputs.zipCode),
-				timeStart: moment(date).day(1).format("YYYY-MM-DD"),
+				timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
 				this.inputForm.informed_Num22 = Number(response.data.result.caseTotal_inform);
