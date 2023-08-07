@@ -3,19 +3,19 @@
 		<h2>PI2.2</h2>
 
 		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
-		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">日報表</el-button>
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
 		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.2附件</el-button>
 
-		<div class="filter-container">
+		<!-- <div class="filter-container">
 			<el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				@click="handleDownload"
 			>輸出PDF</el-button>
-		</div>
+		</div> -->
 
 		<el-row :gutter="24">
 			<el-col :span="11">
@@ -100,7 +100,6 @@ export default {
 				reportId: 0,
 				perfContentId: null
 			},
-			dateTimePickerVisible: false,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -194,9 +193,8 @@ export default {
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
 				zipCode: '104',
-				district: '中山區',
 				requiredStandard_22:'判定道路維護處理(放入觀察區與查報區)必須正確',//要求標準
-				measurement_22:'當周正確判定處理原則之案件數/廠商當周通報數',//量測方式
+				measurement_22:'當週正確判定處理原則之案件數/廠商當周通報數',//量測方式
 				sumInform_Num22: '0',//A
 				informed_Num22: '0',//B
 				companyInform_Num22: '0',//C
@@ -289,7 +287,6 @@ export default {
 		setPDFinputs() {
 			//工程名稱
 			const reportDate = moment(this.reportDate).subtract(1911, 'year');
-			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
 			this.inputs.serialNumber = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
@@ -305,11 +302,8 @@ export default {
 			const A = this.inputForm.informed_Num22+this.inputForm.companyInform_Num22;
 			const E = this.inputForm.correct_Num22 = this.inputForm.informed_Num22+this.inputForm.companyInform_Num22;
 			const F = this.inputForm.incorrect_Num22;
-			if(A==0){
-				this.inputs.EFA_22=''
-			}else{
-				this.inputs.EFA_22 = String( Math.round(((E-F)/A)*10000) / 100)
-			}
+			if(A==0) this.inputs.EFA_22='';
+			else this.inputs.EFA_22 = String( Math.round(((E-F)/A)*10000) / 100);
 
 			//計算所有通報數(A) && (E)=(A)
 			this.inputs.sumInform_Num22 = String(A);

@@ -1,25 +1,34 @@
 <template>
-	<div class="app-container PI2_1-Att" v-loading="loading">
+	<div class="app-container PI3_2" v-loading="loading">
 		<h2>PI3.2</h2>
-		<div class="filter-container">
+
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
+		<span> > </span>
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.2附件</el-button>
+
+		<!-- <div class="filter-container">
 			<el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				@click="handleDownload"
 			>輸出PDF</el-button>
-			<!-- <el-button class="filter-item" type="info" @click="setPDFinputs">更新內容</el-button> -->
-		</div>
+		</div> -->
 
 		<el-row :gutter="10">
 			<el-col :span="12">
 				<el-card shadow="never" style="width: 450px; margin: 20px auto; padding: 5px 10px;">
 					<el-form :model="inputForm">
-						<h3>執行維護工作之時效性</h3>
+						<h3>檢核資訊</h3>
 						<el-divider />
+						<el-form-item label="起始頁碼" :label-width="labelWidth1">
+							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
+						</el-form-item>
 						<el-form-item label="檢查日期" :label-width="labelWidth1">
 							<el-date-picker
-								v-model="searchDate"
+								v-model="checkDate"
 								type="date"
 								placeholder="日期"
 								:picker-options="pickerOptions"
@@ -30,12 +39,12 @@
 						</el-form-item>
 						<el-divider />
 						
-						<el-form-item label="廠商當周所有維護案件數" :label-width="labelWidth1">
+						<h4>廠商每週於規定時間內完成維護工作之案件總數</h4>
+						<el-form-item label="廠商當週所有維護案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.maintainAll_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
-						<h4>廠商每周於規定時間內完成維護工作之案件總數</h4>
-						<el-form-item label="接獲通報案件於1小時內到達現場且回報修復情形案件數" :label-width="labelWidth1">
+						<!-- <el-divider /> -->
+						<!-- <el-form-item label="接獲通報案件於1小時內到達現場且回報修復情形案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.Hr1_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-form-item label="4小時內完成臨補或設置安全措施案件數" :label-width="labelWidth1">
@@ -47,15 +56,15 @@
 						<el-form-item label="標線復原案件於修復完成後2日內(含例假日)將標線復原案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.Day2_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
+						<el-divider /> -->
 						<el-form-item label="未滿足契約時間要求案件資訊" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.failTime_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider />
-						<el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
+						<!-- <el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.companyCheck_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
+						<el-divider /> -->
 						
 						<h4>應檢附文件</h4>
 						<el-form-item label="" :label-width="labelWidth2">
@@ -79,19 +88,21 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
+import { getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
-	name: "PI2_1",
+	name: "PI3_2",
 	components: { },
 	data() {
 		return {
 			labelWidth1:'150px',
 			labelWidth2:'20px',
 			loading: false,
-			timeTabId: 1,
-			initPage: 1,
-			dateTimePickerVisible: false,
-			screenWidth: window.innerWidth,
+			initPage: 4,
+			listQuery: {
+				reportId: 0,
+				perfContentId: null
+			},
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -121,29 +132,72 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
-			searchDate: moment().startOf("d").subtract(1, "d"),
+			checkDate: moment().startOf("d").subtract(1, "d"),
+			reportDate: null,
+			// list:[],
+			districtList: {
+				// 100: {
+				// 	"name": "中正區"
+				// },
+				103: {
+					"name": "大同區",
+					"tenderName": "112年度大同區道路巡查維護修繕成效式契約"
+				},
+				104: {
+					"name": "中山區",
+					"tenderName": "111年度中山區道路巡查維護修繕成效式契約"
+				},
+				// 105: {
+				// 	"name": "松山區"
+				// },
+				// 106: {
+				// 	"name": "大安區"
+				// },
+				// 108: {
+				// 	"name": "萬華區"
+				// },
+				// 110: {
+				// 	"name": "信義區"
+				// },
+				// 111: {
+				// 	"name": "士林區"
+				// },
+				// 112: {
+				// 	"name": "北投區"
+				// },
+				// 114: {
+				// 	"name": "內湖區"
+				// },
+				// 115: {
+				// 	"name": "南港區"
+				// },
+				// 116: {
+				// 	"name": "文山區"
+				// }
+			},
+			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
 				maintainAll_Num32:0,
-				Hr1_Num32: 0,
-				Hr4_Num32: 0,
-				Day15_Num32: 0,
-				Day2_Num32:0,
+				// Hr1_Num32: 0,
+				// Hr4_Num32: 0,
+				// Day15_Num32: 0,
+				// Day2_Num32:0,
 				failTime_Num32: 0,
-				companyCheck_Num32: 0,
-				EFA_32:0,
+				// companyCheck_Num32: 0,
 				checkInTime_doc32:true,
 				checkCoFail_doc32:true,
 				checkSandOFail_doc32:true,
 				checkCoUnreason_doc32:true,
 			},
 			inputs: {
-				contractName: '112年度大同區道路巡查維護修繕成效式契約',//工程名稱
+				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
 				serialNumber: '11206250201',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
-				requiredStandard_32:'判定道路維護處理(放入觀察區與查報區)必須正確',//要求標準
-				measurement_32:'當周正確判定處理原則之案件數/廠商當周通報數',//量測方式
+				zipCode: '104',
+				requiredStandard_32:'維護工作執行期限應滿足契約要求',//要求標準
+				measurement_32:'廠商當週於規定時間內完成維護工作之案件數/ 廠商當週所有維護案件數',//量測方式
 				maintainAll_Num32: '0',//A
 				Hr1_Num32: '0',
 				Hr4_Num32: '0',
@@ -152,7 +206,7 @@ export default {
 				sumCompleteMaintain_Num32:'0',
 				failTime_Num32: '0',//C
 				companyCheck_Num32: '0',
-				EFA_32:'',
+				BCA_32:'',
 				checkInTime_doc32:'V',
 				checkCoFail_doc32:'V',
 				checkSandOFail_doc32:'V',
@@ -163,103 +217,111 @@ export default {
 	computed: { },
 	watch: {},
 	async created() {	
-		// this.template = {};
-		// this.form = {};
+		// if(this.$route.query.reportId && this.$route.query.contentId) {
+			// this.listQuery.reportId = this.$route.query.reportId;
+			// this.listQuery.perfContentId = this.$route.query.contentId;
+
+			// const cidList = this.$route.query.cidList.split(",");
+			// const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			// this.pageTurn = [ 
+			// 	Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+			// 	Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			// ];
+
+			// getPerfContent({
+			// 	contentId: this.listQuery.perfContentId
+			// }).then((response) => {
+			// 	if (response.data.list.length == 0) {
+			// 		this.$message({
+			// 			message: "查無資料",
+			// 			type: "error",
+			// 		});
+			// 	} else {
+			// 		this.list = response.data.list[0];
+					this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
+			// 	}
+
+			// 	this.loading = false;
+			// }).catch(err => { this.loading = false; });
+		// } else this.$router.push({ path: "/PIReport/weekly/list" });	
 	},
-	mounted() {
-		this.initPDF();
-	},
+	mounted() {},
 	methods: {
-		dateShortcuts(index) {
-			this.timeTabId = index;
-
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
-			};
-
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
-					break;
+		async setData(dataObj) {
+			this.list = dataObj;
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
+				this.initPage = this.list.content.initPage;
 			}
-			this.getList();
+			this.reportDate = this.list.reportDate;
+			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+			this.inputs.zipCode = String(this.list.zipCode);
+
+			await this.initPDF();
 		},
-		initPDF() {
-			fetch(`/assets/pdf/weekly/PI3_2-Main.json?t=${Date.now()}`).then(async (response) => {
-				const domContainer = this.$refs.container.$el;
-				this.template = await response.json();
+		async initPDF() {
+			return new Promise(resolve => {
+				fetch(`/assets/pdf/weekly/PI3_2-Main.json?t=${Date.now()}`).then(async (response) => {
+					const domContainer = this.$refs.container.$el;
+					this.template = await response.json();
 
-				const font = {
-					edukai: {
-						data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-						fallback: true
-					}
-				};
+					const font = {
+						edukai: {
+							data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+							fallback: true
+						}
+					};
 
-				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => {
-					// console.log(arg);
-					if(['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32'].includes(arg.key)){
-						this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
+					const changeInput = (arg) => {
+						// console.log(arg);
+						if(['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
+						if(['maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32', 'Day2_Num32', 'failTime_Num32', 'companyCheck_Num32'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+						this.setPDFinputs();
 					}
-					if([
-						'maintainAll_Num32',
-						'Hr1_Num32',
-						'Hr4_Num32',
-						'Day15_Num32',
-						'Day2_Num32',
-						'failTime_Num32',
-						'companyCheck_Num32'].includes(arg.key)) {
-						this.inputForm[arg.key] = parseInt(arg.value)
-					}
+
+					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+					this.form.onChangeInput(arg => changeInput(arg));
+
+					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
 					this.setPDFinputs();
-				});
-				
+						
+					resolve();
+				})
 			})
 		},
 		setPDFinputs() {
 			// console.log('setPDFinputs');
+			//工程名稱
+			const reportDate = moment(this.reportDate).subtract(1911, 'year');
+			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
+			//紀錄編號
+			this.inputs.serialNumber = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
 			//檢查日期
-			const date = moment(this.searchDate).subtract(1911, 'year');
-			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			//查核人次數
-			for(const key of [
-				'maintainAll_Num32',
-				'Hr1_Num32',
-				'Hr4_Num32',
-				'Day15_Num32',
-				'Day2_Num32',
-				'failTime_Num32',
-				'companyCheck_Num32']) {
-				this.inputs[key] = String(this.inputForm[key]);
-			}
-			//計算(B)
-			this.inputs.sumCompleteMaintain_Num32 = String(this.inputForm.Hr1_Num32+this.inputForm.Hr4_Num32+this.inputForm.Day15_Num32+this.inputForm.Day2_Num32);
+			const checkDate = moment(this.checkDate).subtract(1911, 'year');
+			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
+			//案件數
+			this.inputForm.Hr1_Num32 = this.inputForm.Hr4_Num32 = this.inputForm.Day15_Num32 = this.inputForm.Day2_Num32 = this.inputForm.sumCompleteMaintain_Num32 = this.inputForm.companyCheck_Num32 = this.inputForm.maintainAll_Num32;
+			for(const key of [ 'maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32', 'Day2_Num32', 'sumCompleteMaintain_Num32', 'failTime_Num32', 'companyCheck_Num32']) this.inputs[key] = String(this.inputForm[key]);
+
 			//計算指標數值
 			const A = this.inputForm.maintainAll_Num32;
-			const B = this.inputForm.Hr1_Num32+this.inputForm.Hr4_Num32+this.inputForm.Day15_Num32+this.inputForm.Day2_Num32;
+			const B = this.inputForm.sumCompleteMaintain_Num32;
 			const C = this.inputForm.failTime_Num32;
-			if(A==0){
-				this.inputs.BCA_32=''
-			}else{
-				this.inputs.BCA_32 = String(Math.round(((B-C)/A)*10000) / 100)
-			}
+			if(A==0) this.inputs.BCA_32='';
+			else this.inputs.BCA_32 = String( Math.round(((B-C)/A)*10000) / 100);
+
 			//應檢附文件
-			for(const key of ['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32']){
-				this.inputs[key] = this.inputForm[key] ? 'V' : '';
-			}
+			for(const key of ['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32']) this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},
-		
+		async getPDF() {
+			return new Promise(resolve =>{
+				generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
+					resolve(pdf);
+				});
+			});
+		},
 		handleDownload() {
 			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
@@ -279,6 +341,28 @@ export default {
 				document.body.removeChild(link);
 				URL.revokeObjectURL(url);
 			});
+		},
+		handlePageTurn(type) {
+			switch(type) {
+				case 0:
+					this.$router.push({
+						path: "/PIReport/weekly/edit",
+						query: { reportId: this.listQuery.reportId }
+					})
+					return;
+				case -1:
+					return;
+				case 1:
+					this.$router.push({
+						path: "/PIReport/weekly/PI2_2_Att",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+					})
+					return;
+			}
+		},
+		formatDate(date){
+			const momentDate = moment(date);
+			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
 		}
 	},
 };
@@ -288,11 +372,4 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.el-checkbox
-	overflow-wrap: normal
-.PI2_1-Att
-	position: relative
-	.filter-container 
-		.filter-item
-			margin-right: 5px
 </style>
