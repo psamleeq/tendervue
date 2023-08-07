@@ -282,7 +282,7 @@ export default {
 		// 				});
 		// 			} else {
 		// 				this.list = response.data.list[0];
-						this.setData(this.list || { zipCode: 104, reportDate: '2023-05-07', content: {} });
+						this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
 		// 			}
 		// 			this.loading = false;
 		// 		}).catch(err => { this.loading = false; });
@@ -440,13 +440,10 @@ export default {
 				}).catch(err => { this.loading = false; });
 			})
 		},
-		async createPdf() {
+		async createPdf_header(pageIndex) {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
-				this.pdfDoc.addPage();
-				while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 
-				//第一頁
 				this.pdfDoc.setFontSize(15)
 				this.pdfDoc.text(`成效式契約指標檢核表`, width/2, height-280, { align: 'center' });
 				this.pdfDoc.setFontSize(12)
@@ -455,49 +452,72 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber+'-1'}`]],
+					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber}-${pageIndex+1}`]],
 					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
 					startY: height-265,
 				})
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['當週被通報案件資料(附件請詳當日日報表)']],
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
 
-				this.inputs.listOther.map(item => { 
-					item.AC = String(item.AC_total) + ((item.AC_unreasonable != 0) ? `/${item.AC_unreasonable}` : "");
-					item.facility = String(item.facility_total) + ((item.facility_unreasonable != 0) ? `/${item.facility_unreasonable}` : "");
-
-					return item;
-				})
-				// console.log(this.inputs.listOther);
-				this.pdfDoc.autoTable({
-					columns: [
-						{ dataKey: 'reportDate', header: '日期' },
-						{ dataKey: 'distressSrc', header: '查驗項目' },
-						{ dataKey: 'AC', header: '被查報案件數/不合理數(路面)' },
-						{ dataKey: 'facility', header: '被查報案件數/不合理數(設施)' },
-					],
-					body: this.inputs.listOther,
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle'	},
-					columnStyles: { 
-						reportDate: { cellWidth: 16 }, 
-						distressSrc: { cellWidth: 'auto' }, 
-						AC: { cellWidth: 60 }, 
-						facility: { cellWidth: 60} 
-					},
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
+				resolve();
+			})
+		},
+		async createPdf_footer() {
+			return new Promise((resolve, reject) => {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, minCellHeight: 20, valign: 'middle' },
 					head: [['廠商:']],
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
+				resolve();
+			})
+		},
+		async createPdf() {
+			return new Promise(async(resolve, reject) => {
+				this.inputs.listOther.map(item => { 
+					item.AC = String(item.AC_total) + ((item.AC_unreasonable != 0) ? `/${item.AC_unreasonable}` : "");
+					item.facility = String(item.facility_total) + ((item.facility_unreasonable != 0) ? `/${item.facility_unreasonable}` : "");
 
+					return item;
+				})
+
+				const splitTable = this.inputs.listOther.reduce((acc, cur) => {
+					if(acc[acc.length-1].length <= 22) acc[acc.length-1].push(cur);
+					else acc.push([cur]);
+					return acc;
+				}, [[]]);
+				
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+					await this.createPdf_header(pageIndex);
+					
+					this.pdfDoc.autoTable({
+						theme: 'plain',
+						styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
+						head: [['當週被通報案件資料(附件請詳當日日報表)']],
+						startY: this.pdfDoc.lastAutoTable.finalY,
+					})
+
+					this.pdfDoc.autoTable({
+						columns: [
+							{ dataKey: 'reportDate', header: '日期' },
+							{ dataKey: 'distressSrc', header: '查驗項目' },
+							{ dataKey: 'AC', header: '被查報案件數/不合理數(路面)' },
+							{ dataKey: 'facility', header: '被查報案件數/不合理數(設施)' },
+						],
+						body: table,
+						theme: 'plain',
+						styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle'	},
+						columnStyles: { 
+							reportDate: { cellWidth: 16 }, 
+							distressSrc: { cellWidth: 'auto' }, 
+							AC: { cellWidth: 60 }, 
+							facility: { cellWidth: 60} 
+						},
+						startY: this.pdfDoc.lastAutoTable.finalY,
+					})
+					await this.createPdf_footer();
+				}
 				resolve();
 			})
 		},
