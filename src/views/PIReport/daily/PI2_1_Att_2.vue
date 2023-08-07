@@ -354,7 +354,7 @@ export default {
 					body.push({
 						id: data[j].UploadCaseNo,
 						name: data[j].DistressSrc,
-						item: this.deviceType[data[j].DeviceType],
+						item: this.deviceType[data[j].rDeviceType],
 						address: data[j].CaseName,
 						reason: data[j].StateNotes.Firm
 					});
