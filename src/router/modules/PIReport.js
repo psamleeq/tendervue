@@ -163,6 +163,16 @@ const PIReportRouter = {
 					}
 				},
 				{
+					path: 'PI3_2_Att',
+					component: () => import('@/views/PIReport/weekly/PI3_2_Att'),
+					name: 'PI3_2_Att',
+					meta: {
+						title: 'PI3.2附件',
+						roles: ['PIreport.weekly'],
+						vTag: 'Alpha'
+					},
+				},
+				{
 					path: 'PI4_1',
 					component: () => import('@/views/PIReport/weekly/PI4_1'),
 					name: 'PI4_1',

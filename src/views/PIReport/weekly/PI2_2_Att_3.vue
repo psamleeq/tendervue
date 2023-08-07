@@ -228,15 +228,13 @@ export default {
 			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = this.list.zipCode;
 
+			await this.initPDF();
+
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
 				this.initPage = this.list.content.initPage;
-			} else this.getList();
-
-			await this.initPDF();
-
-			if(Object.keys(this.list.content).length == 0) await this.getList();
-			else await this.previewPdf();
+				await this.previewPdf();
+			} else await this.getList();
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -360,7 +358,7 @@ export default {
 				const totalOrgan = this.inputs.listNonAccepted.filter(l => l.State & 64).length;
 
 				const splitTable = this.inputs.listNonAccepted.reduce((acc, cur) => {
-					const rowLimit = acc.length == 1 ? 20 : 23;
+					const rowLimit = acc.length == 1 ? 22 : 25;
 					if(acc[acc.length-1].length <= rowLimit) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
@@ -402,14 +400,14 @@ export default {
 						],
 						body: table,
 						theme: 'plain',
-						styles: { font: "edukai", fontSize: 11, lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle'	},
-						headStyles: { fontSize: 10 },
+						styles: { font: "edukai", lineWidth: 0.1, lineColor: 0, halign: 'center', valign: 'middle'	},
+						headStyles: { textColor: 90, fillColor: 240 },
 						columnStyles: { 
 							CaseDate: { cellWidth: 14 }, 
 							UploadCaseNoSV: { cellWidth: 27 }, 
-							StateNotesSV: { fontSize: 10, cellWidth: 'auto' }, 
+							StateNotesSV: { cellWidth: 'auto' }, 
 							UploadCaseNoOrgan: { cellWidth: 27 }, 
-							StateNotesOrgan: { fontSize: 10, cellWidth: 'auto' } 
+							StateNotesOrgan: { cellWidth: 'auto' } 
 						},
 						startY: this.pdfDoc.lastAutoTable.finalY,
 					})

@@ -315,6 +315,29 @@ export default {
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},
+		storeData(){
+			this.loading = true;
+			const storedContent = {
+				pageCount: 1,
+				initPage: this.initPage,
+				inputs: this.inputs
+			}
+			setPerfContent(this.listQuery.perfContentId, {
+				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent)
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "提交成功",
+						type: "success",
+					});
+				} 
+				this.loading = false;
+			}).catch(err => {
+				console.log(err);
+				this.loading = false;
+			})
+		},
 		async getPDF() {
 			return new Promise(resolve =>{
 				generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {

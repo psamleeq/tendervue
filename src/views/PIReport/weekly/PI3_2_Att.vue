@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container PI2_2-Att_2" v-loading="loading">
-		<h2>PI2.2附件-2</h2>
+	<div class="app-container PI3_2-Att" v-loading="loading">
+		<h2>PI3.2附件</h2>
 
 		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.1附件</el-button>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
@@ -9,20 +9,21 @@
 		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.2附件-3</el-button>
 
 		<el-row :gutter="24">
-			
 			<el-col :span="12">
 				<el-card shadow="never" style="width: 550px; margin: 40px auto; padding: 5px 10px; ">
 					<el-form :model="inputs" label-width="100px">
-						<div style="display:flex;justify-content:space-between;align-items: center">
+						<div style="display: flex; justify-content: space-between; align-items: center">
 							<h3>通報資訊</h3>
-							<el-button-group>
-								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
+
+							<span>
+								<el-upload :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
+									<el-button type="info" size="small" plain>上傳CSV</el-button>
+								</el-upload>
+									
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
-							</el-button-group>
-							<!-- <el-button type="info" @click="handleDownload()" style="margin: 10px" icon="el-icon-document">輸出PDF</el-button> -->
+								<!-- <el-button type="info" @click="handleDownload()" style="margin: 10px" icon="el-icon-document">輸出PDF</el-button> -->
+							</span>
 						</div>
-						<!-- <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="getList()">預覽</el-button> -->
-						<!-- <el-button type="success" @click="storeData" style="margin: 10px" icon="el-icon-document">儲存</el-button> -->
 						
 						<el-divider />
 						<el-form-item label="起始頁碼">
@@ -39,79 +40,9 @@
 								@change="previewPdf()"
 							/>
 						</el-form-item>
-						<el-divider />
-						<h3>被通報案件</h3>
-						<el-table 
-							:data="[...inputs.listOther, newItem]"
-							empty-text="目前沒有資料"
-							fit
-							size="mini"
-							:header-cell-style="{ 'background-color': '#F2F6FC', 'padding': '2px 0' }"
-							style="width: 500px"
-						>
-							<el-table-column prop="reportDate" label="日期" width="60:" align="center">
-								<template slot-scope="{ row }">
-									<el-input v-if="!row.id" v-model = "row.reportDate" size="mini"/>
-									<span v-else >{{ row.reportDate }}</span>
-									
-								</template>
-							</el-table-column>
-							<el-table-column prop="distressSrc" label="查驗項目" align="center">
-								<template slot-scope="{ row }">
-									<el-input v-if="!row.id" v-model = "row.distressSrc" size="mini"/>
-									<span v-else>{{ row.distressSrc }}</span>
-									
-								</template>
-							</el-table-column>
-							<el-table-column prop="AC" label="路面" align="center">
-								<el-table-column prop="AC_total" label="案件數" width="60" align="center">
-									<template slot-scope="{ row }">
-										<el-input v-if="!row.id || row.edit" v-model = "row.AC_total" size="mini"/>
-										<span v-else>{{ row.AC_total }}</span>
-									</template>
-								</el-table-column>
-								<el-table-column prop="AC_unreasonable" label="不合理" width="60" align="center">
-									<template slot-scope="{ row }">
-										<el-input v-if="!row.id || row.edit" v-model = "row.AC_unreasonable" size="mini"/>
-										<span v-else>{{ row.AC_unreasonable }}</span>
-									</template>
-								</el-table-column>
-							</el-table-column>
-							<el-table-column prop="facility" label="設施" align="center">
-								<el-table-column prop="facility_total" label="案件數" width="60" align="center">
-									<template slot-scope="{ row }">
-										<el-input v-if="!row.id || row.edit" v-model = "row.facility_total" size="mini"/>
-										<span v-else>{{ row.facility_total }}</span>
-									</template>
-								</el-table-column>
-								<el-table-column prop="facility_unreasonable" label="不合理" width="60" align="center">
-									<template slot-scope="{ row }">
-										<el-input v-if="!row.id || row.edit" v-model = "row.facility_unreasonable" size="mini"/>
-										<span v-else>{{ row.facility_unreasonable }}</span>
-									</template>
-								</el-table-column>
-							</el-table-column>
-							<el-table-column label="操作" width="80" align="center">
-								<template slot-scope="{ row }">
-									<span v-if="row.id">
-										<el-button-group v-if="row.edit">
-											<el-button type="success" size="mini" icon="el-icon-check" style="padding: 5px" @click="rowEdit(row, false, false)" />
-											<el-button type="danger" plain size="mini" icon="el-icon-close" style="padding: 5px" @click="rowEdit(row, false, true)" />
-										</el-button-group>
-										<el-button-group v-else>
-											<el-button type="primary" plain size="mini" icon="el-icon-edit" style="padding: 5px 10px" @click="rowEdit(row, true)" />
-											<el-button type="danger" plain size="mini" icon="el-icon-delete" style="padding: 5px"  @click="rowDel(row)" />
-										</el-button-group>
-									</span>
-									<el-button v-else type="success" size="mini" @click="rowAdd(row)">新增</el-button>
-								</template>
-							</el-table-column>
-						</el-table>
 					</el-form>
 				</el-card>
 			</el-col>
-
-			<!-- </div> -->
 
 			<el-col :span="12">
 				<div ref="pdfViewer" />
@@ -122,21 +53,22 @@
 
 <script>
 import moment from "moment";
+import jschardet from "jschardet";
+import iconv from "iconv-lite";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
-import { getCaseList, getPerfContent, setPerfContent } from "@/api/PI";
+import { getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
-import { dateWatcher } from "@/utils/pickerOptions";
 
 export default {
-	name: "PI2_2_Att_2",
-	components: {TimePicker },
+	name: "PI3_2_Att",
+	components: { TimePicker },
 	data() {
 		return {
 			loading: false,
-			initPage: 2,
+			initPage: 5,
 			listQuery: {
 				reportId: 0,
 				perfContentId: null
@@ -172,12 +104,15 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
-			pdfSetting: {
-				format: 'a4',
-				fontSize: 14,
-				lineHeight: (14 + 2) * 0.35,
-				orientation: 'p'
+			headers: {
+				CaseNo: "案件編號",
+				DistressSrc: "查報來源",
+				CaseDate: "查報日期",
+				Place: "查報地點",
+				DateDeadline: "預計完工日期",
+				DateCompleted: "實際完工時間"
 			},
+			csvFileList: [],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
@@ -243,7 +178,7 @@ export default {
 				zipCode: 104,
 				district: '中山區',
 				serialNumber: '',
-				listOther: []
+				csvData: []
 			},
 			deviceType:{
 				1:'AC路面',
@@ -254,11 +189,7 @@ export default {
 		}
 	},
 	computed: {},
-	watch: {
-		"pdfSetting.fontSize"() {
-			this.pdfSetting.lineHeight = (this.pdfSetting.fontSize + 2) * 0.35;
-		}
-	},
+	watch: { },
 	created() {
 		this.rowActive = {};
 		// if(this.$route.query.contentId) {
@@ -282,7 +213,7 @@ export default {
 		// 				});
 		// 			} else {
 		// 				this.list = response.data.list[0];
-						this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
+						this.setData(this.list || { zipCode: 104, reportDate: '2023-05-14', content: {} });
 		// 			}
 		// 			this.loading = false;
 		// 		}).catch(err => { this.loading = false; });
@@ -297,13 +228,14 @@ export default {
 			this.newItem.reportDate = moment(this.reportDate).format('MM/DD');
 			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = this.list.zipCode;
-			await this.initPDF();
 
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
 				this.initPage = this.list.content.initPage;
-				await this.previewPdf();
-			} else await this.getList();
+			}
+
+			await this.initPDF();
+			await this.previewPdf();
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -349,107 +281,113 @@ export default {
 					});
 			})
 		},
-		rowAdd(row) {
-			const idMax = this.inputs.listOther.length == 0 ? 0 : Math.max(...this.inputs.listOther.map(row => row.id));
-			this.inputs.listOther.push({id: idMax+1, ...row});
-			this.inputs.listOther.sort((a, b) => moment(a.reportDate).valueOf() - moment(b.reportDate).valueOf());
-			this.previewPdf();
+		readCSV(file, fileList) {
+			if(fileList.length > 1) fileList.shift();
+			this.csvFileList = JSON.parse(JSON.stringify(fileList));
+			this.tableSelect = [];
 
-			this.newItem = {
-				reportDate: moment(this.reportDate).format('MM/DD'),
-				distressSrc: "",
-				AC_total: 0,
-				AC_unreasonable: 0,
-				facility_total: 0,
-				facility_unreasonable: 0
-			};
-		},
-		rowEdit(row, isEdit, isReset) {
-			if(isEdit) {
-				this.rowActive = JSON.parse(JSON.stringify(row)); 
-				row.edit = true;
+			if(file.raw.type != "text/csv") {
+				this.$message({
+					type: "warning",
+					message: "文件類型不符，請重新上傳正確csv"
+				});
+				this.handleRemove(); 
 			} else {
-				if(isReset) {
-					this.$set(row, 'AC_total', this.rowActive.AC_total);
-					this.$set(row, 'AC_unreasonable', this.rowActive.AC_unreasonable);
-					this.$set(row, 'facility_total', this.rowActive.facility_total);
-					this.$set(row, 'facility_unreasonable', this.rowActive.facility_unreasonable);
+				this.loading = true;
+				let reader = new FileReader();
+				// reader.readAsText(file.raw, "UTF-8");
+				reader.readAsArrayBuffer(file.raw);
+				reader.onload = (evt) => {
+					// 讀取CSV內容
+					// const fileString = evt.target.result;
+					const buffer = Buffer.from(evt.target.result);
+					const type = jschardet.detect(buffer);
+					// console.log(type);
+					const fileString = iconv.decode(buffer, type.encoding);
+
+					//轉成array
+					this.inputs.csvData = this.csvToArray(fileString);
+					// console.log(this.inputs.csvData);
+					this.checkCsv();
 				}
-				row.edit = false;
+			}
+		},
+		checkCsv() {
+			const fileHeaders = Object.keys(this.inputs.csvData[0]);
+			let lackHeaderList = [];
+			for(const header of Object.values(this.headers)) {
+				if(!fileHeaders.includes(header)) lackHeaderList.push(header);
 			}
 
-			// this.$set(this.inputs, 'listOther', this.inputs.listOther);
-			this.previewPdf();
+			if(lackHeaderList.length != 0) {
+				this.$message({
+					type: "warning",
+					message: `csv缺少欄位${lackHeaderList.map(l => `「${l}」`).join("、")}，請重新上傳正確csv`
+				});
+				this.handleRemove(); 
+			} else {
+				this.inputs.csvData.forEach(data => {
+					Object.keys(data).forEach(oldKey => {
+						const newKeyArr = Object.keys(this.headers).filter(key => this.headers[key] == oldKey);
+						if(newKeyArr.length != 0) data[newKeyArr[0]] = data[oldKey];
+						delete data[oldKey];
+					});
+				});
+
+				this.previewPdf();
+			}
 		},
-		rowDel(row) {
-			this.inputs.listOther = this.inputs.listOther.filter(rowSpec => rowSpec.id != row.id);
-			this.previewPdf();
+		csvToArray(str, delimiter = ",") {
+			str = str.replace(/\"(.*)[\r\n|\n](.*)\"/g, "$1$2");
+			const headers = str.slice(0, str.indexOf("\n")).split(delimiter).map(header => header.replace(/\r\n/g,'').trim());
+			const rows = str.slice(str.indexOf("\n") + 1).split("\n").filter(row => row.length != 0);
+			const regex = /("[^"]+"|[^,]+)*,/g;
+
+			const result = rows.map(row => {
+				const values = row.split(regex).filter(row => row == undefined || row.length != 0).map(row => {
+					if(row == undefined) return row = '';
+					else return row.replace(/\r\n|\"/g,'').trim();
+				});
+
+				return headers.reduce((object, header, index) => {
+					// if([ "查報日期", "預計完工日期", "實際完工時間" ].includes(header)){
+					// 	if(values[index]=="") object[header] = "";
+					// 	else{
+					// 		object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD");
+					// 	}
+					// } 
+					// else{
+						object[header] = values[index]; 
+					// } 
+					return object
+				}, {});
+			});	
+
+			return result
 		},
-		async getList() {
-			new Promise((resolve, reject) => {
-				this.loading = true;
-				let startDate = moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD");
-				let endDate = moment(this.reportDate).add(1, "day").format("YYYY-MM-DD");
-				dateWatcher(this.districtList[this.inputs.zipCode].start, [startDate, endDate]);
-
-				this.inputs.listOther = [];
-
-				getCaseList({
-					filterType: 2,
-					caseType: 2,
-					zipCode: this.inputs.zipCode,
-					timeStart: startDate,
-					timeEnd: endDate
-				}).then(async (response) => {
-					if (response.data.list.length != 0) {
-
-						const list = response.data.list;
-						this.inputs.listOther = list.filter(l => !l.DistressSrc.includes("1999")).reduce((acc, cur) => {
-							const itemList = acc.filter(item => item.reportDate == moment(cur.ReportDate).format('MM/DD') && item.distressSrc == cur.DistressSrc);
-							if(itemList.length == 0) {
-								acc.push({
-									id: acc.length+1,
-									deviceType: cur.DeviceType,
-									reportDate: moment(cur.ReportDate).format('MM/DD'),
-									distressSrc: cur.DistressSrc,
-									AC_total: cur.DeviceType == 1 ? 1 : 0,
-									AC_unreasonable: cur.DeviceType == 1 && cur.State & 16 ? 1 : 0,
-									facility_total: cur.DeviceType != 1 ? 1 : 0,
-									facility_unreasonable: cur.DeviceType != 1 && cur.State & 16 ? 1 : 0,
-									edit: false
-								}) 
-
-							} else {
-								if(cur.DeviceType == 1) {
-									itemList[0].AC_total++;
-									if(cur.State & 16) itemList[0].AC_unreasonable++;
-								} else {
-									itemList[0].facility_total++;
-									if(cur.State & 16) itemList[0].facility_unreasonable++;
-								}
-							}
-							return acc
-						}, []);
-					}
-					await this.previewPdf()
-					resolve();
-					this.loading = false;
-				}).catch(err => { this.loading = false; });
-			})
+		handleRemove(file, fileList) {
+			this.inputs.csvData = [];
+			if(fileList == undefined) this.csvFileList = [];
+			else this.csvFileList = JSON.parse(JSON.stringify(fileList));
+			this.$refs.uploadFile.clearFiles();
+			this.previewPdf();
+			this.loading = false;
 		},
 		async createPdf_header(pageIndex) {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
 
-				this.pdfDoc.setFontSize(15)
+				this.pdfDoc.setFontSize(15);
 				this.pdfDoc.text(`成效式契約指標檢核表`, width/2, height-280, { align: 'center' });
-				this.pdfDoc.setFontSize(12)
-				this.pdfDoc.text(`項目:【PI-2.2附件】`, width-190, height-270, { align: 'left' })
-				this.pdfDoc.text(`週報表`, width-40, height-270, { align: 'left' })
+				this.pdfDoc.setFontSize(12);
+				this.pdfDoc.text(`項目:【PI-3.2附件】`, width-190, height-270, { align: 'left' });
+				this.pdfDoc.text(`週報表`, width-40, height-270, { align: 'left' });
+
+				const serialNumber = `${this.inputs.serialNumber}` + (pageIndex == 0 ? "" : `-${pageIndex}`);
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber}-${pageIndex+1}`]],
+					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${serialNumber}`]],
 					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
 					startY: height-265,
 				})
@@ -469,50 +407,49 @@ export default {
 			})
 		},
 		async createPdf() {
-			return new Promise(async(resolve, reject) => {
-				this.inputs.listOther.map(item => { 
-					item.AC = String(item.AC_total) + ((item.AC_unreasonable != 0) ? `/${item.AC_unreasonable}` : "");
-					item.facility = String(item.facility_total) + ((item.facility_unreasonable != 0) ? `/${item.facility_unreasonable}` : "");
-
-					return item;
-				})
-
-				const splitTable = this.inputs.listOther.reduce((acc, cur) => {
-					if(acc[acc.length-1].length <= 22) acc[acc.length-1].push(cur);
+			return new Promise(async (resolve, reject) => {
+				const total = this.inputs.csvData.length;
+				const splitTable = this.inputs.csvData.reduce((acc, cur) => {
+					if(acc[acc.length-1].length <= 20) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
 				}, [[]]);
-				
+
 				for(const [ pageIndex, table ] of splitTable.entries()) {
 					this.pdfDoc.addPage();
 					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 					await this.createPdf_header(pageIndex);
-					
+
 					this.pdfDoc.autoTable({
 						theme: 'plain',
 						styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-						head: [['當週被通報案件資料(附件請詳當日日報表)']],
+						head: [[`本週預計完工案件列表: ${total} 件`]],
 						startY: this.pdfDoc.lastAutoTable.finalY,
 					})
-
 					this.pdfDoc.autoTable({
 						columns: [
-							{ dataKey: 'reportDate', header: '日期' },
-							{ dataKey: 'distressSrc', header: '查驗項目' },
-							{ dataKey: 'AC', header: '被查報案件數/不合理數(路面)' },
-							{ dataKey: 'facility', header: '被查報案件數/不合理數(設施)' },
+							{ dataKey: 'CaseNo', header: '案件編號' },
+							{ dataKey: 'CaseDate', header: '查報日期' },
+							{ dataKey: 'DistressSrc', header: '查報來源' },
+							{ dataKey: 'Place', header: '查報地點' },
+							{ dataKey: 'DateDeadline', header: '預計完工日期' },
+							{ dataKey: 'DateCompleted', header: '實際完工日期' }
 						],
-						body: table,
+						body: table.length == 0 ? [ { CaseNo: '' } ] : table,
 						theme: 'plain',
-						styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle'	},
+						styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle', cellPadding: 1	},
+						headStyles: { fontSize: 9, textColor: 90, fillColor: 240 },
 						columnStyles: { 
-							reportDate: { cellWidth: 16 }, 
-							distressSrc: { cellWidth: 'auto' }, 
-							AC: { cellWidth: 60 }, 
-							facility: { cellWidth: 60} 
+							CaseNo: { cellWidth: 20 }, 
+							CaseDate: { cellWidth: 18 }, 
+							DistressSrc: { cellWidth: 19 }, 
+							Place: { cellWidth: 'auto', halign: 'left' }, 
+							DateDeadline: { cellWidth: 22 }, 
+							DateCompleted: { cellWidth: 22 } 
 						},
 						startY: this.pdfDoc.lastAutoTable.finalY,
 					})
+
 					await this.createPdf_footer();
 				}
 				resolve();
@@ -631,8 +568,28 @@ export default {
 </script>
 
 <style lang="sass">
-.PI2_2-Att_2
-	.el-table .el-input .el-input__inner
-		padding: 0
-		text-align: center
+.PI3_2-Att
+	.upload-csv
+		display: inline-flex
+		// flex-direction: row-reverse
+		border: 1px solid rgba(#909399, 0.6)
+		border-radius: 5px
+		&.is-ready > .el-upload.el-upload--text
+			display: none
+		.el-upload-list__item
+			transition: none !important
+			margin-top: 0
+			.el-upload-list__item-name
+				line-height: 35px
+				margin: 0 25px 0 10px
+			.el-icon-close
+				display: block
+				top: 50%
+				transform: translateY(-50%)
+				color: #F56C6C
+				font-weight: bold
+				&:hover
+					color: white
+					background-color: #F56C6C
+					border-radius: 50%
 </style>
