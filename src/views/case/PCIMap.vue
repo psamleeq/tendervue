@@ -330,7 +330,8 @@ export default {
 						isMain: cur.zipCodeSpec == 0,
 						zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
 						roundStart: cur.roundStart, 
-						roundEnd: cur.roundEnd
+						roundEnd: cur.roundEnd,
+						orthoPath: cur.orthoPath
 					};
 					return acc;
 				}, {});
@@ -476,8 +477,8 @@ export default {
 						const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
 							if(this.blockId != 0) {
 								this.loading = true;
-								const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
-								const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${this.blockId}.tif`;
+								const orthoPath = this.options.tenderRoundMap[this.listQuery.tenderRound].orthoPath;
+								const url = `${orthoPath.replace("_jpg", "")}${this.blockId}.tif`;
 								fromUrl(url).then( async(geoTiffFile) => {
 									const imageSpec = await geoTiffFile.getImage(0);
 									// console.log(imageSpec);
@@ -952,8 +953,8 @@ export default {
 			} else if(feature.getProperty("blockId")) {
 				this.blockId = feature.getProperty("blockId");
 				this.pciId = feature.getProperty("pciId");
-				const tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
-				const url = `https://storage.googleapis.com/adm_orthographic/${tenderId}/${this.blockId}.tif`;
+				const orthoPath = this.options.tenderRoundMap[this.listQuery.tenderRound].orthoPath;
+				const url = `${orthoPath.replace("_jpg", "")}${this.blockId}.tif`;
 				// fromUrl(url).then( async(geoTiffFile) => {
 				// 	const imageSpec = await geoTiffFile.getImage(0);
 				// 	// console.log(imageSpec);
