@@ -370,34 +370,55 @@ export default {
 
 			return body
 		},
-		async createPdf() {
-			if(this.inputs.case1999Img.length != 0){
-				// 獲取圖片實際高度寬度
-				const image = new Image();
-				image.src = this.inputs.case1999Img;
-				await image.decode();
-				this.imageWidth = image.width;
-				this.imageHeight = image.height;
-			}
-			
+		async createPdf_header(pageIndex) {
 			return new Promise((resolve, reject) => {
 				const { width, height } = this.pdfDoc.internal.pageSize;
+
+				this.pdfDoc.setFontSize(15);
+				this.pdfDoc.text(`成效式契約指標檢核表`, width/2, height-280, { align: 'center' });
+				this.pdfDoc.setFontSize(12);
+				this.pdfDoc.text(`項目:【PI-2.1附件】`, width-190, height-270, { align: 'left' })
+				this.pdfDoc.text(`日報表`, width-40, height-270, { align: 'left' });
+
+				this.pdfDoc.autoTable({
+					theme: 'plain',
+					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
+					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber1}-${pageIndex+1}`]],
+					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
+					startY: height-265,
+				});
+
+				resolve();
+			})
+		},
+		async createPdf_footer() {
+			return new Promise((resolve, reject) => {
+				this.pdfDoc.autoTable({
+					theme: 'plain',
+					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, minCellHeight: 20, valign: 'middle' },
+					head: [['廠商:']],
+					startY: this.pdfDoc.lastAutoTable.finalY,
+				})
+				resolve();
+			})
+		},
+		async createPdf() {
+			return new Promise(async (resolve, reject) => {
+				if(this.inputs.case1999Img.length != 0) {
+					// 獲取圖片實際高度寬度
+					const image = new Image();
+					image.src = this.inputs.case1999Img;
+					await image.decode();
+					this.imageWidth = image.width;
+					this.imageHeight = image.height;
+				}
+				
 				this.pdfDoc.addPage();
 				while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 
 				//第一頁
-				this.pdfDoc.setFontSize(15)
-				this.pdfDoc.text(`成效式契約指標檢核表`, width/2, height-280, { align: 'center' });
-				this.pdfDoc.setFontSize(12)
-				this.pdfDoc.text(`項目:【PI-2.1附件】`, width-190, height-270, { align: 'left' })
-				this.pdfDoc.text(`日報表`, width-40, height-270, { align: 'left' })
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber1+'-1'}`]],
-					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
-					startY: height-265,
-				})
+				await this.createPdf_header(0);
+				
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
@@ -454,27 +475,11 @@ export default {
 					},
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, minCellHeight: 20 },
-					head: [['廠商:']],
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
+				await this.createPdf_footer();
 
 				// 第二頁
 				this.pdfDoc.addPage(this.pdfSetting.format, this.pdfSetting.orientation);
-				this.pdfDoc.setFontSize(15)
-				this.pdfDoc.text(`成效式契約指標檢核表`, width/2, height-280, { align: 'center' });
-				this.pdfDoc.setFontSize(12)
-				this.pdfDoc.text(`項目:【PI-2.1附件】`, width-190, height-270, { align: 'left' })
-				this.pdfDoc.text(`日報表`, width-40, height-270, { align: 'left' })
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber1+'-2'}`]],
-					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
-					startY: height-265,
-				})
+				await this.createPdf_header(1);
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
@@ -491,12 +496,8 @@ export default {
 					body: body2,
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, minCellHeight: 20 },
-					head: [['廠商:']],
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
+
+				await this.createPdf_footer();
 
 				resolve();
 			})
