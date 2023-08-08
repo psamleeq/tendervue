@@ -39,7 +39,7 @@
 						</el-form-item>
 						<el-divider />
 						
-						<h4>廠商每週於規定時間內完成維護工作之案件總數</h4>
+						<h4>案件數據</h4>
 						<el-form-item label="廠商當週所有維護案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.maintainAll_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>

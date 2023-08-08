@@ -334,6 +334,7 @@ export default {
 					});
 				});
 
+				this.inputs.csvData.sort((a,b) => a.CaseNo - b.CaseNo);
 				this.previewPdf();
 			}
 		},
@@ -350,15 +351,7 @@ export default {
 				});
 
 				return headers.reduce((object, header, index) => {
-					// if([ "查報日期", "預計完工日期", "實際完工時間" ].includes(header)){
-					// 	if(values[index]=="") object[header] = "";
-					// 	else{
-					// 		object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD");
-					// 	}
-					// } 
-					// else{
-						object[header] = values[index]; 
-					// } 
+					object[header] = values[index]; 
 					return object
 				}, {});
 			});	
