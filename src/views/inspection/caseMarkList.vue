@@ -148,7 +148,7 @@
 			<el-row>
 				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId">
 					<el-checkbox v-model="listQuery.caseType" :label="distressId">
-						{{ options.distressType[distressId] }} ({{ caseInfo[distressId] || 0 }})
+						{{ options.DistressType[distressId] }} ({{ caseInfo[distressId] || 0 }})
 					</el-checkbox>
 				</el-col>
 			</el-row>
@@ -276,7 +276,7 @@ export default {
 			allHeaders: true,
 			options: {
 				tenderMap: {},
-				distressType: {
+				DistressType: {
 					15: "坑洞",
 					29: "縱向及橫向裂縫",
 					16: "龜裂",
@@ -591,7 +591,7 @@ export default {
 			row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
 		},
 		formatter(row, column) {
-			if (["DistressType"].includes(column.property)) return this.options.distressType[row.DistressType];
+			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
 			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
 			else if (["roadDir"].includes(column.property)) return `${this.options.roadDir[row.Direction]}-${row.Lane}`;
 			else if (!["id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
