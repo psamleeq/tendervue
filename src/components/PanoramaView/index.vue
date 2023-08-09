@@ -424,7 +424,7 @@ export default {
 				this.$emit('update:isUpload', true);
 
 				let coordinates = this.hotSpotIdList.dot.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat]));
-				coordinates.push(coordinates[0]);
+				if(this.caseInfo.distressType != 29) coordinates.push(coordinates[0]);
 				// console.log(coordinates);
 				this.caseInfo.geoJson = {
 					"type": this.caseInfo.distressType == 29 ? "MultiLineString" : 'MultiPolygon',
