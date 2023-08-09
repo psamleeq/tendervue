@@ -249,11 +249,15 @@ export default {
 					},
 					hybrid: {
 						name: "衛星(Google)",
-						color: "#006400",
+						color: "#00BFFF",
 					},
 					hybridTaipei: {
 						name: "衛星(台北)",
 						color: "#483D8B",
+					},
+					topoTaipei: {
+						name: "地形(台北)",
+						color: "#228B22",
 					}
 				},
 				line: {
@@ -450,7 +454,7 @@ export default {
 				this.map.overlayMapTypes.push(labelsMapType);
 			}
 
-			// NOTE: 台北都發局 航測圖
+			// NOTE: 台北都發局 正射圖
 			const hybridTaipeiMapType = new google.maps.ImageMapType({
 				name: 'hybridTaipei',
 				tileSize: new google.maps.Size(256, 256),
@@ -458,15 +462,27 @@ export default {
 				maxZoom: 21,
 				minZoom: 13,
 				getTileUrl: function (coord, zoom) {
-					// console.log(coord);
-					// console.log(`https://www.historygis.udd.gov.taipei/arcgis/rest/services/Aerial/Ortho_2022/MapServer/WMTS/tile/1.0.0/Aerial_Ortho_2022/default/GoogleMapsCompatible/${zoom}/${(coord.y)}/${coord.x}`);
 					return (
-						`https://www.historygis.udd.gov.taipei/arcgis/rest/services/Aerial/Ortho_2022/MapServer/WMTS/tile/1.0.0/Aerial_Ortho_2022/default/GoogleMapsCompatible/${zoom}/${(coord.y)}/${coord.x}`
-						// `https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/GoogleMapsCompatible/${zoom}/${(coord.y)}/${coord.x}`
+						`https://www.historygis.udd.gov.taipei/arcgis/rest/services/Aerial/Ortho_2022/MapServer/WMTS/tile/1.0.0/Aerial_Ortho_2022/default/GoogleMapsCompatible/${zoom}/${coord.y}/${coord.x}`
 					);
 				}
 			});
 			this.map.mapTypes.set("hybridTaipei", hybridTaipeiMapType);
+
+			// NOTE: 台北都發局 地形圖
+			const topoTaipeiMapType = new google.maps.ImageMapType({
+				name: 'topoTaipei',
+				tileSize: new google.maps.Size(256, 256),
+				isPng: true,
+				maxZoom: 21,
+				minZoom: 13,
+				getTileUrl: function (coord, zoom) {
+					return (
+						`https://www.historygis.udd.gov.taipei/arcgis/rest/services/TOPO/DGN_2022/MapServer/WMTS/tile/1.0.0/TOPO_DGN_2022/default/GoogleMapsCompatible/${zoom}/${coord.y}/${coord.x}.png`
+					);
+				}
+			});
+			this.map.mapTypes.set("topoTaipei", topoTaipeiMapType);
 
 			this.dataLayer = new google.maps.Data({ map: this.map });
 			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -5) });
@@ -1268,8 +1284,9 @@ export default {
 	.action-box
 		.btn-MapType
 			position: absolute
-			bottom: 24px
-			right: 60px
+			top: 24px
+			right: 24px
+			background-color: rgba(white, 0.8)
 	#map
 		overflow: hidden
 		background: none !important
