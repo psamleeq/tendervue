@@ -146,6 +146,11 @@
 				</el-table>
 			</el-card>
 		</div>
+
+		<!-- 操作 -->
+		<div class="action-box">
+			<el-button class="btn-MapType" icon="el-icon-copy-document" size="small" :style="`color: ${options.mapList[mapType].color}`" @click="setMapType">{{ options.mapList[mapType].name }}</el-button>
+		</div>
 	</div>
 </template>
 
@@ -178,6 +183,7 @@ export default {
 			stepOrder: 0,
 			splitType: 0,
 			areaLimit: [139, 325],
+			mapType: 'hybrid',
 			map: null,
 			dataLayer: null,
 			infoWindow: null,
@@ -234,6 +240,20 @@ export default {
 					2: {
 						name: "車道編碼",
 						params: "laneCode"
+					}
+				},
+				mapList: {
+					roadmap: {
+						name: "地圖",
+						color: "#B22222",
+					},
+					hybrid: {
+						name: "衛星(Google)",
+						color: "#006400",
+					},
+					hybridTaipei: {
+						name: "衛星(台北)",
+						color: "#483D8B",
 					}
 				},
 				line: {
@@ -430,6 +450,24 @@ export default {
 				this.map.overlayMapTypes.push(labelsMapType);
 			}
 
+			// NOTE: 台北都發局 航測圖
+			const hybridTaipeiMapType = new google.maps.ImageMapType({
+				name: 'hybridTaipei',
+				tileSize: new google.maps.Size(256, 256),
+				isPng: true,
+				maxZoom: 21,
+				minZoom: 13,
+				getTileUrl: function (coord, zoom) {
+					// console.log(coord);
+					// console.log(`https://www.historygis.udd.gov.taipei/arcgis/rest/services/Aerial/Ortho_2022/MapServer/WMTS/tile/1.0.0/Aerial_Ortho_2022/default/GoogleMapsCompatible/${zoom}/${(coord.y)}/${coord.x}`);
+					return (
+						`https://www.historygis.udd.gov.taipei/arcgis/rest/services/Aerial/Ortho_2022/MapServer/WMTS/tile/1.0.0/Aerial_Ortho_2022/default/GoogleMapsCompatible/${zoom}/${(coord.y)}/${coord.x}`
+						// `https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/GoogleMapsCompatible/${zoom}/${(coord.y)}/${coord.x}`
+					);
+				}
+			});
+			this.map.mapTypes.set("hybridTaipei", hybridTaipeiMapType);
+
 			this.dataLayer = new google.maps.Data({ map: this.map });
 			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -5) });
 
@@ -451,6 +489,13 @@ export default {
 					scaledSize: new google.maps.Size(35, 35)
 				}
 			}
+		},
+		setMapType() {
+			const mapKeyList = Object.keys(this.options.mapList);
+			let index = mapKeyList.indexOf(this.mapType);
+			index = (index+1) % mapKeyList.length;
+			this.mapType = mapKeyList[index];
+			this.map.setMapTypeId(this.mapType);
 		},
 		getList() {
 			if(!Number(this.listQuery.roadId) && !Number(this.listQuery.laneCode)) {
@@ -1220,6 +1265,11 @@ export default {
 						width: 70px
 					.el-input-group__append
 						width: 10px
+	.action-box
+		.btn-MapType
+			position: absolute
+			bottom: 24px
+			right: 60px
 	#map
 		overflow: hidden
 		background: none !important
