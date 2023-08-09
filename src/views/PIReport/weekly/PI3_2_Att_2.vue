@@ -44,12 +44,21 @@
 							<el-select v-model="inputs.distressSrc" placeholder="請選擇" style="width: 130px" @change="changeTemplate">
 								<el-option v-for="(value, key) in srcList" :key="key" :label="value.name" :value="key" />
 							</el-select>
-							<el-checkbox v-if="inputs.distressSrc == 3" v-model="inputs.inspection" true-label="1" false-label="0" style="margin-left: 10px" @change="changeTemplate">派工</el-checkbox>
+							<el-checkbox v-model="inputs.inspection" true-label="1" false-label="0" style="margin-left: 10px" @change="changeTemplate">派工</el-checkbox>
 						</el-form-item>
 						<el-form-item label="案件編號" :label-width="labelWidth1">
 							<el-input v-model="inputForm.caseNumber" style="width: 200px" @change="setPDFinputs">
 								<el-link slot="append" icon="el-icon-link" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${inputForm.caseNumber}`" target="_blank" :underline="false" :disabled="inputForm.caseNumber.length == 0" style="width: 40px; height: 38px;"/>
 							</el-input>
+						</el-form-item>
+						<el-form-item label="損害項目" :label-width="labelWidth1">
+							<el-select v-model="inputs.deviceType" placeholder="請選擇" style="width: 80px" @change="changeTemplate">
+								<el-option label="AC" value="AC" />
+								<el-option label="設施" value="設施" />
+							</el-select>
+							<el-select v-model="inputs.distressType" placeholder="請選擇" style="width: 120px" @change="changeTemplate">
+								<el-option v-for="type in distressType" :key="type" :label="type" :value="type" />
+							</el-select>
 						</el-form-item>
 						<el-form-item label="查報日期" :label-width="labelWidth1">
 							<el-date-picker
@@ -84,7 +93,7 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<el-form-item v-if="['1', '2' , '3'].includes(inputs.distressSrc) && inputs.inspection == '1'" label="預計完工時間" :label-width="labelWidth1">
+						<el-form-item v-if="!(['3'].includes(inputs.distressSrc) && inputs.inspection == '0')" label="預計完工時間" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="inputForm.expectedCompleteT"
 								type="datetime"
@@ -95,7 +104,7 @@
 								@change="setPDFinputs"
 							/>
 						</el-form-item>
-						<el-form-item v-if="['1', '2', '3'].includes(inputs.distressSrc) && inputs.inspection == '1'" label="實際施工時間" :label-width="labelWidth1">
+						<el-form-item v-if="!(['3'].includes(inputs.distressSrc) && inputs.inspection == '0')" label="實際施工時間" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="inputForm.actualCompleteT"
 								type="datetime"
@@ -244,17 +253,18 @@ export default {
 			srcList: {
 				1: {
 					name: '廠商',
-					json: { 1: 'PI3_2Att2t1.json' }
+					json: { 0: 'PI3_2Att2t1.json', 1: 'PI3_2Att2t1.json' }
 				},
 				2: {
 					name: '隊部',
-					json: { 1: 'PI3_2Att2t1.json' }
+					json: { 0: 'PI3_2Att2t1.json', 1: 'PI3_2Att2t1.json' }
 				},
 				3: {
 					name: '1999',
 					json: { 0: 'PI3_2Att2t2.json', 1: 'PI3_2Att2t3.json' }
 				}
 			},
+			distressType: ['坑洞', '人孔高差', '縱橫向裂縫/龜裂', '車轍/隆起與凹陷', '人行道'],
 			finishText: [
 				'\n已修復完工(無須復標)',
 				'\n已修復完工(已復標)',
@@ -287,6 +297,8 @@ export default {
 				serialNumber: '11206250201',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
+				deviceType: '',
+				distressType: '',
 				distressSrc: '1',
 				inspection: '1',
 				zipCode: '104',
