@@ -8,7 +8,7 @@ const inspectionRouter = {
 	redirect: '/inspection/inspectionProgress',
 	name: 'inspection',
 	meta: {
-		title: '巡查管理',
+		title: '環景巡查',
 		icon: 'map-marker-path',
 		roles: ['inspection'],
 		isNew: true 
