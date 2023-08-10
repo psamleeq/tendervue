@@ -3,19 +3,19 @@
 import Layout from '@/layout'
 
 const caseRouter = {
-	path: '/case',
+	path: '/caseV1',
 	component: Layout,
-	redirect: '/case/caseList',
+	redirect: '/caseV1/caseList',
 	name: 'road',
 	meta: {
-		title: '鋪面管理',
+		title: '鋪面管理V1',
 		icon: 'el-icon-s-release', 
 		roles: ['distress']
 	},
 	children: [
 		{
 			path: 'caseUpload',
-			component: () => import('@/views/case/caseUpload'),
+			component: () => import('@/views/caseV1/caseUpload'),
 			name: 'caseUpload',
 			meta: {
 				title: '缺失上傳',
@@ -25,7 +25,7 @@ const caseRouter = {
 		},
 		{
 			path: 'caseList',
-			component: () => import('@/views/case/list'),
+			component: () => import('@/views/caseV1/list'),
 			name: 'caseList',
 			meta: { 
 				title: '缺失列表', 
@@ -34,7 +34,7 @@ const caseRouter = {
 		},
 		{
 			path: 'caseMap',
-			component: () => import('@/views/case/caseMap'),
+			component: () => import('@/views/caseV1/caseMap'),
 			name: 'caseMap',
 			meta: { 
 				title: '缺失地圖', 
@@ -43,7 +43,7 @@ const caseRouter = {
 		},
 		{
 			path: 'roadStatus',
-			component: () => import('@/views/case/roadStatus'),
+			component: () => import('@/views/caseV1/roadStatus'),
 			name: 'roadStatus',
 			meta: { 
 				title: '路況查詢', 
@@ -52,7 +52,7 @@ const caseRouter = {
 		},
 		{
 			path: 'PCIManager',
-			component: () => import('@/views/case/PCIManager'),
+			component: () => import('@/views/caseV1/PCIManager'),
 			name: 'PCIManager',
 			meta: {
 				title: 'PCI管理',
@@ -61,11 +61,21 @@ const caseRouter = {
 		},
 		{
 			path: 'PCIMap',
-			component: () => import('@/views/case/PCIMap'),
+			component: () => import('@/views/caseV1/PCIMap'),
 			name: 'PCIMap',
 			meta: { 
 				title: '查核地圖', 
-				roles: ['distress.inspectorOrtho']
+				roles: ['distress.inspectorMap']
+			}
+		},
+		{
+			path: 'PCIMap_new',
+			component: () => import('@/views/caseV1/PCIMap_new'),
+			name: 'PCIMap_new',
+			meta: { 
+				title: '查核地圖(測試)', 
+				roles: ['distress.inspectorOrtho'],
+				vTag: 'Alpha'
 			}
 		}
 	]

@@ -26,7 +26,6 @@
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
 				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">載入</el-button>
-				<el-button v-if="hasClearOverlay" class="filter-item" type="danger" size="small" icon="el-icon-delete" @click="clearOverlay()">清除正射</el-button>
 			</div>
 		</div>
 
@@ -39,12 +38,12 @@
 				<el-collapse>
 					<el-collapse-item class="collapse-label" title="鋪面狀況指數">
 						<!-- TODO: 關閉鋪面圖層 -->
-						<el-row slot="title">
+						<!-- <el-row slot="title">
 							<el-col :span="18">鋪面狀況指數</el-col>
 							<el-col :span="6">
 								<el-switch v-model="blockSwitch" @change="switchBlock()" onclick="(function(e) { e.stopPropagation() }(event))" />
 							</el-col>
-						</el-row>
+						</el-row> -->
 						<el-row class="color-box" v-for="key in [ 6, 5, 4, 3, 2, 1, 0 ]" :key="`PCILevel_${key}`"  :style="`background-color: ${options.PCILevel[key].color}; width: 100%; margin-bottom: 0px`">
 							<el-col :span="7" style="padding: 0 5px">{{ options.PCILevel[key].description }}</el-col>
 							<el-col :span="7">({{ options.PCILevel[key].range[0] }} - {{ options.PCILevel[key].range[1] }})</el-col>
@@ -127,19 +126,14 @@ export default {
 			loading: false,
 			showCaseList: false,
 			showImgViewer: false,
-			hasClearOverlay: false,
 			blockSwitch: true,
 			caseSwitch: false,
 			screenWidth: window.innerWidth,
-			blockInfo: {
-				id: 0,
-				feature: null
-			},
+			blockId: 0,
 			pciId: 0,
 			// map: null,
 			imgUrls: [],
 			// dataLayer: {},
-			// overlayLayer: {},
 			infoWindow: null,
 			// geoJSON: {},
 			caseInfo: [],
@@ -296,7 +290,6 @@ export default {
 	watch: { },
 	created() {
 		this.dataLayer = { PCIBlock: {} };
-		this.overlayLayer = {};
 		this.geoJSON = {};
 		this.geoTiffPool = new Pool();
 	},
@@ -354,112 +347,6 @@ export default {
 		async initMap() {
 			return new Promise(resolve => {
 				// console.log("initMap");
-
-				// 宣告自定義疊加層 MapImgOverlay
-				class MapImgOverlay extends google.maps.OverlayView {
-					map;
-					layer;
-					div;
-					img;
-					bounds;
-					imgUrl;
-					constructor(bounds, imgUrl, map) {
-						super();
-						// this.img = document.createElement("img");
-						this.bounds = bounds;
-						this.imgUrl = imgUrl;
-						this.map = map;
-						this.setMap(this.map);
-					}
-					/**
-					 * onAdd is called when the map's panes are ready and the overlay has been
-					 * added to the map.
-					 */
-					onAdd() {
-						this.div = document.createElement("div");
-						this.div.style.borderStyle = "none";
-						this.div.style.borderWidth = "0px";
-						this.div.style.position = "absolute";
-						// this.div.style.zIndex = 100;
-
-						// Create the img element and attach it to the div.
-						this.img = document.createElement("img");
-						this.img.onload = () => {
-							// console.log(this.img.naturalWidth, this.img.naturalHeight);
-							if(this.map != undefined) {
-								// this.map.fitBounds(this.bounds);
-								this.map.panBy(0.01, 0);
-								this.map.panBy(-0.01, 0);
-							}
-						};
-						this.img.onerror = () => {
-							console.log("Load Error:", this.img.src); 
-							this.img.style.display = 'none';
-
-							if(this.map != undefined) {
-								// this.map.fitBounds(this.bounds);
-								this.map.panBy(0.01, 0);
-								this.map.panBy(-0.01, 0);
-							}
-						};
-
-						this.img.src = this.imgUrl;
-						this.img.style.width = "100%";
-						this.img.style.height = "100%";
-						this.img.style.position = "absolute";
-						this.img.style.mixBlendMode = "darken";
-						// img.style.zIndex = 100;
-						this.div.appendChild(this.img);
-
-						// Add the element to the "overlayLayer" pane.
-						const panes = this.getPanes();
-						panes.overlayLayer.appendChild(this.div);
-					}
-					draw() {
-						// We use the south-west and north-east
-						// coordinates of the overlay to peg it to the correct position and size.
-						// To do this, we need to retrieve the projection from the overlay.
-						const overlayProjection = this.getProjection();
-						// Retrieve the south-west and north-east coordinates of this overlay
-						// in LatLngs and convert them to pixel coordinates.
-						// We'll use these coordinates to resize the div.
-						const sw = overlayProjection.fromLatLngToDivPixel(
-							this.bounds.getSouthWest()
-						);
-						const ne = overlayProjection.fromLatLngToDivPixel(
-							this.bounds.getNorthEast()
-						);
-
-						// Resize the image's div to fit the indicated dimensions.
-						if (this.div) {
-							this.div.style.left = sw.x + "px";
-							this.div.style.top = ne.y + "px";
-							this.div.style.width = ne.x - sw.x + "px";
-							this.div.style.height = sw.y - ne.y + "px";
-						}
-					}
-					/**
-					 * The onRemove() method will be called automatically from the API if
-					 * we ever set the overlay's map property to 'null'.
-					 */
-					onRemove() {
-						if (this.div) {
-							// this.div.parentNode.removeChild(this.img);
-							this.img.remove();
-							delete this.img;
-
-							// this.div.parentNode.removeChild(this.div);
-							this.div.remove();
-							delete this.div;
-						}
-					}
-					checkImg() {
-						// console.log(this.img.complete);
-						// console.log(this.img.naturalWidth, this.img.naturalHeight);
-						return this.img.complete && this.img.naturalWidth !== 0 ;
-					}
-				}
-
 				// 預設顯示的地點：台北市政府親子劇場
 				// const location = {
 				// 	lat: 25.0374865, // 經度
@@ -588,58 +475,38 @@ export default {
 					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
 					if(infoScrnFullBtn) {
 						const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
-							if(this.blockInfo.id != 0) {
-								if(this.overlayLayer[this.blockInfo.id] != undefined) return; 
-
+							if(this.blockId != 0) {
+								this.loading = true;
 								const orthoPath = this.options.tenderRoundMap[this.listQuery.tenderRound].orthoPath;
-								const imgSrc = `${orthoPath}${this.blockInfo.id}.jpeg?t=${Date.now()}`;
-								const bounds = new google.maps.LatLngBounds();
-								this.blockInfo.feature.getGeometry().forEachLatLng(point => bounds.extend(point));
+								const url = `${orthoPath.replace("_jpg", "")}${this.blockId}.tif`;
+								fromUrl(url).then( async(geoTiffFile) => {
+									const imageSpec = await geoTiffFile.getImage(0);
+									// console.log(imageSpec);
+									const imgSrc = await this.toDataURL(await imageSpec.readRGB({ pool: this.geoTiffPool, enableAlpha: true }), imageSpec.getWidth(), imageSpec.getHeight());
+									this.imgUrls = [ imgSrc ];
+									// this.$el.querySelector("#map #info-btn").style.opacity = "1";
+									this.$el.querySelector("#map #info-scrn-full-btn").style.opacity = "1";
+									this.$el.querySelector("#map #info-download-btn").style.opacity = "1";
+									this.loading = false;
+									this.showImgViewer = true;
 
-								const overlay = new MapImgOverlay(bounds, imgSrc, this.map);
-								// this.$set(this.overlayLayer, this.blockInfo.id, overlay);
-								this.overlayLayer[this.blockInfo.id] = overlay;
-
-								google.maps.event.addListenerOnce(this.map, 'idle', () => {
-									if(overlay.checkImg()) {
-										this.hasClearOverlay = true;
-										this.$el.querySelector("#map #info-scrn-full-btn").style.opacity = "1";
-										this.$el.querySelector("#map #info-download-btn").style.opacity = "1";
-										this.infoWindow.close();
-										
-										const PCISpec = this.blockInfo.feature.getProperty("PCIValue");
-										let filterLevel = [];
-										if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
-										else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
-										else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
-											return PCISpec >= level.range[0] && PCISpec < level.range[1]
-										});
-
-										this.dataLayer.PCIBlock.overrideStyle(
-											this.blockInfo.feature, 
-											{ 
-												fillOpacity: 0, 
-												strokeColor: filterLevel[0][1].color, 
-												strokeOpacity: 0.4,
-												strokeWeight: 2,
-												zIndex: 3 
-											});
-									} else {
-										overlay.setMap(null);
-										this.$delete(this.overlayLayer, this.blockInfo.id);
-
-										this.$el.querySelector("#map #info-scrn-full-btn").style.display = "none";
-										this.$el.querySelector("#map #info-download-btn").style.display = "none";
-
-										this.$message({
-											message: "尚無正射圖",
-											type: "error",
-										});
-									}
-									// this.loading = false;
-									infoScrnFullBtn.removeEventListener("click", clickHandle);
+									// contentText += `<img src="${imgSrc}" class="img" onerror="this.className='img hide-img'">`;
+									// contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
+									// contentText += `</div>`;
+								}).catch(err => {
+									console.log(err);
+									// this.$el.querySelector("#map #info-btn").style.opacity = "0";
+									this.$el.querySelector("#map #info-scrn-full-btn").style.display = "none";
+									this.$el.querySelector("#map #info-download-btn").style.display = "none";
+									this.$message({
+										message: "尚無正射圖",
+										type: "error",
+									});
+									this.loading = false;
 								});
-							}
+							} else this.showImgViewer = true;
+
+							infoScrnFullBtn.removeEventListener("click", clickHandle);
 						});
 					}
 
@@ -647,7 +514,7 @@ export default {
 					if(caseListBtn) {
 						const clickHandle = caseListBtn.addEventListener("click", () => { 
 							this.caseList = [];
-							if(this.blockInfo.id != 0) {
+							if(this.blockId != 0) {
 								this.loading = true;
 								const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 								const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
@@ -664,6 +531,7 @@ export default {
 									this.loading = false;
 								}).catch(err => this.loading = false);
 							} else this.showCaseList = true;
+
 							caseListBtn.removeEventListener("click", clickHandle);
 						});
 					}
@@ -712,53 +580,7 @@ export default {
 					this.showContent(event.feature, event.latLng);
 				});
 
-				// TODO: 右鍵顯示「正射」 (測試-jpg)
-				// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
-				// 	// console.log(event.feature);
-				// 	// this.loading = true;
-				// 	const blockId = event.feature.getProperty("blockId");
-				// 	const imgSrc = `https://storage.googleapis.com/demo-freeway20200701/orthos_test/${blockId}.jpeg`;
-
-				// 	const bounds = new google.maps.LatLngBounds();
-				// 	event.feature.getGeometry().forEachLatLng(point => bounds.extend(point));
-				// 	// new google.maps.GroundOverlay( imgSrc, bounds, { map: this.map } );
-				// 	const overlay = new MapImgOverlay(bounds, imgSrc, this.map);
-				// 	if(this.overlayLayer[blockId] != undefined) return; 
-				// 	this.overlayLayer[blockId] = overlay;
-
-				// 	google.maps.event.addListenerOnce(this.map, 'idle', () => {
-				// 		if(overlay.checkImg()) {
-				// 			const PCISpec = event.feature.getProperty("PCIValue");
-				// 			let  filterLevel = [];
-				// 			if(PCISpec == -1) filterLevel = [[ "-1", { description: "不合格", color: '#666666' }]];
-				// 			else if(PCISpec == 100) filterLevel = [[ "6", { description: "很好", color: '#00B900' }]];
-				// 			else filterLevel = Object.entries(this.options.PCILevel).filter(([key, level]) => {	
-				// 				return PCISpec >= level.range[0] && PCISpec < level.range[1]
-				// 			});
-
-				// 			this.dataLayer.PCIBlock.overrideStyle(
-				// 				event.feature, 
-				// 				{ 
-				// 					fillOpacity: 0, 
-				// 					strokeColor: filterLevel[0][1].color, 
-				// 					strokeOpacity: 0.4,
-				// 					strokeWeight: 2,
-				// 					zIndex: 3 
-				// 				});
-				// 		} else {
-				// 			overlay.setMap(null);
-				// 			delete this.overlayLayer[blockId];
-
-				// 			this.$message({
-				// 				message: "尚無正射圖",
-				// 				type: "error",
-				// 			});
-				// 		}
-				// 		// this.loading = false;
-				// 	});
-				// });
-
-				// TODO: 右鍵顯示「正射」 (測試-tiff)
+				// TODO: 右鍵顯示「正射」 (測試)
 				// this.dataLayer.PCIBlock.addListener('rightclick', (event) => {
 				// 	// console.log(event.feature);
 				// 	// this.loading = true;
@@ -838,6 +660,23 @@ export default {
 				this.dataLayer.case.addListener('click', (event) => {
 					this.showContent(event.feature, event.latLng);
 				});
+
+				// NOTE: 測試正射圖
+				// const imageBounds = {
+				// 	north: 25.049850,
+				// 	south: 25.048093,
+				// 	east: 121.512028,
+				// 	west: 121.511287,
+				// };
+
+				// new google.maps.GroundOverlay(
+				// 	"https://storage.googleapis.com/demo-freeway20200701/test_2mm.png",
+				// 	imageBounds,
+				// 	{
+				// 		map: this.map,
+				// 		opacity: 0.8
+				// 	}
+				// );
 			})
 		},
 		changeTender() {
@@ -1088,10 +927,7 @@ export default {
 			});
 		},
 		async showContent(feature, position) {
-			this.blockInfo = {
-				id: 0,
-				feature: null
-			}
+			this.blockId = 0;
 			this.pciId = 0;
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.content) {
@@ -1115,13 +951,10 @@ export default {
 				contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px; opacity: 1"><i class="el-icon-full-screen btn-text"></i></button>`;
 				contentText += `</div>`;
 			} else if(feature.getProperty("blockId")) {
-				this.blockInfo = {
-					id: feature.getProperty("blockId"),
-					feature
-				}
+				this.blockId = feature.getProperty("blockId");
 				this.pciId = feature.getProperty("pciId");
 				const orthoPath = this.options.tenderRoundMap[this.listQuery.tenderRound].orthoPath;
-				const url = `${orthoPath.replace("_jpg", "")}${this.blockInfo.id}.tif`;
+				const url = `${orthoPath.replace("_jpg", "")}${this.blockId}.tif`;
 				// fromUrl(url).then( async(geoTiffFile) => {
 				// 	const imageSpec = await geoTiffFile.getImage(0);
 				// 	// console.log(imageSpec);
@@ -1151,20 +984,9 @@ export default {
 
 			this.infoWindow.open(this.map);
 		},
-		clearOverlay() {
-			this.dataLayer.PCIBlock.revertStyle();
-
-			for(const blockId in this.overlayLayer) {
-				this.overlayLayer[blockId].setMap(null);
-				this.$delete(this.overlayLayer, blockId);
-			}
-
-			this.hasClearOverlay = false;
-		},
 		clearAll() {
 			this.infoWindow.close();
 			for(const type of [ "PCIBlock", "case" ]) this.dataLayer[type].forEach(feature => this.dataLayer[type].remove(feature));
-			this.clearOverlay();
 		},
 		formatter(row, column) {
 			if (!['caseId'].includes(column.property) && Number(row[column.property])) return row[column.property].toLocaleString();
