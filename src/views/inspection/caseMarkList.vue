@@ -38,8 +38,8 @@
 					<div class="el-input-group__prepend">
 						<span>合約</span>
 					</div>
-					<el-select v-model.number="listQuery.tenderId" class="tender-select" popper-class="type-select tender" :disabled="list.length == 0 || isUpload" @change="getImportCaseList()">
-						<el-option v-for="(val, type) in options.tenderMap" :key="type" :label="val.tenderName" :value="Number(type)" />
+					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender" :disabled="list.length == 0 || isUpload" @change="getImportCaseList()">
+						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
 					</el-select>
 				</div>
 			</div>
@@ -68,7 +68,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column v-if="!filterNow" type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && !importCaseObj[listQuery.tenderId].includes(row.id))" />
+			<el-table-column v-if="!filterNow" type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && !importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id].includes(row.id))" />
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"
@@ -167,7 +167,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap } from "@/api/type";
+import { getTenderRound } from "@/api/type";
 import { getInspectionCaseList, setInspectionCaseList, getImportCase, importInspectionCase } from "@/api/inspection";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
@@ -275,7 +275,7 @@ export default {
 			headersCheckVal: [],
 			allHeaders: true,
 			options: {
-				tenderMap: {},
+				tenderRoundMap: {},
 				DistressType: {
 					15: "坑洞",
 					29: "縱向及橫向裂縫",
@@ -351,11 +351,30 @@ export default {
 		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
 		else this.headersCheckVal = [];
 
-		getTenderMap().then(response => {
-			this.options.tenderMap = response.data.tenderMap;
-			if(Object.keys(this.options.tenderMap).length > 0) {
-				if(!Object.keys(this.options.tenderMap).includes(String(this.listQuery.tenderId))) this.listQuery.tenderId = Object.keys(this.options.tenderMap)[0];
-			}
+		getTenderRound().then(response => {
+			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+					let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
+					if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+
+					let name = `${cur.tenderName}`;
+					if(cur.title.length != 0) name += `_${cur.title}`;
+					name += ` Round${cur.round}`;
+
+					acc[roundId] = { 
+						id: cur.id,
+						name, 
+						tenderId: cur.tenderId, 
+						isMain: cur.zipCodeSpec == 0,
+						zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
+						roundStart: cur.roundStart, 
+						roundEnd: cur.roundEnd
+					};
+					return acc;
+				}, {});
+
+				if(Object.keys(this.options.tenderRoundMap).length > 0) {
+					if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				}
 		});
 	},
 	mounted() {
@@ -417,7 +436,7 @@ export default {
 		getImportCaseList() {
 			this.loading = true;
 			this.importCaseObj = [];
-			getImportCase({ tenderIdList: Object.keys(this.options.tenderMap)}).then(response => {
+			getImportCase({ surveyIdList: Object.values(this.options.tenderRoundMap).map(val => val.id)}).then(response => {
 				this.importCaseObj = response.data.caseDetectionIdObj;
 				this.loading = false;
 			}).catch(err => this.loading = false);
@@ -551,7 +570,7 @@ export default {
 			})
 		},
 		uploadCase() {
-			this.$confirm(`確定上傳缺失 ${this.tableSelect.length} 件 至 「${this.options.tenderMap[this.listQuery.tenderId].tenderName}」?`, "確認", {
+			this.$confirm(`確定上傳缺失 ${this.tableSelect.length} 件 至 「${this.options.tenderRoundMap[this.listQuery.tenderRound].name}」?`, "確認", {
 				showClose: false,
 			}).then(() => {
 				this.loading = true;
@@ -560,10 +579,11 @@ export default {
 				const uploadCaseList = this.tableSelect.map(caseSpec => {
 					return { caseDetectionId: caseSpec.id, caseName: this.options.pciCaseTypeMap[caseSpec.DistressType], caseLevel: this.options.DistressLevel[caseSpec.DistressLevel], geoJson: caseSpec.Geometry }
 				});
-				// console.log(uploadCaseList);
+				// console.log(uploadCaseList)
 
+				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 				importInspectionCase({
-					tenderId: this.listQuery.tenderId,
+					surveyId: tenderRound.id,
 					caseList: uploadCaseList
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
@@ -625,7 +645,7 @@ export default {
 		.filter-item
 			margin-right: 5px
 			.el-select.tender-select
-				width: 320px
+				width: 400px
 				.el-input__inner
 					padding-left: 10px
 					text-align: left

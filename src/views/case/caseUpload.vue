@@ -9,8 +9,8 @@
 							<div class="el-input-group__prepend">
 								<span>合約</span>
 							</div>
-						<el-select v-model.number="listQuery.tenderId" class="tender-select" popper-class="type-select tender" @input="changeTender()">
-							<el-option v-for="(obj, id) in options.tenderMap" :key="id" :label="obj.tenderName" :value="Number(id)" />
+						<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender" @input="changeTender()">
+							<el-option v-for="(obj, id) in options.tenderRoundMap" :key="id" :label="obj.name" :value="Number(id)" />
 						</el-select>
 					</div>
 				</div>
@@ -88,7 +88,7 @@ import { Loader } from "@googlemaps/js-api-loader";
 import { parseXml, xml2json } from '../../utils/xml2json';
 import { json2xml } from '../../utils/json2xml';
 import { uploadRoadCase } from '@/api/road';
-import { getDistMap, getTenderMap, getBlockGeo } from "@/api/type";
+import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -121,7 +121,7 @@ export default {
 			geoJSONFilter: {},
 			searchRange: "",
 			listQuery: {
-				tenderId: 100,
+				tenderRound: 100,
 				filterId: null,
 				labelCur: ""
 			},
@@ -138,7 +138,7 @@ export default {
 				// depth: "深度(cm)"
 			},
 			options: { 
-				tenderMap: {},
+				tenderRoundMap: {},
 				caseColorMap: [
 					{
 						index: 0,
@@ -329,13 +329,32 @@ export default {
 			await this.initMap();
 
 			await getDistMap().then(response => this.options.districtMap = response.data.districtMap);
-			getTenderMap().then(response => {
-			this.options.tenderMap = response.data.tenderMap;
-			if(Object.keys(this.options.tenderMap).length > 0) {
-				if(!Object.keys(this.options.tenderMap).includes(String(this.listQuery.tenderId))) this.listQuery.tenderId = Object.keys(this.options.tenderMap)[0];
-				this.changeTender();
-			}
-		});
+			getTenderRound().then(response => {
+				this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+					let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
+					if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+
+					let name = `${cur.tenderName}`;
+					if(cur.title.length != 0) name += `_${cur.title}`;
+					name += ` Round${cur.round}`;
+
+					acc[roundId] = { 
+						id: cur.id,
+						name, 
+						tenderId: cur.tenderId, 
+						isMain: cur.zipCodeSpec == 0,
+						zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
+						roundStart: cur.roundStart, 
+						roundEnd: cur.roundEnd
+					};
+					return acc;
+				}, {});
+
+				if(Object.keys(this.options.tenderRoundMap).length > 0) {
+					if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+					this.changeTender();
+				}
+			});
 		}).catch(err => console.log("err: ", err));
 	},
 	methods: {
@@ -555,7 +574,7 @@ export default {
 		},
 		async changeTender() {
 			this.handleRemove(); 
-			const zipCode = this.options.tenderMap[this.listQuery.tenderId].zipCode;
+			const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
 
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
@@ -584,8 +603,9 @@ export default {
 			this.dataLayer.PCIBlock.forEach(feature => this.dataLayer.PCIBlock.remove(feature));
 
 			return new Promise((resolve, reject) => {
+				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 				getBlockGeo({ 
-					tenderId: this.listQuery.tenderId,
+					tenderId: tenderRound.tenderId,
 					zipCode: 0,
 					blockType: [1]
 				}).then(async (response) => {
@@ -804,7 +824,7 @@ export default {
 			URL.revokeObjectURL(url);
 		},
 		uploadCase() {
-			this.$confirm(`確定上傳缺失 ${this.caseList.length - this.caseErrListLen} 件 至 「${this.options.tenderMap[this.listQuery.tenderId].tenderName}」?`, "確認", {
+			this.$confirm(`確定上傳缺失 ${this.caseList.length - this.caseErrListLen} 件 至 「${this.options.tenderRoundMap[this.listQuery.tenderRound].name}」?`, "確認", {
 				showClose: false,
 			}).then(() => {
 				this.loading = true;
@@ -823,9 +843,9 @@ export default {
 				});
 
 				// console.log(uploadCaseList);
-
+				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 				uploadRoadCase({
-					tenderId: this.listQuery.tenderId,
+					surveyId: tenderRound.id,
 					caseList: uploadCaseList
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {

@@ -62,9 +62,25 @@ export function getTenderRound(query) {
 	})
 }
 
-export function setTenderRound(data) {
+export function addTenderRound(data) {
 	return request({
 		url: `/type/tenderRound/`,
+		method: 'post',
+		data
+	})
+}
+
+export function setTenderRound(id, data) {
+	return request({
+		url: `/type/tenderRound/${id}`,
+		method: 'put',
+		data
+	})
+}
+
+export function archiveTenderRound(id, data) {
+	return request({
+		url: `/type/tenderRound/archive/${id}`,
 		method: 'put',
 		data
 	})

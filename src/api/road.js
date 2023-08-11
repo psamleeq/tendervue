@@ -132,6 +132,14 @@ export function getBlockPCI(query) {
 	})
 }
 
+export function getBlockPCIArchive(query) {
+	return request({
+		url: '/road/blockPCI/archive',
+		method: 'get',
+		params: query
+	})
+}
+
 export function getBlockCase(query) {
 	return request({
 		url: '/road/blockCaseList',

@@ -156,7 +156,6 @@
 import moment from "moment";
 import { getTenderRound } from "@/api/type";
 import { getRoadCaseType, getRoadCaseList, setRoadCase } from "@/api/road";
-// import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -174,13 +173,7 @@ export default {
 			imgUrls: "",
 			caseTypeTemp: [],
 			caseTitleTemp: [],
-			// timeTabId: moment().year(),
-			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			// dateRange: [
-			// 	moment().year(2022).month(5).startOf("month").toDate(),
-			// 	moment().endOf("year").toDate(),
-			// ],
 			searchRange: "",
 			listQuery: {
 				filter: false,
@@ -361,6 +354,7 @@ export default {
 				name += ` Round${cur.round}`;
 
 				acc[roundId] = { 
+					id: cur.id,
 					name, 
 					tenderId: cur.tenderId, 
 					isMain: cur.zipCodeSpec == 0,
@@ -447,8 +441,7 @@ export default {
 			let query = {
 				filter: this.listQuery.filter,
 				tenderId: tenderRound.tenderId,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				surveyId: tenderRound.id,
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 			};
@@ -499,8 +492,7 @@ export default {
 		},
 		setCaseStatus(row, type) {
 			// console.log(this.currCaseId);
-			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-			setRoadCase(row.caseId, { tenderId: tenderRound.tenderId, type }).then(response => {
+			setRoadCase(row.id, { type }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",

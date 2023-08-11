@@ -112,6 +112,7 @@ export default {
 			showImgViewer: false,
 			screenWidth: window.innerWidth,
 			// map: null,
+			currId: null,
 			currCaseId: null,
 			imgUrls: [],
 			// dataLayer: {},
@@ -259,6 +260,7 @@ export default {
 
 					acc[roundId] = { 
 						name, 
+						id: cur.id,
 						tenderId: cur.tenderId, 
 						isMain: cur.zipCodeSpec == 0,
 						zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
@@ -582,9 +584,7 @@ export default {
 			// 載入缺失
 			await getRoadCaseGeo({
 				tenderId: tenderRound.tenderId,
-				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+				surveyId: tenderRound.id,
 			}).then(async (response) => {
 				if(response.data.geoJSON.length == 0) {
 					this.$message({
@@ -704,8 +704,7 @@ export default {
 		},
 		removeCaseStatus() {
 			// console.log(this.currCaseId);
-			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-			setRoadCase(this.currCaseId, { tenderId: tenderRound.tenderId, type: 8 }).then(response => {
+			setRoadCase(this.currId, { type: 8 }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",
@@ -832,6 +831,7 @@ export default {
 		showCaseContent(props, position) {
 			const isFeature = google.maps.Data.Feature.prototype.isPrototypeOf(props);
 			this.currCaseId = isFeature ? props.getProperty("caseId") : props.caseId;
+			this.currId = isFeature ? props.getProperty("id") : props.id;
 			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${this.currCaseId}.jpg` ];
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.caseInfo) {

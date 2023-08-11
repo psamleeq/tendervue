@@ -97,7 +97,7 @@ import { fromUrl, Pool } from "geotiff";
 import moment from "moment";
 import proj4 from 'proj4';
 import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
-import { getBlockPCI, getRoadCaseGeo, getBlockCase } from "@/api/road";
+import { getBlockPCI, getBlockPCIArchive, getRoadCaseGeo, getBlockCase } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
@@ -330,11 +330,14 @@ export default {
 					let name = `${cur.tenderName}`;
 					if(cur.title.length != 0) name += `_${cur.title}`;
 					name += ` Round${cur.round}`;
+					if(cur.archiveTime) name += ` (已封存)`
 
 					acc[roundId] = { 
 						name, 
+						id: cur.id,
 						tenderId: cur.tenderId, 
 						isMain: cur.zipCodeSpec == 0,
+						isArchive: Boolean(cur.archiveTime),
 						zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
 						roundStart: cur.roundStart, 
 						roundEnd: cur.roundEnd,
@@ -650,14 +653,11 @@ export default {
 							if(this.blockInfo.id != 0) {
 								this.loading = true;
 								const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-								const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
-								const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
 								
 								getBlockCase({
 									tenderId: tenderRound.tenderId,
-									blockId: this.pciId,
-									timeStart: startDate,
-									timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+									surveyId: tenderRound.id,
+									blockId: this.pciId
 								}).then(response => {
 									this.caseList = response.data.list;
 									this.showCaseList = true;
@@ -880,31 +880,58 @@ export default {
 			// 載入區塊
 			if(!this.blockGeo_bell[this.listQuery.tenderRound] || this.blockGeo_bell[this.listQuery.tenderRound].length == 0) await this.getBlock();
 			else this.geoJSON.block = JSON.parse(this.blockGeo_bell[this.listQuery.tenderRound]);
-
+			
 			// 獲取PCI
-			getBlockPCI({ 
-				tenderId: tenderRound.tenderId,
-				zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode
-			}).then(async (response) => {
-				const summary = response.data.summary[0];
-				Object.keys(this.options.PCILevel).forEach(key => {
-					const levelText = this.options.PCILevel[key].text;
-					this.options.PCILevel[key].total = summary[levelText];
-				})
+			if (tenderRound.isArchive) {
+				getBlockPCIArchive({ 
+					tenderId: tenderRound.tenderId,
+					surveyId: tenderRound.id,
+					zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode
+				}).then(async (response) => {
+					const summary = response.data.summary[0];
+					Object.keys(this.options.PCILevel).forEach(key => {
+						const levelText = this.options.PCILevel[key].text;
+						this.options.PCILevel[key].total = summary[levelText];
+					})
 
-				const list = response.data.list;
-				this.geoJSON.block.features.forEach(block => {
-					const PCIData = list.filter(l => l.pciId == block.properties.pciId);
-					if(PCIData.length > 0) {
-						block.properties.PCIValue = PCIData[0].PCI_real;
-						block.properties.updateTime = PCIData[0].updateTime;
-					}
-				});
-				this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
+					const list = response.data.list;
+					this.geoJSON.block.features.forEach(block => {
+						const PCIData = list.filter(l => l.pciId == block.properties.pciId);
+						if(PCIData.length > 0) {
+							block.properties.PCIValue = PCIData[0].PCI_real;
+							block.properties.updateTime = PCIData[0].updateTime;
+						}
+					});
+					this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
 
-				await this.focusMap();
-				this.loading = false;
-			}).catch(err => this.loading = false);
+					await this.focusMap();
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			} else {
+				getBlockPCI({ 
+					tenderId: tenderRound.tenderId,
+					zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode
+				}).then(async (response) => {
+					const summary = response.data.summary[0];
+					Object.keys(this.options.PCILevel).forEach(key => {
+						const levelText = this.options.PCILevel[key].text;
+						this.options.PCILevel[key].total = summary[levelText];
+					})
+
+					const list = response.data.list;
+					this.geoJSON.block.features.forEach(block => {
+						const PCIData = list.filter(l => l.pciId == block.properties.pciId);
+						if(PCIData.length > 0) {
+							block.properties.PCIValue = PCIData[0].PCI_real;
+							block.properties.updateTime = PCIData[0].updateTime;
+						}
+					});
+					this.dataLayer.PCIBlock.addGeoJson(this.geoJSON.block);
+
+					await this.focusMap();
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			}
 		},
 		async getBlock() {
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
@@ -946,9 +973,7 @@ export default {
 			return new Promise((resolve, reject) => {
 				getRoadCaseGeo({
 					tenderId: tenderRound.tenderId,
-					zipCode: tenderRound.isMain ? 0 : tenderRound.zipCode,
-					timeStart: startDate,
-					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+					surveyId: tenderRound.id,
 				}).then(response => {
 					if(response.data.geoJSON.length == 0) {
 						this.$message({
