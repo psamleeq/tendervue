@@ -155,11 +155,11 @@ export default {
 						name: "缺失編號",
 						sortable: true,
 					},
-					caseName: {
+					distressType: {
 						name: "缺失類型",
 						sortable: true,
 					},
-					caseLevel: {
+					distressLevel: {
 						name: "損壞程度",
 						sortable: true,
 					},

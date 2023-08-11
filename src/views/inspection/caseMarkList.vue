@@ -68,7 +68,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column v-if="!filterNow" type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && !importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id].includes(row.id))" />
+			<el-table-column v-if="!filterNow" type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id] && !importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id].includes(row.id))" />
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"

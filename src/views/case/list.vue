@@ -16,9 +16,7 @@
 			<div class="filter-item">
 				<el-tooltip effect="dark" content="不填為查詢全部" placement="bottom-end">
 					<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 200px">
-						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-							<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-						</el-select>
+						<span slot="prepend">缺失編號</span>
 					</el-input>
 				</el-tooltip>
 			</div>
@@ -76,13 +74,13 @@
 			</el-table-column>
 			<el-table-column label="狀態" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.reccontrol == '1'">
+					<span v-if="row.active">
 						<i class="el-icon-check" style="color: #67C23A" />
-						<el-button class="btn-action" type="danger" plain size="mini" round @click="setCaseStatus(row, 8)">刪除</el-button>
+						<el-button class="btn-action" type="danger" plain size="mini" round @click="setCaseStatus(row, false)">刪除</el-button>
 					</span>
-					<span v-else-if="row.reccontrol == '8'">
+					<span v-else>
 						<i class="el-icon-close" style="color: #F56C6C" />
-						<el-button class="btn-action" type="success" plain size="mini" round @click="setCaseStatus(row, 1)">復原</el-button>
+						<el-button class="btn-action" type="success" plain size="mini" round @click="setCaseStatus(row, true)">復原</el-button>
 					</span>
 				</template>
 			</el-table-column>
@@ -177,7 +175,6 @@ export default {
 			searchRange: "",
 			listQuery: {
 				filter: false,
-				filterType: 1,
 				tenderRound: 100001,
 				filterStr: null,
 				caseType: [],
@@ -193,16 +190,12 @@ export default {
 					name: "缺失編號",
 					sortable: true,
 				},
-				caseName: {
+				distressType: {
 					name: "缺失類型",
 					sortable: true,
 				},
-				caseLevel: {
+				distressLevel: {
 					name: "損壞程度",
-					sortable: true,
-				},
-				roadName: {
-					name: "道路名稱",
 					sortable: true,
 				},
 				// width: {
@@ -216,15 +209,7 @@ export default {
 				area: {
 					name: "面積(㎡)",
 					sortable: true,
-				},
-				depth: {
-					name: "深度(cm)",
-					sortable: true,
-				},
-				// reccontrol: {
-				// 	name: "狀態",
-				// 	sortable: false
-				// }
+				}
 			},
 			total: 0,
 			list: [],
@@ -234,10 +219,6 @@ export default {
 				2: "逆向",
 			},
 			options: {
-				filterType: {
-					1: "缺失編號",
-					2: "道路名稱"
-				},
 				tenderRoundMap : {},
 				caseTitle: {
 					0: {
@@ -445,8 +426,7 @@ export default {
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 			};
-			if(this.listQuery.filterType == 1 && this.listQuery.filterStr && this.listQuery.filterStr.length != 0) query.caseId = this.listQuery.filterStr;
-			if(this.listQuery.filterType == 2 && this.listQuery.filterStr && this.listQuery.filterStr.length != 0) query.roadName = this.listQuery.filterStr;
+			if(this.listQuery.filterStr && this.listQuery.filterStr.length != 0) query.caseId = this.listQuery.filterStr;
 			if(this.listQuery.caseType.length != 0) query.caseType = JSON.stringify(this.listQuery.caseType);
 
 			getRoadCaseList(query).then(response => {
@@ -490,9 +470,9 @@ export default {
 			});
 			this.getList();
 		},
-		setCaseStatus(row, type) {
+		setCaseStatus(row, isActive) {
 			// console.log(this.currCaseId);
-			setRoadCase(row.id, { type }).then(response => {
+			setRoadCase(row.id, { isActive }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",

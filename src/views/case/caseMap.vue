@@ -133,10 +133,8 @@ export default {
 					caseId: "缺失編號",
 					caseName: "缺失類型",
 					caseLevel: "損壞程度",
-					roadName: "道路名稱",
 					length: "長度(m)",
-					area: "面積(㎡)",
-					depth: "深度(cm)"
+					area: "面積(㎡)"
 				}
 			},
 			options: { 
@@ -704,7 +702,7 @@ export default {
 		},
 		removeCaseStatus() {
 			// console.log(this.currCaseId);
-			setRoadCase(this.currId, { type: 8 }).then(response => {
+			setRoadCase(this.currId, { isActive: false }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",
