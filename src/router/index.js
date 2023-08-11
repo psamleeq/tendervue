@@ -12,6 +12,7 @@ import unitRouter from './modules/unit';
 import inspectionRouter from './modules/inspection';
 import caseV1Router from './modules/caseV1';
 import caseRouter from './modules/case';
+import pciManageRouter from './modules/PCIManage';
 import caseHistRouter from './modules/caseHist';
 import dispatchV0Router from './modules/dispatchV0';
 import dispatchRouter from './modules/dispatch';
@@ -109,6 +110,7 @@ export const asyncRoutes = [
 	inspectionRouter,
 	caseV1Router,
 	caseRouter,
+	pciManageRouter,
 	caseHistRouter,
 	dispatchV0Router,
 	dispatchRouter,
