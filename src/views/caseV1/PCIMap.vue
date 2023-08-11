@@ -96,7 +96,7 @@ import { fromUrl, Pool } from "geotiff";
 import moment from "moment";
 import proj4 from 'proj4';
 import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
-import { getBlockPCI, getRoadCaseGeo, getBlockCase } from "@/api/road";
+import { getBlockPCI, getRoadCaseGeo, getBlockCase } from "@/api/roadV1";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API

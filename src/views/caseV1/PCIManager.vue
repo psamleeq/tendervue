@@ -105,7 +105,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getTenderRound, setTenderRound } from "@/api/type";
-import { resetPCI, updatePCI, updatePCIByName } from "@/api/tool";
+import { resetPCI, updatePCI, updatePCIByName } from "@/api/toolV1";
 import checkPermission from '@/utils/permission';
 
 export default {

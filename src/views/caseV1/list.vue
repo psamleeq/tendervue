@@ -155,7 +155,7 @@
 <script>
 import moment from "moment";
 import { getTenderRound } from "@/api/type";
-import { getRoadCaseType, getRoadCaseList, setRoadCase } from "@/api/road";
+import { getRoadCaseType, getRoadCaseList, setRoadCase } from "@/api/roadV1";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -441,7 +441,8 @@ export default {
 			let query = {
 				filter: this.listQuery.filter,
 				tenderId: tenderRound.tenderId,
-				surveyId: tenderRound.id,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 			};

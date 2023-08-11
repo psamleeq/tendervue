@@ -19,8 +19,7 @@ const caseRouter = {
 			name: 'caseUpload',
 			meta: {
 				title: '缺失上傳',
-				roles: ['distress.inspectorMaster'],
-				isNew: true
+				roles: ['distress.inspectorMaster']
 			}
 		},
 		{

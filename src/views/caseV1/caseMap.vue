@@ -87,7 +87,7 @@ import { mapGetters } from "vuex";
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
-import { getRoadCaseGeo, setRoadCase } from "@/api/road";
+import { getRoadCaseGeo, setRoadCase } from "@/api/roadV1";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
