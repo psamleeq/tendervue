@@ -198,7 +198,7 @@ export default {
 				filterId: "",
 				filterType: 1,
 				caseInspectId: "",
-				tenderId: 91,
+				tenderRound: 91,
 				caseType: [],
 				pageCurrent: 1,
 				pageSize: 50,
@@ -268,6 +268,7 @@ export default {
 				}
 			},
 			total: 0,
+			dateCollect: "",
 			importCaseObj: {},
 			list: [],
 			caseInfo: {},
@@ -449,6 +450,7 @@ export default {
 				});
 			} else {
 				this.loading = true;
+				this.dateCollect = "";
 				this.list = [];
 				this.tableSelect = [];
 				this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
@@ -492,6 +494,7 @@ export default {
 						this.total = 0;
 					} else {
 						this.caseInfo = response.data.caseInfo;
+						this.dateCollect = response.data.dateCollect;
 						this.total = response.data.total;
 						this.list = response.data.list;
 						this.list.forEach(l => {
@@ -584,6 +587,7 @@ export default {
 				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 				importInspectionCase({
 					surveyId: tenderRound.id,
+					dateCollect: moment(this.dateCollect).format("YYYY-MM-DD"),
 					caseList: uploadCaseList
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {

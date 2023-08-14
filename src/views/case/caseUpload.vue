@@ -32,6 +32,7 @@
 		</div>
 
 		<el-card v-if="caseList.length > 0" class="info-box right">
+			<label style="margin-left: 5px">缺失收集日期<el-date-picker v-model="listQuery.dateCollect" type="date" placeholder="請選擇" style="margin: 0 0 5px 10px" /></label>
 			<el-button v-if="allCorrect" type="success" style="width: 100%" :disabled="isUpload" @click="uploadCase()">全部上傳({{ caseList.length }})</el-button>
 			<el-button-group v-else style="width: 100%; margin-bottom: 5px;">
 				<el-button style="width: 50%" @click="handleDownload()">下載KML({{ caseErrListLen }})</el-button>
@@ -83,6 +84,7 @@
 </template>
 
 <script>
+import moment from "moment";
 import { mapGetters } from "vuex";
 import { Loader } from "@googlemaps/js-api-loader";
 import { parseXml, xml2json } from '../../utils/xml2json';
@@ -123,7 +125,8 @@ export default {
 			listQuery: {
 				tenderRound: 100,
 				filterId: null,
-				labelCur: ""
+				labelCur: "",
+				dateCollect: "",
 			},
 			headers: {
 				id: "序號",
@@ -687,8 +690,8 @@ export default {
 							}
 						}
 
-						const caseName = caseInfo.name != null && this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] != undefined ? this.options.caseTypeMap[caseInfo.name.substring(0,3).toUpperCase()] : caseInfo.name;
-						const caseLevel = caseInfo.description != null && this.options.caseLevelMap[caseInfo.description.toUpperCase()] != undefined ? this.options.caseLevelMap[caseInfo.description.toUpperCase()] : caseInfo.description;
+						const caseName = caseInfo.name != null && this.options.caseTypeMap[caseInfo.name.trim().substring(0,3).toUpperCase()] != undefined ? this.options.caseTypeMap[caseInfo.name.trim().substring(0,3).toUpperCase()] : caseInfo.name;
+						const caseLevel = caseInfo.description != null && this.options.caseLevelMap[caseInfo.description.trim().toUpperCase()] != undefined ? this.options.caseLevelMap[caseInfo.description.trim().toUpperCase()] : caseInfo.description;
 
 						this.caseList.push({ 
 							id: `${folderId}_${placeIndex}`,
@@ -824,48 +827,57 @@ export default {
 			URL.revokeObjectURL(url);
 		},
 		uploadCase() {
-			this.$confirm(`確定上傳缺失 ${this.caseList.length - this.caseErrListLen} 件 至 「${this.options.tenderRoundMap[this.listQuery.tenderRound].name}」?`, "確認", {
-				showClose: false,
-			}).then(() => {
-				this.loading = true;
-				this.isUpload = true;
-				const caseErrIdList = this.caseErrList.map(caseErrSpec => caseErrSpec.list.map(caseSpec => caseSpec.id)).flat();
-				const caseListFilter = this.caseList.filter(caseSpec => !caseErrIdList.includes(caseSpec.id));
-
-				const uploadCaseList = caseListFilter.map(caseSpec => {
-					const coordinates = caseSpec.coordinates.map(point => ([point.lng, point.lat]));
-					// console.log(coordinates);
-					const geoJson = {
-						"type": caseSpec.geoType == 'LineString' ? 'MultiLineString' : 'MultiPolygon',
-						"coordinates": caseSpec.geoType == 'LineString' ? [ coordinates ] : [[ coordinates ]]
-					};
-					return { caseName: caseSpec.caseName, caseLevel: caseSpec.caseLevel, geoJson }
+			if(this.listQuery.dateCollect.length == 0) {
+				this.$message({
+					message: "請輸入收集日期",
+					type: "error",
 				});
+			} else {
+				this.$confirm(`確定上傳缺失 ${this.caseList.length - this.caseErrListLen} 件 至 「${this.options.tenderRoundMap[this.listQuery.tenderRound].name}」?`, "確認", {
+					showClose: false,
+				}).then(() => {
+					this.loading = true;
+					this.isUpload = true;
+					const caseErrIdList = this.caseErrList.map(caseErrSpec => caseErrSpec.list.map(caseSpec => caseSpec.id)).flat();
+					const caseListFilter = this.caseList.filter(caseSpec => !caseErrIdList.includes(caseSpec.id));
 
-				// console.log(uploadCaseList);
-				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-				uploadRoadCase({
-					surveyId: tenderRound.id,
-					caseList: uploadCaseList
-				}).then(response => {
-					if ( response.statusCode == 20000 ) {
-						this.$message({
-							message: "上傳成功",
-							type: "success",
-						});
-					} 
-					this.handleRemove();
-					this.loading = false;
-					this.isUpload = false;
+					const uploadCaseList = caseListFilter.map(caseSpec => {
+						const coordinates = caseSpec.coordinates.map(point => ([point.lng, point.lat]));
+						// console.log(coordinates);
+						const geoJson = {
+							"type": caseSpec.geoType == 'LineString' ? 'MultiLineString' : 'MultiPolygon',
+							"coordinates": caseSpec.geoType == 'LineString' ? [ coordinates ] : [[ coordinates ]]
+						};
+						return { caseName: caseSpec.caseName, caseLevel: caseSpec.caseLevel, geoJson }
+					});
+
+					// console.log(uploadCaseList);
+					const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+					uploadRoadCase({
+						surveyId: tenderRound.id,
+						dateCollect: moment(this.listQuery.dateCollect).format("YYYY-MM-DD"),
+						caseList: uploadCaseList
+					}).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "上傳成功",
+								type: "success",
+							});
+						} 
+						this.handleRemove();
+						this.listQuery.dateCollect = "";
+						this.loading = false;
+						this.isUpload = false;
+					}).catch(err => {
+						console.log(err);
+						this.loading = false;
+						this.isUpload = false;
+					})
+
 				}).catch(err => {
 					console.log(err);
-					this.loading = false;
-					this.isUpload = false;
-				})
-
-			}).catch(err => {
-				console.log(err);
-			});
+				});
+			}
 
 		},
 		async search() {
