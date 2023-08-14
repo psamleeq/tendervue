@@ -18,6 +18,11 @@
 			<el-checkbox v-if="checkPermission(['PIcase.editor'])" v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 
 			<br>
+			<el-radio-group v-model="listQuery.caseType" size="mini" @change="getList()">
+				<el-radio-button :label="1">全部</el-radio-button>
+				<el-radio-button :label="3">派工</el-radio-button>
+				<el-radio-button :label="7">保固</el-radio-button>
+			</el-radio-group>
 			<el-button
 				class="filter-item"
 				type="info"
@@ -70,7 +75,7 @@
 
 		<el-dialog
 			:visible.sync="showCsvList"
-			width="1000px"
+			width="1050px"
 			:close-on-click-modal="false"
 			:close-on-press-escape="false"
 			:show-close="false"
@@ -99,7 +104,7 @@
 				empty-text="目前沒有資料"
 				:data="csvData"
 				border
-				size="small"
+				size="mini"
 				fit
 				highlight-current-row
 				:header-cell-style="{'background-color': '#F2F6FC'}"
@@ -114,14 +119,33 @@
 					:prop="key"
 					:label="value.name"
 					align="center"
+					:width="[ 'DistressTypeR' ].includes(key) ? 140 : [ 'DeviceType', 'DateCompleted' ].includes(key) ? 90 : null"
 					:formatter="formatter"
 					:sortable="value.sortable"
 					:show-overflow-tooltip="key == 'Place'"
 				>
 					<template slot-scope="{ row, column, $index }">
 						<span v-if="[ 'UploadCaseNo' ].includes(column.property)">
-							<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
+							<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank" style="font-size: 12px">{{ row[column.property] }}</el-link>
 							<span v-else> - </span>
+						</span>
+						<span v-else-if="[ 'DeviceType' ].includes(column.property)">
+							<el-select v-model="row.DeviceType" placeholder="請選擇" size="mini" style="width: 50px" @change="updateDialogTable($index, row)">
+								<el-option label="AC" value="AC" />
+								<el-option label="設施" value="設施" />
+							</el-select>
+						</span>
+						<span v-else-if="[ 'DistressTypeR' ].includes(column.property)">
+							<el-select v-model="row.DistressTypeR" placeholder="請選擇" size="mini" style="width: 110px" @change="updateDialogTable($index, row)">
+								<el-option v-for="type in distressType" :key="type" :label="type" :value="type" />
+							</el-select>
+						</span>
+						<span v-else-if="[ 'CaseType' ].includes(column.property)">
+							<!-- <span>{{ row.CaseType }}</span> -->
+							<el-checkbox-group v-model="row.CaseType" size="mini" @change="updateDialogTable($index, row)">
+								<el-checkbox :label="2">派工</el-checkbox>
+								<el-checkbox :label="4">保固</el-checkbox>
+							</el-checkbox-group>
 						</span>
 						<span v-else-if="[ 'DateCompleted' ].includes(column.property)">
 							<el-date-picker 
@@ -131,7 +155,7 @@
 								placeholder="請選擇日期"
 								value-format="yyyy/MM/dd"
 								:format="formattedDate(row)"
-								@input="updateDatePicker($index, row)" 
+								@input="updateDialogTable($index, row)" 
 							/>
 						</span>
 						<span v-else>{{ formatter(row, column) }}</span>
@@ -171,7 +195,8 @@ export default {
 			listQuery: {
 				zipCode: 104,
 				filterType: 1,
-				filter: false
+				filter: false,
+				caseType: 7
 			},
 			headers: {
 				UploadCaseNo: {
@@ -192,12 +217,24 @@ export default {
 					sortable: false,
 					width: 400
 				},
+				DeviceType: {
+					name: "設施類型",
+					sortable: false
+				},
 				DistressType: {
 					name: "損壞情形",
 					sortable: false
 				},
+				DistressTypeR: {
+					name: "缺失種類",
+					sortable: false
+				},
 				DistressLevel: {
 					name: "損壞狀況",
+					sortable: false
+				},
+				CaseType: {
+					name: "案件類型",
 					sortable: false
 				},
 				DateDeadline: {
@@ -214,7 +251,7 @@ export default {
 				}
 			},
 			csvHeader: [ "案件編號", "查報日期", "查報地點", "預計完工日期", "實際完工時間", "損壞情形", "損壞狀況", "查報來源" ],
-			apiHeader: [ "UploadCaseNo", "CaseDate", "Place", "DateDeadline", "DateCompleted", "DateWarranty", "DistressType", "DistressLevel", "DistressSrc" ],
+			apiHeader: [ "UploadCaseNo", "CaseDate", "Place", "State", "DeviceType", "DateDeadline", "DateCompleted", "DateWarranty", "DistressType", "DistressTypeR", "DistressLevel", "DistressSrc" ],
 			tableSelect: [],
 			list: [],
 			csvData: [],
@@ -257,6 +294,7 @@ export default {
 				// 	"name": "文山區"
 				// }
 			},
+			distressType: ['坑洞', '人孔高差', '縱橫向裂縫/龜裂', '車轍/隆起與凹陷', '人行道'],
 			checkDateWarranty:true,
 		};
 	},
@@ -280,6 +318,7 @@ export default {
 			this.list = [];
 			getCaseWarrantyList({
 				zipCode: this.listQuery.zipCode,
+				caseType: this.listQuery.caseType,
 				filter: this.listQuery.filter,
 				filterType: this.listQuery.filterType,
 				timeStart: startDate,
@@ -297,14 +336,27 @@ export default {
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
+		caseFilterList(list) {
+			let caseFilterList = [];
+			for(const row of list) {
+				let caseItem = {};
+				for(const key of this.apiHeader) caseItem[key] = row[key];
+				caseFilterList.push(caseItem);
+			}
+
+			return caseFilterList;
+		},
 		createList() {
 			this.loading = true;
 			const arr = this.tableSelect.map((val)=>{val.DateWarranty});
 			this.checkDateWarranty=!arr.includes("Invalid date")
 			if(this.checkDateWarranty){
+				this.tableSelect.forEach(l => l.State = l.CaseType.reduce((acc, cur) => (acc +=cur)));
+				const caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.tableSelect)));
+				
 				addCaseWarrantyList({
 					zipCode: this.listQuery.zipCode,
-					caseList: this.tableSelect
+					caseList
 				}).then(response =>{
 					console.log(response);
 					if ( response.statusCode == 20000 ) {
@@ -412,12 +464,22 @@ export default {
 						delete data[oldKey];
 					});
 
-					if(['坑洞', '人孔高差'].includes(data.DistressType)) {
-						data.DateWarranty = moment(data.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
-					}else{
-						data.DateWarranty = moment(data.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
+					data.CaseType = [1];
+
+					if(['坑洞'].includes(data.DistressType)) data.DistressTypeR = data.DistressType;
+
+					if(['鋪面破損', '孔蓋周邊破損', '樹穴緣石', '溝蓋路邊緣石', '鋪面鬆動'].includes(data.DistressType)) {
+						data.DeviceType = '設施';
+						data.DistressTypeR = '人行道'
+					} else {
+						data.DeviceType = 'AC';
+						if(['人手孔缺失'].includes(data.DistressType)) data.DistressTypeR = '人孔高差';
+						else if(['縱向及橫向裂縫', '龜裂'].includes(data.DistressType)) data.DistressTypeR = '縱橫向裂縫/龜裂';
+						else if(['車轍', '隆起與凹陷'].includes(data.DistressType)) data.DistressTypeR = '車轍/隆起與凹陷';
 					}
-					
+
+					// 計算保固日期
+					// this.computedWarranty(data);
 				});
 				// this.computedDateWarranty();
 				// this.$refs.caseTable.toggleAllSelection();
@@ -474,14 +536,13 @@ export default {
 			return formattedDate
 		},
 		computedWarranty(row){
-			if(['坑洞', '人孔高差'].includes(row.DistressType)) {
-				row.DateWarranty = moment(row.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
-			}else{
-				row.DateWarranty = moment(row.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
-			}
+			if(['坑洞', '人孔高差'].includes(row.DistressType)) row.DateWarranty = moment(row.DateCompleted).add(13, 'day').format("YYYY/MM/DD");
+			else row.DateWarranty = moment(row.DateCompleted).add(179, 'day').format("YYYY/MM/DD");
 		},
-		updateDatePicker(index, row){
-			this.computedWarranty(row);
+		updateDialogTable(index, row) {
+			if(row.CaseType.includes(4) && !row.CaseType.includes(2)) row.CaseType.push(2);
+			row.State = row.CaseType.reduce((acc, cur) => (acc += cur));
+			if(row.State & 7) this.computedWarranty(row);
 			this.$set(this.csvData, index, row);
 		},
 		handleRemove(file, fileList) {
@@ -564,14 +625,23 @@ export default {
 	.el-dialog
 		.el-dialog__body > div
 			margin-top: 10px
-		
-.datePicker
-	font-size: 5px
-	.el-input__inner
-		width: 80px
-		height: 30px
-		padding:0 0 0 8px
-	.el-input__icon
-		display: none
+			.el-select
+				.el-input__inner
+					padding: 0 15px 0 5px
+				.el-select__caret.el-input__icon.el-icon-arrow-up
+					width: 14px
+					font-size: 10px
+			.el-checkbox
+				margin-right: 0
+				margin-top: -5px
+			.datePicker
+				font-size: 5px
+				width: 80px
+				.el-input__inner
+					width: 70px
+					height: 30px
+					padding:0 0 0 5px
+				.el-input__icon
+					display: none
 
 </style>
