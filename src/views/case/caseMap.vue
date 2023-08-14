@@ -580,8 +580,7 @@ export default {
 
 			// 載入缺失
 			await getRoadCaseGeo({
-				tenderId: tenderRound.tenderId,
-				surveyId: tenderRound.id,
+				surveyId: tenderRound.id
 			}).then(async (response) => {
 				if(response.data.geoJSON.length == 0) {
 					this.$message({

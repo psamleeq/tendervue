@@ -972,7 +972,6 @@ export default {
 
 			return new Promise((resolve, reject) => {
 				getRoadCaseGeo({
-					tenderId: tenderRound.tenderId,
 					surveyId: tenderRound.id,
 				}).then(response => {
 					if(response.data.geoJSON.length == 0) {

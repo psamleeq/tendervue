@@ -419,7 +419,6 @@ export default {
 
 			let query = {
 				filter: this.listQuery.filter,
-				tenderId: tenderRound.tenderId,
 				surveyId: tenderRound.id,
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
