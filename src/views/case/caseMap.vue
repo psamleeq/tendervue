@@ -113,7 +113,6 @@ export default {
 			screenWidth: window.innerWidth,
 			// map: null,
 			currId: null,
-			currCaseId: null,
 			imgUrls: [],
 			// dataLayer: {},
 			infoWindow: null,
@@ -130,7 +129,7 @@ export default {
 			},
 			headers: {
 				caseInfo: {
-					caseId: "缺失編號",
+					id: "缺失編號",
 					caseName: "缺失類型",
 					caseLevel: "損壞程度",
 					length: "長度(m)",
@@ -519,7 +518,7 @@ export default {
 
 				this.map.data.addListener('click', (event) => {
 					// console.log("click: ", event);
-					// console.log(this.currCaseId);
+					// console.log(this.currId);
 					this.showCaseContent(event.feature, event.latLng);
 				});
 			})
@@ -701,7 +700,7 @@ export default {
 			})
 		},
 		removeCaseStatus() {
-			// console.log(this.currCaseId);
+			// console.log(this.currId);
 			setRoadCase(this.currId, { isActive: false }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -828,9 +827,10 @@ export default {
 		},
 		showCaseContent(props, position) {
 			const isFeature = google.maps.Data.Feature.prototype.isPrototypeOf(props);
-			this.currCaseId = isFeature ? props.getProperty("caseId") : props.caseId;
 			this.currId = isFeature ? props.getProperty("id") : props.id;
-			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${this.currCaseId}.jpg` ];
+
+			// TODO: 缺失圖片需替換
+			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${this.currId}.jpg` ];
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.caseInfo) {
 				if(props[key] || (isFeature && props.getProperty(key))) {
@@ -845,7 +845,8 @@ export default {
 			// 	contentText += `<img src="https://img.bellsgis.com/images/casepic_o/${img}" style="object-fit: scale-down;">`
 			// }
 			contentText += `<button type="button" id="info-del-btn" class="info-btn del el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">刪除</span></button>`;
-			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${this.currCaseId}.jpg" class="img" onerror="this.className='img hide-img'">`;
+			// TODO: 缺失圖片需替換
+			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${this.currId}.jpg" class="img" onerror="this.className='img hide-img'">`;
 			contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
 			contentText += `</div>`;
 			// console.log(contentText);

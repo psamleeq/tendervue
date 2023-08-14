@@ -63,8 +63,9 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span>{{ formatter(row, column) }}</span>
-					<span v-if="column.property == 'caseName'">
+					<span v-if="column.property == 'distressType'">
 						<el-popover popper-class="imgHover" placement="top" trigger="hover" :close-delay="0">
+							<!-- TODO: 缺失圖片需替換 -->
 							<el-image style="width: 100%; height: 100%" :src="`https://img.bellsgis.com/images/online_pic/${row.caseId}.jpg`" fit="scale-down" />
 							<el-button slot="reference" class="btn-action" type="primary" plain size="mini" round @click="showImg(row)">檢視</el-button>
 							<!-- <i  class="el-icon-picture" style="color: #409EFF; margin-left: 5px" /> -->
@@ -182,10 +183,6 @@ export default {
 				pageSize: 50,
 			},
 			headers: {
-				id: {
-					name: "序號",
-					sortable: true,
-				},
 				caseId: {
 					name: "缺失編號",
 					sortable: true,
@@ -358,12 +355,13 @@ export default {
 			this.listQuery.caseType.filter(type => (type.name == typeName))[0].level = val;
 		},
 		showImg(row) {
+			// TODO: 缺失圖片需替換
 			this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${row.caseId}.jpg` ];
 			this.showImgViewer = true;
 		},
 		showMap(row) {
 			this.$router.push({
-				path: "/caseV1/caseMap",
+				path: "/case/caseMap",
 				query: { tenderRound: this.listQuery.tenderRound, caseId: row.caseId },
 			});
 		},
