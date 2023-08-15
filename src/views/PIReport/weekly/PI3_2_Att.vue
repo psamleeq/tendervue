@@ -49,8 +49,6 @@
 
 <script>
 import moment from "moment";
-import jschardet from "jschardet";
-import iconv from "iconv-lite";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);

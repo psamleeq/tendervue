@@ -21,7 +21,13 @@
 			<el-col :span="12">
 				<el-card shadow="never" style="width: 450px; margin: 20px auto; padding: 5px 10px;">
 					<el-form :model="inputForm">
-						<h3>檢核資訊</h3>
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h3>檢核資訊</h3>
+							<el-button-group>
+								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
+							</el-button-group>
+						</div>
 						<el-divider />
 						<el-form-item label="起始頁碼" :label-width="labelWidth1">
 							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
@@ -41,17 +47,16 @@
 						
 						<h4>案件資訊</h4>
 						<el-form-item label="查報來源" :label-width="labelWidth1">
-							<el-select v-model="inputs.distressSrc" placeholder="請選擇" style="width: 130px" @change="changeTemplate">
+							<el-select v-model="inputs.distressSrc" placeholder="請選擇" style="width: 200px" @change="changeTemplate">
 								<el-option v-for="(value, key) in srcList" :key="key" :label="value.name" :value="key" />
 							</el-select>
-							<el-checkbox v-model="inputs.inspection" true-label="1" false-label="0" style="margin-left: 10px" @change="changeTemplate">派工</el-checkbox>
 						</el-form-item>
 						<el-form-item label="案件編號" :label-width="labelWidth1">
 							<el-input v-model="inputForm.caseNumber" style="width: 200px" @change="setPDFinputs">
 								<el-link slot="append" icon="el-icon-link" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${inputForm.caseNumber}`" target="_blank" :underline="false" :disabled="inputForm.caseNumber.length == 0" style="width: 40px; height: 38px;"/>
 							</el-input>
 						</el-form-item>
-						<el-form-item label="損害項目" :label-width="labelWidth1">
+						<!-- <el-form-item label="損害項目" :label-width="labelWidth1">
 							<el-select v-model="inputs.deviceType" placeholder="請選擇" style="width: 80px" @change="changeTemplate">
 								<el-option label="AC" value="AC" />
 								<el-option label="設施" value="設施" />
@@ -59,7 +64,7 @@
 							<el-select v-model="inputs.distressType" placeholder="請選擇" style="width: 120px" @change="changeTemplate">
 								<el-option v-for="type in distressType" :key="type" :label="type" :value="type" />
 							</el-select>
-						</el-form-item>
+						</el-form-item> -->
 						<el-form-item label="查報日期" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="inputForm.checkReportDate"
@@ -163,7 +168,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
-import { getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseWarrantyList, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
 	name: "PI3_2-Att_2",
@@ -210,6 +215,7 @@ export default {
 			checkDate: moment().startOf("d").subtract(1, "d"),
 			reportDate: null,
 			// list:[],
+			// caseList: [],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
@@ -297,8 +303,6 @@ export default {
 				serialNumber: '11206250201',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
-				deviceType: '',
-				distressType: '',
 				distressSrc: '1',
 				inspection: '1',
 				zipCode: '104',
@@ -370,7 +374,9 @@ export default {
 		},
 		async initPDF() {
 			return new Promise(resolve => {
-				fetch(`/assets/pdf/weekly/PI3_2Att2t1.json?t=${Date.now()}`).then(async (response) => {
+				const fileName = this.srcList[this.inputs.distressSrc].json[this.inputs.inspection];
+
+				fetch(`/assets/pdf/weekly/${fileName}?t=${Date.now()}`).then(async (response) => {
 					const domContainer = this.$refs.container.$el;
 					this.template = await response.json();
 
@@ -401,7 +407,8 @@ export default {
 					this.form.onChangeInput(arg => changeInput(arg));
 
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
-					this.setPDFinputs();
+					if(Object.keys(this.list.content).length == 0) this.getList();
+					else this.setPDFinputs();
 						
 					resolve();
 				})
@@ -409,7 +416,6 @@ export default {
 		},
 		changeTemplate() {
 			// this.loading = true;
-			if([1, 2].includes(this.inputs.distressSrc)) this.inputs.inspection = '1';
 			const fileName = this.srcList[this.inputs.distressSrc].json[this.inputs.inspection];
 			// console.log(fileName);
 			fetch(`/assets/pdf/weekly/${fileName}?t=${Date.now()}`).then(async (response) => {
@@ -479,6 +485,37 @@ export default {
 
 			this.form.setInputs([this.inputs]);
 			this.form.render();
+		},
+		async getList() {
+			new Promise((resolve, reject) => {
+				this.loading = true;
+				const date = moment(this.reportDate).format("YYYY-MM-DD");
+				this.caseList = [];
+
+				getCaseWarrantyList({
+					zipCode: Number(this.inputs.zipCode),
+					caseType: 1,
+					filterType: 2,
+					timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
+					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+				}).then(async(response) => {
+					this.caseList = response.data.list;
+					this.caseList.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
+
+					const caseSpec = this.caseList[0];
+					this.inputForm.caseNumber = caseSpec.UploadCaseNo;
+					this.inputForm.checkReportDate = caseSpec.CaseDate;
+					this.inputForm.expectedCompleteT = caseSpec.DateDeadline;
+					this.inputForm.actualCompleteT = caseSpec.DateCompleted;
+					this.inputs.distressSrc = caseSpec.DistressSrc.includes("1999") ? '3' : caseSpec.DistressSrc.includes("隊部") ? '2' : '1';
+					this.inputs.inspection = (caseSpec.State & 2) ? '1' : '0';
+
+					if(this.inputs.distressSrc == 3) this.changeTemplate();
+					else this.setPDFinputs();
+					resolve();
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			})
 		},
 		storeData(){
 			this.loading = true;
