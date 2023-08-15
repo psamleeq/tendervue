@@ -227,7 +227,6 @@ export default {
 			this.newItem.reportDate = moment(this.reportDate).format('MM/DD');
 			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = this.list.zipCode;
-
 			await this.initPDF();
 
 			if(Object.keys(this.list.content).length != 0) {

@@ -237,17 +237,14 @@ export default {
 			this.reportDate = this.list.reportDate;
 			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = this.list.zipCode;
+			await this.initPDF();
 
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
 				if(this.inputs.case1999Img.length != 0) this.imgList = [{ url: this.inputs.case1999Img }];
 				this.initPage = this.list.content.initPage;
-			} else this.getList();
-
-			await this.initPDF();
-
-			if(Object.keys(this.list.content).length == 0) await this.getList();
-			else await this.previewPdf();
+				await this.previewPdf();
+			} else await this.getList();
 		},
 		async initPDF() {
 			return new Promise(resolve => {

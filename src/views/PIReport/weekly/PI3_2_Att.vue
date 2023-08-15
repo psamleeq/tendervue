@@ -14,15 +14,11 @@
 					<el-form :model="inputs" label-width="100px">
 						<div style="display: flex; justify-content: space-between; align-items: center">
 							<h3>通報資訊</h3>
-
-							<span>
-								<el-upload :class="[ 'filter-item', 'upload-csv', { 'is-ready' : csvFileList.length > 0 }]" ref="uploadFile" action accept=".csv" :multiple="false" :limit="1" :auto-upload="false" :file-list="csvFileList" :on-change="readCSV" :on-remove="handleRemove">
-									<el-button type="info" size="small" plain>上傳CSV</el-button>
-								</el-upload>
-									
+							<el-button-group>
+								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>	
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
 								<!-- <el-button type="info" @click="handleDownload()" style="margin: 10px" icon="el-icon-document">輸出PDF</el-button> -->
-							</span>
+							</el-button-group>
 						</div>
 						
 						<el-divider />
@@ -59,7 +55,7 @@ import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
-import { getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseWarrantyList, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 
 export default {
@@ -105,7 +101,7 @@ export default {
 				},
 			},
 			headers: {
-				CaseNo: "案件編號",
+				UploadCaseNo: "案件編號",
 				DistressSrc: "查報來源",
 				CaseDate: "查報日期",
 				Place: "查報地點",
@@ -162,14 +158,6 @@ export default {
 			imageWidth:null,
 			imageHeight:null,
 			// rowActive: {},
-			newItem: {
-				reportDate: "",
-				distressSrc: "",
-				AC_total: 0,
-				AC_unreasonable: 0,
-				facility_total: 0,
-				facility_unreasonable: 0
-			},
 			imgList: [],
 			inputs: {
 				companyName: '聖東營造股份有限公司',
@@ -178,7 +166,7 @@ export default {
 				zipCode: 104,
 				district: '中山區',
 				serialNumber: '',
-				csvData: []
+				caseList: []
 			},
 			deviceType:{
 				1:'AC路面',
@@ -213,7 +201,7 @@ export default {
 		// 				});
 		// 			} else {
 		// 				this.list = response.data.list[0];
-						this.setData(this.list || { zipCode: 104, reportDate: '2023-05-14', content: {} });
+						this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
 		// 			}
 		// 			this.loading = false;
 		// 		}).catch(err => { this.loading = false; });
@@ -225,17 +213,15 @@ export default {
 		async setData(dataObj) {
 			this.list = dataObj;
 			this.reportDate = this.list.reportDate;
-			this.newItem.reportDate = moment(this.reportDate).format('MM/DD');
 			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 			this.inputs.zipCode = this.list.zipCode;
+			await this.initPDF();
 
 			if(Object.keys(this.list.content).length != 0) {
 				this.inputs = this.list.content.inputs;
 				this.initPage = this.list.content.initPage;
-			}
-
-			await this.initPDF();
-			await this.previewPdf();
+				await this.previewPdf();
+			} else await this.getList();
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -281,90 +267,31 @@ export default {
 					});
 			})
 		},
-		readCSV(file, fileList) {
-			if(fileList.length > 1) fileList.shift();
-			this.csvFileList = JSON.parse(JSON.stringify(fileList));
-			this.tableSelect = [];
-
-			if(file.raw.type != "text/csv") {
-				this.$message({
-					type: "warning",
-					message: "文件類型不符，請重新上傳正確csv"
-				});
-				this.handleRemove(); 
-			} else {
+		async getList() {
+			new Promise((resolve, reject) => {
 				this.loading = true;
-				let reader = new FileReader();
-				// reader.readAsText(file.raw, "UTF-8");
-				reader.readAsArrayBuffer(file.raw);
-				reader.onload = (evt) => {
-					// 讀取CSV內容
-					// const fileString = evt.target.result;
-					const buffer = Buffer.from(evt.target.result);
-					const type = jschardet.detect(buffer);
-					// console.log(type);
-					const fileString = iconv.decode(buffer, type.encoding);
+				const date = moment(this.reportDate).format("YYYY-MM-DD");
+				this.inputs.caseList = [];
 
-					//轉成array
-					this.inputs.csvData = this.csvToArray(fileString);
-					// console.log(this.inputs.csvData);
-					this.checkCsv();
-				}
-			}
-		},
-		checkCsv() {
-			const fileHeaders = Object.keys(this.inputs.csvData[0]);
-			let lackHeaderList = [];
-			for(const header of Object.values(this.headers)) {
-				if(!fileHeaders.includes(header)) lackHeaderList.push(header);
-			}
-
-			if(lackHeaderList.length != 0) {
-				this.$message({
-					type: "warning",
-					message: `csv缺少欄位${lackHeaderList.map(l => `「${l}」`).join("、")}，請重新上傳正確csv`
-				});
-				this.handleRemove(); 
-			} else {
-				this.inputs.csvData.forEach(data => {
-					Object.keys(data).forEach(oldKey => {
-						const newKeyArr = Object.keys(this.headers).filter(key => this.headers[key] == oldKey);
-						if(newKeyArr.length != 0) data[newKeyArr[0]] = data[oldKey];
-						delete data[oldKey];
+				getCaseWarrantyList({
+					zipCode: Number(this.inputs.zipCode),
+					caseType: 1,
+					filterType: 2,
+					timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
+					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+				}).then(async(response) => {
+					this.inputs.caseList = response.data.list;
+					this.inputs.caseList.forEach(l => {
+						l.CaseDate = this.formatDate(l.CaseDate);
+						l.DateDeadline = this.formatDate(l.DateDeadline);
+						l.DateCompleted = this.formatDate(l.DateCompleted);
 					});
-				});
-
-				this.inputs.csvData.sort((a,b) => a.CaseNo - b.CaseNo);
-				this.previewPdf();
-			}
-		},
-		csvToArray(str, delimiter = ",") {
-			str = str.replace(/\"(.*)[\r\n|\n](.*)\"/g, "$1$2");
-			const headers = str.slice(0, str.indexOf("\n")).split(delimiter).map(header => header.replace(/\r\n/g,'').trim());
-			const rows = str.slice(str.indexOf("\n") + 1).split("\n").filter(row => row.length != 0);
-			const regex = /("[^"]+"|[^,]+)*,/g;
-
-			const result = rows.map(row => {
-				const values = row.split(regex).filter(row => row == undefined || row.length != 0).map(row => {
-					if(row == undefined) return row = '';
-					else return row.replace(/\r\n|\"/g,'').trim();
-				});
-
-				return headers.reduce((object, header, index) => {
-					object[header] = values[index]; 
-					return object
-				}, {});
-			});	
-
-			return result
-		},
-		handleRemove(file, fileList) {
-			this.inputs.csvData = [];
-			if(fileList == undefined) this.csvFileList = [];
-			else this.csvFileList = JSON.parse(JSON.stringify(fileList));
-			this.$refs.uploadFile.clearFiles();
-			this.previewPdf();
-			this.loading = false;
+					this.inputs.caseList.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
+					await this.previewPdf();
+					resolve();
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			})
 		},
 		async createPdf_header(pageIndex) {
 			return new Promise((resolve, reject) => {
@@ -401,8 +328,8 @@ export default {
 		},
 		async createPdf() {
 			return new Promise(async (resolve, reject) => {
-				const total = this.inputs.csvData.length;
-				const splitTable = this.inputs.csvData.reduce((acc, cur) => {
+				const total = this.inputs.caseList.length;
+				const splitTable = this.inputs.caseList.reduce((acc, cur) => {
 					if(acc[acc.length-1].length <= 20) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
@@ -421,19 +348,19 @@ export default {
 					})
 					this.pdfDoc.autoTable({
 						columns: [
-							{ dataKey: 'CaseNo', header: '案件編號' },
+							{ dataKey: 'UploadCaseNo', header: '案件編號' },
 							{ dataKey: 'CaseDate', header: '查報日期' },
 							{ dataKey: 'DistressSrc', header: '查報來源' },
 							{ dataKey: 'Place', header: '查報地點' },
 							{ dataKey: 'DateDeadline', header: '預計完工日期' },
 							{ dataKey: 'DateCompleted', header: '實際完工日期' }
 						],
-						body: table.length == 0 ? [ { CaseNo: '' } ] : table,
+						body: table.length == 0 ? [ { UploadCaseNo: '' } ] : table,
 						theme: 'plain',
 						styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle', cellPadding: 1	},
 						headStyles: { fontSize: 9, textColor: 90, fillColor: 240 },
 						columnStyles: { 
-							CaseNo: { cellWidth: 20 }, 
+							UploadCaseNo: { cellWidth: 20 }, 
 							CaseDate: { cellWidth: 18 }, 
 							DistressSrc: { cellWidth: 19 }, 
 							Place: { cellWidth: 'auto', halign: 'left' }, 
@@ -552,7 +479,7 @@ export default {
 					break;
 			}
 		},
-		formatDate(date){
+		formatDate(date) {
 			const momentDate = moment(date);
 			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
 		}
