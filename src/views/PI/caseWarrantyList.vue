@@ -20,8 +20,8 @@
 			<br>
 			<el-radio-group v-model="listQuery.caseType" size="mini" @change="getList()">
 				<el-radio-button :label="1">全部</el-radio-button>
-				<el-radio-button :label="3">派工</el-radio-button>
-				<el-radio-button :label="7">保固</el-radio-button>
+				<el-radio-button :label="2">派工</el-radio-button>
+				<el-radio-button :label="4">保固</el-radio-button>
 			</el-radio-group>
 			<el-button
 				class="filter-item"
@@ -196,7 +196,7 @@ export default {
 				zipCode: 104,
 				filterType: 1,
 				filter: false,
-				caseType: 7
+				caseType: 4
 			},
 			headers: {
 				UploadCaseNo: {
@@ -331,20 +331,15 @@ export default {
 					});
 				} else {
 					this.list = response.data.list;
+					this.list.forEach(l => {
+						if(l.State & 1) l.CaseType = "-";
+						if((l.State & 1) && (l.State & 2)) l.CaseType = "派工"; 
+						if((l.State & 1) && (l.State & 2) && (l.State & 4)) l.CaseType = "保固"; 
+					});
 					// console.log(this.list)
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
-		},
-		caseFilterList(list) {
-			let caseFilterList = [];
-			for(const row of list) {
-				let caseItem = {};
-				for(const key of this.apiHeader) caseItem[key] = row[key];
-				caseFilterList.push(caseItem);
-			}
-
-			return caseFilterList;
 		},
 		createList() {
 			this.loading = true;
@@ -399,6 +394,16 @@ export default {
 		},
 		handleSelectionChange(value) {
 			this.tableSelect = value;
+		},
+		caseFilterList(list) {
+			let caseFilterList = [];
+			for(const row of list) {
+				let caseItem = {};
+				for(const key of this.apiHeader) caseItem[key] = row[key];
+				caseFilterList.push(caseItem);
+			}
+
+			return caseFilterList;
 		},
 		formatter(row, column) {
 			if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
