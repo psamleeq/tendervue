@@ -75,7 +75,7 @@
 
 		<el-dialog
 			:visible.sync="showCsvList"
-			width="1050px"
+			width="1150px"
 			:close-on-click-modal="false"
 			:close-on-press-escape="false"
 			:show-close="false"
@@ -639,8 +639,10 @@ export default {
 			.el-checkbox
 				margin-right: 0
 				margin-top: -5px
+				.el-checkbox__label
+					font-size: 12px
 			.datePicker
-				font-size: 5px
+				font-size: 12px
 				width: 80px
 				.el-input__inner
 					width: 70px
