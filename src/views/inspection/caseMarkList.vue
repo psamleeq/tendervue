@@ -33,7 +33,7 @@
 				>清空過濾條件</el-button>
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 			<br>
-			<div class="filter-item">
+			<div v-if="listQuery.tenderRound > 0" class="filter-item">
 				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<span>合約</span>
@@ -43,7 +43,7 @@
 					</el-select>
 				</div>
 			</div>
-			<el-button v-if="!filterNow" type="success" :disabled="tableSelect.length == 0 || isUpload" @click="uploadCase()">上傳</el-button>
+			<el-button v-if="listQuery.tenderRound > 0 && !filterNow" type="success" :disabled="tableSelect.length == 0 || isUpload" @click="uploadCase()">上傳</el-button>
 		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
@@ -68,7 +68,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column v-if="!filterNow" type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id] && !importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id].includes(row.id))" />
+			<el-table-column v-if="listQuery.tenderRound > 0 && !filterNow" type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id] && !importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id].includes(row.id))" />
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"
@@ -374,6 +374,10 @@ export default {
 
 				if(Object.keys(this.options.tenderRoundMap).length > 0) {
 					if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				}
+				if(Object.keys(this.options.tenderRoundMap).length == 0) {
+					this.options.tenderRoundMap = { "-1": { id: -1 }};
+					this.listQuery.tenderRound = -1;
 				}
 		});
 	},
