@@ -21,7 +21,13 @@
 			<el-col :span="12">
 				<el-card shadow="never" style="width: 450px; margin: 20px auto; padding: 5px 10px;">
 					<el-form :model="inputForm">
-						<h3>檢核資訊</h3>
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h3>檢核資訊</h3>
+							<el-button-group>
+								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
+							</el-button-group>
+						</div>
 						<el-divider />
 						<el-form-item label="起始頁碼" :label-width="labelWidth1">
 							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
@@ -88,7 +94,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
-import { getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseWarrantyCount, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
 	name: "PI3_2",
@@ -185,10 +191,10 @@ export default {
 				// Day2_Num32:0,
 				failTime_Num32: 0,
 				// companyCheck_Num32: 0,
-				checkInTime_doc32:true,
-				checkCoFail_doc32:true,
-				checkSandOFail_doc32:true,
-				checkCoUnreason_doc32:true,
+				checkInTime_doc32: true,
+				checkCoFail_doc32: true,
+				checkSandOFail_doc32: true,
+				checkCoUnreason_doc32: true,
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
@@ -283,7 +289,8 @@ export default {
 					this.form.onChangeInput(arg => changeInput(arg));
 
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
-					this.setPDFinputs();
+					if(Object.keys(this.list.content).length == 0) this.getList();
+					else this.setPDFinputs();
 						
 					resolve();
 				})
@@ -314,6 +321,22 @@ export default {
 			for(const key of ['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32']) this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			this.form.setInputs([this.inputs]);
 			this.form.render();
+		},
+		getList() {
+			this.loading = true;
+			const date = moment(this.reportDate).format("YYYY-MM-DD");
+			this.inputForm.maintainAll_Num32 = 0;
+
+			getCaseWarrantyCount({
+				zipCode: Number(this.inputs.zipCode),
+				timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
+				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+			}).then(response => {
+				this.inputForm.maintainAll_Num32 = Number(response.data.result.caseTotal);
+
+				this.setPDFinputs();
+				this.loading = false;
+			}).catch(err => this.loading = false);
 		},
 		storeData(){
 			this.loading = true;
