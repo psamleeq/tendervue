@@ -268,7 +268,6 @@ export default {
 				}
 			},
 			total: 0,
-			dateCollect: "",
 			importCaseObj: {},
 			list: [],
 			caseInfo: {},
@@ -450,7 +449,6 @@ export default {
 				});
 			} else {
 				this.loading = true;
-				this.dateCollect = "";
 				this.list = [];
 				this.tableSelect = [];
 				this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
@@ -494,7 +492,6 @@ export default {
 						this.total = 0;
 					} else {
 						this.caseInfo = response.data.caseInfo;
-						this.dateCollect = response.data.dateCollect;
 						this.total = response.data.total;
 						this.list = response.data.list;
 						this.list.forEach(l => {
@@ -580,14 +577,18 @@ export default {
 				this.isUpload = true;
 
 				const uploadCaseList = this.tableSelect.map(caseSpec => {
-					return { caseDetectionId: caseSpec.id, caseName: this.options.pciCaseTypeMap[caseSpec.DistressType], caseLevel: this.options.DistressLevel[caseSpec.DistressLevel], geoJson: caseSpec.Geometry }
+					return { 
+						caseDetectionId: caseSpec.id, 
+						caseName: this.options.pciCaseTypeMap[caseSpec.DistressType], 
+						caseLevel: this.options.DistressLevel[caseSpec.DistressLevel], 
+						dateCollect: moment(caseSpec.DateCollect).format("YYYY-MM-DD"),
+						geoJson: caseSpec.Geometry }
 				});
 				// console.log(uploadCaseList)
 
 				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 				importInspectionCase({
 					surveyId: tenderRound.id,
-					dateCollect: moment(this.dateCollect).format("YYYY-MM-DD"),
 					caseList: uploadCaseList
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
