@@ -141,15 +141,18 @@
 			class="dialog-filter"
 			:visible.sync="dialogFilterVisible"
 			title="過濾條件"
-			width="800px"
+			width="900px"
 			:show-close="false"
 			center
 		>
 			<el-row>
-				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId">
-					<el-checkbox v-model="listQuery.caseType" :label="distressId">
+				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId" style="display: flex; justify-content: space-between; width: 200px; margin-right: 10px">
+					<el-checkbox v-model="checked" :label="distressId">
 						{{ options.DistressType[distressId] }} ({{ caseInfo[distressId] || 0 }})
 					</el-checkbox>
+					<el-select v-model="typeLevel[distressId]" placeholder="請選擇" size="mini" popper-class="type-select" :disabled="!checked.includes(distressId)">
+						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="order == 0 ? '全部' : options.DistressLevel[order]" />
+					</el-select>
 				</el-col>
 			</el-row>
 
@@ -270,6 +273,7 @@ export default {
 			total: 0,
 			importCaseObj: {},
 			list: [],
+			typeLevel: {},
 			caseInfo: {},
 			tableSelect: [],
 			headersCheckVal: [],
@@ -316,6 +320,7 @@ export default {
 					58: "人孔高差"
 				},
 				DistressLevel: {
+					// 0: "全部",
 					1: "輕",
 					2: "中",
 					3: "重"
@@ -329,6 +334,26 @@ export default {
 		};
 	},
 	computed: {
+		checked: {
+			get() {
+				return this.listQuery.caseType.map(type => (type[0]));
+			},
+			set(val) {
+				const caseTypeArr = this.listQuery.caseType.map(type => type[0]);
+				const addTypeArr = val.filter(type => !caseTypeArr.includes(type));
+				const removeTypeArr = caseTypeArr.filter(type => !val.includes(type));
+
+				for(const type of removeTypeArr) {
+					this.listQuery.caseType = this.listQuery.caseType.filter(typeArr => typeArr[0] != type);
+					this.$delete(this.typeLevel, type);
+				}
+
+				for(const type of addTypeArr) {
+					this.listQuery.caseType.push([type, 0]);
+					this.$set(this.typeLevel, type, 0);
+				}
+			}
+		},
 		partHeaders() {
 			return (this.headersCheckVal.length != 0 && this.headersCheckVal.length < Object.keys(this.headers).length);
 		},
@@ -454,8 +479,10 @@ export default {
 			} else {
 				this.loading = true;
 				this.list = [];
+				this.caseInfo = {};
 				this.tableSelect = [];
 				this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
+				this.listQuery.caseType.forEach(typeArr => typeArr[1] = this.typeLevel[typeArr[0]]);
 
 				let inspectId = null;
 				let caseId = null;
@@ -483,7 +510,7 @@ export default {
 					caseId: caseId,
 					trackingId: trackingId,
 					dutyWith: dutyWith,
-					caseType: this.listQuery.caseType.join(","),
+					caseType: JSON.stringify(this.listQuery.caseType),
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
@@ -682,6 +709,17 @@ export default {
 		margin-right: -10px
 	.el-icon-error
 		color: #F56C6C
+	.dialog-filter
+		.el-select
+			width: 55px
+			.el-input__inner
+				padding: 0 13px 0 5px
+				text-align: center
+				background-color: transparent
+			.el-input__suffix
+				right: 0px
+				margin-right: -3px
+				transform: scale(0.7)
 	.dialog-map
 		min-height: 300px 
 		.el-dialog__body
