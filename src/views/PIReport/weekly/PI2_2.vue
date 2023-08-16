@@ -194,7 +194,7 @@ export default {
 				date: '',//檢查日期
 				zipCode: '104',
 				requiredStandard_22:'判定道路維護處理(放入觀察區與查報區)必須正確',//要求標準
-				measurement_22:'當週正確判定處理原則之案件數/廠商當周通報數',//量測方式
+				measurement_22:'當週正確判定處理原則之案件數/廠商當週通報數',//量測方式
 				sumInform_Num22: '0',//A
 				informed_Num22: '0',//B
 				companyInform_Num22: '0',//C

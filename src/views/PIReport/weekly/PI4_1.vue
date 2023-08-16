@@ -1,22 +1,37 @@
 <template>
 	<div class="app-container PI2_1-Att" v-loading="loading">
 		<h2>PI4.1</h2>
-		<div class="filter-container">
+
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
+		<span> > </span>
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.2附件</el-button>
+
+		<!-- <div class="filter-container">
 			<el-button
 				class="filter-item"
 				type="info"
 				icon="el-icon-document"
 				@click="handleDownload"
 			>輸出PDF</el-button>
-			<!-- <el-button class="filter-item" type="info" @click="setPDFinputs">更新內容</el-button> -->
-		</div>
+		</div> -->
 
 		<el-row :gutter="10">
 			<el-col :span="12">
 				<el-card shadow="never" style="width: 450px; margin: 20px auto; padding: 5px 10px;">
 					<el-form :model="inputForm">
-						<h3>完成維護結果之技術性</h3>
+						<div style="display:flex;justify-content:space-between;align-items: center">
+							<h3>檢核資訊</h3>
+							<el-button-group>
+								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
+								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
+							</el-button-group>
+						</div>
 						<el-divider />
+						<el-form-item label="起始頁碼" :label-width="labelWidth1">
+							<el-input-number v-model="initPage" controls-position="right" :min="1" @change="setPDFinputs" />
+						</el-form-item>
 						<el-form-item label="檢查日期" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="searchDate"
@@ -29,44 +44,46 @@
 							/>
 						</el-form-item>
 						<el-divider />
-						
-						<el-form-item label="維護各項缺失之總項次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.maintainAll_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<h4>廠商每周維護後滿足各項缺失合格標準之總項次數</h4>
-						<el-form-item label="坑洞" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.hole_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="人行道" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.sidewalk_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="縱橫向裂縫/龜裂" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.crack_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="車轍/隆起與凹陷" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.uplift_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<el-form-item label="未滿足契約要求案件資訊" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.failContractRequire_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						<el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.companyCheck_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-divider />
-						
-						<h4>應檢附文件</h4>
-						<el-form-item label="" :label-width="labelWidth2">
-							<el-checkbox v-model="inputForm.checkInTime_doc41" @change="setPDFinputs">滿足與未滿足各項契約時間要求資訊</el-checkbox>
-							<br/>
-							<el-checkbox v-model="inputForm.checkCoFail_doc41" @change="setPDFinputs">廠商自主發現未滿足契約要求案件資訊</el-checkbox>
-							<br/>
-							<el-checkbox v-model="inputForm.checkSandOFail_doc41" @change="setPDFinputs">機關或監造抽查檢核後發現未滿足要求的案件數資訊</el-checkbox>
-							<br/>
-							<el-checkbox v-model="inputForm.checkCoUnreason_doc41" @change="setPDFinputs">廠商認為為滿足判定不合理資訊</el-checkbox>
-						</el-form-item>
+						<el-collapse v-model="activeName">
+							<el-collapse-item v-for="key in ['AC', 'FA']" :key="`form_${key}`" class="collapse-label" :title="`${inputs['serialNumber_'+key]} (${key == 'FA' ? '設施' : key})`" :name="key">
+								<!-- <el-form-item label="維護各項缺失之總項次數" :label-width="labelWidth1">
+									<el-input-number v-model="inputForm.maintainAll_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
+								</el-form-item>
+								<el-divider /> -->
+								<el-form-item label="坑洞" :label-width="labelWidth1">
+									<el-input-number v-model="inputForm[`hole_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
+								</el-form-item>
+								<el-form-item :label="key == 'AC' ? '人孔高差' : '人行道'" :label-width="labelWidth1">
+									<el-input-number v-model="inputForm[`sidewalk_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
+								</el-form-item>
+								<el-form-item label="縱橫向裂縫/龜裂" :label-width="labelWidth1">
+									<el-input-number v-model="inputForm[`crack_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
+								</el-form-item>
+								<el-form-item label="車轍/隆起與凹陷" :label-width="labelWidth1">
+									<el-input-number v-model="inputForm[`uplift_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
+								</el-form-item>
+								<el-divider />
+								<el-form-item label="未滿足契約要求案件資訊" :label-width="labelWidth1">
+									<el-input-number v-model="inputForm[`failContractRequire_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
+								</el-form-item>
+								<el-divider />
+								<!-- <el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
+									<el-input-number v-model="inputForm.companyCheck_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
+								</el-form-item>
+								<el-divider /> -->
+								
+								<h4>應檢附文件</h4>
+								<el-form-item label="" :label-width="labelWidth2">
+									<el-checkbox v-model="inputForm[`checkInTime_doc41_${key}`]" @change="setPDFinputs">滿足與未滿足各項契約時間要求資訊</el-checkbox>
+									<br/>
+									<el-checkbox v-model="inputForm[`checkCoFail_doc41_${key}`]" @change="setPDFinputs">廠商自主發現未滿足契約要求案件資訊</el-checkbox>
+									<br/>
+									<el-checkbox v-model="inputForm[`checkSandOFail_doc41_${key}`]" @change="setPDFinputs">機關或監造抽查檢核後發現未滿足要求的案件數資訊</el-checkbox>
+									<br/>
+									<el-checkbox v-model="inputForm[`checkCoUnreason_doc41_${key}`]" @change="setPDFinputs">廠商認為為滿足判定不合理資訊</el-checkbox>
+								</el-form-item>
+							</el-collapse-item>
+						</el-collapse>
 					</el-form>
 				</el-card>
 			</el-col>
@@ -79,19 +96,21 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
+import { getCaseWarrantyCount, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
-	name: "PI2_1",
+	name: "PI4_1",
 	components: { },
 	data() {
 		return {
 			labelWidth1:'150px',
 			labelWidth2:'20px',
 			loading: false,
-			timeTabId: 1,
-			initPage: 1,
-			dateTimePickerVisible: false,
-			screenWidth: window.innerWidth,
+			initPage: 22,
+			listQuery: {
+				reportId: 0,
+				perfContentId: null
+			},
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -122,144 +141,286 @@ export default {
 				},
 			},
 			searchDate: moment().startOf("d").subtract(1, "d"),
+			reportDate: null,
+			// list:[],
+			districtList: {
+				// 100: {
+				// 	"name": "中正區"
+				// },
+				103: {
+					"name": "大同區",
+					"tenderName": "112年度大同區道路巡查維護修繕成效式契約"
+				},
+				104: {
+					"name": "中山區",
+					"tenderName": "111年度中山區道路巡查維護修繕成效式契約"
+				},
+				// 105: {
+				// 	"name": "松山區"
+				// },
+				// 106: {
+				// 	"name": "大安區"
+				// },
+				// 108: {
+				// 	"name": "萬華區"
+				// },
+				// 110: {
+				// 	"name": "信義區"
+				// },
+				// 111: {
+				// 	"name": "士林區"
+				// },
+				// 112: {
+				// 	"name": "北投區"
+				// },
+				// 114: {
+				// 	"name": "內湖區"
+				// },
+				// 115: {
+				// 	"name": "南港區"
+				// },
+				// 116: {
+				// 	"name": "文山區"
+				// }
+			},
+			activeName: ['AC'],
+			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
-				maintainAll_Num41:0,
-				hole_Num41: 0,
-				sidewalk_Num41: 0,
-				crack_Num41: 0,
-				uplift_Num41:0,
-				failContractRequire_Num41: 0,
-				companyCheck_Num41: 0,
-				BCA_41:0,
-				checkInTime_doc41:true,
-				checkCoFail_doc41:true,
-				checkSandOFail_doc41:true,
-				checkCoUnreason_doc41:true,
+				//AC
+				// maintainAll_Num41_AC: 0,
+				hole_Num41_AC: 0,
+				sidewalk_Num41_AC: 0,
+				crack_Num41_AC: 0,
+				uplift_Num41_AC: 0,
+				failContractRequire_Num41_AC: 0,
+				companyCheck_Num41_AC: 0,
+				BCA_41_AC: 0,
+				checkInTime_doc41_AC: true,
+				checkCoFail_doc41_AC: true,
+				checkSandOFail_doc41_AC: true,
+				checkCoUnreason_doc41_AC: true,
+
+				//FA
+				hole_Num41_FA: 0,
+				sidewalk_Num41_FA: 0,
+				crack_Num41_FA: 0,
+				uplift_Num41_FA: 0,
+				failContractRequire_Num41_FA: 0,
+				companyCheck_Num41_FA: 0,
+				BCA_41_FA: 0,
+				checkInTime_doc41_FA: true,
+				checkCoFail_doc41_FA: true,
+				checkSandOFail_doc41_FA: true,
+				checkCoUnreason_doc41_FA: true,
 			},
 			inputs: {
-				contractName: '112年度大同區道路巡查維護修繕成效式契約',//工程名稱
-				serialNumber: '11206250201',//紀錄編號
+				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
+				serialNumber_AC: '11206250201',//紀錄編號
+				serialNumber_FA: '11206250202',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
-				requiredStandard_41:'判定道路維護處理(放入觀察區與查報區)必須正確',//要求標準
-				measurement_41:'當周正確判定處理原則之案件數/廠商當周通報數',//量測方式
-				maintainAll_Num41: '0',//A
-				hole_Num41: '0',
-				sidewalk_Num41: '0',
-				crack_Num41: '0',
-				uplift_Num41:'0',
-				sumQualified_Num41:'0',
-				failContractRequire_Num41: '0',//C
-				companyCheck_Num41: '0',
-				BCA_41:'',
-				checkInTime_doc41:'V',
-				checkCoFail_doc41:'V',
-				checkSandOFail_doc41:'V',
-				checkCoUnreason_doc41:'V',
+				zipCode: '104',
+				requiredStandard_41_AC:'維護後應滿足「AC路面缺失訂定查報標準」各項次之技術水準',//要求標準
+				requiredStandard_41_FA:'維護後應滿足「設施缺失訂定查報標準」各項次之技術水準',//要求標準
+				measurement_41:'廠商每週維護後滿足各項缺失合格標準之總項次數/維護各項缺失之總項次數',//量測方式
+
+				// AC
+				maintainAll_Num41_AC: '0',//A
+				hole_Num41_AC: '0',
+				sidewalk_Num41_AC: '0',
+				crack_Num41_AC: '0',
+				uplift_Num41_AC: '0',
+				sumQualified_Num41_AC: '0',
+				failContractRequire_Num41_AC: '0',//C
+				companyCheck_Num41_AC: '0',
+				BCA_41_AC: '',
+				checkInTime_doc41_AC: 'V',
+				checkCoFail_doc41_AC: 'V',
+				checkSandOFail_doc41_AC: 'V',
+				checkCoUnreason_doc41_AC: 'V',
+
+				// FA
+				maintainAll_Num41_FA: '0',//A
+				hole_Num41_FA: '0',
+				sidewalk_Num41_FA: '0',
+				crack_Num41_FA: '0',
+				uplift_Num41_FA: '0',
+				sumQualified_Num41_FA: '0',
+				failContractRequire_Num41_FA: '0',//C
+				companyCheck_Num41_FA: '0',
+				BCA_41_FA: '',
+				checkInTime_doc41_FA: 'V',
+				checkCoFail_doc41_FA: 'V',
+				checkSandOFail_doc41_FA: 'V',
+				checkCoUnreason_doc41_FA: 'V'
 			},
 		};
 	},
 	computed: { },
 	watch: {},
 	async created() {	
-		// this.template = {};
-		// this.form = {};
+		// if(this.$route.query.reportId && this.$route.query.contentId) {
+			// this.listQuery.reportId = this.$route.query.reportId;
+			// this.listQuery.perfContentId = this.$route.query.contentId;
+
+			// const cidList = this.$route.query.cidList.split(",");
+			// const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			// this.pageTurn = [ 
+			// 	Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+			// 	Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			// ];
+
+			// getPerfContent({
+			// 	contentId: this.listQuery.perfContentId
+			// }).then((response) => {
+			// 	if (response.data.list.length == 0) {
+			// 		this.$message({
+			// 			message: "查無資料",
+			// 			type: "error",
+			// 		});
+			// 	} else {
+			// 		this.list = response.data.list[0];
+					this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
+			// 	}
+
+			// 	this.loading = false;
+			// }).catch(err => { this.loading = false; });
+		// } else this.$router.push({ path: "/PIReport/weekly/list" });	
 	},
-	mounted() {
-		this.initPDF();
-	},
+	mounted() { },
 	methods: {
-		dateShortcuts(index) {
-			this.timeTabId = index;
-
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
-			};
-
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
-					break;
+		async setData(dataObj) {
+			this.list = dataObj;
+			if(Object.keys(this.list.content).length != 0) {
+				this.inputs = this.list.content.inputs;
+				this.initPage = this.list.content.initPage;
 			}
-			this.getList();
+			this.reportDate = this.list.reportDate;
+			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+			this.inputs.zipCode = String(this.list.zipCode);
+
+			await this.initPDF();
 		},
 		initPDF() {
-			fetch(`/assets/pdf/weekly/PI4_1-Main.json?t=${Date.now()}`).then(async (response) => {
-				const domContainer = this.$refs.container.$el;
-				this.template = await response.json();
+			return new Promise(resolve => {
+				fetch(`/assets/pdf/weekly/PI4_1-Main.json?t=${Date.now()}`).then(async (response) => {
+					const domContainer = this.$refs.container.$el;
+					this.template = await response.json();
 
-				const font = {
-					edukai: {
-						data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
-						fallback: true
-					}
-				};
+					const font = {
+						edukai: {
+							data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
+							fallback: true
+						}
+					};
 
-				this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-				this.form.onChangeInput(arg => {
-					console.log(arg);
-					if(['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41'].includes(arg.key)){
-						this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v')
+					const changeInput = (arg) => {
+						// console.log(arg);
+						if(['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
+						if(['maintainAll_Num41', 'hole_Num41', 'sidewalk_Num41', 'crack_Num41', 'uplift_Num41', 'failContractRequire_Num41', 'companyCheck_Num41'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+						this.setPDFinputs();
 					}
-					if([
-						'maintainAll_Num41',
-						'hole_Num41',
-						'sidewalk_Num41',
-						'crack_Num41',
-						'uplift_Num41',
-						'failContractRequire_Num41',
-						'companyCheck_Num41'].includes(arg.key)) {
-						this.inputForm[arg.key] = parseInt(arg.value)
-					}
-					this.setPDFinputs();
-				});
-				
+
+					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
+					this.form.onChangeInput(arg => changeInput(arg));
+
+					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
+					if(Object.keys(this.list.content).length == 0) this.getList();
+					else this.setPDFinputs();
+				})
 			})
 		},
 		setPDFinputs() {
 			// console.log('setPDFinputs');
+			//工程名稱
+			const reportDate = moment(this.reportDate).subtract(1911, 'year');
+			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
+			//紀錄編號
+			this.inputs.serialNumber_AC = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
+			this.inputs.serialNumber_FA = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage+1).padStart(2, '0');	
 			//檢查日期
-			const date = moment(this.searchDate).subtract(1911, 'year');
-			this.inputs.date = date.format("YYYY年MM月DD日").slice(1);
-			//查核人次數
-			for(const key of [
-				'maintainAll_Num41',
-				'hole_Num41',
-				'sidewalk_Num41',
-				'crack_Num41',
-				'uplift_Num41',
-				'failContractRequire_Num41',
-				'companyCheck_Num41']) {
-				this.inputs[key] = String(this.inputForm[key]);
-			}
-			//計算(B)
-			this.inputs.sumQualified_Num41 = String(this.inputForm.hole_Num41+this.inputForm.sidewalk_Num41+this.inputForm.crack_Num41+this.inputForm.uplift_Num41);
-			//計算指標數值
-			const A = this.inputForm.maintainAll_Num41;
-			const B = this.inputForm.hole_Num41+this.inputForm.sidewalk_Num41+this.inputForm.crack_Num41+this.inputForm.uplift_Num41;
-			const C = this.inputForm.failContractRequire_Num41;
-			if(A==0){
-				this.inputs.BCA_41=''
-			}else{
-				this.inputs.BCA_41 = String(Math.round(((B-C)/A)*10000) / 100)
-			}
-			//應檢附文件
-			for(const key of ['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41']){
-				this.inputs[key] = this.inputForm[key] ? 'V' : '';
+			const checkDate = moment(this.checkDate).subtract(1911, 'year');
+			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
+			//缺失次數
+			for(const caseKey of ['AC', 'FA']) {
+				for(const key of ['hole_Num41', 'sidewalk_Num41', 'crack_Num41', 'uplift_Num41', 'failContractRequire_Num41', 'companyCheck_Num41']) {
+					this.inputs[`${key}_${caseKey}`] = String(this.inputForm[`${key}_${caseKey}`]);
+				}
+				//計算(B)
+				this.inputs[`sumQualified_Num41_${caseKey}`] = String(this.inputForm[`hole_Num41_${caseKey}`]+this.inputForm[`sidewalk_Num41_${caseKey}`]+this.inputForm[`crack_Num41_${caseKey}`]+this.inputForm[`uplift_Num41_${caseKey}`]);
+				//(A)=(B) && 廠商自主檢查件數 = (A)
+				this.inputs[`maintainAll_Num41_${caseKey}`] = this.inputs[`companyCheck_Num41_${caseKey}`] = this.inputs[`sumQualified_Num41_${caseKey}`];
+
+				//計算指標數值
+				const A = this.inputs[`maintainAll_Num41_${caseKey}`];
+				const B = this.inputForm[`hole_Num41_${caseKey}`]+this.inputForm[`sidewalk_Num41_${caseKey}`]+this.inputForm[`crack_Num41_${caseKey}`]+this.inputForm[`uplift_Num41_${caseKey}`];
+				const C = this.inputForm[`failContractRequire_Num41_${caseKey}`];
+				if(A==0) this.inputs[`BCA_41_${caseKey}`] = '';
+				else this.inputs[`BCA_41_${caseKey}`] = String(Math.round(((B-C)/A)*10000) / 100);
+
+				//應檢附文件
+				for(const key of ['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41']){
+					this.inputs[`${key}_${caseKey}`] = this.inputForm[`${key}_${caseKey}`] ? 'V' : '';
+				}
 			}
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},
-		
+		getList() {
+			this.loading = true;
+			const date = moment(this.reportDate).format("YYYY-MM-DD");
+			this.inputForm.maintainAll_Num32 = 0;
+
+			getCaseWarrantyCount({
+				zipCode: Number(this.inputs.zipCode),
+				timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
+				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+			}).then(response => {
+				this.initPage = Number(response.data.result.caseTotal);
+				this.inputForm.hole_Num41_AC = Number(response.data.result.caseTotal_hole_AC);
+				this.inputForm.sidewalk_Num41_AC = Number(response.data.result.caseTotal_holeCover_AC);
+				this.inputForm.crack_Num41_AC = Number(response.data.result.caseTotal_crack_AC);
+				this.inputForm.uplift_Num41_AC = Number(response.data.result.caseTotal_uplift_AC);
+				this.inputForm.hole_Num41_FA = Number(response.data.result.caseTotal_hole_FA);
+				this.inputForm.sidewalk_Num41_FA = Number(response.data.result.caseTotal_holeCover_FA);
+				this.inputForm.crack_Num41_FA = Number(response.data.result.caseTotal_crack_FA);
+				this.inputForm.uplift_Num41_FA = Number(response.data.result.caseTotal_uplift_FA);
+
+				this.setPDFinputs();
+				this.loading = false;
+			}).catch(err => this.loading = false);
+		},
+		storeData(){
+			this.loading = true;
+			const storedContent = {
+				pageCount: 1,
+				initPage: this.initPage,
+				inputs: this.inputs
+			}
+			setPerfContent(this.listQuery.perfContentId, {
+				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				content: JSON.stringify(storedContent)
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "提交成功",
+						type: "success",
+					});
+				} 
+				this.loading = false;
+			}).catch(err => {
+				console.log(err);
+				this.loading = false;
+			})
+		},
+		async getPDF() {
+			return new Promise(resolve =>{
+				generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
+					resolve(pdf);
+				});
+			});
+		},
 		handleDownload() {
 			// console.log(this.form);
 			generate({ template: this.form.getTemplate(), inputs: this.form.getInputs(), options: { font: this.form.getFont() } }).then((pdf) => {
@@ -279,6 +440,28 @@ export default {
 				document.body.removeChild(link);
 				URL.revokeObjectURL(url);
 			});
+		},
+		handlePageTurn(type) {
+			switch(type) {
+				case 0:
+					this.$router.push({
+						path: "/PIReport/weekly/edit",
+						query: { reportId: this.listQuery.reportId }
+					})
+					return;
+				case -1:
+					return;
+				case 1:
+					this.$router.push({
+						path: "/PIReport/weekly/PI2_2_Att",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+					})
+					return;
+			}
+		},
+		formatDate(date){
+			const momentDate = moment(date);
+			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
 		}
 	},
 };
@@ -288,11 +471,20 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.el-checkbox
-	overflow-wrap: normal
 .PI2_1-Att
-	position: relative
-	.filter-container 
-		.filter-item
-			margin-right: 5px
+	.collapse-label
+		width: 100%
+		.el-collapse-item__header
+			padding: 5px 25px
+			background-color: #F2F6FC
+			position: relative
+			&.is-active
+				background-color: rgba(#F2F6FC, 0.5)
+				transition: 0.5s
+			.el-collapse-item__arrow
+				position: absolute
+				left: 5px
+		.el-collapse-item__content
+			height: 100%
+			padding: 10px 0 5px 0
 </style>

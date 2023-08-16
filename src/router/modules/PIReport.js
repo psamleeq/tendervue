@@ -118,8 +118,7 @@ const PIReportRouter = {
 					name: 'PI2_2',
 					meta: {
 						title: 'PI2.2',
-						roles: ['PIreport.weekly'],
-						vTag: 'Alpha'
+						roles: ['PIreport.weekly']
 					}
 				},
 				{
@@ -128,8 +127,7 @@ const PIReportRouter = {
 					name: 'PI2_2_Att',
 					meta: {
 						title: 'PI2.2附件',
-						roles: ['PIreport.weekly'],
-						vTag: 'Alpha'
+						roles: ['PIreport.weekly']
 					},
 				},
 				{
@@ -138,8 +136,7 @@ const PIReportRouter = {
 					name: 'PI2_2_Att_2',
 					meta: {
 						title: 'PI2.2附件-2',
-						roles: ['PIreport.weekly'],
-						vTag: 'Alpha'
+						roles: ['PIreport.weekly']
 					},
 				},
 				{
@@ -148,8 +145,7 @@ const PIReportRouter = {
 					name: 'PI2_2_Att_3',
 					meta: {
 						title: 'PI2.2附件-3',
-						roles: ['PIreport.weekly'],
-						vTag: 'Alpha'
+						roles: ['PIreport.weekly']
 					},
 				},
 				{
@@ -158,8 +154,7 @@ const PIReportRouter = {
 					name: 'PI3_2',
 					meta: {
 						title: 'PI3.2',
-						roles: ['PIreport.weekly'],
-						vTag: 'Alpha'
+						roles: ['PIreport.weekly']
 					}
 				},
 				{
@@ -168,8 +163,7 @@ const PIReportRouter = {
 					name: 'PI3_2_Att',
 					meta: {
 						title: 'PI3.2附件',
-						roles: ['PIreport.weekly'],
-						vTag: 'Alpha'
+						roles: ['PIreport.weekly']
 					},
 				},
 				{
@@ -178,8 +172,7 @@ const PIReportRouter = {
 					name: 'PI3_2_Att_2',
 					meta: {
 						title: 'PI3.2附件-2',
-						roles: ['PIreport.weekly'],
-						vTag: 'Alpha'
+						roles: ['PIreport.weekly']
 					},
 				},
 				{
@@ -188,8 +181,7 @@ const PIReportRouter = {
 					name: 'PI4_1',
 					meta: {
 						title: 'PI4.1',
-						roles: ['PIreport.weekly'],
-						vTag: 'Alpha'
+						roles: ['PIreport.weekly']
 					}
 				},
 			]
