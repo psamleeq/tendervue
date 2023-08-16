@@ -145,7 +145,7 @@ export default {
 			caseInfo: [],
 			selectCase: {},
 			listQuery: {
-				tenderRound: 100001,
+				tenderRound: null,
 				filterType: 1,
 				filterId: null
 			},
@@ -346,9 +346,9 @@ export default {
 					return acc;
 				}, {});
 
-				if(this.$route.query.tenderRound && Object.keys(this.options.tenderRoundMap).includes(String(this.$route.query.tenderRound))) this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
-				else if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
-				this.changeTender();
+				// if(this.$route.query.tenderRound && Object.keys(this.options.tenderRoundMap).includes(String(this.$route.query.tenderRound))) this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
+				// else if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				// this.changeTender();
 			});
 		}).catch(err => console.log("err: ", err));
 	},
@@ -863,7 +863,7 @@ export default {
 			this.map.fitBounds(bounds);
 
 			this.$router.push({ query: { ...this.$route.query , tenderRound: this.listQuery.tenderRound } });
-			// this.getList();
+			this.getList();
 		},
 		async getList() {
 			this.loading = true;
