@@ -137,7 +137,7 @@
 						</span>
 						<span v-else-if="[ 'DistressTypeR' ].includes(column.property)">
 							<el-select v-model="row.DistressTypeR" placeholder="請選擇" size="mini" style="width: 110px" @change="updateDialogTable($index, row)">
-								<el-option v-for="type in distressType" :key="type" :label="type" :value="type" />
+								<el-option v-for="type in distressType.filter(type => type != ((row.DeviceType == 'AC') ? '人行道' : '人孔高差'))" :key="type" :label="type" :value="type" />
 							</el-select>
 						</span>
 						<span v-else-if="[ 'CaseType' ].includes(column.property)">
@@ -547,7 +547,7 @@ export default {
 		updateDialogTable(index, row) {
 			if(row.CaseType.includes(4) && !row.CaseType.includes(2)) row.CaseType.push(2);
 			row.State = row.CaseType.reduce((acc, cur) => (acc += cur));
-			if(row.State & 7) this.computedWarranty(row);
+			if(row.State & 4) this.computedWarranty(row);
 			this.$set(this.csvData, index, row);
 		},
 		handleRemove(file, fileList) {
