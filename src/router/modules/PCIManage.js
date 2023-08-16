@@ -10,7 +10,8 @@ const caseRouter = {
 	meta: {
 		title: 'PCI計算',
 		icon: 'el-icon-star-on', 
-		roles: ['distress']
+		roles: ['distress'],
+		isNew: true
 	},
 	children: [
 		{

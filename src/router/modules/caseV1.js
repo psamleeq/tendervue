@@ -10,7 +10,7 @@ const caseRouter = {
 	meta: {
 		title: '鋪面管理V1',
 		icon: 'el-icon-s-release', 
-		roles: ['distress']
+		roles: ['beta']
 	},
 	children: [
 		{
@@ -19,7 +19,7 @@ const caseRouter = {
 			name: 'caseUpload',
 			meta: {
 				title: '缺失上傳',
-				roles: ['distress.inspectorMaster']
+				roles: ['beta']
 			}
 		},
 		{
@@ -28,7 +28,7 @@ const caseRouter = {
 			name: 'caseList',
 			meta: { 
 				title: '缺失列表', 
-				roles: ['distress.viewer']
+				roles: ['beta']
 			}
 		},
 		{
@@ -37,7 +37,7 @@ const caseRouter = {
 			name: 'caseMap',
 			meta: { 
 				title: '缺失地圖', 
-				roles: ['distress.viewer']
+				roles: ['beta']
 			}
 		},
 		{
@@ -46,7 +46,7 @@ const caseRouter = {
 			name: 'roadStatus',
 			meta: { 
 				title: '路況查詢', 
-				roles: ['distress.inspector']
+				roles: ['beta']
 			}
 		},
 		{
@@ -55,7 +55,7 @@ const caseRouter = {
 			name: 'PCIManager',
 			meta: {
 				title: 'PCI管理',
-				roles: ['distress.inspectorMaster']
+				roles: ['beta']
 			}
 		},
 		{
@@ -64,7 +64,7 @@ const caseRouter = {
 			name: 'PCIMap',
 			meta: { 
 				title: '查核地圖', 
-				roles: ['distress.inspectorMap']
+				roles: ['beta']
 			}
 		},
 		{
@@ -73,7 +73,7 @@ const caseRouter = {
 			name: 'PCIMap_new',
 			meta: { 
 				title: '查核地圖(測試)', 
-				roles: ['distress.inspectorOrtho'],
+				roles: ['beta'],
 				vTag: 'Alpha'
 			}
 		}

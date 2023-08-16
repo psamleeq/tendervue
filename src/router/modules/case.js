@@ -11,7 +11,7 @@ const caseRouter = {
 		title: '鋪面管理',
 		icon: 'el-icon-s-release', 
 		roles: ['distress'],
-		vTag: 'Alpha'
+		isNew: true
 	},
 	children: [
 		{
@@ -20,8 +20,7 @@ const caseRouter = {
 			name: 'caseUpload',
 			meta: {
 				title: '缺失上傳',
-				roles: ['distress.inspectorMaster'],
-				vTag: 'Alpha'
+				roles: ['distress.inspectorMaster']
 			}
 		},
 		{
@@ -30,8 +29,7 @@ const caseRouter = {
 			name: 'caseList',
 			meta: { 
 				title: '缺失列表', 
-				roles: ['distress.viewer'],
-				vTag: 'Alpha'
+				roles: ['distress.viewer']
 			}
 		},
 		{
@@ -40,8 +38,7 @@ const caseRouter = {
 			name: 'caseMap',
 			meta: { 
 				title: '缺失地圖', 
-				roles: ['distress.viewer'],
-				vTag: 'Alpha'
+				roles: ['distress.viewer']
 			}
 		},
 		{
@@ -50,8 +47,7 @@ const caseRouter = {
 			name: 'PCIMap',
 			meta: { 
 				title: '查核地圖', 
-				roles: ['distress.inspectorOrtho'],
-				vTag: 'Alpha'
+				roles: ['distress.inspectorOrtho']
 			}
 		}
 	]
