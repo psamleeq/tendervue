@@ -96,6 +96,7 @@ export default {
 				userId: Number(this.listQuery.userId)
 			}).then(response => {
 				this.accountData = response.data;
+				this.accountData.rolesPermit = this.accountData.rolesPermit.filter(role => role != 'beta');
 				this.permissionTree();
 
 				this.accountData.roles.forEach(role => {
