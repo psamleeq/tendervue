@@ -23,8 +23,7 @@ const PIReportRouter = {
 			redirect: '/PIReport/daily/list',
 			meta: { 
 				title: '日報表', 
-				roles: ['PIreport.daily'],
-				isNew: true
+				roles: ['PIreport.daily']
 			},
 			children: [
 				{
@@ -34,8 +33,7 @@ const PIReportRouter = {
 					meta: { 
 						title: '日報表', 
 						reportType: 1,
-						roles: ['PIreport.daily'],
-						isNew: true
+						roles: ['PIreport.daily']
 					}
 				},
 				{
@@ -110,8 +108,7 @@ const PIReportRouter = {
 			redirect: '/PIReport/weekly/list',
 			meta: {
 				title: '週報表',
-				roles: ['PIreport.weekly'],
-				isNew: true
+				roles: ['PIreport.weekly']
 			},
 			children: [
 				{

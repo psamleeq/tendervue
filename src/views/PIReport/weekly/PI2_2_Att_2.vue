@@ -2,7 +2,7 @@
 	<div class="app-container PI2_2-Att_2" v-loading="loading">
 		<h2>PI2.2附件-2</h2>
 
-		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.1附件</el-button>
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.2附件</el-button>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
@@ -261,33 +261,33 @@ export default {
 	},
 	created() {
 		this.rowActive = {};
-		// if(this.$route.query.contentId) {
-		// 	this.listQuery.reportId = this.$route.query.reportId;
-		// 	this.listQuery.perfContentId = this.$route.query.contentId;
+		if(this.$route.query.contentId) {
+			this.listQuery.reportId = this.$route.query.reportId;
+			this.listQuery.perfContentId = this.$route.query.contentId;
 
-		// 	const cidList = this.$route.query.cidList.split(",");
-		// 	const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
-		// 	this.pageTurn = [ 
-		// 		Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
-		// 		Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
-		// 	];
+			const cidList = this.$route.query.cidList.split(",");
+			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.pageTurn = [ 
+				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			];
 
-		// 	getPerfContent({
-		// 			contentId: this.listQuery.perfContentId
-		// 		}).then(async(response) => {
-		// 			if (response.data.list.length == 0) {
-		// 				this.$message({
-		// 					message: "查無資料",
-		// 					type: "error",
-		// 				});
-		// 			} else {
-		// 				this.list = response.data.list[0];
-						this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
-		// 			}
-		// 			this.loading = false;
-		// 		}).catch(err => { this.loading = false; });
+			getPerfContent({
+					contentId: this.listQuery.perfContentId
+				}).then(async(response) => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.list = response.data.list[0];
+						this.setData(this.list);
+					}
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
 
-		// } else this.$router.push({ path: "/PIReport/daily/list" });
+		} else this.$router.push({ path: "/PIReport/weekly/list" });
 	},
 	mounted() { },
 	methods: {
@@ -591,32 +591,32 @@ export default {
 			});
 		},
 		handleDownload() {
-			this.pdfDoc.save(`PI2.1附件-2.pdf`);
+			this.pdfDoc.save(`PI2-2附件-2.pdf`);
 		},
 		handlePageTurn(type) {
 			switch(type) {
 				case 0:
 					this.$router.push({
-						path: "/PIReport/daily/edit",
+						path: "/PIReport/weekly/edit",
 						query: { reportId: this.listQuery.reportId }
 					})
 					break;
 				case -1:
 					this.$router.push({
-						path: "/PIReport/daily/PI2_1_Att",
+						path: "/PIReport/weekly/PI2_2_Att",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
 					})
 					break;
 				case 1:
 					this.$router.push({
-						path: "/PIReport/daily/PI3_1",
+						path: "/PIReport/weekly/PI2_2_Att_3",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					break;
 				default:
 					const date = moment(this.reportDate).format("YYYY-MM-DD");
 					this.$router.push({
-						path: "/PIReport/daily/list",
+						path: "/PIReport/weekly/list",
 						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: date }
 					})
 					break;

@@ -123,68 +123,82 @@ export default {
 					201:{
 						0: {
 							name: "PI2.1",
-							description: "登錄「道路管理資訊系統」資料之即時性"
+							description: "登錄「道路管理資訊系統」資料之即時性",
+							path: "/PIReport/daily/PI2_1"
 						},
 						1: {
 							name: "PI2.1附件",
-							description: "廠商每天通報數資訊 & 登錄資料數量"
+							description: "廠商每天通報數資訊 & 登錄資料數量",
+							path: "/PIReport/daily/PI2_1_Att"
 						},
 						2: {
 							name: "PI2.1附件",
-							description: "當日被通報案件 & 廠商判定不合理案件"
+							description: "當日被通報案件 & 廠商判定不合理案件",
+							path: "/PIReport/daily/PI2_1_Att_2"
 						},
 					},
 					301:{
 						0: {
 							name: "PI3.1",
-							description: "執行巡查與維護工作之安全性"
+							description: "執行巡查與維護工作之安全性",
+							path: "/PIReport/daily/PI3_1"
 						},
 						1: {
 							name: "PI3.1附件",
-							description: "廠商每日完成自主檢查資訊"
+							description: "廠商每日完成自主檢查資訊",
+							path: "/PIReport/daily/PI3_1_Att"
 						},
 					},
 					// 週報表
 					202: {
 						0: {
 							name: "PI2.2",
-							description: "登錄「道路管理資訊系統」資料之正確性"
+							description: "登錄「道路管理資訊系統」資料之正確性",
+							path: "/PIReport/weekly/PI2_2"
 						},
 						1: {
 							name: "PI2.2附件",
-							description: "正確判定處理原則(放入觀察區與查報區)之案件"
+							description: "正確判定處理原則(放入觀察區與查報區)之案件",
+							path: "/PIReport/weekly/PI2_2_Att"
 						},
 						2: {
 							name: "PI2.2附件2",
-							description: "當週被通報案件"
+							description: "當週被通報案件",
+							path: "/PIReport/weekly/PI2_2_Att_2"
 						},
 						3: {
 							name: "PI2.2附件3",
-							description: "機關或監造抽查檢核後發現錯誤的案件敷"
+							description: "機關或監造抽查檢核後發現錯誤的案件敷",
+							path: "/PIReport/weekly/PI2_2_Att_3"
 						}
 					},
 					302: {
 						0: {
 							name: "PI3.2",
-							description: "執行維護工作之時效性"
+							description: "執行維護工作之時效性",
+							path: "/PIReport/weekly/PI3_2"
 						},
 						1: {
 							name: "PI3.2附件",
-							description: "滿足各項契約時間要求之案件列表"
+							description: "滿足各項契約時間要求之案件列表",
+							path: "/PIReport/weekly/PI3_2_Att"
 						},
 						2: {
 							name: "PI3.2附件2",
-							description: "滿足各項契約時間要求之案件"
+							description: "滿足各項契約時間要求之案件",
+							path: "/PIReport/weekly/PI3_2_Att_2"
 						}
 					},
 					401: {
 						0: {
 							name: "PI4.1",
-							description: "完成維護結果之技術性"
+							description: "完成維護結果之技術性",
+							path: "/PIReport/weekly/PI4_1"
 						},
 						1: {
 							name: "PI4.1附件",
-							description: "維護後滿足缺失查報標準之案件"
+							description: "維護後滿足缺失查報標準之案件",
+							path: "/PIReport/weekly/PI4_1_Att"
 						}
 					},
 				},
@@ -232,34 +246,18 @@ export default {
 			}).catch(err => { this.loading = false; });
 		},
 		formatItem(perfItem, perfAtt) {
-			const itemText = this.options.itemMap[perfItem]?.[perfAtt];
-			// 如果找不到對應的值，返回空字符串或其他預設值
-			return itemText ? itemText.name : "";
+			const item = this.options.itemMap[perfItem]?.[perfAtt];
+			return item ? item.name : "";
 		},
 		getDescription(perfItem, perfAtt){
-			const itemText = this.options.itemMap[perfItem]?.[perfAtt];
-			return itemText ? itemText.description : "";
+			const item = this.options.itemMap[perfItem]?.[perfAtt];
+			return item ? item.description : "";
 		},
 		beforeEdit(row) {
-			let path = '';
-			if (row.perfItem === 201) {
-				if (row.perfAtt === 0) {
-					path = "/PIReport/daily/PI2_1";
-				} else if (row.perfAtt === 1) {
-					path = "/PIReport/daily/PI2_1_Att";
-				} else if (row.perfAtt === 2) {
-					path = "/PIReport/daily/PI2_1_Att_2";
-				}
-			} else if (row.perfItem === 301) {
-				if (row.perfAtt === 0) {
-					path = "/PIReport/daily/PI3_1";
-				} else if (row.perfAtt === 1) {
-					path = "/PIReport/daily/PI3_1_Att";
-				}
-			}
+			const item = this.options.itemMap[row.perfItem]?.[row.perfAtt];
 
-			if (path !== '') {
-				this.$router.push({ path, query: { reportId: this.listQuery.reportId, contentId: row.id, cidList: this.list.map(l => l.id).join(",") } });
+			if (item) {
+				this.$router.push({ path: item.path, query: { reportId: this.listQuery.reportId, contentId: row.id, cidList: this.list.map(l => l.id).join(",") } });
 			}
 		},
 		handlePageTurn() {

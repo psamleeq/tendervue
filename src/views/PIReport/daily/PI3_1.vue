@@ -325,7 +325,7 @@ export default {
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
-				const filename = "成效式契約指標檢核表PI-3-1.pdf"; 
+				const filename = "PI3-1.pdf"; 
 				const file = new File([blob], filename, { type: 'application/pdf' });
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);

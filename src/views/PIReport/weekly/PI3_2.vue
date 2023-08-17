@@ -2,11 +2,11 @@
 	<div class="app-container PI3_2" v-loading="loading">
 		<h2>PI3.2</h2>
 
-		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)" />
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.1附件-3</el-button>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
-		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.2附件</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI3.2附件</el-button>
 
 		<!-- <div class="filter-container">
 			<el-button
@@ -223,33 +223,32 @@ export default {
 	computed: { },
 	watch: {},
 	async created() {	
-		// if(this.$route.query.reportId && this.$route.query.contentId) {
-			// this.listQuery.reportId = this.$route.query.reportId;
-			// this.listQuery.perfContentId = this.$route.query.contentId;
+		if(this.$route.query.reportId && this.$route.query.contentId) {
+			this.listQuery.reportId = this.$route.query.reportId;
+			this.listQuery.perfContentId = this.$route.query.contentId;
 
-			// const cidList = this.$route.query.cidList.split(",");
-			// const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
-			// this.pageTurn = [ 
-			// 	Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
-			// 	Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
-			// ];
+			const cidList = this.$route.query.cidList.split(",");
+			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.pageTurn = [ 
+				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			];
 
-			// getPerfContent({
-			// 	contentId: this.listQuery.perfContentId
-			// }).then((response) => {
-			// 	if (response.data.list.length == 0) {
-			// 		this.$message({
-			// 			message: "查無資料",
-			// 			type: "error",
-			// 		});
-			// 	} else {
-			// 		this.list = response.data.list[0];
-					this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
-			// 	}
-
-			// 	this.loading = false;
-			// }).catch(err => { this.loading = false; });
-		// } else this.$router.push({ path: "/PIReport/weekly/list" });	
+			getPerfContent({
+				contentId: this.listQuery.perfContentId
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list[0];
+					this.setData(this.list);
+				}
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		} else this.$router.push({ path: "/PIReport/weekly/list" });	
 	},
 	mounted() {},
 	methods: {
@@ -375,7 +374,7 @@ export default {
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
-				const filename = "成效式契約指標檢核表PI-2-2.pdf"; 
+				const filename = "PI3-2.pdf"; 
 				const file = new File([blob], filename, { type: 'application/pdf' });
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
@@ -397,13 +396,24 @@ export default {
 					})
 					return;
 				case -1:
-					return;
-				case 1:
 					this.$router.push({
-						path: "/PIReport/weekly/PI2_2_Att",
+						path: "/PIReport/weekly/PI2_2_Att_3",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					return;
+				case 1:
+					this.$router.push({
+						path: "/PIReport/weekly/PI3_2_Att",
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+					})
+					return;
+				default:
+					const date = moment(this.reportDate).format("YYYY-MM-DD");
+					this.$router.push({
+						path: "/PIReport/weekly/list",
+						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: date }
+					})
+					break;
 			}
 		},
 		formatDate(date){

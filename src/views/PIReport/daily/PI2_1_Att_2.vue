@@ -571,7 +571,7 @@ export default {
 			});
 		},
 		handleDownload() {
-			this.pdfDoc.save(`PI2.1附件-2.pdf`);
+			this.pdfDoc.save(`PI2-1附件-2.pdf`);
 		},
 		handlePageTurn(type) {
 			switch(type) {

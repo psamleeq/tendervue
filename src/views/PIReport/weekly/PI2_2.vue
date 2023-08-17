@@ -212,33 +212,33 @@ export default {
 	computed: {},
 	watch: {},
 	async created() {	
-		// if(this.$route.query.reportId && this.$route.query.contentId) {
-			// this.listQuery.reportId = this.$route.query.reportId;
-			// this.listQuery.perfContentId = this.$route.query.contentId;
+		if(this.$route.query.reportId && this.$route.query.contentId) {
+			this.listQuery.reportId = this.$route.query.reportId;
+			this.listQuery.perfContentId = this.$route.query.contentId;
 
-			// const cidList = this.$route.query.cidList.split(",");
-			// const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
-			// this.pageTurn = [ 
-			// 	Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
-			// 	Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
-			// ];
+			const cidList = this.$route.query.cidList.split(",");
+			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.pageTurn = [ 
+				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+			];
 
-			// getPerfContent({
-			// 	contentId: this.listQuery.perfContentId
-			// }).then((response) => {
-			// 	if (response.data.list.length == 0) {
-			// 		this.$message({
-			// 			message: "查無資料",
-			// 			type: "error",
-			// 		});
-			// 	} else {
-			// 		this.list = response.data.list[0];
-					this.setData(this.list || { zipCode: 104, reportDate: '2023-05-31', content: {} });
-			// 	}
+			getPerfContent({
+				contentId: this.listQuery.perfContentId
+			}).then((response) => {
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+				} else {
+					this.list = response.data.list[0];
+					this.setData(this.list);
+				}
 
-			// 	this.loading = false;
-			// }).catch(err => { this.loading = false; });
-		// } else this.$router.push({ path: "/PIReport/weekly/list" });	
+				this.loading = false;
+			}).catch(err => { this.loading = false; });
+		} else this.$router.push({ path: "/PIReport/weekly/list" });	
 	},
 	mounted() { },
 	methods: {
@@ -370,7 +370,7 @@ export default {
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
-				const filename = "成效式契約指標檢核表PI-2-2.pdf"; 
+				const filename = "PI2-2.pdf"; 
 				const file = new File([blob], filename, { type: 'application/pdf' });
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
@@ -398,6 +398,13 @@ export default {
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					return;
+				default:
+					const date = moment(this.reportDate).format("YYYY-MM-DD");
+					this.$router.push({
+						path: "/PIReport/weekly/list",
+						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: date }
+					})
+					break;
 			}
 		},
 		formatDate(date){
