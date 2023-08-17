@@ -184,6 +184,15 @@ const PIReportRouter = {
 						roles: ['PIreport.weekly']
 					}
 				},
+				{
+					path: 'PI4_1_Att',
+					component: () => import('@/views/PIReport/weekly/PI4_1_Att'),
+					name: 'PI4_1_Att',
+					meta: {
+						title: 'PI4.1附件',
+						roles: ['PIreport.weekly']
+					}
+				},
 			]
 		},
 	]

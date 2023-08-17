@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container PI3_2-Att" v-loading="loading">
-		<h2>PI3.2附件</h2>
+	<div class="app-container PI4_1-Att" v-loading="loading">
+		<h2>PI4.1附件</h2>
 
 		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.1附件</el-button>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
@@ -57,7 +57,7 @@ import { getCaseWarrantyList, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 
 export default {
-	name: "PI3_2_Att",
+	name: "PI4_1_Att",
 	components: { TimePicker },
 	data() {
 		return {
@@ -155,7 +155,6 @@ export default {
 			},
 			imageWidth:null,
 			imageHeight:null,
-			// rowActive: {},
 			imgList: [],
 			inputs: {
 				companyName: '聖東營造股份有限公司',
@@ -177,7 +176,7 @@ export default {
 	computed: {},
 	watch: { },
 	created() {
-		this.rowActive = {};
+		this.imgDOMObj = {};
 		// if(this.$route.query.contentId) {
 		// 	this.listQuery.reportId = this.$route.query.reportId;
 		// 	this.listQuery.perfContentId = this.$route.query.contentId;
@@ -273,23 +272,42 @@ export default {
 
 				getCaseWarrantyList({
 					zipCode: Number(this.inputs.zipCode),
-					caseType: 1,
+					caseType: 2,
 					filterType: 2,
 					timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
 					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 				}).then(async(response) => {
-					this.inputs.caseList = response.data.list;
-					this.inputs.caseList.forEach(l => {
-						l.CaseDate = this.formatDate(l.CaseDate);
-						l.DateDeadline = this.formatDate(l.DateDeadline);
-						l.DateCompleted = this.formatDate(l.DateCompleted);
-					});
-					this.inputs.caseList.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
+					const list = response.data.list;
+					this.inputs.caseList = list.reduce((acc, cur) =>{
+						if(acc.length == 0 || cur.DeviceType != acc.DeviceType || cur.DistressTypeR != acc.DistressTypeR) acc.push([cur]);
+						else {
+							acc.forEach(caseArr => {
+								if(caseArr[0].DeviceType == cur.DeviceType && caseArr[0].DistressTypeR  == cur.DistressTypeR) caseArr.push(cur);
+								caseArr.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
+							})
+						}
+						return acc;
+					}, []);
 					await this.previewPdf();
 					resolve();
 					this.loading = false;
 				}).catch(err => this.loading = false);
 			})
+		},
+		async imgPreload(data) {
+			//img preload
+			this.imgDOMObj = {};
+			for(const caseSpec of data) { 
+				for(const key of ['preconstruction_Img', 'completeFixed_Img']) {
+					let image = new Image();
+					image.src = caseSpec[key];
+					try {
+						await image.decode();
+					} catch(err) { console.log(err) }
+					if(this.imgDOMObj[caseSpec.UploadCaseNo] == undefined) this.imgDOMObj[caseSpec.UploadCaseNo] = {};
+					this.imgDOMObj[caseSpec.UploadCaseNo][key] = image;
+				}
+			};
 		},
 		async createPdf_header(pageIndex) {
 			return new Promise((resolve, reject) => {
@@ -298,10 +316,10 @@ export default {
 				this.pdfDoc.setFontSize(15);
 				this.pdfDoc.text(`成效式契約指標檢核表`, width/2, height-280, { align: 'center' });
 				this.pdfDoc.setFontSize(12);
-				this.pdfDoc.text(`項目:【PI-3.2附件】`, width-190, height-270, { align: 'left' });
+				this.pdfDoc.text(`項目:【PI-4.1附件】`, width-190, height-270, { align: 'left' });
 				this.pdfDoc.text(`週報表`, width-40, height-270, { align: 'left' });
 
-				const serialNumber = `${this.inputs.serialNumber}` + (pageIndex == 0 ? "" : `-${pageIndex}`);
+				const serialNumber = `${Number(this.inputs.serialNumber)+Number(pageIndex)}`;
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
@@ -326,49 +344,81 @@ export default {
 		},
 		async createPdf() {
 			return new Promise(async (resolve, reject) => {
-				const total = this.inputs.caseList.length;
-				const splitTable = this.inputs.caseList.reduce((acc, cur) => {
-					if(acc[acc.length-1].length <= 20) acc[acc.length-1].push(cur);
-					else acc.push([cur]);
-					return acc;
-				}, [[]]);
+				for(const [ caseIndex, caseTable ] of this.inputs.caseList.entries()) {
+					// NOTE: 測試
+					// caseTable.forEach(l => {
+					// 	l.preconstruction_Img = 'https://storage.googleapis.com/adm_distress_image/caseDetection/10000_ImgZoomIn_1.jpg';
+					// 	l.completeFixed_Img = 'https://storage.googleapis.com/adm_distress_image/restored_reporter/5448458_UnderConstr__1.jpg';
+					// })
+					await this.imgPreload(caseTable);
+					// console.log(this.imgDOMObj);
+					const splitTable = caseTable.reduce((acc, cur) => {
+						if(acc[acc.length-1].length <= 3) acc[acc.length-1].push(cur);
+						else acc.push([cur]);
+						return acc;
+					}, [[]]);
 
-				for(const [ pageIndex, table ] of splitTable.entries()) {
-					this.pdfDoc.addPage();
-					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
-					await this.createPdf_header(pageIndex);
+					for(const [ pageIndex, pageTable ] of splitTable.entries()) {
+						this.pdfDoc.addPage();
+						while(caseIndex == 0 && pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+						await this.createPdf_header(caseIndex+pageIndex);
 
-					this.pdfDoc.autoTable({
-						theme: 'plain',
-						styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-						head: [[`本週預計完工案件列表: ${total} 件`]],
-						startY: this.pdfDoc.lastAutoTable.finalY,
-					})
-					this.pdfDoc.autoTable({
-						columns: [
-							{ dataKey: 'UploadCaseNo', header: '案件編號' },
-							{ dataKey: 'CaseDate', header: '查報日期' },
-							{ dataKey: 'DistressSrc', header: '查報來源' },
-							{ dataKey: 'Place', header: '查報地點' },
-							{ dataKey: 'DateDeadline', header: '預計完工日期' },
-							{ dataKey: 'DateCompleted', header: '實際完工日期' }
-						],
-						body: table.length == 0 ? [ { UploadCaseNo: '' } ] : table,
-						theme: 'plain',
-						styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle', cellPadding: 1	},
-						headStyles: { fontSize: 9, textColor: 90, fillColor: 240 },
-						columnStyles: { 
-							UploadCaseNo: { cellWidth: 20 }, 
-							CaseDate: { cellWidth: 18 }, 
-							DistressSrc: { cellWidth: 19 }, 
-							Place: { cellWidth: 'auto', halign: 'left' }, 
-							DateDeadline: { cellWidth: 22 }, 
-							DateCompleted: { cellWidth: 22 } 
-						},
-						startY: this.pdfDoc.lastAutoTable.finalY,
-					})
+						for(const caseSpec of pageTable) {
+							this.pdfDoc.autoTable({
+								theme: 'plain',
+								styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
+								head: [[`${caseSpec.DistressTypeR}`]],
+								startY: this.pdfDoc.lastAutoTable.finalY,
+							})
+							this.pdfDoc.autoTable({
+								theme: 'plain',
+								styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
+								head: [[`案件編號: ${caseSpec.UploadCaseNo}`]],
+								startY: this.pdfDoc.lastAutoTable.finalY,
+							})
 
-					await this.createPdf_footer();
+							this.pdfDoc.autoTable({
+								columns: [ 
+									{ dataKey: 'preconstruction_Img', header: '施工前' },
+									{ dataKey: 'completeFixed_Img', header: '施工後' }, 
+								],
+								body: [[ caseSpec.UploadCaseNo, caseSpec.UploadCaseNo ]],
+								theme: 'plain',
+								styles: { font: "edukai", lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle', cellPadding: 1	},
+								headStyles: { textColor: 90, fillColor: 240 },
+								bodyStyles: { overflow: 'hidden', textColor: 255, minCellHeight: 50, halign: 'center', valign: 'middle', fontSize: 1 },
+								didDrawCell: async (data) => {
+									if(data.cell.section === 'body') {
+										const image = this.imgDOMObj[data.cell.raw][data.column.dataKey];
+									
+										const imageWidth = image.width;
+										const imageHeight = image.height;
+										const cellWidth = data.cell.width;
+										const cellHeight = data.cell.height;
+										// 等比縮放
+										let scale = 1;
+										if (imageWidth > cellWidth || imageHeight > cellHeight) {
+											const widthRatio = cellWidth / imageWidth;
+											const heightRatio = cellHeight / imageHeight;
+											scale = Math.min(widthRatio, heightRatio);
+										}
+										const scaledWidth = imageWidth * scale;
+										const scaledHeight = imageHeight * scale;
+
+										// 居中位置
+										const x = data.cell.x + (cellWidth - scaledWidth) / 2;
+										const y = data.cell.y + (cellHeight - scaledHeight) / 2;
+
+										// 添加圖片到PDF中
+										await this.pdfDoc.addImage(image, 'JPEG', x, y, scaledWidth, scaledHeight);
+									}
+								},
+								startY: this.pdfDoc.lastAutoTable.finalY,
+							})
+						}
+
+						await this.createPdf_footer();
+					}
 				}
 				resolve();
 			})
@@ -486,4 +536,5 @@ export default {
 </script>
 
 <style lang="sass">
+.PI4_1-Att
 </style>

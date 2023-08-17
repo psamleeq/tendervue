@@ -447,7 +447,6 @@ export default {
 
 							await this.pdfDoc.addImage(this.inputs.case1999Img, 'JPEG', x, y, scaledWidth, scaledHeight);
 						}
-						
 					},
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
