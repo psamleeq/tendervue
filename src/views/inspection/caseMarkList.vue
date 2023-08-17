@@ -68,7 +68,7 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column v-if="listQuery.tenderRound > 0 && !filterNow" type="selection" width="60" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id] && !importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id].includes(row.id))" />
+			<el-table-column v-if="listQuery.tenderRound > 0 && !filterNow" type="selection" width="50" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id] && !importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id].includes(row.id))" />
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"
@@ -212,10 +212,15 @@ export default {
 					sortable: true,
 					width: 80
 				},
+				InspectId: {
+					name: "路線Id",
+					sortable: false,
+					width: 70
+				},
 				TrackingId: {
 					name: "追蹤Id",
 					sortable: false,
-					width: 80
+					width: 70
 				},
 				DistressType: {
 					name: "缺失類型",
@@ -481,7 +486,7 @@ export default {
 				this.list = [];
 				this.caseInfo = {};
 				this.tableSelect = [];
-				this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
+				// this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
 				this.listQuery.caseType.forEach(typeArr => typeArr[1] = this.typeLevel[typeArr[0]]);
 
 				let inspectId = null;
