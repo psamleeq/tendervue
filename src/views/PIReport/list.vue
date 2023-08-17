@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container perfReportD-List" v-loading="loading">
-		<h2>{{ options.reportTypeMap[listQuery.reportType] }} - 列表</h2>
+	<div class="app-container perfReport-List" v-loading="loading">
+		<h2>{{ options.reportTypeMap[listQuery.reportType].name }} - 列表</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(options.districtList).length <= 1">
 				<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
@@ -24,7 +24,7 @@
 					</el-form-item>
 					<el-form-item label="報告日期">
 						<el-date-picker
-							v-model="addList.searchDate"
+							v-model="addList.reportDate"
 							type="date"
 							placeholder="日期"
 							:picker-options="pickerOptions"
@@ -81,12 +81,28 @@
 				<el-button type="primary" size="small" @click="handleDownload()">下載</el-button>
 			</div>
 		</el-dialog>
-		
-		<PI21 v-show="false" ref="PI21" />
-		<PI21Att v-show="false" ref="PI21Att" />
-		<PI21Att2 v-show="false" ref="PI21Att2" />
-		<PI31 v-show="false" ref="PI31" />
-		<PI31Att v-show="false" ref="PI31Att" />
+
+		<!-- 日報表 -->
+		<span v-if="listQuery.reportType == 1">
+			<PI21 v-show="false" ref="PI21" />
+			<PI21Att v-show="false" ref="PI21Att" />
+			<PI21Att2 v-show="false" ref="PI21Att2" />
+			<PI31 v-show="false" ref="PI31" />
+			<PI31Att v-show="false" ref="PI31Att" />
+		</span>
+
+		<!-- 週報表 -->
+		<span v-if="listQuery.reportType == 2">
+			<PI22 v-show="false" ref="PI22" />
+			<PI22Att v-show="false" ref="PI22Att" />
+			<PI22Att2 v-show="false" ref="PI22Att2" />
+			<PI22Att3 v-show="false" ref="PI22Att3" />
+			<PI32 v-show="false" ref="PI32" />
+			<PI32Att v-show="false" ref="PI32Att" />
+			<PI32Att2 v-show="false" ref="PI32Att2" />
+			<PI41 v-show="false" ref="PI41" />
+			<PI41Att v-show="false" ref="PI41Att" />
+		</span>
 	</div>
 </template>
 
@@ -97,15 +113,30 @@ import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 import { getPerfReport, addPerfReport, getPerfReportList } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
+// 日報表
 import PI21 from '@/views/PIReport/daily/PI2_1.vue';
 import PI21Att from '@/views/PIReport/daily/PI2_1_Att.vue';
 import PI21Att2 from '@/views/PIReport/daily/PI2_1_Att_2.vue';
 import PI31 from '@/views/PIReport/daily/PI3_1.vue';
 import PI31Att from '@/views/PIReport/daily/PI3_1_Att.vue';
+// 週報表
+import PI22 from '@/views/PIReport/weekly/PI2_2.vue';
+import PI22Att from '@/views/PIReport/weekly/PI2_2_Att.vue';
+import PI22Att2 from '@/views/PIReport/weekly/PI2_2_Att_2.vue';
+import PI22Att3 from '@/views/PIReport/weekly/PI2_2_Att_3.vue';
+import PI32 from '@/views/PIReport/weekly/PI3_2.vue';
+import PI32Att from '@/views/PIReport/weekly/PI3_2_Att.vue';
+import PI32Att2 from '@/views/PIReport/weekly/PI3_2_Att_2.vue';
+import PI41 from '@/views/PIReport/weekly/PI4_1.vue';
+import PI41Att from '@/views/PIReport/weekly/PI4_1_Att.vue';
 
 export default {
-	name: "perfReportDList",
-	components:{ TimePicker, PI21, PI21Att, PI21Att2, PI31, PI31Att },
+	name: "perfReportList",
+	components:{ 
+		TimePicker, 
+		PI21, PI21Att, PI21Att2, PI31, PI31Att, 
+		PI22, PI22Att, PI22Att2 , PI22Att3, PI32, PI32Att, PI32Att2, PI41, PI41Att
+	},
 	data() {
 		return {
 			loading: false,
@@ -144,7 +175,7 @@ export default {
 			},
 			addList:{
 				zipCode: 104,
-				searchDate: moment().startOf("d").subtract(1, "d"),
+				reportDate: moment().startOf("d").subtract(1, "d"),
 			},
 			listQuery:{
 				reportType: 1,
@@ -194,9 +225,18 @@ export default {
 					// }
 				},
 				reportTypeMap: {
-					1: "日報表",
-					2: "週報表",
-					3: "月報表"
+					1: {
+						name: "日報表",
+						path: "daily"
+					},
+					2: {
+						name: "週報表",
+						path: "weekly" 
+					},
+					3: {
+						name: "月報表",
+						path: "monthly"
+					}
 				}
 			}
 		};
@@ -204,6 +244,8 @@ export default {
 	computed: { },
 	watch: { },
 	created() {
+		this.listQuery.reportType = this.$route.meta.reportType;
+
 		if(this.$route.query.zipCode && this.$route.query.timeStart && this.$route.query.timeEnd) {
 			this.listQuery.zipCode = this.$route.query.zipCode;
 			this.dateRange = [ this.$route.query.timeStart, this.$route.query.timeEnd ];
@@ -233,7 +275,7 @@ export default {
 
 			getPerfReport({
 				zipCode: this.listQuery.zipCode,
-				reportType:1,
+				reportType: this.listQuery.reportType,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
 			}).then((response) => {
@@ -249,22 +291,46 @@ export default {
 			}).catch(err => { this.loading = false; });
 		},
 		addNewPdf(){
-			addPerfReport({
-				zipCode: this.addList.zipCode,
-				reportType: 1,
-				reportDate: moment(this.addList.searchDate).format('YYYY-MM-DD'),//報告日期
-				perfItems: [
+			let perfItems = [];
+			if(this.listQuery.reportType == 1) {
+				perfItems = [
 					{
 						"perfItem": 201,
-						"perfAtt": [0,1,2],
+						"perfAtt": [0, 1, 2],
 						"perfPages": []
 					},
 					{
 						"perfItem": 301,
-						"perfAtt": [0,1],
+						"perfAtt": [0, 1],
 						"perfPages": []
 					}
 				]
+			}
+			if(this.listQuery.reportType == 2) {
+				perfItems = [
+					{
+						"perfItem": 202,
+						"perfAtt": [0, 1, 2, 3],
+						"perfPages": []
+					},
+					{
+						"perfItem": 302,
+						"perfAtt": [0, 1, 2],
+						"perfPages": []
+					},
+					{
+						"perfItem": 401,
+						"perfAtt": [0, 1],
+						"perfPages": []
+					}
+				]
+			}
+
+			addPerfReport({
+				zipCode: this.addList.zipCode,
+				reportType: this.listQuery.reportType,
+				reportDate: moment(this.addList.reportDate).format('YYYY-MM-DD'),//報告日期
+				perfItems
 			}).then((response) => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -294,8 +360,9 @@ export default {
 		},
 		beforeEdit(row){
 			// console.log(row);
+			const path = this.options.reportTypeMap[this.listQuery.reportType].path;
 			this.$router.push({
-				path: "/PIReport/daily/edit",
+				path: `/PIReport/${path}/edit`,
 				query: { reportId: row.id }
 			})
 		},
@@ -400,7 +467,7 @@ export default {
 </script>
 
 <style lang="sass">
-	.perfReportD-List
+	.perfReport-List
 		.pdf-preview .el-dialog
 			margin-top: 30px !important
 			max-height: calc(100vh - 50px)

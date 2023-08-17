@@ -23,26 +23,28 @@ const PIReportRouter = {
 			redirect: '/PIReport/daily/list',
 			meta: { 
 				title: '日報表', 
-				roles: ['PIreport'],
+				roles: ['PIreport.daily'],
 				isNew: true
 			},
 			children: [
 				{
 					path: 'list',
-					component: () => import('@/views/PIReport/daily/list'),
-					name: 'list',
+					component: () => import('@/views/PIReport/list'),
+					name: 'dailyList',
 					meta: { 
 						title: '日報表', 
+						reportType: 1,
 						roles: ['PIreport.daily'],
 						isNew: true
 					}
 				},
 				{
 					path: 'edit',
-					component: () => import('@/views/PIReport/daily/edit'),
-					name: 'edit',
+					component: () => import('@/views/PIReport/edit'),
+					name: 'dailyEdit',
 					meta: { 
-						title: '日報表編輯', 
+						title: '日報表編輯',
+						reportType: 1, 
 						roles: ['PIreport.daily']
 					},
 					hidden: true
@@ -105,13 +107,34 @@ const PIReportRouter = {
 				render: (c) => c('router-view')
 			},
 			name: 'weekly',
-			redirect: 'noRedirect',
+			redirect: '/PIReport/weekly/list',
 			meta: {
 				title: '週報表',
-				roles: ['PIreport'],
-				vTag: 'Alpha'
+				roles: ['PIreport.weekly'],
+				isNew: true
 			},
 			children: [
+				{
+					path: 'list',
+					component: () => import('@/views/PIReport/list'),
+					name: 'weeklyList',
+					meta: {
+						title: '週報表',
+						reportType: 2,
+						roles: ['PIreport.weekly'],
+						isNew: true
+					}
+				},
+				{
+					path: 'edit',
+					component: () => import('@/views/PIReport/edit'),
+					name: 'weeklyEdit',
+					meta: {
+						title: '週報表編輯',
+						reportType: 2,
+						roles: ['PIreport.weekly']
+					}
+				},
 				{
 					path: 'PI2_2',
 					component: () => import('@/views/PIReport/weekly/PI2_2'),

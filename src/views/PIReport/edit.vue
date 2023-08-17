@@ -1,15 +1,19 @@
 <template>
-	<div class="app-container perfReportD-Edit" v-loading="loading">
-		<h2>{{ options.reportTypeMap[reportInfo.reportType] }} - 編輯
+	<div class="app-container perfReport-Edit" v-loading="loading">
+		<h2>{{ options.reportTypeMap[listQuery.reportType].name }} - 編輯
 			<!-- <el-button type="info" icon="el-icon-refresh-left" size="mini" style="margin-left: 5px;" @click="handlePageTurn()" /> -->
 		</h2>
-		<aside>{{ options.districtList[reportInfo.zipCode].name }} ({{ reportInfo.reportDate }})</aside>
+		<aside>{{ options.districtList[reportInfo.zipCode].name }} 
+			<span v-if="listQuery.reportType == 1">({{ reportInfo.reportDateEnd }})</span>
+			<span v-else-if="listQuery.reportType == 2">({{ reportInfo.reportDateStart }} ~ {{ reportInfo.reportDateEnd }})</span>
+		</aside>
 		<el-table 
 			:data="list"
 			empty-text="目前沒有資料"
 			border
 			fit
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
+			:row-class-name = "({ row, _ }) => ( row.perfAtt == 0 ? 'item-main' : '' )"
 			style="width: 100%"
 		>
 			<el-table-column type="index" label="序號" width="60" align="center" />
@@ -48,36 +52,19 @@ import moment from "moment";
 import { getPerfReportList } from "@/api/PI";
 
 export default {
-	name: "perfReportDEdit",
+	name: "perfReportEdit",
 	components: { },
 	data() {
 		return {
 			loading: false,
 			listQuery: {
-				reportId: 0
+				reportId: 0,
+				reportType: 1
 			},
 			reportInfo: {
 				zipCode: 104
 			},
 			list:[],
-			itemMap:{
-				201:{
-					0: "PI2.1",
-					1: "PI2.1附件",
-					2: "PI2.1附件(通報)",
-				},
-				301:{
-					0: "PI3.1",
-					1: "PI3.1附件",
-				},
-			},
-			// pdfList:[
-			// 	{pdfPage:'PI2.1',name:'登錄「道路管理資訊系統」資料之即時性',editDate:''},
-			// 	{pdfPage:'PI2.1附件',name:'',editDate:''},
-			// 	{pdfPage:'PI2.1附件(通報)',name:'當日被通報案件、當日廠商判定不合理案件',editDate:''},
-			// 	{pdfPage:'PI3.1',name:'執行巡查與維護工作之安全性',editDate:''},
-			// 	{pdfPage:'PI3.1附件',name:'',editDate:''},
-			// ],
 			options: {
 				districtList: {
 					// 100: {
@@ -118,20 +105,104 @@ export default {
 					// }
 				},
 				reportTypeMap: {
-					1: "日報表",
-					2: "週報表",
-					3: "月報表"
-				}
+					1: {
+						name: "日報表",
+						path: "daily"
+					},
+					2: {
+						name: "週報表",
+						path: "weekly" 
+					},
+					3: {
+						name: "月報表",
+						path: "monthly"
+					}
+				},
+				itemMap:{
+					// 日報表
+					201:{
+						0: {
+							name: "PI2.1",
+							description: "登錄「道路管理資訊系統」資料之即時性"
+						},
+						1: {
+							name: "PI2.1附件",
+							description: "廠商每天通報數資訊 & 登錄資料數量"
+						},
+						2: {
+							name: "PI2.1附件",
+							description: "當日被通報案件 & 廠商判定不合理案件"
+						},
+					},
+					301:{
+						0: {
+							name: "PI3.1",
+							description: "執行巡查與維護工作之安全性"
+						},
+						1: {
+							name: "PI3.1附件",
+							description: "廠商每日完成自主檢查資訊"
+						},
+					},
+					// 週報表
+					202: {
+						0: {
+							name: "PI2.2",
+							description: "登錄「道路管理資訊系統」資料之正確性"
+						},
+						1: {
+							name: "PI2.2附件",
+							description: "正確判定處理原則(放入觀察區與查報區)之案件"
+						},
+						2: {
+							name: "PI2.2附件2",
+							description: "當週被通報案件"
+						},
+						3: {
+							name: "PI2.2附件3",
+							description: "機關或監造抽查檢核後發現錯誤的案件敷"
+						}
+					},
+					302: {
+						0: {
+							name: "PI3.2",
+							description: "執行維護工作之時效性"
+						},
+						1: {
+							name: "PI3.2附件",
+							description: "滿足各項契約時間要求之案件列表"
+						},
+						2: {
+							name: "PI3.2附件2",
+							description: "滿足各項契約時間要求之案件"
+						}
+					},
+					401: {
+						0: {
+							name: "PI4.1",
+							description: "完成維護結果之技術性"
+						},
+						1: {
+							name: "PI4.1附件",
+							description: "維護後滿足缺失查報標準之案件"
+						}
+					},
+				},
 			}
 		};
 	},
 	computed: { },
 	watch: {},
 	created() {
+		this.listQuery.reportType = this.$route.meta.reportType;
+
 		if(this.$route.query.reportId) {
 			this.listQuery.reportId = this.$route.query.reportId;
 			this.getList();
-		} else this.$router.push({ path: "/PIReport/daily/list" });
+		} else {
+			const path = this.options.reportTypeMap[this.listQuery.reportType].path;
+			this.$router.push({ path: `/PIReport/${path}/list` });
+		}
 	},
 	mounted() { },
 	methods: {
@@ -150,32 +221,24 @@ export default {
 				} else {
 					this.list = response.data.list;
 					this.reportInfo = response.data.reportInfo;
-					this.reportInfo.reportDate = moment(this.reportInfo.reportDate).format("YYYY-MM-DD")
+					if(this.listQuery.reportType == 2) {
+						this.reportInfo.reportDateStart = moment(this.reportInfo.reportDate).day() == 0 ? moment(this.reportInfo.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportInfo.reportDate).day(1).format("YYYY-MM-DD");
+					} else if(this.listQuery.reportType == 3) {
+						this.reportInfo.reportDateEnd = moment(this.reportInfo.reportDate).startOf('month').format("YYYY-MM-DD");
+					}
+					this.reportInfo.reportDateEnd = moment(this.reportInfo.reportDate).format("YYYY-MM-DD");
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
 		formatItem(perfItem, perfAtt) {
-			const itemText = this.itemMap[perfItem]?.[perfAtt];
+			const itemText = this.options.itemMap[perfItem]?.[perfAtt];
 			// 如果找不到對應的值，返回空字符串或其他預設值
-			return itemText || "";
+			return itemText ? itemText.name : "";
 		},
 		getDescription(perfItem, perfAtt){
-			const itemText = this.itemMap[perfItem]?.[perfAtt];
-			switch (itemText) {
-				case "PI2.1":
-					return '登錄「道路管理資訊系統」資料之即時性';
-				case "PI2.1附件":
-					return ''
-				case "PI2.1附件(通報)":
-					return '當日被通報案件、當日廠商判定不合理案件'
-				case "PI3.1":
-					return '執行巡查與維護工作之安全性';
-				case "PI3.1附件":
-					return '';
-				default:
-					return '';
-			}
+			const itemText = this.options.itemMap[perfItem]?.[perfAtt];
+			return itemText ? itemText.description : "";
 		},
 		beforeEdit(row) {
 			let path = '';
@@ -209,4 +272,8 @@ export default {
 </script>
 
 <style lang="sass">
+.perfReport-Edit
+	.el-table
+		.item-main
+			background-color: #F5F5F5
 </style>
