@@ -505,11 +505,8 @@ export default {
 
 				return headers.reduce((object, header, index) => {
 					if([ "查報日期", "預計完工日期", "實際完工時間" ].includes(header)){
-						if(values[index]==""){
-							object[header] = ""
-						}else{
-							object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD");
-						}
+						if(values[index]=="") object[header] = ""
+						else object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD HH:mm:ss");
 					} 
 					else{
 						object[header] = values[index]; 
@@ -548,6 +545,7 @@ export default {
 			if(row.CaseType.includes(4) && !row.CaseType.includes(2)) row.CaseType.push(2);
 			row.State = row.CaseType.reduce((acc, cur) => (acc += cur));
 			if(row.State & 4) this.computedWarranty(row);
+			else delete row.DateWarranty;
 			this.$set(this.csvData, index, row);
 		},
 		handleRemove(file, fileList) {
