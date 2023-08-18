@@ -1,12 +1,12 @@
 <template>
-	<div class="app-container PI2_2-Att" v-loading="loading">
-		<h2>PI2.2附件</h2>
+	<div class="app-container PI2_1-Att_1" v-loading="loading">
+		<h2>PI2.1附件</h2>
 
-		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.2</el-button>
-		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.1</el-button>
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">日報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
-		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.2附件-2</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI2.1附件-2</el-button>
 
 		<el-row :gutter="24">
 			<el-col :span="10">
@@ -53,24 +53,6 @@
 						<el-form-item label="正式區">
 							<el-input-number v-model="inputForm.facTotal_Reg" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-divider />
-
-						<h3>通報案件</h3>
-						<h4>1999: </h4>
-						<el-form-item label="路面">
-							<el-input-number v-model="inputForm.AC1999" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="設施">
-							<el-input-number v-model="inputForm.fac1999" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-
-						<h4>不合理案件: </h4>
-						<el-form-item label="路面">
-							<el-input-number v-model="inputForm.AC1999_unreasonable" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
-						<el-form-item label="設施">
-							<el-input-number v-model="inputForm.fac1999_unreasonable" controls-position="right" :min="0" @change="setPDFinputs" />
-						</el-form-item>
 					</el-form>
 				</el-card>
 			</el-col>
@@ -86,7 +68,7 @@ import { Form } from '@pdfme/ui';
 import { getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
-	name: "PI2_2_Att",
+	name: "PI2_1_Att_1",
 	components: { },
 	data() {
 		return {
@@ -172,35 +154,31 @@ export default {
 			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
+				caseReportTotal: 0,
 				ACTotal_Obs: 0,
 				ACTotal_Reg: 0,
 				facTotal_Obs: 0,
-				facTotal_Reg: 0,
-				AC1999: 0,
-				fac1999: 0,
-				AC1999_unreasonable: 0,
-				fac1999_unreasonable: 0
+				facTotal_Reg: 0
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約', 
 				companyName: '聖東營造股份有限公司',
 				serialNumber_21Att_1: '1111102102',
+				serialNumber_21Att_2: '1111102103',
 				date: '111年11月02日',
 				zipCode: '104',
 				district: '中山區',
+				caseReportTotal: '0',
 				ACTotal_Obs: '0',
 				ACTotal_Reg: '0',
 				facTotal_Obs: '0',
 				facTotal_Reg: '0',
-				AC1999: '0',
-				fac1999: '0',
-				AC1999_unreasonable: '0',
-				fac1999_unreasonable: '0',
-				companyLoginW_Img1: '', 
-				companyLoginW_Img2: '',
-				companyLoginW_Img3: '',
-				informed1999W_Img: '',
-				correctProcess_Img: ''
+				info1_21Att: '無',
+				info2_21Att: '無',
+				caseReportImg: '', 
+				caseReportImg_neo1: '',
+				caseReportImg_neo2: '',
+				caseReportImg_neo3: ''
 			},
 		};
 	},
@@ -220,53 +198,55 @@ export default {
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
 
-			getPerfContent({
-				contentId: this.listQuery.perfContentId
-			}).then((response) => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.list = response.data.list[0];
-					this.setData(this.list);
-				}
-				this.loading = false;
-			}).catch(err => { this.loading = false; });
-		} else this.$router.push({ path: "/PIReport/weekly/list" });
+			this.setData(this.listQuery.perfContentId);
+		} else this.$router.push({ path: "/PIReport/daily/list" });
 	},
 	mounted() {},
 	methods: {
-		async setData(dataObj) {
-			this.list = dataObj;
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputs = this.list.content.inputs;
+		async setData(perfContentId, initPage=0) {
+			return new Promise(resolve => {
+				getPerfContent({
+					contentId: perfContentId
+				}).then(async(response) => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.list = response.data.list[0];
+						if(Object.keys(this.list.content).length != 0) {
+							this.inputs = this.list.content.inputs;
 
-				// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
-				for(const key in this.inputs) {
-					if(key.includes('Img') && this.inputs[key].length != 0) {
-						await fetch(this.inputs[key])
-							.then(res => res.blob())
-							.then(blob => {
-								const reader = new FileReader();
-								reader.onloadend = () => { this.inputs[key] = reader.result };
-								reader.readAsDataURL(blob);
-							})
+							// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
+							for(const key in this.inputs) {
+								if(key.includes('Img') && this.inputs[key].length != 0) {
+									await fetch(this.inputs[key])
+										.then(res => res.blob())
+										.then(blob => {
+											const reader = new FileReader();
+											reader.onloadend = () => { this.inputs[key] = reader.result };
+											reader.readAsDataURL(blob);
+										})
+								}
+							}
+							
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+						}
+						this.reportDate = this.list.reportDate;
+						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+						this.inputs.zipCode = String(this.list.zipCode);
+
+						await this.initPDF();
 					}
-				}
-				
-				this.initPage = this.list.content.initPage;
-			}
-			this.reportDate = this.list.reportDate;
-			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
-			this.inputs.zipCode = String(this.list.zipCode);
-
-			await this.initPDF();
+					resolve();
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
+			})
 		},
 		async initPDF() {
 			return new Promise(resolve => {
-				fetch(`/assets/pdf/weekly/PI2_2-Att1.json?t=${Date.now()}`).then(async (response) => {
+				fetch(`/assets/pdf/daily/PI2_1-Att.json?t=${Date.now()}`).then(async (response) => {
 					const domContainer = this.$refs.container.$el;
 					this.template = await response.json();
 
@@ -275,11 +255,15 @@ export default {
 							data: await fetch('/assets/font/edukai-4.0.ttf').then(res => res.arrayBuffer()),
 							fallback: true
 						},
+						// NotoSansTC: {
+						// 	data: await fetch('/assets/font/NotoSansTC-Regular.ttf').then(res => res.arrayBuffer()),
+						// 	fallback: true
+						// }
 					};
 
 					const changeInput = (arg) => {
-						if(['ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg', 'AC1999', 'fac1999', 'AC1999_unreasonable', 'fac1999_unreasonable'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
-						if(['companyLoginW_Img1', 'companyLoginW_Img2', 'companyLoginW_Img3', 'informed1999W_Img', 'correctProcess_Img'].includes(arg.key)) {
+						if(['caseReportTotal', 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+						if(['caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2','caseReportImg_neo3'].includes(arg.key)) {
 							// console.log(arg);
 							if(this.schemasOri[arg.key]) {
 								this.template.schemas[0][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[arg.key]));
@@ -326,21 +310,21 @@ export default {
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
 			for(let i=0; i < this.template.schemas.length; i++) {
-				this.inputs.serialNumber = reportDate.format("YYYYMMDD02").slice(1) + String(i+this.initPage).padStart(2, '0');
+				this.inputs[`serialNumber_21Att_${i+1}`] = reportDate.format("YYYYMMDD01").slice(1) + String(i+this.initPage).padStart(2, '0');
 			}
 			//檢查日期
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
 			//資料數轉換
 			let sum = 0
-			for(const key of ['ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg', 'AC1999', 'fac1999', 'AC1999_unreasonable', 'fac1999_unreasonable']) {
+			for(const key of [ 'ACTotal_Obs', 'ACTotal_Reg', 'facTotal_Obs', 'facTotal_Reg' ]) {
 				this.inputs[key] = String(this.inputForm[key]);
 				//本日通報 加總
 				sum += Number(this.inputForm[key]);
 			}
 			this.inputs.caseReportTotal = String(sum);
 
-			for(const key of ['companyLoginW_Img1', 'companyLoginW_Img2', 'companyLoginW_Img3', 'informed1999W_Img', 'correctProcess_Img']) {
+			for(const key of [ 'caseReportImg', 'caseReportImg_neo1', 'caseReportImg_neo2', 'caseReportImg_neo3' ]) {
 				if(this.inputForm[key]) this.inputs[key] = this.inputForm[key];
 			}
 
@@ -353,17 +337,14 @@ export default {
 
 			getCaseCount({
 				zipCode: Number(this.inputs.zipCode),
-				timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
+				timeStart: date,
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
+				this.inputForm.caseReportTotal = Number(response.data.result.caseTotal_report);
 				this.inputForm.ACTotal_Obs = Number(response.data.result.ACTotal_Obs);
 				this.inputForm.ACTotal_Reg = Number(response.data.result.ACTotal_Reg);
 				this.inputForm.facTotal_Obs = Number(response.data.result.facTotal_Obs);
 				this.inputForm.facTotal_Reg = Number(response.data.result.facTotal_Reg);
-				this.inputForm.AC1999 = Number(response.data.result.AC1999);
-				this.inputForm.fac1999 = Number(response.data.result.fac1999);
-				this.inputForm.AC1999_unreasonable = Number(response.data.result.AC1999_unreasonable);
-				this.inputForm.fac1999_unreasonable = Number(response.data.result.fac1999_unreasonable);
 
 				this.setPDFinputs();
 				this.loading = false;
@@ -382,7 +363,6 @@ export default {
 			})
 
 			const storedContent = {
-				pageCount: 2,
 				initPage: this.initPage,
 				inputs
 			}
@@ -390,6 +370,7 @@ export default {
 
 			setPerfContent(this.listQuery.perfContentId, {
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				pageCount: 1,
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {
@@ -419,7 +400,7 @@ export default {
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
-				const filename = "PI2-2附件.pdf"; 
+				const filename = "PI2-1附件.pdf"; 
 				const file = new File([blob], filename, { type: 'application/pdf' });
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
@@ -435,26 +416,26 @@ export default {
 			switch(type) {
 				case 0:
 					this.$router.push({
-						path: "/PIReport/weekly/edit",
+						path: "/PIReport/daily/edit",
 						query: { reportId: this.listQuery.reportId }
 					})
 					break;
 				case -1:
 					this.$router.push({
-						path: "/PIReport/weekly/PI2_2",
+						path: "/PIReport/daily/PI2_1",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
 					})
 					break;
 				case 1:
 					this.$router.push({
-						path: "/PIReport/weekly/PI2_2_Att_2",
+						path: "/PIReport/daily/PI2_1_Att_2",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					break;
 				default:
 					const date = moment(this.reportDate).format("YYYY-MM-DD");
 					this.$router.push({
-						path: "/PIReport/weekly/list",
+						path: "/PIReport/daily/list",
 						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: date }
 					})
 					break;
@@ -472,7 +453,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PI2_2-Att
+.PI2_1-Att_1
 	.filter-container 
 		.filter-item
 			margin-right: 5px

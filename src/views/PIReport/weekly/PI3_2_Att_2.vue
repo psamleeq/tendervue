@@ -2,11 +2,17 @@
 	<div class="app-container PI3_2-Att_2" v-loading="loading">
 		<h2>PI3.2附件-2</h2>
 
-		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI3.2附件</el-button>
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">
+			<span v-if="listQuery.perfPages == 1">PI3.2附件</span>
+			<span v-else>PI3.2附件-2 ({{ Number(listQuery.perfPages)-1 }})</span>
+		</el-button>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
-		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI4.1</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">
+			<span v-if="caseList.length == listQuery.perfPages">PI4.1</span>
+			<span v-else>PI3.2附件-2 ({{ Number(listQuery.perfPages)+1 }})</span>
+		</el-button>
 
 		<!-- <div class="filter-container">
 			<el-button
@@ -56,15 +62,6 @@
 								<el-link slot="append" icon="el-icon-link" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${inputForm.caseNumber}`" target="_blank" :underline="false" :disabled="inputForm.caseNumber.length == 0" style="width: 40px; height: 38px;"/>
 							</el-input>
 						</el-form-item>
-						<!-- <el-form-item label="損害項目" :label-width="labelWidth1">
-							<el-select v-model="inputs.deviceType" placeholder="請選擇" style="width: 80px" @change="changeTemplate">
-								<el-option label="AC" value="AC" />
-								<el-option label="設施" value="設施" />
-							</el-select>
-							<el-select v-model="inputs.distressType" placeholder="請選擇" style="width: 120px" @change="changeTemplate">
-								<el-option v-for="type in distressType" :key="type" :label="type" :value="type" />
-							</el-select>
-						</el-form-item> -->
 						<el-form-item label="查報日期" :label-width="labelWidth1">
 							<el-date-picker
 								v-model="inputForm.checkReportDate"
@@ -181,7 +178,8 @@ export default {
 			initPage: 6,
 			listQuery: {
 				reportId: 0,
-				perfContentId: null
+				perfContentId: null,
+				perfPages: 0
 			},
 			pickerOptions: {
 				firstDayOfWeek: 1,
@@ -300,7 +298,7 @@ export default {
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
-				serialNumber: '11206250201',//紀錄編號
+				serialNumber1: '11206250201',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
 				distressSrc: '1',
@@ -326,13 +324,74 @@ export default {
 		};
 	},
 	computed: { },
-	watch: {},
+	watch: {
+		"$route.query.perfPages"(newVal, oldVal) {
+			if(newVal != oldVal) {
+				this.loading = true;
+				this.listQuery.perfContentId = this.$route.query.contentId;
+				this.listQuery.perfPages = this.$route.query.perfPages;
+
+				const cidList = this.$route.query.cidList.split(",");
+				const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+				this.pageTurn = [ 
+					Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
+					Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+				];
+
+				this.inputs = {
+					contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
+					serialNumber1: '11206250201',//紀錄編號
+					serialNumber2: '11206250201-1',
+					companyName: '聖東營造股份有限公司',//施工廠商
+					date: '',//檢查日期
+					distressSrc: '1',
+					inspection: '1',
+					zipCode: '104',
+					distressSrc_Text: '',
+					caseNumber: '',
+					completeFixed_Text: '',
+					construction_Text: '',
+					checkReportDate: '',
+					expectedCompleteT: '',
+					actualCompleteT: '',
+					receivedDate: '',
+					actualCompleteS1: '',
+					checkReportData_Img: '', 
+					dispatchData_Img: '',
+					completeReportData_Img: '',
+					reportData1999_Img: '',
+					preconstruction_Img: '',
+					completeFixed_Img: '',
+					construction_Img: ''
+				};
+
+				this.inputForm = {
+					caseNumber: '',
+					checkReportDate: '',
+					expectedCompleteT: '',
+					actualCompleteT: '',
+					receivedDate: '',
+					actualCompleteS1: '',
+					completeFixed_Text: '',
+					construction_Text: '',
+					preconstruction_Img: '',
+					completeFixed_Img: '',
+					construction_Img: '',
+				};
+
+				this.setData(this.listQuery.perfContentId, false);
+			}
+		}
+	},
 	async created() {	
+		this.caseList = [];
 		this.schemasOri = {};
 
-		if(this.$route.query.reportId && this.$route.query.contentId) {
+		if(this.$route.query.reportId && this.$route.query.contentId && this.$route.query.perfPages) {
 			this.listQuery.reportId = this.$route.query.reportId;
 			this.listQuery.perfContentId = this.$route.query.contentId;
+			this.listQuery.perfPages = this.$route.query.perfPages;
+			this.initPage = this.initPage + Number(this.listQuery.perfPages) - 1; 
 
 			const cidList = this.$route.query.cidList.split(",");
 			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
@@ -341,36 +400,56 @@ export default {
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
 
-			getPerfContent({
-				contentId: this.listQuery.perfContentId
-			}).then((response) => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.list = response.data.list[0];
-					this.setData(this.list);
-				}
-
-				this.loading = false;
-			}).catch(err => { this.loading = false; });
+			this.setData(this.listQuery.perfContentId);
 		} else this.$router.push({ path: "/PIReport/weekly/list" });	
 	},
 	mounted() {},
 	methods: {
-		async setData(dataObj) {
-			this.list = dataObj;
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputs = this.list.content.inputs;
-				this.initPage = this.list.content.initPage;
-			}
-			this.reportDate = this.list.reportDate;
-			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
-			this.inputs.zipCode = String(this.list.zipCode);
+		async setData(perfContentId, init=true, initPage=0) {
+			return new Promise(resolve => {
+				getPerfContent({
+					contentId: perfContentId
+				}).then(async (response) => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.list = response.data.list[0];
+						if(Object.keys(this.list.content).length != 0) {
+							this.inputs = this.list.content.inputs;
 
-			await this.initPDF();
+							// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
+							for(const key in this.inputs) {
+								if(key.includes('Img') && this.inputs[key].length != 0) {
+									await fetch(this.inputs[key])
+										.then(res => res.blob())
+										.then(blob => {
+											const reader = new FileReader();
+											reader.onloadend = () => { this.inputs[key] = reader.result };
+											reader.readAsDataURL(blob);
+										})
+								}
+							}
+
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+						}
+						this.reportDate = this.list.reportDate;
+						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+						this.inputs.zipCode = String(this.list.zipCode);
+
+						if(init) await this.initPDF();
+						else {
+							for(const [key, value] of Object.entries(this.inputs)) this.changeInput({ key, value });
+							this.getList(Object.keys(this.list.content).length == 0);
+						}
+					}
+
+					resolve();
+					// this.loading = false;
+				}).catch(err => { this.loading = false; });
+			})
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -387,32 +466,31 @@ export default {
 						}
 					};
 
-					const changeInput = (arg) => {
-						if(['caseNumber', 'completeFixed_Text', 'construction_Text'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
-						if(['checkReportDate', 'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT', ].includes(arg.key)) {
-							const dateTime = moment(arg.value);
-							this.inputForm[arg.key] = dateTime.isValid() 
-							? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
-							: '';
-						}
-
-						if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
-							this.inputs[arg.key] = arg.value;
-							if(this.inputForm[arg.key] != undefined && arg.value.length == 0) this.inputForm[arg.key] = arg.value;
-							this.aspectRatioImg(arg);
-						}
-					}
-
 					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
-					this.form.onChangeInput(arg => changeInput(arg));
+					this.form.onChangeInput(arg => this.changeInput(arg));
 
-					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
-					if(Object.keys(this.list.content).length == 0) this.getList();
-					else this.setPDFinputs();
+					for(const [key, value] of Object.entries(this.inputs)) this.changeInput({ key, value });
+					this.getList(Object.keys(this.list.content).length == 0);
 						
 					resolve();
 				})
 			})
+		},
+		changeInput(arg) {
+			if(['caseNumber', 'completeFixed_Text', 'construction_Text'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
+			if(['checkReportDate', 'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT', ].includes(arg.key)) {
+				const dateTime = moment(arg.value);
+				this.inputForm[arg.key] = dateTime.isValid() 
+				? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
+				: '';
+			}
+
+			if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
+				if(arg.value != undefined) {
+					this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
+					this.aspectRatioImg(arg);
+				}
+			}
 		},
 		changeTemplate() {
 			// this.loading = true;
@@ -420,15 +498,18 @@ export default {
 			// console.log(fileName);
 			fetch(`/assets/pdf/weekly/${fileName}?t=${Date.now()}`).then(async (response) => {
 				this.template = await response.json();
+				this.schemasOri = {};
 				this.form.updateTemplate(this.template);
 				this.setPDFinputs();
+				this.form.render();
 				this.loading = false;
 			})
 		},
 		aspectRatioImg(arg) {
 			const keyArray = this.template.schemas.map(item => Object.keys(item));
 			const keyIndex =  keyArray.findIndex(el => el.includes(arg.key));
-			// console.log(arg.key, keyIndex);
+			if(keyIndex == -1) return;
+
 			if(this.schemasOri[arg.key]) {
 				this.template.schemas[keyIndex][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[arg.key]));
 				delete this.schemasOri[arg.key];
@@ -458,7 +539,8 @@ export default {
 			const reportDate = moment(this.reportDate).subtract(1911, 'year');
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
-			this.inputs.serialNumber = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
+			this.inputs.serialNumber1 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
+			this.inputs.serialNumber2 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0') + "-1";	
 			//檢查日期
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
@@ -477,16 +559,16 @@ export default {
 			}
 
 			for(const key of ['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img']) {
-				if(this.inputForm[key] != undefined) {
+				if(this.inputForm[key] != undefined && this.inputForm[key].length != 0) {
 					this.inputs[key] = this.inputForm[key];
 					this.aspectRatioImg({ key, value: this.inputs[key] });
-				}
+				} 
 			}
 
 			this.form.setInputs([this.inputs]);
 			this.form.render();
 		},
-		async getList() {
+		async getList(isReplace = true) {
 			new Promise((resolve, reject) => {
 				this.loading = true;
 				const date = moment(this.reportDate).format("YYYY-MM-DD");
@@ -502,31 +584,46 @@ export default {
 					this.caseList = response.data.list;
 					this.caseList.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
 
-					const caseSpec = this.caseList[0];
-					this.inputForm.caseNumber = caseSpec.UploadCaseNo;
-					this.inputForm.checkReportDate = caseSpec.CaseDate;
-					this.inputForm.expectedCompleteT = caseSpec.DateDeadline;
-					this.inputForm.actualCompleteT = caseSpec.DateCompleted;
-					this.inputs.distressSrc = caseSpec.DistressSrc.includes("1999") ? '3' : caseSpec.DistressSrc.includes("隊部") ? '2' : '1';
-					this.inputs.inspection = (caseSpec.State & 2) ? '1' : '0';
+					if(Number(this.listQuery.perfPages) < 0) this.listQuery.perfPages = Number(this.listQuery.perfPages) + this.caseList.length + 1;
 
-					if(this.inputs.distressSrc == 3) this.changeTemplate();
-					else this.setPDFinputs();
+					if(isReplace) {
+						const caseSpec = this.caseList[this.listQuery.perfPages-1];
+						this.inputForm.caseNumber = caseSpec.UploadCaseNo;
+						this.inputForm.checkReportDate = moment(caseSpec.CaseDate).utc().format("YYYY-MM-DD HH:mm:ss");
+						this.inputForm.expectedCompleteT = moment(caseSpec.DateDeadline).utc().format("YYYY-MM-DD HH:mm:ss");
+						this.inputForm.actualCompleteT = moment(caseSpec.DateCompleted).utc().format("YYYY-MM-DD HH:mm:ss");
+						this.inputs.distressSrc = caseSpec.DistressSrc.includes("1999") ? '3' : caseSpec.DistressSrc.includes("隊部") ? '2' : '1';
+						this.inputs.inspection = (caseSpec.State & 2) ? '1' : '0';
+					}
+
+					this.changeTemplate();
 					resolve();
-					this.loading = false;
+					// this.loading = false;
 				}).catch(err => this.loading = false);
 			})
 		},
 		storeData(){
 			this.loading = true;
+			let imgObj = {}; 
+			let inputs = JSON.parse(JSON.stringify(this.inputs));
+
+			Object.keys(this.inputs).forEach(key => {
+				if(key.includes('Img')) {
+					imgObj[key] = this.inputs[key];
+					inputs[key] = "";
+				}
+			})
+			
 			const storedContent = {
-				pageCount: 1,
 				initPage: this.initPage,
 				inputs: this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId, {
+				caseNo: Number(this.inputForm.caseNumber),
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				content: JSON.stringify(storedContent)
+				pageCount: 1,
+				content: JSON.stringify(storedContent),
+				imgObj
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -576,16 +673,30 @@ export default {
 					})
 					return;
 				case -1:
-					this.$router.push({
-						path: "/PIReport/weekly/PI3_2_Att",
-						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
-					})
+					if(this.listQuery.perfPages == 1) {
+						this.$router.push({
+							path: "/PIReport/weekly/PI3_2_Att_1",
+							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+						})
+					} else {
+						this.$router.push({
+							path: "/PIReport/weekly/PI3_2_Att_2",
+							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], perfPages: Number(this.listQuery.perfPages) - 1, cidList: this.$route.query.cidList }
+						})
+					}
 					return;
 				case 1:
-					this.$router.push({
-						path: "/PIReport/weekly/PI4_1",
-						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
-					})
+					if(this.caseList.length == this.listQuery.perfPages) {
+						this.$router.push({
+							path: "/PIReport/weekly/PI4_1",
+							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+						})
+					} else {
+						this.$router.push({
+							path: "/PIReport/weekly/PI3_2_Att_2",
+							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], perfPages: Number(this.listQuery.perfPages) + 1, cidList: this.$route.query.cidList }
+						})
+					}
 					return;
 				default:
 					const date = moment(this.reportDate).format("YYYY-MM-DD");

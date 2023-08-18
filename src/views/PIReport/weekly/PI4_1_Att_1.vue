@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container PI4_1-Att" v-loading="loading">
+	<div class="app-container PI4_1-Att_1" v-loading="loading">
 		<h2>PI4.1附件</h2>
 
 		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI4.1</el-button>
@@ -57,7 +57,7 @@ import { getCaseWarrantyList, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 
 export default {
-	name: "PI4_1_Att",
+	name: "PI4_1_Att_1",
 	components: { TimePicker },
 	data() {
 		return {
@@ -188,8 +188,15 @@ export default {
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
 
-			getPerfContent({
-					contentId: this.listQuery.perfContentId
+			this.setData(this.listQuery.perfContentId);
+		} else this.$router.push({ path: "/PIReport/weekly/list" });
+	},
+	mounted() { },
+	methods: {
+		async setData(perfContentId, initPage=0) {
+			return new Promise(resolve => {
+				getPerfContent({
+					contentId: perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
 						this.$message({
@@ -198,27 +205,22 @@ export default {
 						});
 					} else {
 						this.list = response.data.list[0];
-						this.setData(this.list);
+						this.reportDate = this.list.reportDate;
+						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+						this.inputs.zipCode = this.list.zipCode;
+						await this.initPDF();
+
+						if(Object.keys(this.list.content).length != 0) {
+							this.inputs = this.list.content.inputs;
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+							await this.previewPdf();
+						} else await this.getList();
 					}
+
+					resolve();
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
-
-		} else this.$router.push({ path: "/PIReport/weekly/list" });
-	},
-	mounted() { },
-	methods: {
-		async setData(dataObj) {
-			this.list = dataObj;
-			this.reportDate = this.list.reportDate;
-			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
-			this.inputs.zipCode = this.list.zipCode;
-			await this.initPDF();
-
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputs = this.list.content.inputs;
-				this.initPage = this.list.content.initPage;
-				await this.previewPdf();
-			} else await this.getList();
+			})
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -278,16 +280,22 @@ export default {
 					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 				}).then(async(response) => {
 					const list = response.data.list;
-					this.inputs.caseList = list.reduce((acc, cur) =>{
-						if(acc.length == 0 || cur.DeviceType != acc.DeviceType || cur.DistressTypeR != acc.DistressTypeR) acc.push([cur]);
-						else {
-							acc.forEach(caseArr => {
-								if(caseArr[0].DeviceType == cur.DeviceType && caseArr[0].DistressTypeR  == cur.DistressTypeR) caseArr.push(cur);
-								caseArr.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
-							})
-						}
-						return acc;
-					}, []);
+					this.inputs.caseList = list.map(caseSpec => ({ 
+							UploadCaseNo: caseSpec.UploadCaseNo,
+							DeviceType: caseSpec.DeviceType, 
+							DistressTypeR: caseSpec.DistressTypeR,
+							preconstruction_Img: caseSpec.PerfContent.preconstruction_Img,
+							completeFixed_Img: caseSpec.PerfContent.completeFixed_Img
+						})).reduce((acc, cur) =>{
+							if(acc.length == 0 || cur.DeviceType != acc.DeviceType || cur.DistressTypeR != acc.DistressTypeR) acc.push([cur]);
+							else {
+								acc.forEach(caseArr => {
+									if(caseArr[0].DeviceType == cur.DeviceType && caseArr[0].DistressTypeR  == cur.DistressTypeR) caseArr.push(cur);
+									caseArr.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
+								})
+							}
+							return acc;
+						}, []);
 					await this.previewPdf();
 					resolve();
 					this.loading = false;
@@ -465,9 +473,7 @@ export default {
 				}
 			})
 
-
 			const storedContent = {
-				pageCount: this.pdfDoc.internal.getNumberOfPages(),
 				initPage: this.initPage,
 				inputs
 			}
@@ -475,6 +481,7 @@ export default {
 
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				pageCount: this.pdfDoc.internal.getNumberOfPages(),
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {
@@ -532,5 +539,4 @@ export default {
 </script>
 
 <style lang="sass">
-.PI4_1-Att
 </style>

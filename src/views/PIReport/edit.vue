@@ -19,7 +19,7 @@
 			<el-table-column type="index" label="序號" width="60" align="center" />
 			<el-table-column label="項目" width="200" align="center">
 				<template slot-scope="{ row }">
-					{{ formatItem(row.perfItem, row.perfAtt) }}
+					{{ formatItem(row.perfItem, row.perfAtt, row.perfPages) }}
 				</template>
 			</el-table-column>
 			<el-table-column label="說明" align="center">
@@ -29,7 +29,7 @@
 			</el-table-column>
 			<el-table-column label="頁數" align="center">
 				<template slot-scope="{ row }">
-					{{ row.content.pageCount ? row.content.pageCount : "-" }}
+					{{ row.pageCount ? row.pageCount : "-" }}
 				</template>
 			</el-table-column>
 			<el-table-column label="完成" align="center">
@@ -129,10 +129,10 @@ export default {
 						1: {
 							name: "PI2.1附件",
 							description: "廠商每天通報數資訊 & 登錄資料數量",
-							path: "/PIReport/daily/PI2_1_Att"
+							path: "/PIReport/daily/PI2_1_Att_1"
 						},
 						2: {
-							name: "PI2.1附件",
+							name: "PI2.1附件2",
 							description: "當日被通報案件 & 廠商判定不合理案件",
 							path: "/PIReport/daily/PI2_1_Att_2"
 						},
@@ -146,7 +146,7 @@ export default {
 						1: {
 							name: "PI3.1附件",
 							description: "廠商每日完成自主檢查資訊",
-							path: "/PIReport/daily/PI3_1_Att"
+							path: "/PIReport/daily/PI3_1_Att_1"
 						},
 					},
 					// 週報表
@@ -159,7 +159,7 @@ export default {
 						1: {
 							name: "PI2.2附件",
 							description: "正確判定處理原則(放入觀察區與查報區)之案件",
-							path: "/PIReport/weekly/PI2_2_Att"
+							path: "/PIReport/weekly/PI2_2_Att_1"
 						},
 						2: {
 							name: "PI2.2附件2",
@@ -181,7 +181,7 @@ export default {
 						1: {
 							name: "PI3.2附件",
 							description: "滿足各項契約時間要求之案件列表",
-							path: "/PIReport/weekly/PI3_2_Att"
+							path: "/PIReport/weekly/PI3_2_Att_1"
 						},
 						2: {
 							name: "PI3.2附件2",
@@ -198,7 +198,7 @@ export default {
 						1: {
 							name: "PI4.1附件",
 							description: "維護後滿足缺失查報標準之案件",
-							path: "/PIReport/weekly/PI4_1_Att"
+							path: "/PIReport/weekly/PI4_1_Att_1"
 						}
 					},
 				},
@@ -234,20 +234,23 @@ export default {
 					});
 				} else {
 					this.list = response.data.list;
+					this.list.sort((a,b) => a.perfItem - b.perfItem || a.perfAtt - b.perfAtt || a.perfPages - b.perfPages);
 					this.reportInfo = response.data.reportInfo;
 					if(this.listQuery.reportType == 2) {
-						this.reportInfo.reportDateStart = moment(this.reportInfo.reportDate).day() == 0 ? moment(this.reportInfo.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportInfo.reportDate).day(1).format("YYYY-MM-DD");
+						this.reportInfo.reportDateStart = moment(this.reportInfo.reportDate).day() == 0 
+							? moment(this.reportInfo.reportDate).day(-6).format("YYYY-MM-DD") 
+							: moment(this.reportInfo.reportDate).day(1).format("YYYY-MM-DD");
 					} else if(this.listQuery.reportType == 3) {
-						this.reportInfo.reportDateEnd = moment(this.reportInfo.reportDate).startOf('month').format("YYYY-MM-DD");
+						this.reportInfo.reportDateStart = moment(this.reportInfo.reportDate).startOf('month').format("YYYY-MM-DD");
 					}
 					this.reportInfo.reportDateEnd = moment(this.reportInfo.reportDate).format("YYYY-MM-DD");
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
-		formatItem(perfItem, perfAtt) {
-			const item = this.options.itemMap[perfItem]?.[perfAtt];
-			return item ? item.name : "";
+		formatItem(perfItem, perfAtt, perfPages) {
+			let item = this.options.itemMap[perfItem]?.[perfAtt];
+			return item ? item.name + (perfPages > 0 ? ` (${perfPages})` : "") : "";
 		},
 		getDescription(perfItem, perfAtt){
 			const item = this.options.itemMap[perfItem]?.[perfAtt];
@@ -257,7 +260,7 @@ export default {
 			const item = this.options.itemMap[row.perfItem]?.[row.perfAtt];
 
 			if (item) {
-				this.$router.push({ path: item.path, query: { reportId: this.listQuery.reportId, contentId: row.id, cidList: this.list.map(l => l.id).join(",") } });
+				this.$router.push({ path: item.path, query: { reportId: this.listQuery.reportId, contentId: row.id, perfPages: row.perfPages, cidList: this.list.map(l => l.id).join(",") } });
 			}
 		},
 		handlePageTurn() {

@@ -213,8 +213,16 @@ export default {
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
 
+			this.setData(this.listQuery.perfContentId);
+		} else this.$router.push({ path: "/PIReport/daily/list" });
+	},
+	mounted() { },
+	methods: {
+		async setData(perfContentId, initPage=0) {
+			console.log(initPage);
+			return new Promise(resolve => {
 			getPerfContent({
-					contentId: this.listQuery.perfContentId
+					contentId: perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
 						this.$message({
@@ -223,28 +231,22 @@ export default {
 						});
 					} else {
 						this.list = response.data.list[0];
-						this.setData(this.list);
+						this.reportDate = this.list.reportDate;
+						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+						this.inputs.zipCode = this.list.zipCode;
+						await this.initPDF();
+
+						if(Object.keys(this.list.content).length != 0) {
+							this.inputs = this.list.content.inputs;
+							if(this.inputs.case1999Img.length != 0) this.imgList = [{ url: this.inputs.case1999Img }];
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+							await this.previewPdf();
+						} else await this.getList();
 					}
+					resolve();
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
-
-		} else this.$router.push({ path: "/PIReport/daily/list" });
-	},
-	mounted() { },
-	methods: {
-		async setData(dataObj) {
-			this.list = dataObj;
-			this.reportDate = this.list.reportDate;
-			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
-			this.inputs.zipCode = this.list.zipCode;
-			await this.initPDF();
-
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputs = this.list.content.inputs;
-				if(this.inputs.case1999Img.length != 0) this.imgList = [{ url: this.inputs.case1999Img }];
-				this.initPage = this.list.content.initPage;
-				await this.previewPdf();
-			} else await this.getList();
+			});
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -542,7 +544,6 @@ export default {
 
 
 			const storedContent = {
-				pageCount: this.pdfDoc.internal.getNumberOfPages(),
 				initPage: this.initPage,
 				inputs
 			}
@@ -550,6 +551,7 @@ export default {
 
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				pageCount: this.pdfDoc.internal.getNumberOfPages(),
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {
@@ -583,7 +585,7 @@ export default {
 					break;
 				case -1:
 					this.$router.push({
-						path: "/PIReport/daily/PI2_1_Att",
+						path: "/PIReport/daily/PI2_1_Att_1",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
 					})
 					break;

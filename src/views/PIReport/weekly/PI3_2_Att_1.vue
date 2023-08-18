@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container PI3_2-Att" v-loading="loading">
+	<div class="app-container PI3_2-Att_1" v-loading="loading">
 		<h2>PI3.2附件</h2>
 
 		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI3.2</el-button>
@@ -57,7 +57,7 @@ import { getCaseWarrantyList, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 
 export default {
-	name: "PI3_2_Att",
+	name: "PI3_2_Att_1",
 	components: { TimePicker },
 	data() {
 		return {
@@ -189,8 +189,15 @@ export default {
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
 
-			getPerfContent({
-					contentId: this.listQuery.perfContentId
+			this.setData(this.listQuery.perfContentId);
+		} else this.$router.push({ path: "/PIReport/weekly/list" });
+	},
+	mounted() { },
+	methods: {
+		async setData(perfContentId, initPage=0) {
+			return new Promise(resolve => {
+				getPerfContent({
+					contentId: perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
 						this.$message({
@@ -199,27 +206,21 @@ export default {
 						});
 					} else {
 						this.list = response.data.list[0];
-						this.setData(this.list);
+						this.reportDate = this.list.reportDate;
+						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+						this.inputs.zipCode = this.list.zipCode;
+						await this.initPDF();
+
+						if(Object.keys(this.list.content).length != 0) {
+							this.inputs = this.list.content.inputs;
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+							await this.previewPdf();
+						} else await this.getList();
 					}
+					resolve();
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
-
-		} else this.$router.push({ path: "/PIReport/weekly/list" });
-	},
-	mounted() { },
-	methods: {
-		async setData(dataObj) {
-			this.list = dataObj;
-			this.reportDate = this.list.reportDate;
-			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
-			this.inputs.zipCode = this.list.zipCode;
-			await this.initPDF();
-
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputs = this.list.content.inputs;
-				this.initPage = this.list.content.initPage;
-				await this.previewPdf();
-			} else await this.getList();
+			})
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -280,9 +281,9 @@ export default {
 				}).then(async(response) => {
 					this.inputs.caseList = response.data.list;
 					this.inputs.caseList.forEach(l => {
-						l.CaseDate = this.formatDate(l.CaseDate);
-						l.DateDeadline = this.formatDate(l.DateDeadline);
-						l.DateCompleted = this.formatDate(l.DateCompleted);
+						l.CaseDate = this.formatTime(l.CaseDate);
+						l.DateDeadline = this.formatTime(l.DateDeadline);
+						l.DateCompleted = this.formatTime(l.DateCompleted);
 					});
 					this.inputs.caseList.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
 					await this.previewPdf();
@@ -417,7 +418,6 @@ export default {
 
 
 			const storedContent = {
-				pageCount: this.pdfDoc.internal.getNumberOfPages(),
 				initPage: this.initPage,
 				inputs
 			}
@@ -425,8 +425,17 @@ export default {
 
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				pageCount: this.pdfDoc.internal.getNumberOfPages(),
 				content: JSON.stringify(storedContent),
-				imgObj
+				imgObj,
+				perfItems: [
+					{
+						"reportId": this.listQuery.reportId,
+						"perfItem": 302,
+						"perfAtt": [ 2 ],
+						"perfPages": [ this.inputs.caseList.length ]
+					}
+				]
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -465,7 +474,7 @@ export default {
 				case 1:
 					this.$router.push({
 						path: "/PIReport/weekly/PI3_2_Att_2",
-						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], perfPages: 1, cidList: this.$route.query.cidList }
 					})
 					break;
 				default:
@@ -479,7 +488,11 @@ export default {
 		},
 		formatDate(date) {
 			const momentDate = moment(date);
-			return momentDate.isValid() ? momentDate.format('YYYY-MM-DD') : "-";
+			return momentDate.isValid() ? momentDate.utc().format('YYYY-MM-DD') : "-";
+		},
+		formatTime(time) {
+			const momentTime = moment(time);
+			return momentTime.isValid() ? momentTime.utc().format('YYYY-MM-DD HH:mm:ss') : "-";
 		}
 	}
 }

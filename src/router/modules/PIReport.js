@@ -58,9 +58,9 @@ const PIReportRouter = {
 					hidden: true
 				},
 				{
-					path: 'PI2_1_Att',
-					component: () => import('@/views/PIReport/daily/PI2_1_Att'),
-					name: 'PI2_1_Att',
+					path: 'PI2_1_Att_1',
+					component: () => import('@/views/PIReport/daily/PI2_1_Att_1'),
+					name: 'PI2_1_Att_1',
 					meta: { 
 						title: 'PI2.1附件', 
 						roles: ['PIreport.daily'] 
@@ -88,9 +88,9 @@ const PIReportRouter = {
 					hidden: true
 				},
 				{
-					path: 'PI3_1_Att',
-					component: () => import('@/views/PIReport/daily/PI3_1_Att'),
-					name: 'PI3_1_Att',
+					path: 'PI3_1_Att_1',
+					component: () => import('@/views/PIReport/daily/PI3_1_Att_1'),
+					name: 'PI3_1_Att_1',
 					meta: {
 						title: 'PI3.1附件',
 						roles: ['PIreport.daily']
@@ -142,9 +142,9 @@ const PIReportRouter = {
 					}
 				},
 				{
-					path: 'PI2_2_Att',
-					component: () => import('@/views/PIReport/weekly/PI2_2_Att'),
-					name: 'PI2_2_Att',
+					path: 'PI2_2_Att_1',
+					component: () => import('@/views/PIReport/weekly/PI2_2_Att_1'),
+					name: 'PI2_2_Att_1',
 					meta: {
 						title: 'PI2.2附件',
 						roles: ['PIreport.weekly']
@@ -178,9 +178,9 @@ const PIReportRouter = {
 					}
 				},
 				{
-					path: 'PI3_2_Att',
-					component: () => import('@/views/PIReport/weekly/PI3_2_Att'),
-					name: 'PI3_2_Att',
+					path: 'PI3_2_Att_1',
+					component: () => import('@/views/PIReport/weekly/PI3_2_Att_1'),
+					name: 'PI3_2_Att_1',
 					meta: {
 						title: 'PI3.2附件',
 						roles: ['PIreport.weekly']
@@ -205,9 +205,9 @@ const PIReportRouter = {
 					}
 				},
 				{
-					path: 'PI4_1_Att',
-					component: () => import('@/views/PIReport/weekly/PI4_1_Att'),
-					name: 'PI4_1_Att',
+					path: 'PI4_1_Att_1',
+					component: () => import('@/views/PIReport/weekly/PI4_1_Att_1'),
+					name: 'PI4_1_Att_1',
 					meta: {
 						title: 'PI4.1附件',
 						roles: ['PIreport.weekly']

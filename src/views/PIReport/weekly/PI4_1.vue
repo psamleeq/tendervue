@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container PI2_1-Att" v-loading="loading">
+	<div class="app-container PI4_1" v-loading="loading">
 		<h2>PI4.1</h2>
 
 		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI3.2附件-2</el-button>
@@ -34,7 +34,7 @@
 						</el-form-item>
 						<el-form-item label="檢查日期" :label-width="labelWidth1">
 							<el-date-picker
-								v-model="searchDate"
+								v-model="checkDate"
 								type="date"
 								placeholder="日期"
 								:picker-options="pickerOptions"
@@ -140,7 +140,7 @@ export default {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
 				},
 			},
-			searchDate: moment().startOf("d").subtract(1, "d"),
+			checkDate: moment().startOf("d").subtract(1, "d"),
 			reportDate: null,
 			// list:[],
 			districtList: {
@@ -271,36 +271,38 @@ export default {
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
 
-			getPerfContent({
-				contentId: this.listQuery.perfContentId
-			}).then((response) => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.list = response.data.list[0];
-					this.setData(this.list);
-				}
-
-				this.loading = false;
-			}).catch(err => { this.loading = false; });
+			this.setData(this.listQuery.perfContentId);
 		} else this.$router.push({ path: "/PIReport/weekly/list" });	
 	},
 	mounted() { },
 	methods: {
-		async setData(dataObj) {
-			this.list = dataObj;
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputs = this.list.content.inputs;
-				this.initPage = this.list.content.initPage;
-			}
-			this.reportDate = this.list.reportDate;
-			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
-			this.inputs.zipCode = String(this.list.zipCode);
+		async setData(perfContentId, initPage=0) {
+			return new Promise(resolve => {
+				getPerfContent({
+					contentId: perfContentId
+				}).then(async (response) => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.list = response.data.list[0];
+						if(Object.keys(this.list.content).length != 0) {
+							this.inputs = this.list.content.inputs;
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+						}
+						this.reportDate = this.list.reportDate;
+						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+						this.inputs.zipCode = String(this.list.zipCode);
 
-			await this.initPDF();
+						await this.initPDF();
+					}
+
+					resolve();
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
+			})
 		},
 		initPDF() {
 			return new Promise(resolve => {
@@ -317,22 +319,24 @@ export default {
 
 					const changeInput = (arg) => {
 						// console.log(arg);
-						if(['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
-						if(['maintainAll_Num41', 'hole_Num41', 'sidewalk_Num41', 'crack_Num41', 'uplift_Num41', 'failContractRequire_Num41', 'companyCheck_Num41'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+						for(const caseKey of ['AC', 'FA']) { 
+							if([`checkInTime_doc41_${caseKey}`, `checkCoFail_doc41_${caseKey}`, `checkSandOFail_doc41_${caseKey}`, `checkCoUnreason_doc41_${caseKey}`].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
+							if([`maintainAll_Num41_${caseKey}`, `hole_Num41_${caseKey}`, `sidewalk_Num41_${caseKey}`, `crack_Num41_${caseKey}`, `uplift_Num41_${caseKey}`, `failContractRequire_Num41_${caseKey}`, `companyCheck_Num41_${caseKey}`].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+						}
 						this.setPDFinputs();
 					}
 
 					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 					this.form.onChangeInput(arg => changeInput(arg));
-
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
 					if(Object.keys(this.list.content).length == 0) this.getList();
 					else this.setPDFinputs();
+
+					resolve();
 				})
 			})
 		},
 		setPDFinputs() {
-			// console.log('setPDFinputs');
 			//工程名稱
 			const reportDate = moment(this.reportDate).subtract(1911, 'year');
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
@@ -394,12 +398,12 @@ export default {
 		storeData(){
 			this.loading = true;
 			const storedContent = {
-				pageCount: 1,
 				initPage: this.initPage,
 				inputs: this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId, {
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				pageCount: 1,
 				content: JSON.stringify(storedContent)
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
@@ -452,12 +456,12 @@ export default {
 				case -1:
 					this.$router.push({
 						path: "/PIReport/weekly/PI3_2_Att_2",
-						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], perfPages: -1, cidList: this.$route.query.cidList }
 					})
 					return;
 				case 1:
 					this.$router.push({
-						path: "/PIReport/weekly/PI4_1_Att",
+						path: "/PIReport/weekly/PI4_1_Att_1",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					return;
@@ -482,7 +486,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PI2_1-Att
+.PI4_1
 	.collapse-label
 		width: 100%
 		.el-collapse-item__header
