@@ -400,7 +400,7 @@ export default {
 							if(caseSpec.perfItem == 301 && caseSpec.perfAtt == 1) await this.$refs.PI31Att1.setData(caseSpec.id, caseSpec.initPage);
 						}
 
-						this.fetchPdf_daily();
+						await this.fetchPdf_daily();
 					} else if(this.listQuery.reportType == 2) {
 						// 計算頁數
 						const initPageArr = this.listContent
@@ -425,7 +425,7 @@ export default {
 							if(caseSpec.perfItem == 401 && caseSpec.perfAtt == 1) await this.$refs.PI41Att1.setData(caseSpec.id, caseSpec.initPage);
 						}
 
-						this.fetchPdf_weekly();
+						await this.fetchPdf_weekly();
 					}
 				}
 			}).catch(err => { this.loading = false; });
@@ -470,9 +470,19 @@ export default {
 			const add_arrayBuffer_22Att3 = await this.$refs.PI22Att3.getPDF();
 			const add_pdfUint8_32 = await this.$refs.PI32.getPDF();
 			const add_arrayBuffer_32Att1 = await this.$refs.PI32Att1.getPDF();
-			const add_pdfUint8_32Att2 = await this.$refs.PI32Att2.getPDF();
+			
+			let add_pdfUint8_32Att2Arr = [ await this.$refs.PI32Att2.getPDF() ];
+			for(const caseSpec of this.perfPagesObj[302][2]) {
+				const { id, initPage, perfPages } = caseSpec;
+				await this.$refs.PI32Att2.setData(id, false, initPage, perfPages);
+				await new Promise(r => setTimeout(r, 1000));
+				add_pdfUint8_32Att2Arr.push(await this.$refs.PI32Att2.getPDF());
+			}
+			// console.log(add_pdfUint8_32Att2Arr);
+
 			const add_pdfUint8_41 = await this.$refs.PI41.getPDF();
-			const add_arrayBuffer_41Att1 = await this.$refs.PI41Att1.getPDF();
+			const add_pdfUint8_41Att1 = await this.$refs.PI41Att1.getPDF();
+			this.genPercentIndex = 3;
 
 			const add_pdf_22 = await PDFDocument.load(add_pdfUint8_22.buffer);
 			const add_pdf_22Att1 = await PDFDocument.load(add_pdfUint8_22Att1.buffer);
@@ -480,9 +490,12 @@ export default {
 			const add_pdf_22Att3 = await PDFDocument.load(add_arrayBuffer_22Att3);
 			const add_pdf_32 = await PDFDocument.load(add_pdfUint8_32.buffer);
 			const add_pdf_32Att1 = await PDFDocument.load(add_arrayBuffer_32Att1);
-			const add_pdf_32Att2 = await PDFDocument.load(add_pdfUint8_32Att2.buffer);
+
+			let add_pdf_32Att2Arr = [];
+			for(const add_pdfUint8_32Att2 of add_pdfUint8_32Att2Arr) add_pdf_32Att2Arr.push(await PDFDocument.load(add_pdfUint8_32Att2.buffer));
+
 			const add_pdf_41 = await PDFDocument.load(add_pdfUint8_41);
-			const add_pdf_41Att1 = await PDFDocument.load(add_arrayBuffer_41Att1);
+			const add_pdf_41Att1 = await PDFDocument.load(add_pdfUint8_41Att1.buffer);
 
 			const mergedPdf = await PDFDocument.create();
 			const add_copiedPage_22 = await mergedPdf.copyPages(add_pdf_22, add_pdf_22.getPageIndices());
@@ -491,7 +504,10 @@ export default {
 			const add_copiedPage_22Att3 = await mergedPdf.copyPages(add_pdf_22Att3, add_pdf_22Att3.getPageIndices());
 			const add_copiedPage_32 = await mergedPdf.copyPages(add_pdf_32, add_pdf_32.getPageIndices());
 			const add_copiedPage_32Att1 = await mergedPdf.copyPages(add_pdf_32Att1, add_pdf_32Att1.getPageIndices());
-			const add_copiedPage_32Att2 = await mergedPdf.copyPages(add_pdf_32Att2, add_pdf_32Att2.getPageIndices());
+
+			let add_copiedPage_32Att2Arr = [];
+			for(const add_pdf_32Att2 of add_pdf_32Att2Arr) add_copiedPage_32Att2Arr.push(await mergedPdf.copyPages(add_pdf_32Att2, add_pdf_32Att2.getPageIndices()));
+
 			const add_copiedPage_41 = await mergedPdf.copyPages(add_pdf_41, add_pdf_41.getPageIndices());
 			const add_copiedPage_41Att1 = await mergedPdf.copyPages(add_pdf_41Att1, add_pdf_41Att1.getPageIndices());
 			
@@ -501,7 +517,7 @@ export default {
 			for(const copiedPage of add_copiedPage_22Att3) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_32) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_32Att1) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_32Att2) mergedPdf.addPage(copiedPage);
+			for(const add_copiedPage_32Att2 of add_copiedPage_32Att2Arr) for(const copiedPage of add_copiedPage_32Att2) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_41) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_41Att1) mergedPdf.addPage(copiedPage);
 
