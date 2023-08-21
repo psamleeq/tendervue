@@ -372,10 +372,10 @@ export default {
 			this.loading = true;
 			this.rowActive = row;
 			this.perfPagesObj = {};
-			this.genPercentArr = [ 0, 70, 90, 95, 97, 100 ];
+			this.genPercentArr = this.listQuery.reportType == 1 ? [ 0, 95, 95, 95, 97, 100 ] : this.listQuery.reportType == 2 ? [ 0, 40, 90, 95, 97, 100 ] : [ 0, 40, 90, 95, 97, 100 ];
 			this.genPercentIndex = 1;
 			this.genPercent = this.genPercentArr[this.genPercentIndex-1];
-			const intervalSec = this.listQuery.reportType == 1 ? 10 : this.listQuery.reportType == 2 ? 100 : 50;
+			const intervalSec = this.listQuery.reportType == 1 ? 1 : this.listQuery.reportType == 2 ? 120 : 50;
 			this.timer = setInterval(() => { 
 				if(this.genPercentIndex-1 > 0 && this.genPercent < this.genPercentArr[this.genPercentIndex-1]) this.genPercent += Math.floor((this.genPercentArr[this.genPercentIndex-1] - this.genPercent) * intervalSec / 500);
 				if(this.genPercent < this.genPercentArr[this.genPercentIndex]) this.genPercent++;
@@ -486,9 +486,9 @@ export default {
 			for(const copiedPage of add_copiedPage_31Att1) mergedPdf.addPage(copiedPage);
 
 			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
-			this.viewer.updateTemplate(this.template);
 			this.genPercent = this.genPercentArr[this.genPercentIndex];
 			clearInterval(this.timer);
+			this.viewer.updateTemplate(this.template);
 
 			this.loading = false;
 			this.showPdfDialog = true;
@@ -555,10 +555,10 @@ export default {
 			for(const copiedPage of add_copiedPage_41Att1) mergedPdf.addPage(copiedPage);
 
 			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
-			this.viewer.updateTemplate(this.template);
-			await new Promise(r => setTimeout(r, 500));
 			this.genPercent = this.genPercentArr[this.genPercentIndex];
 			clearInterval(this.timer);
+			this.viewer.updateTemplate(this.template);
+			await new Promise(r => setTimeout(r, 500));
 
 			this.loading = false;
 			this.showPdfDialog = true;
