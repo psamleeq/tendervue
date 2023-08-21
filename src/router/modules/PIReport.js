@@ -130,7 +130,8 @@ const PIReportRouter = {
 						title: '週報表編輯',
 						reportType: 2,
 						roles: ['PIreport.weekly']
-					}
+					},
+					hidden: true
 				},
 				{
 					path: 'PI2_2',
@@ -139,7 +140,8 @@ const PIReportRouter = {
 					meta: {
 						title: 'PI2.2',
 						roles: ['PIreport.weekly']
-					}
+					},
+					hidden: true
 				},
 				{
 					path: 'PI2_2_Att_1',
@@ -149,6 +151,7 @@ const PIReportRouter = {
 						title: 'PI2.2附件',
 						roles: ['PIreport.weekly']
 					},
+					hidden: true
 				},
 				{
 					path: 'PI2_2_Att_2',
@@ -158,6 +161,7 @@ const PIReportRouter = {
 						title: 'PI2.2附件-2',
 						roles: ['PIreport.weekly']
 					},
+					hidden: true
 				},
 				{
 					path: 'PI2_2_Att_3',
@@ -167,6 +171,7 @@ const PIReportRouter = {
 						title: 'PI2.2附件-3',
 						roles: ['PIreport.weekly']
 					},
+					hidden: true
 				},
 				{
 					path: 'PI3_2',
@@ -175,7 +180,8 @@ const PIReportRouter = {
 					meta: {
 						title: 'PI3.2',
 						roles: ['PIreport.weekly']
-					}
+					},
+					hidden: true
 				},
 				{
 					path: 'PI3_2_Att_1',
@@ -185,6 +191,7 @@ const PIReportRouter = {
 						title: 'PI3.2附件',
 						roles: ['PIreport.weekly']
 					},
+					hidden: true
 				},
 				{
 					path: 'PI3_2_Att_2',
@@ -194,6 +201,7 @@ const PIReportRouter = {
 						title: 'PI3.2附件-2',
 						roles: ['PIreport.weekly']
 					},
+					hidden: true
 				},
 				{
 					path: 'PI4_1',
@@ -202,7 +210,8 @@ const PIReportRouter = {
 					meta: {
 						title: 'PI4.1',
 						roles: ['PIreport.weekly']
-					}
+					},
+					hidden: true
 				},
 				{
 					path: 'PI4_1_Att_1',
@@ -211,7 +220,8 @@ const PIReportRouter = {
 					meta: {
 						title: 'PI4.1附件',
 						roles: ['PIreport.weekly']
-					}
+					},
+					hidden: true
 				},
 			]
 		},

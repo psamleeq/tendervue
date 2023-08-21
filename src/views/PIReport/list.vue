@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container perfReport-List" v-loading="loading">
+	<div class="app-container perfReport-List" v-loading="loading" :element-loading-text="`PDF生成中 (${genPercent}%) ...`">
 		<h2>{{ options.reportTypeMap[listQuery.reportType].name }} - 列表</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(options.districtList).length <= 1">
@@ -140,6 +140,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			genPercent: 0,
 			showNewPdf:false,
 			timeTabId: 4,
 			dateRange: [ moment().startOf("month").toDate(), moment().endOf("month").toDate() ],
@@ -185,6 +186,7 @@ export default {
 			rowActive: {},
 			list:[],
 			listContent:[],
+			perfPagesObj: {},
 			options: {
 				districtList: {
 					// 100: {
@@ -369,6 +371,15 @@ export default {
 		async previewPdf(row) {
 			this.loading = true;
 			this.rowActive = row;
+			this.perfPagesObj = {};
+			this.genPercentArr = [ 0, 70, 90, 95, 97, 100 ];
+			this.genPercentIndex = 1;
+			this.genPercent = this.genPercentArr[this.genPercentIndex-1];
+			const intervalSec = this.listQuery.reportType == 1 ? 10 : this.listQuery.reportType == 2 ? 100 : 50;
+			this.timer = setInterval(() => { 
+				if(this.genPercentIndex-1 > 0 && this.genPercent < this.genPercentArr[this.genPercentIndex-1]) this.genPercent += Math.floor((this.genPercentArr[this.genPercentIndex-1] - this.genPercent) * intervalSec / 500);
+				if(this.genPercent < this.genPercentArr[this.genPercentIndex]) this.genPercent++;
+			}, intervalSec);
 			
 			await getPerfReportList({
 				reportId: row.id
@@ -399,6 +410,7 @@ export default {
 							if(caseSpec.perfItem == 301 && caseSpec.perfAtt == 0) await this.$refs.PI31.setData(caseSpec.id, caseSpec.initPage);
 							if(caseSpec.perfItem == 301 && caseSpec.perfAtt == 1) await this.$refs.PI31Att1.setData(caseSpec.id, caseSpec.initPage);
 						}
+						this.genPercentIndex = 2;
 
 						await this.fetchPdf_daily();
 					} else if(this.listQuery.reportType == 2) {
@@ -420,10 +432,20 @@ export default {
 							if(caseSpec.perfItem == 202 && caseSpec.perfAtt == 3) await this.$refs.PI22Att3.setData(caseSpec.id, caseSpec.initPage);
 							if(caseSpec.perfItem == 302 && caseSpec.perfAtt == 0) await this.$refs.PI32.setData(caseSpec.id, caseSpec.initPage);
 							if(caseSpec.perfItem == 302 && caseSpec.perfAtt == 1) await this.$refs.PI32Att1.setData(caseSpec.id, caseSpec.initPage);
-							if(caseSpec.perfItem == 302 && caseSpec.perfAtt == 2) await this.$refs.PI32Att2.setData(caseSpec.id, true, caseSpec.initPage);
+							if(caseSpec.perfItem == 302 && caseSpec.perfAtt == 2) {
+								if(caseSpec.perfPages == 1) await this.$refs.PI32Att2.setData(caseSpec.id, true, caseSpec.initPage, caseSpec.perfPages);
+								else {
+									if(this.perfPagesObj[caseSpec.perfItem] == undefined || this.perfPagesObj[caseSpec.perfItem][caseSpec.perfAtt] == undefined) {
+										this.perfPagesObj[caseSpec.perfItem] = {};
+										this.perfPagesObj[caseSpec.perfItem][caseSpec.perfAtt] = [];
+									}
+									this.perfPagesObj[caseSpec.perfItem][caseSpec.perfAtt].push({ id: caseSpec.id, initPage: caseSpec.initPage, perfPages: caseSpec.perfPages });
+								}
+							}
 							if(caseSpec.perfItem == 401 && caseSpec.perfAtt == 0) await this.$refs.PI41.setData(caseSpec.id, caseSpec.initPage);
 							if(caseSpec.perfItem == 401 && caseSpec.perfAtt == 1) await this.$refs.PI41Att1.setData(caseSpec.id, caseSpec.initPage);
 						}
+						this.genPercentIndex = 2;
 
 						await this.fetchPdf_weekly();
 					}
@@ -437,12 +459,14 @@ export default {
 			const add_arrayBuffer_21Att2 = await this.$refs.PI21Att2.getPDF();
 			const add_pdfUint8_31 = await this.$refs.PI31.getPDF();
 			const add_pdfUint8_31Att1 = await this.$refs.PI31Att1.getPDF(); 
+			this.genPercentIndex = 3;
 
 			const add_pdf_21 = await PDFDocument.load(add_pdfUint8_21.buffer);
 			const add_pdf_21Att1 = await PDFDocument.load(add_pdfUint8_21Att1.buffer);
 			const add_pdf_21Att2 = await PDFDocument.load(add_arrayBuffer_21Att2);
 			const add_pdf_31 = await PDFDocument.load(add_pdfUint8_31.buffer);
 			const add_pdf_31Att1 = await PDFDocument.load(add_pdfUint8_31Att1.buffer);
+			this.genPercentIndex = 4;
 
 			const mergedPdf = await PDFDocument.create();
 			const add_copiedPage_21 = await mergedPdf.copyPages(add_pdf_21, add_pdf_21.getPageIndices());
@@ -450,6 +474,7 @@ export default {
 			const add_copiedPage_21Att2 = await mergedPdf.copyPages(add_pdf_21Att2, add_pdf_21Att2.getPageIndices());
 			const add_copiedPage_31 = await mergedPdf.copyPages(add_pdf_31, add_pdf_31.getPageIndices());
 			const add_copiedPage_31Att1 = await mergedPdf.copyPages(add_pdf_31Att1, add_pdf_31Att1.getPageIndices());
+			this.genPercentIndex = 5;
 			
 			for(const copiedPage of add_copiedPage_21) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_21Att1) mergedPdf.addPage(copiedPage);
@@ -459,6 +484,9 @@ export default {
 
 			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
 			this.viewer.updateTemplate(this.template);
+			this.genPercent = this.genPercentArr[this.genPercentIndex];
+			clearInterval(this.timer);
+
 			this.loading = false;
 			this.showPdfDialog = true;
 		},
@@ -496,6 +524,7 @@ export default {
 
 			const add_pdf_41 = await PDFDocument.load(add_pdfUint8_41);
 			const add_pdf_41Att1 = await PDFDocument.load(add_pdfUint8_41Att1.buffer);
+			this.genPercentIndex = 4;
 
 			const mergedPdf = await PDFDocument.create();
 			const add_copiedPage_22 = await mergedPdf.copyPages(add_pdf_22, add_pdf_22.getPageIndices());
@@ -510,6 +539,7 @@ export default {
 
 			const add_copiedPage_41 = await mergedPdf.copyPages(add_pdf_41, add_pdf_41.getPageIndices());
 			const add_copiedPage_41Att1 = await mergedPdf.copyPages(add_pdf_41Att1, add_pdf_41Att1.getPageIndices());
+			this.genPercentIndex = 5;
 			
 			for(const copiedPage of add_copiedPage_22) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_22Att1) mergedPdf.addPage(copiedPage);
@@ -523,6 +553,10 @@ export default {
 
 			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
 			this.viewer.updateTemplate(this.template);
+			await new Promise(r => setTimeout(r, 500));
+			this.genPercent = this.genPercentArr[this.genPercentIndex];
+			clearInterval(this.timer);
+
 			this.loading = false;
 			this.showPdfDialog = true;
 		},
