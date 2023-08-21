@@ -219,7 +219,6 @@ export default {
 	mounted() { },
 	methods: {
 		async setData(perfContentId, initPage=0) {
-			console.log(initPage);
 			return new Promise(resolve => {
 			getPerfContent({
 					contentId: perfContentId

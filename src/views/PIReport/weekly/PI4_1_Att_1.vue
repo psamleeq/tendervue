@@ -52,7 +52,9 @@ import moment from "moment";
 import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
+import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
+import { PDFDocument } from 'pdf-lib';
 import { getCaseWarrantyList, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 
@@ -169,8 +171,7 @@ export default {
 				1:'AC路面',
 				2:'人行道',
 				3:'側溝',
-			},
-			result:{}
+			}
 		}
 	},
 	computed: {},
@@ -448,12 +449,36 @@ export default {
 			return new Promise((resolve, reject) => {
 				this.loading = true;
 				this.formatFormData();
-				this.createPdf().then(() => {
+				this.createPdf().then(async() => {
 					const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => ({}));
+					// this.result = async () => {
+					// 	return new Promise(resolve => {
+					// 		resolve(this.pdfDoc.output('arraybuffer'))
+					// 	})
+					// } 
+					// console.log(await this.result());
+					//合併PDF
+					const ori_arrayBuffer = this.pdfDoc.output('arraybuffer');
+					const ori_pdf = await PDFDocument.load(ori_arrayBuffer);
+					const addTemplate = await fetch(`/assets/pdf/weekly/PI4_1Att4.json?t=${Date.now()}`).then(response => response.json());
+					const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+					const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
+					
+					const mergedPdf = await PDFDocument.create();
+					const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
+					const [ add_copiedPage ] = await mergedPdf.copyPages(add_pdf, [0]);
+					for(const copiedPage of ori_copiedPages) mergedPdf.addPage(copiedPage);
+					mergedPdf.addPage(add_copiedPage);
+					const basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
+					schemas.push(addTemplate.schemas[0]);
 
-					this.result = this.pdfDoc.output('dataurlstring');
-					this.viewer.updateTemplate({ basePdf: this.result, schemas });
-					// console.log(this.result);
+					this.viewer.updateTemplate({ basePdf, schemas});
+					this.viewer.setInputs([{
+						contractName: this.districtList[this.inputs.zipCode].tenderName,//工程名稱
+						serialNumber: `${Number(this.inputs.serialNumber)+Number(this.pdfDoc.internal.getNumberOfPages())}`,//紀錄編號
+						companyName: this.inputs.companyName,//施工廠商
+						date: this.inputs.formatDate//檢查日期
+					}])
 					resolve();
 				})
 				this.loading = false;
@@ -481,7 +506,7 @@ export default {
 
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: this.pdfDoc.internal.getNumberOfPages(),
+				pageCount: this.pdfDoc.internal.getNumberOfPages() + 1,
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {
@@ -499,7 +524,11 @@ export default {
 		},
 		async getPDF() {
 			return new Promise(resolve =>{
-				resolve(this.pdfDoc.output('arraybuffer'));
+				this.previewPdf().then(() => {
+					generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then((pdf) => {
+						resolve(pdf);
+					});
+				})
 			});
 		},
 		handleDownload() {

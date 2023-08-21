@@ -403,7 +403,7 @@ export default {
 			}
 			setPerfContent(this.listQuery.perfContentId, {
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: 1,
+				pageCount: 2,
 				content: JSON.stringify(storedContent)
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {

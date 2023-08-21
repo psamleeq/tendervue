@@ -165,6 +165,7 @@
 import moment from "moment";
 import { generate } from '@pdfme/generator';
 import { Form } from '@pdfme/ui';
+import { PDFDocument } from 'pdf-lib';
 import { getCaseWarrantyList, getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
@@ -299,6 +300,8 @@ export default {
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
 				serialNumber1: '11206250201',//紀錄編號
+				serialNumber2: '11206250201-1',
+				serialNumber3: '11206250202',
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
 				distressSrc: '1',
@@ -342,6 +345,7 @@ export default {
 					contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
 					serialNumber1: '11206250201',//紀錄編號
 					serialNumber2: '11206250201-1',
+					serialNumber3: '11206250202',
 					companyName: '聖東營造股份有限公司',//施工廠商
 					date: '',//檢查日期
 					distressSrc: '1',
@@ -405,7 +409,7 @@ export default {
 	},
 	mounted() {},
 	methods: {
-		async setData(perfContentId, init=true, initPage=0) {
+		async setData(perfContentId, init=true, initPage=0, perfPages = 0) {
 			return new Promise(resolve => {
 				getPerfContent({
 					contentId: perfContentId
@@ -432,17 +436,19 @@ export default {
 										})
 								}
 							}
-
 							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+							this.listQuery.perfPages = perfPages != 0 ? perfPages : this.listQuery.perfPages;
 						}
 						this.reportDate = this.list.reportDate;
 						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 						this.inputs.zipCode = String(this.list.zipCode);
 
+						await new Promise(r => setTimeout(r, 100));
+
 						if(init) await this.initPDF();
 						else {
 							for(const [key, value] of Object.entries(this.inputs)) this.changeInput({ key, value });
-							this.getList(Object.keys(this.list.content).length == 0);
+							await this.getList(Object.keys(this.list.content).length == 0);
 						}
 					}
 
@@ -470,68 +476,92 @@ export default {
 					this.form.onChangeInput(arg => this.changeInput(arg));
 
 					for(const [key, value] of Object.entries(this.inputs)) this.changeInput({ key, value });
-					this.getList(Object.keys(this.list.content).length == 0);
+					await this.getList(Object.keys(this.list.content).length == 0);
 						
 					resolve();
 				})
 			})
 		},
-		changeInput(arg) {
+		async changeInput(arg) {
 			if(['caseNumber', 'completeFixed_Text', 'construction_Text'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
 			if(['checkReportDate', 'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT', ].includes(arg.key)) {
 				const dateTime = moment(arg.value);
 				this.inputForm[arg.key] = dateTime.isValid() 
-				? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
-				: '';
+					? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
+					: '';
 			}
 
 			if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
 				if(arg.value != undefined) {
 					this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
-					this.aspectRatioImg(arg);
+					await this.aspectRatioImg(arg);
 				}
 			}
 		},
-		changeTemplate() {
-			// this.loading = true;
-			const fileName = this.srcList[this.inputs.distressSrc].json[this.inputs.inspection];
-			// console.log(fileName);
-			fetch(`/assets/pdf/weekly/${fileName}?t=${Date.now()}`).then(async (response) => {
-				this.template = await response.json();
-				this.schemasOri = {};
-				this.form.updateTemplate(this.template);
-				this.setPDFinputs();
-				this.form.render();
-				this.loading = false;
+		async changeTemplate() {
+			new Promise((resolve, reject) => {
+				// this.loading = true;
+				const fileName = this.srcList[this.inputs.distressSrc].json[this.inputs.inspection];
+				// console.log(fileName);
+				fetch(`/assets/pdf/weekly/${fileName}?t=${Date.now()}`).then(async (response) => {
+					this.template = await response.json();
+					if(this.caseList.length == this.listQuery.perfPages) {
+						//合併PDF
+						const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+						const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
+						const addTemplate = await fetch(`/assets/pdf/weekly/PI3_2Att3.json?t=${Date.now()}`).then(response => response.json());
+						const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+						const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
+						
+						const mergedPdf = await PDFDocument.create();
+						const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
+						const [ add_copiedPage ] = await mergedPdf.copyPages(add_pdf, [0]);
+						for(const copiedPage of ori_copiedPages) mergedPdf.addPage(copiedPage);
+						mergedPdf.addPage(add_copiedPage);
+						this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
+						this.template.schemas.push(addTemplate.schemas[0]);
+					}
+					this.schemasOri = {};
+					this.form.updateTemplate(this.template);
+					this.setPDFinputs();
+					this.form.render();
+
+					resolve();
+					this.loading = false;
+				})
 			})
 		},
-		aspectRatioImg(arg) {
-			const keyArray = this.template.schemas.map(item => Object.keys(item));
-			const keyIndex =  keyArray.findIndex(el => el.includes(arg.key));
-			if(keyIndex == -1) return;
+		async aspectRatioImg(arg) {
+			new Promise((resolve, reject) => {
+				const keyArray = this.template.schemas.map(item => Object.keys(item));
+				const keyIndex =  keyArray.findIndex(el => el.includes(arg.key));
+				if(keyIndex == -1) return;
 
-			if(this.schemasOri[arg.key]) {
-				this.template.schemas[keyIndex][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[arg.key]));
-				delete this.schemasOri[arg.key];
-				this.form.updateTemplate(this.template);
-			}
+				if(this.schemasOri[arg.key]) {
+					this.template.schemas[keyIndex][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[arg.key]));
+					delete this.schemasOri[arg.key];
+					this.form.updateTemplate(this.template);
+				}
 
-			const img = new Image();
-			img.onload = () => {
-				// console.log(img.width, img.height);
-				const templateWidth = this.template.schemas[keyIndex][arg.key].width;
-				const templateHeight = this.template.schemas[keyIndex][arg.key].height;
-				const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
-				// console.log(ratio);
+				const img = new Image();
+				img.onload = () => {
+					// console.log(img.width, img.height);
+					const templateWidth = this.template.schemas[keyIndex][arg.key].width;
+					const templateHeight = this.template.schemas[keyIndex][arg.key].height;
+					const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
+					// console.log(ratio);
 
-				this.schemasOri[arg.key] = JSON.parse(JSON.stringify(this.template.schemas[keyIndex][arg.key]));
-				this.template.schemas[keyIndex][arg.key].position.x = this.template.schemas[keyIndex][arg.key].position.x + (this.template.schemas[keyIndex][arg.key].width - img.width * ratio) / 2;
-				this.template.schemas[keyIndex][arg.key].position.y = this.template.schemas[keyIndex][arg.key].position.y + (this.template.schemas[keyIndex][arg.key].height - img.height * ratio) / 2;
-				this.template.schemas[keyIndex][arg.key].width = img.width * ratio;
-				this.template.schemas[keyIndex][arg.key].height = img.height * ratio;
-				this.form.updateTemplate(this.template);
-			}
-			img.src = arg.value;
+					this.schemasOri[arg.key] = JSON.parse(JSON.stringify(this.template.schemas[keyIndex][arg.key]));
+					this.template.schemas[keyIndex][arg.key].position.x = this.template.schemas[keyIndex][arg.key].position.x + (this.template.schemas[keyIndex][arg.key].width - img.width * ratio) / 2;
+					this.template.schemas[keyIndex][arg.key].position.y = this.template.schemas[keyIndex][arg.key].position.y + (this.template.schemas[keyIndex][arg.key].height - img.height * ratio) / 2;
+					this.template.schemas[keyIndex][arg.key].width = img.width * ratio;
+					this.template.schemas[keyIndex][arg.key].height = img.height * ratio;
+					this.form.updateTemplate(this.template);
+
+					resolve();
+				}
+				img.src = arg.value;
+			})
 		},
 		setPDFinputs() {
 			// console.log('setPDFinputs');
@@ -541,6 +571,7 @@ export default {
 			//紀錄編號
 			this.inputs.serialNumber1 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
 			this.inputs.serialNumber2 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0') + "-1";	
+			this.inputs.serialNumber3 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage+1).padStart(2, '0');	
 			//檢查日期
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
@@ -596,7 +627,7 @@ export default {
 						this.inputs.inspection = (caseSpec.State & 2) ? '1' : '0';
 					}
 
-					this.changeTemplate();
+					await this.changeTemplate();
 					resolve();
 					// this.loading = false;
 				}).catch(err => this.loading = false);
@@ -621,7 +652,7 @@ export default {
 			setPerfContent(this.listQuery.perfContentId, {
 				caseNo: Number(this.inputForm.caseNumber),
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: 1,
+				pageCount: ((this.inputs.distressSrc == 3) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0),
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {
