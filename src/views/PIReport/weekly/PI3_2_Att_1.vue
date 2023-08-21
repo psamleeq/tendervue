@@ -492,7 +492,7 @@ export default {
 		},
 		formatTime(time) {
 			const momentTime = moment(time);
-			return momentTime.isValid() ? momentTime.utc().format('YYYY-MM-DD HH:mm:ss') : "-";
+			return momentTime.isValid() ? momentTime.utc().format('YYYY-MM-DD HH:mm') : "-";
 		}
 	}
 }

@@ -273,7 +273,7 @@ export default {
 			finishText: [
 				'\n已修復完工(無須復標)',
 				'\n已修復完工(已復標)',
-				'\n本案分隊工班修復完妥',
+				'\n本案分隊工班已修復完妥',
 				'\n已請管區開立{{單位}}B單',
 				'\n本案{{單位}}已派員改善完妥'
 			],
@@ -714,6 +714,7 @@ export default {
 							path: "/PIReport/weekly/PI3_2_Att_2",
 							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], perfPages: Number(this.listQuery.perfPages) - 1, cidList: this.$route.query.cidList }
 						})
+						this.initPage--;
 					}
 					return;
 				case 1:
@@ -727,6 +728,7 @@ export default {
 							path: "/PIReport/weekly/PI3_2_Att_2",
 							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], perfPages: Number(this.listQuery.perfPages) + 1, cidList: this.$route.query.cidList }
 						})
+						this.initPage++;
 					}
 					return;
 				default:

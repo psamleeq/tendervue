@@ -281,22 +281,27 @@ export default {
 					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 				}).then(async(response) => {
 					const list = response.data.list;
+					const sortList = { "坑洞": 1, "人孔高差": 2, "縱橫向裂縫/龜裂": 3, "車轍/隆起與凹陷": 4, "人行道": 5 };
+					list.sort((a, b) => sortList[a.DistressTypeR] - sortList[b.DistressTypeR]);
+
 					this.inputs.caseList = list.map(caseSpec => ({ 
-							UploadCaseNo: caseSpec.UploadCaseNo,
-							DeviceType: caseSpec.DeviceType, 
-							DistressTypeR: caseSpec.DistressTypeR,
-							preconstruction_Img: caseSpec.PerfContent.preconstruction_Img,
-							completeFixed_Img: caseSpec.PerfContent.completeFixed_Img
-						})).reduce((acc, cur) =>{
-							if(acc.length == 0 || cur.DeviceType != acc.DeviceType || cur.DistressTypeR != acc.DistressTypeR) acc.push([cur]);
-							else {
-								acc.forEach(caseArr => {
-									if(caseArr[0].DeviceType == cur.DeviceType && caseArr[0].DistressTypeR  == cur.DistressTypeR) caseArr.push(cur);
-									caseArr.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
-								})
-							}
-							return acc;
-						}, []);
+						UploadCaseNo: caseSpec.UploadCaseNo,
+						DeviceType: caseSpec.DeviceType, 
+						DistressTypeR: caseSpec.DistressTypeR,
+						preconstruction_Img: caseSpec.PerfContent.preconstruction_Img,
+						completeFixed_Img: caseSpec.PerfContent.completeFixed_Img
+					})).reduce((acc, cur) =>{
+						// if(acc.length != 0) console.log(acc[acc.length-1], cur);
+						if(acc.length == 0 || cur.DeviceType != acc[acc.length -1][0].DeviceType || cur.DistressTypeR != acc[acc.length -1][0].DistressTypeR) acc.push([cur]);
+						else {
+							acc.forEach(caseArr => {
+								if(caseArr[0].DeviceType == cur.DeviceType && caseArr[0].DistressTypeR  == cur.DistressTypeR) caseArr.push(cur);
+								caseArr.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);
+							})
+						}
+						return acc;
+					}, []);
+
 					await this.previewPdf();
 					resolve();
 					this.loading = false;
@@ -354,15 +359,9 @@ export default {
 		async createPdf() {
 			return new Promise(async (resolve, reject) => {
 				for(const [ caseIndex, caseTable ] of this.inputs.caseList.entries()) {
-					// NOTE: 測試
-					// caseTable.forEach(l => {
-					// 	l.preconstruction_Img = 'https://storage.googleapis.com/adm_distress_image/caseDetection/10000_ImgZoomIn_1.jpg';
-					// 	l.completeFixed_Img = 'https://storage.googleapis.com/adm_distress_image/restored_reporter/5448458_UnderConstr__1.jpg';
-					// })
 					await this.imgPreload(caseTable);
-					// console.log(this.imgDOMObj);
 					const splitTable = caseTable.reduce((acc, cur) => {
-						if(acc[acc.length-1].length <= 3) acc[acc.length-1].push(cur);
+						if(acc[acc.length-1].length < 3) acc[acc.length-1].push(cur);
 						else acc.push([cur]);
 						return acc;
 					}, [[]]);
@@ -395,7 +394,7 @@ export default {
 								theme: 'plain',
 								styles: { font: "edukai", lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle', cellPadding: 1	},
 								headStyles: { textColor: 90, fillColor: 240 },
-								bodyStyles: { overflow: 'hidden', textColor: 255, minCellHeight: 50, halign: 'center', valign: 'middle', fontSize: 1 },
+								bodyStyles: { overflow: 'hidden', textColor: 255, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 },
 								didDrawCell: async (data) => {
 									if(data.cell.section === 'body') {
 										const image = this.imgDOMObj[data.cell.raw][data.column.dataKey];
