@@ -79,7 +79,7 @@ export default {
 		return {
 			labelWidth1:'150px',
 			labelWidth2:'20px',
-			loading: false,
+			loading: true,
 			initPage: 1,
 			listQuery: {
 				reportId: 0,

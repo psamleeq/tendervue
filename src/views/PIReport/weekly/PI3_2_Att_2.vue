@@ -175,7 +175,7 @@ export default {
 		return {
 			labelWidth1:'150px',
 			labelWidth2:'20px',
-			loading: false,
+			loading: true,
 			initPage: 6,
 			listQuery: {
 				reportId: 0,
@@ -334,11 +334,11 @@ export default {
 				this.listQuery.perfContentId = this.$route.query.contentId;
 				this.listQuery.perfPages = this.$route.query.perfPages;
 
-				const cidList = this.$route.query.cidList.split(",");
-				const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+				this.cidList = this.$route.query.cidList.split(",");
+				const pageIndex = this.cidList.indexOf(String(this.$route.query.contentId));
 				this.pageTurn = [ 
-					Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
-					Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+					Number(pageIndex) == 0 ? -1 : this.cidList[pageIndex-1], 
+					Number(pageIndex) == this.cidList.length - 1 ? -1 : this.cidList[pageIndex+1] 
 				];
 
 				this.inputs = {
@@ -397,11 +397,11 @@ export default {
 			this.listQuery.perfPages = this.$route.query.perfPages;
 			this.initPage = this.initPage + Number(this.listQuery.perfPages) - 1; 
 
-			const cidList = this.$route.query.cidList.split(",");
-			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.cidList = this.$route.query.cidList.split(",");
+			const pageIndex = this.cidList.indexOf(String(this.$route.query.contentId));
 			this.pageTurn = [ 
-				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
-				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+				Number(pageIndex) == 0 ? -1 : this.cidList[pageIndex-1], 
+				Number(pageIndex) == this.cidList.length - 1 ? -1 : this.cidList[pageIndex+1] 
 			];
 
 			this.setData(this.listQuery.perfContentId);
@@ -421,6 +421,23 @@ export default {
 						});
 					} else {
 						this.list = response.data.list[0];
+
+						// 如PI3-2附件尚未建立，則跳過
+						if(this.list.perfPages == 0) {
+							if(this.listQuery.perfPages == 1) {
+								this.$router.push({
+									path: "/PIReport/weekly/PI4_1",
+									query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.cidList.join(",") }
+								})
+							} else if(this.listQuery.perfPages == -1) {
+								this.$router.push({
+									path: "/PIReport/weekly/PI3_2_Att_1",
+									query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.cidList.join(",") }
+								})
+							}
+							return;
+						}
+
 						if(Object.keys(this.list.content).length != 0) {
 							this.inputs = this.list.content.inputs;
 
@@ -661,6 +678,7 @@ export default {
 						message: "提交成功",
 						type: "success",
 					});
+					this.cidList = response.data.idList;
 				} 
 				this.loading = false;
 			}).catch(err => {
@@ -707,12 +725,12 @@ export default {
 					if(this.listQuery.perfPages == 1) {
 						this.$router.push({
 							path: "/PIReport/weekly/PI3_2_Att_1",
-							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.cidList.join(",") }
 						})
 					} else {
 						this.$router.push({
 							path: "/PIReport/weekly/PI3_2_Att_2",
-							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], perfPages: Number(this.listQuery.perfPages) - 1, cidList: this.$route.query.cidList }
+							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], perfPages: Number(this.listQuery.perfPages) - 1, cidList: this.cidList.join(",") }
 						})
 						this.initPage--;
 					}
@@ -721,12 +739,12 @@ export default {
 					if(this.caseList.length == this.listQuery.perfPages) {
 						this.$router.push({
 							path: "/PIReport/weekly/PI4_1",
-							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
+							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.cidList.join(",") }
 						})
 					} else {
 						this.$router.push({
 							path: "/PIReport/weekly/PI3_2_Att_2",
-							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], perfPages: Number(this.listQuery.perfPages) + 1, cidList: this.$route.query.cidList }
+							query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], perfPages: Number(this.listQuery.perfPages) + 1, cidList: this.cidList.join(",") }
 						})
 						this.initPage++;
 					}

@@ -74,7 +74,7 @@ export default {
 		return {
 			labelWidth1:'170px',
 			labelWidth2:'10px',
-			loading: false,
+			loading: true,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [

@@ -2,7 +2,7 @@
 	<div class="app-container PI4_1" v-loading="loading">
 		<h2>PI4.1</h2>
 
-		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI3.2附件-2</el-button>
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI3-2附件/2</el-button>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
@@ -105,7 +105,7 @@ export default {
 		return {
 			labelWidth1:'150px',
 			labelWidth2:'20px',
-			loading: false,
+			loading: true,
 			initPage: 22,
 			listQuery: {
 				reportId: 0,

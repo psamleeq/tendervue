@@ -87,7 +87,7 @@ export default {
 	components: { },
 	data() {
 		return {
-			loading: false,
+			loading: true,
 			initPage: 5,
 			listQuery: {
 				reportId: 0,

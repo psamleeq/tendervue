@@ -40,7 +40,7 @@
 			</el-table-column>
 			<el-table-column label="動作" width="100" align="center">
 				<template slot-scope="{ row }">
-					<el-button type="success" plain size="mini" @click="beforeEdit(row)"><i class="el-icon-edit"></i>編輯</el-button>
+					<el-button type="success" plain size="mini" :disabled="editDisabled(row)" @click="beforeEdit(row)"><i class="el-icon-edit"></i>編輯</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -220,6 +220,10 @@ export default {
 	},
 	mounted() { },
 	methods: {
+		editDisabled(row) {
+			if(row.perfItem == 302 && row.perfAtt == 2) return row.perfPages == 0;
+			return false;
+		},
 		getList(){
 			this.loading = true;
 			this.list = [];

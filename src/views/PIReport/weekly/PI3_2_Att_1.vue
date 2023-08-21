@@ -6,7 +6,10 @@
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
-		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI3.2附件-2</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">
+			<span v-if="list.content && Object.keys(list.content).length == 0">PI4.1</span>
+			<span v-else>PI3.2附件-2</span>
+		</el-button>
 
 		<el-row :gutter="24">
 			<el-col :span="12">
@@ -61,7 +64,7 @@ export default {
 	components: { TimePicker },
 	data() {
 		return {
-			loading: false,
+			loading: true,
 			initPage: 5,
 			listQuery: {
 				reportId: 0,
@@ -106,7 +109,7 @@ export default {
 				DateDeadline: "預計完工日期",
 				DateCompleted: "實際完工時間"
 			},
-			csvFileList: [],
+			list: [],
 			districtList: {
 				// 100: {
 				// 	"name": "中正區"
@@ -182,11 +185,11 @@ export default {
 			this.listQuery.reportId = this.$route.query.reportId;
 			this.listQuery.perfContentId = this.$route.query.contentId;
 
-			const cidList = this.$route.query.cidList.split(",");
-			const pageIndex = cidList.indexOf(String(this.$route.query.contentId));
+			this.cidList = this.$route.query.cidList.split(",");
+			const pageIndex = this.cidList.indexOf(String(this.$route.query.contentId));
 			this.pageTurn = [ 
-				Number(pageIndex) == 0 ? -1 : cidList[pageIndex-1], 
-				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
+				Number(pageIndex) == 0 ? -1 : this.cidList[pageIndex-1], 
+				Number(pageIndex) == this.cidList.length - 1 ? -1 : this.cidList[pageIndex+1] 
 			];
 
 			this.setData(this.listQuery.perfContentId);
@@ -416,7 +419,6 @@ export default {
 				}
 			})
 
-
 			const storedContent = {
 				initPage: this.initPage,
 				inputs
@@ -443,6 +445,8 @@ export default {
 						type: "success",
 					});
 				} 
+				this.cidList = response.data.idList;
+				this.list.content = storedContent;
 				this.loading = false;
 			}).catch(err => {
 				console.log(err);
@@ -468,13 +472,13 @@ export default {
 				case -1:
 					this.$router.push({
 						path: "/PIReport/weekly/PI3_2",
-						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.cidList.join(",") }
 					})
 					break;
 				case 1:
 					this.$router.push({
 						path: "/PIReport/weekly/PI3_2_Att_2",
-						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], perfPages: 1, cidList: this.$route.query.cidList }
+						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], perfPages: 1, cidList: this.cidList.join(",")}
 					})
 					break;
 				default:

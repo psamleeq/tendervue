@@ -63,7 +63,7 @@ export default {
 	components: { TimePicker },
 	data() {
 		return {
-			loading: false,
+			loading: true,
 			initPage: 5,
 			listQuery: {
 				reportId: 0,
