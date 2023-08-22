@@ -28,6 +28,7 @@
 					<template slot-scope="{ row, column }"> {{ formatDate(row[column.property]) }}</template>
 				</el-table-column>
 				<el-table-column prop="dutyWithName" label="編輯人員" align="center" />
+				<el-table-column prop="pageCountTotal" label="頁數" align="center" />
 				<el-table-column label="進度" align="center">
 					<template slot-scope="{ row }">
 						<span :style="row.contentFin == row.contentTotal ? 'color: #67C23A' : 'color: #F56C6C'">{{ row.contentFin }}</span><span> / {{ row.contentTotal }}</span>
@@ -40,7 +41,10 @@
 					<template slot-scope="{ row }">
 						<el-button-group>
 							<el-button type="success" plain size="mini" @click="beforeEdit(row)"><i class="el-icon-edit"></i>編輯</el-button>
-							<el-button type="info" plain size="mini" :disabled="row.contentFin != row.contentTotal" @click="previewPdf(row)" ><i class="el-icon-download"></i>預覽</el-button>
+							<el-button type="info" plain size="mini" :disabled="row.contentFin != row.contentTotal" @click="previewPdf(row)" ><i class="el-icon-download"></i>
+								<span v-if="listQuery.reportType == 2">下載</span>
+								<span v-else>預覽</span>
+							</el-button>
 						</el-button-group>
 					</template>
 				</el-table-column>
@@ -387,13 +391,14 @@ export default {
 			this.loading = true;
 			this.rowActive = row;
 			this.perfPagesObj = {};
-			this.genPercentArr = this.listQuery.reportType == 1 ? [ 0, 95, 95, 95, 97, 100 ] : this.listQuery.reportType == 2 ? [ 0, 40, 90, 95, 97, 100 ] : [ 0, 40, 90, 95, 97, 100 ];
+			this.genPercentArr = this.listQuery.reportType == 1 ? [ 0, 95, 95, 95, 97, 100 ] : this.listQuery.reportType == 2 ? [ 0, 30, 90, 95, 97, 100 ] : [ 0, 40, 90, 95, 97, 100 ];
 			this.genPercentIndex = 1;
 			this.genPercent = this.genPercentArr[this.genPercentIndex-1];
-			const intervalSec = this.listQuery.reportType == 1 ? 1 : this.listQuery.reportType == 2 ? 120 : 50;
+			const intervalSec = this.listQuery.reportType == 1 ? 1 : 12 * row.pageCountTotal;
 			this.timer = setInterval(() => { 
-				if(this.genPercentIndex-1 > 0 && this.genPercent < this.genPercentArr[this.genPercentIndex-1]) this.genPercent += Math.floor((this.genPercentArr[this.genPercentIndex-1] - this.genPercent) * intervalSec / 500);
+				if(this.genPercentIndex-1 > 0 && this.genPercent < this.genPercentArr[this.genPercentIndex-1]) this.genPercent += Math.floor(Math.floor(Math.random() * (this.genPercentArr[this.genPercentIndex-1] - this.genPercent) * 0.5));
 				if(this.genPercent < this.genPercentArr[this.genPercentIndex]) this.genPercent++;
+				else if(this.genPercent < 99 && Math.floor(Math.random() * 2)) this.genPercent++;
 			}, intervalSec);
 			
 			await getPerfReportList({
@@ -569,24 +574,30 @@ export default {
 			for(const copiedPage of add_copiedPage_41) mergedPdf.addPage(copiedPage);
 			for(const copiedPage of add_copiedPage_41Att1) mergedPdf.addPage(copiedPage);
 
-			this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
+			const file = new File([await mergedPdf.save()], `${this.options.reportTypeMap[this.rowActive.reportType].name}_${this.formatDate(this.rowActive.reportDate)}.pdf`, { type: 'application/pdf' });
+			const link = document.createElement('a');
+			const url = URL.createObjectURL(file);
+			link.href = url;
+			link.download = file.name;
+			document.body.appendChild(link);
 			this.genPercent = this.genPercentArr[this.genPercentIndex];
 			clearInterval(this.timer);
-			this.viewer.updateTemplate(this.template);
-			await new Promise(r => setTimeout(r, 500));
+
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
 
 			this.loading = false;
-			this.showPdfDialog = true;
 		},
 		handleDownload() {
 			this.$confirm(`<p>確定下載 ${this.formatDate(this.rowActive.reportDate)} ${this.options.reportTypeMap[this.rowActive.reportType].name}? <br/>(下載封存後將<span style="color: #F56C6C">無法修改</span>。)</p>`, "確認", { dangerouslyUseHTMLString: true, showClose: false }).then(() => {
 				this.showPdfDialog = false;
 				generate({ template: this.viewer.getTemplate(), inputs: [{}], options: { font: this.viewer.getFont() } }).then(pdf => {
 					// console.log(pdf);
-					const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
+					// const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 					// window.open(URL.createObjectURL(blob));
 
-					const file = new File([blob], `${this.options.reportTypeMap[this.rowActive.reportType].name}_${this.formatDate(this.rowActive.reportDate)}.pdf`, { type: 'application/pdf' });
+					const file = new File([pdf], `${this.options.reportTypeMap[this.rowActive.reportType].name}_${this.formatDate(this.rowActive.reportDate)}.pdf`, { type: 'application/pdf' });
 					const link = document.createElement('a');
 					const url = URL.createObjectURL(file);
 					link.href = url;
