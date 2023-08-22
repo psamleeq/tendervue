@@ -219,7 +219,7 @@ export default {
 					}
 
 					resolve();
-					this.loading = false;
+					// this.loading = false;
 				}).catch(err => { this.loading = false; });
 			})
 		},
@@ -304,7 +304,7 @@ export default {
 
 					await this.previewPdf();
 					resolve();
-					this.loading = false;
+					// this.loading = false;
 				}).catch(err => this.loading = false);
 			})
 		},
@@ -358,6 +358,7 @@ export default {
 		},
 		async createPdf() {
 			return new Promise(async (resolve, reject) => {
+				this.loading = true;
 				for(const [ caseIndex, caseTable ] of this.inputs.caseList.entries()) {
 					await this.imgPreload(caseTable);
 					const splitTable = caseTable.reduce((acc, cur) => {
@@ -370,14 +371,13 @@ export default {
 						this.pdfDoc.addPage();
 						while(caseIndex == 0 && pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
 						await this.createPdf_header(caseIndex+pageIndex);
-
+						this.pdfDoc.autoTable({
+							theme: 'plain',
+							styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
+							head: [[`${pageTable[0].DistressTypeR}`]],
+							startY: this.pdfDoc.lastAutoTable.finalY,
+						})
 						for(const caseSpec of pageTable) {
-							this.pdfDoc.autoTable({
-								theme: 'plain',
-								styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-								head: [[`${caseSpec.DistressTypeR}`]],
-								startY: this.pdfDoc.lastAutoTable.finalY,
-							})
 							this.pdfDoc.autoTable({
 								theme: 'plain',
 								styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
@@ -394,7 +394,7 @@ export default {
 								theme: 'plain',
 								styles: { font: "edukai", lineWidth: 0.1, lineColor: 10, halign: 'center', valign: 'middle', cellPadding: 1	},
 								headStyles: { textColor: 90, fillColor: 240 },
-								bodyStyles: { overflow: 'hidden', textColor: 255, minCellHeight: 45, halign: 'center', valign: 'middle', fontSize: 1 },
+								bodyStyles: { overflow: 'hidden', textColor: 255, minCellHeight: 50, halign: 'center', valign: 'middle', fontSize: 1 },
 								didDrawCell: async (data) => {
 									if(data.cell.section === 'body') {
 										const image = this.imgDOMObj[data.cell.raw][data.column.dataKey];
@@ -450,12 +450,6 @@ export default {
 				this.formatFormData();
 				this.createPdf().then(async() => {
 					const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => ({}));
-					// this.result = async () => {
-					// 	return new Promise(resolve => {
-					// 		resolve(this.pdfDoc.output('arraybuffer'))
-					// 	})
-					// } 
-					// console.log(await this.result());
 					//合併PDF
 					const ori_arrayBuffer = this.pdfDoc.output('arraybuffer');
 					const ori_pdf = await PDFDocument.load(ori_arrayBuffer);
@@ -479,9 +473,9 @@ export default {
 						date: this.inputs.formatDate//檢查日期
 					}])
 					resolve();
+					// await new Promise(r => setTimeout(r, 1000));
+					this.loading = false;
 				})
-				this.loading = false;
-				
 			})
 			
 		},

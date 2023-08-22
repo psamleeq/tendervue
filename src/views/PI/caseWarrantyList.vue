@@ -294,7 +294,7 @@ export default {
 				// 	"name": "文山區"
 				// }
 			},
-			distressType: ['坑洞', '人孔高差', '縱橫向裂縫/龜裂', '車轍/隆起與凹陷', '人行道'],
+			distressType: ['坑洞', '人孔高差', '縱橫向裂縫/龜裂', '車轍/隆起與凹陷', '人行道', '其他'],
 			checkDateWarranty:true,
 		};
 	},
@@ -471,9 +471,9 @@ export default {
 
 					data.CaseType = [1];
 
-					if(['坑洞'].includes(data.DistressType)) data.DistressTypeR = data.DistressType;
+					if(['坑洞', '其他'].includes(data.DistressType)) data.DistressTypeR = data.DistressType;
 
-					if(['鋪面破損', '孔蓋周邊破損', '樹穴緣石', '溝蓋路邊緣石', '鋪面鬆動'].includes(data.DistressType)) {
+					if(['鋪面破損', '孔蓋周邊破損', '樹穴緣石', '側溝蓋破損',  '溝蓋路邊緣石', '鋪面鬆動'].includes(data.DistressType)) {
 						data.DeviceType = '設施';
 						data.DistressTypeR = '人行道'
 					} else {
