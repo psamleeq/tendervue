@@ -14,33 +14,6 @@
 			<el-button @click="showNewPdf = true" type="success" icon="el-icon-plus">新增</el-button>
 		</div>
 
-		<el-dialog width="400px" title="新增" :visible.sync="showNewPdf">
-			<div>
-				<el-form :model="addList" label-width="80px">
-					<el-form-item label="行政區">
-						<el-select class="filter-item" v-model="addList.zipCode" :disabled="Object.keys(options.districtList).length <= 1" style="width: 250px;margin-bottom:15px">
-							<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
-						</el-select>
-					</el-form-item>
-					<el-form-item label="報告日期">
-						<el-date-picker
-							v-model="addList.reportDate"
-							type="date"
-							placeholder="日期"
-							:picker-options="pickerOptions"
-							:clearable="false"
-							style="width: 250px"
-						/>
-					</el-form-item>
-				</el-form>
-				
-			</div>
-			<div slot="footer" class="dialog-footer">
-				<el-button @click="showNewPdf = false">取消</el-button>
-				<el-button type="primary" @click="addNewPdf()">確定</el-button>
-			</div>
-		</el-dialog>
-
 		<div class="filter-container">
 			<el-table 
 			:data="list"
@@ -73,6 +46,45 @@
 				</el-table-column>
 			</el-table>
 		</div>
+
+		<!-- Dialog: 新增 -->
+		<el-dialog width="400px" title="新增" :visible.sync="showNewPdf">
+			<div>
+				<el-form :model="addList" label-width="80px">
+					<el-form-item label="行政區">
+						<el-select class="filter-item" v-model="addList.zipCode" :disabled="Object.keys(options.districtList).length <= 1" style="width: 250px;margin-bottom:15px">
+							<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+						</el-select>
+					</el-form-item>
+					<el-form-item label="報告日期">
+						<el-date-picker
+							v-model="addList.reportDate"
+							type="date"
+							placeholder="日期"
+							:picker-options="pickerOptions"
+							:clearable="false"
+							style="width: 250px"
+						/>
+					</el-form-item>
+					<el-form-item label="檢查日期">
+						<el-date-picker
+							v-model="addList.checkDate"
+							type="date"
+							placeholder="日期"
+							:picker-options="pickerOptions"
+							:clearable="false"
+							style="width: 250px"
+						/>
+					</el-form-item>
+				</el-form>
+				
+			</div>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="showNewPdf = false">取消</el-button>
+				<el-button type="primary" @click="addNewPdf()">確定</el-button>
+			</div>
+		</el-dialog>
+
 		<!-- Dialog: PDF預覽 -->
 		<el-dialog class="pdf-preview" width="800px" :visible.sync="showPdfDialog">
 			<div ref="pdfViewer" />
@@ -177,6 +189,7 @@ export default {
 			addList:{
 				zipCode: 104,
 				reportDate: moment().startOf("d").subtract(1, "d"),
+				checkDate: moment().startOf("d").subtract(1, "d"),
 			},
 			listQuery:{
 				reportType: 1,
@@ -331,7 +344,8 @@ export default {
 			addPerfReport({
 				zipCode: this.addList.zipCode,
 				reportType: this.listQuery.reportType,
-				reportDate: moment(this.addList.reportDate).format('YYYY-MM-DD'),//報告日期
+				reportDate: moment(this.addList.reportDate).format('YYYY-MM-DD'), //報告日期
+				checkDate: moment(this.addList.checkDate).format('YYYY-MM-DD'), //檢查報期
 				perfItems
 			}).then((response) => {
 				if ( response.statusCode == 20000 ) {
@@ -340,6 +354,7 @@ export default {
 						type: "success",
 					});
 				}
+				this.dateRange = [ moment(this.addList.reportDate).toDate(), moment(this.addList.reportDate).add(1, 'd').toDate() ],
 				this.getList();
 				this.loading = false;
 			}).catch(error => { 
