@@ -353,7 +353,7 @@ export default {
 			}
 		},
 		formatter(row, column) {
-			if (Number(row[column.property])) return row[column.property].toLocaleString();
+			if (Number(row[column.property])) return row[column.property];
 			else return row[column.property] || "-";
 		},
 		formatTime(time) {
