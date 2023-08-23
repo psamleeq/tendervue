@@ -129,7 +129,7 @@
 								style="width: 200px"
 								@change="setPDFinputs" />
 						</el-form-item>
-						<el-form-item v-if="['3'].includes(inputs.distressSrc) && inputs.inspection == '1'" label="第一階段回報說明" :label-width="labelWidth1">
+						<el-form-item v-if="['3'].includes(inputs.distressSrc)" label="第一階段回報說明" :label-width="labelWidth1">
 							<el-select v-model.number="inputForm.construction_Text" placeholder="套用模板" clearable @change="setPDFinputs">
 								<el-option v-for="text in constructionText" :key="text" :label="text" :value="text" />
 							</el-select>
@@ -150,7 +150,7 @@
 						<el-form-item label="施工後" :label-width="labelWidth1">
 							<el-input v-model="inputForm.completeFixed_Img" style="width: 200px" @change="setPDFinputs" />
 						</el-form-item>
-						<el-form-item v-if="['3'].includes(inputs.distressSrc) && inputs.inspection == '1'" label="第一階段回報" :label-width="labelWidth1">
+						<el-form-item v-if="['3'].includes(inputs.distressSrc)" label="第一階段回報" :label-width="labelWidth1">
 							<el-input v-model="inputForm.construction_Img" style="width: 200px" @change="setPDFinputs" />
 						</el-form-item>
 					</el-form>
@@ -669,7 +669,7 @@ export default {
 			setPerfContent(this.listQuery.perfContentId, {
 				caseNo: Number(this.inputForm.caseNumber),
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: ((this.inputs.distressSrc == 3) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0),
+				pageCount: (([2, 3].includes(this.inputs.distressSrc)) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0),
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {
