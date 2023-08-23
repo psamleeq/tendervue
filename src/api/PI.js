@@ -43,7 +43,7 @@ export function archiveCaseList(data) {
 
 export function getCheckResult(query) {
 	return request({
-		url: 'PI/checkResult',
+		url: '/PI/checkResult',
 		method: 'get',
 		params: query
 	})
@@ -52,7 +52,7 @@ export function getCheckResult(query) {
 // 成效指標報表
 export function getCaseCount(query) {
 	return request({
-		url: 'PI/caseCount',
+		url: '/PI/caseCount',
 		method: 'get',
 		params: query
 	})
@@ -61,7 +61,7 @@ export function getCaseCount(query) {
 // PI4.2: 保固案件列表
 export function getCaseWarrantyList(query) {
 	return request({
-		url: 'PI/caseWarrantyList',
+		url: '/PI/caseWarrantyList',
 		method: 'get',
 		params: query
 	})
@@ -69,7 +69,7 @@ export function getCaseWarrantyList(query) {
 
 export function addCaseWarrantyList(data) {
 	return request({
-		url: 'PI/caseWarrantyList',
+		url: '/PI/caseWarrantyList',
 		method: 'post',
 		data
 	})
@@ -80,6 +80,14 @@ export function delCaseWarrantyList(data) {
 		url: `/PI/caseWarrantyList`,
 		method: 'delete',
 		data
+	})
+}
+
+export function getCaseWarrantyCount(query) {
+	return request({
+		url: '/PI/caseWarrantyCount',
+		method: 'get',
+		params: query
 	})
 }
 

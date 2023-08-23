@@ -575,7 +575,7 @@ export default {
 				}
 
 				this.viewer.updateTemplate({ 
-					basePdf: this.pdfDoc.output('bloburl'), 
+					basePdf: this.pdfDoc.output('dataurlstring'), 
 					schemas: [{ }]
 				});
 

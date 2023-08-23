@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container PI3_1-Att" v-loading="loading">
+	<div class="app-container PI3_1-Att_1" v-loading="loading">
 		<h2>PI3.1附件</h2>
 
 		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI3.1</el-button>
@@ -83,11 +83,11 @@ import { PDFDocument } from 'pdf-lib';
 import { getPerfContent, setPerfContent } from "@/api/PI";
 
 export default {
-	name: "PI3_1_Att",
+	name: "PI3_1_Att_1",
 	components: { },
 	data() {
 		return {
-			loading: false,
+			loading: true,
 			initPage: 5,
 			listQuery: {
 				reportId: 0,
@@ -216,49 +216,52 @@ export default {
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
 
-			getPerfContent({
-				contentId: this.listQuery.perfContentId
-			}).then((response) => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.list = response.data.list[0];
-					this.setData(this.list);
-				}
-				this.loading = false;
-			}).catch(err => { this.loading = false; });
+			this.setData(this.listQuery.perfContentId);
 		} else this.$router.push({ path: "/PIReport/daily/list" });
 	},
 	mounted() { },
 	methods: {
-		async setData(dataObj) {
-			this.list = dataObj;
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputs = this.list.content.inputs;
+		async setData(perfContentId, initPage=0) {
+			return new Promise(resolve => {
+				getPerfContent({
+					contentId: perfContentId
+				}).then(async (response) => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.list = response.data.list[0];
+						if(Object.keys(this.list.content).length != 0) {
+							this.inputs = this.list.content.inputs;
 
-				// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
-				for(const key in this.inputs) {
-					if(key.includes('Img') && this.inputs[key].length != 0) {
-						await fetch(this.inputs[key])
-							.then(res => res.blob())
-							.then(blob => {
-								const reader = new FileReader();
-								reader.onloadend = () => { this.inputs[key] = reader.result };
-								reader.readAsDataURL(blob);
-							})
+							// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
+							for(const key in this.inputs) {
+								if(key.includes('Img') && this.inputs[key].length != 0) {
+									await fetch(this.inputs[key])
+										.then(res => res.blob())
+										.then(blob => {
+											const reader = new FileReader();
+											reader.onloadend = () => { this.inputs[key] = reader.result };
+											reader.readAsDataURL(blob);
+										})
+								}
+							}
+
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+						}
+						this.reportDate = this.list.reportDate;
+						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+						this.inputs.zipCode = String(this.list.zipCode);
+
+						await this.initPDF();
 					}
-				}
-
-				this.initPage = this.list.content.initPage;
-			}
-			this.reportDate = dataObj.reportDate;
-			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
-			this.inputs.zipCode = String(dataObj.zipCode);
-
-			await this.initPDF();
+					resolve();
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
+			
+			})
 		},
 		initPDF() {
 			return new Promise(resolve => {
@@ -451,13 +454,13 @@ export default {
 				}
 			})
 			const storedContent = {
-				pageCount: this.inputFormArr.length + 1,
 				initPage: this.initPage,
 				inputs
 			}
 
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				pageCount: this.inputFormArr.length + 1,
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {
@@ -485,7 +488,7 @@ export default {
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
-				const filename = "成效式契約指標檢核表(附件)PI-3-1.pdf"; 
+				const filename = "PI3-1附件.pdf"; 
 				const file = new File([blob], filename, { type: 'application/pdf' });
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
@@ -534,7 +537,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PI3_1-Att
+.PI3_1-Att_1
 	.collapse-label
 		width: 100%
 		.el-collapse-item__header

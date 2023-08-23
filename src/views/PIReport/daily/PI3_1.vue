@@ -74,7 +74,7 @@ export default {
 		return {
 			labelWidth1:'170px',
 			labelWidth2:'10px',
-			loading: false,
+			loading: true,
 			pickerOptions: {
 				firstDayOfWeek: 1,
 				shortcuts: [
@@ -200,36 +200,37 @@ export default {
 				Number(pageIndex) == cidList.length - 1 ? -1 : cidList[pageIndex+1] 
 			];
 
-			getPerfContent({
-				contentId: this.listQuery.perfContentId
-			}).then((response) => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.list = response.data.list[0];
-					this.setData(this.list);
-				}
-				this.loading = false;
-			}).catch(err => { this.loading = false; });
+			this.setData(this.listQuery.perfContentId);
 		} else this.$router.push({ path: "/PIReport/daily/list" });
 	},
 	mounted() { },
 	methods: {
-		async setData(dataObj) {
-			this.list = dataObj;
-			if(Object.keys(this.list.content).length != 0) {
-				this.inputs = this.list.content.inputs;
-				// this.inputForm = this.list.content.inputForm;
-				this.initPage = this.list.content.initPage;
-			}
-			this.reportDate = this.list.reportDate;
-			this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
-			this.inputs.zipCode = String(this.list.zipCode);
+		async setData(perfContentId, initPage=0) {
+			return new Promise(resolve => {
+				getPerfContent({
+					contentId: perfContentId
+				}).then(async (response) => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.list = response.data.list[0];
+						if(Object.keys(this.list.content).length != 0) {
+							this.inputs = this.list.content.inputs;
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
+						}
+						this.reportDate = this.list.reportDate;
+						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
+						this.inputs.zipCode = String(this.list.zipCode);
 
-			await this.initPDF();
+						await this.initPDF();
+					}
+					resolve();
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
+			})
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -293,12 +294,12 @@ export default {
 		storeData(){
 			this.loading = true;
 			const storedContent = {
-				pageCount: 1,
 				initPage: this.initPage,
 				inputs: this.inputs
 			}
 			setPerfContent(this.listQuery.perfContentId,{
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
+				pageCount: 1,
 				content: JSON.stringify(storedContent)
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
@@ -325,7 +326,7 @@ export default {
 				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
 				// window.open(URL.createObjectURL(blob));
 
-				const filename = "成效式契約指標檢核表PI-3-1.pdf"; 
+				const filename = "PI3-1.pdf"; 
 				const file = new File([blob], filename, { type: 'application/pdf' });
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
@@ -353,7 +354,7 @@ export default {
 					break;
 				case 1:
 					this.$router.push({
-						path: "/PIReport/daily/PI3_1_Att",
+						path: "/PIReport/daily/PI3_1_Att_1",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					break;

@@ -1,17 +1,17 @@
 <template>
-	<div class="app-container PI2_1-Att_2" v-loading="loading">
-		<h2>PI2.1附件-2</h2>
+	<div class="app-container PI2_2-Att_3" v-loading="loading">
+		<h2>PI2.2附件-3</h2>
 
-		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.1附件</el-button>
-		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">日報表</el-button>
+		<el-button v-if="pageTurn[0] != -1" icon="el-icon-arrow-left" size="mini" plain :disabled="pageTurn[0] == -1" @click="handlePageTurn(-1)">PI2.2附件-2</el-button>
+		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn()">週報表</el-button>
 		<span> > </span>
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
-		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI3.1</el-button>
+		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI3.2</el-button>
 
 		<el-row :gutter="24">
 			
-			<el-col :span="11">
-				<el-card shadow="never" style="width: 500px; margin: 40px auto; padding: 5px 10px; ">
+			<el-col :span="12">
+				<el-card shadow="never" style="width: 550px; margin: 40px auto; padding: 5px 10px; ">
 					<el-form :model="inputs" label-width="100px">
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h3>通報資訊</h3>
@@ -39,29 +39,11 @@
 								@change="previewPdf()"
 							/>
 						</el-form-item>
-						
-						<el-form-item label="1999通報" style="width: 400px">
-							<el-upload
-								list-type="picture"
-								action
-								accept=".jpg" 
-								:multiple="false" 
-								:limit="1" 
-								:auto-upload="false"
-								:on-change="handleChange"
-								:on-remove="handleRemove"
-								:file-list="imgList"
-							>
-								<el-button type="primary" :disabled="imgList.length >= 1">上傳圖片</el-button>
-							</el-upload>
-						</el-form-item>
 					</el-form>
 				</el-card>
 			</el-col>
 
-			<!-- </div> -->
-
-			<el-col :span="13">
+			<el-col :span="12">
 				<div ref="pdfViewer" />
 			</el-col>
 		</el-row>
@@ -79,12 +61,12 @@ import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
 export default {
-	name: "PI2_1_Att_2",
-	components: {TimePicker },
+	name: "PI2_2_Att_3",
+	components: { TimePicker },
 	data() {
 		return {
 			loading: true,
-			initPage: 2,
+			initPage: 3,
 			listQuery: {
 				reportId: 0,
 				perfContentId: null
@@ -174,6 +156,15 @@ export default {
 			},
 			imageWidth:null,
 			imageHeight:null,
+			// rowActive: {},
+			newItem: {
+				reportDate: "",
+				distressSrc: "",
+				AC_total: 0,
+				AC_unreasonable: 0,
+				facility_total: 0,
+				facility_unreasonable: 0
+			},
 			imgList: [],
 			inputs: {
 				companyName: '聖東營造股份有限公司',
@@ -181,11 +172,8 @@ export default {
 				dateYear:'',
 				zipCode: 104,
 				district: '中山區',
-				serialNumber1: '',
-				serialNumber2: '',
-				case1999Img: '',
-				listNo1999: [],
-				listUnreason: []
+				serialNumber: '',
+				listNonAccepted: []
 			},
 			deviceType:{
 				1:'AC路面',
@@ -202,6 +190,7 @@ export default {
 		}
 	},
 	created() {
+		this.rowActive = {};
 		if(this.$route.query.contentId) {
 			this.listQuery.reportId = this.$route.query.reportId;
 			this.listQuery.perfContentId = this.$route.query.contentId;
@@ -214,13 +203,13 @@ export default {
 			];
 
 			this.setData(this.listQuery.perfContentId);
-		} else this.$router.push({ path: "/PIReport/daily/list" });
+		} else this.$router.push({ path: "/PIReport/weekly/list" });
 	},
 	mounted() { },
 	methods: {
 		async setData(perfContentId, initPage=0) {
 			return new Promise(resolve => {
-			getPerfContent({
+				getPerfContent({
 					contentId: perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
@@ -231,13 +220,13 @@ export default {
 					} else {
 						this.list = response.data.list[0];
 						this.reportDate = this.list.reportDate;
+						this.newItem.reportDate = moment(this.reportDate).format('MM/DD');
 						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 						this.inputs.zipCode = this.list.zipCode;
 						await this.initPDF();
 
 						if(Object.keys(this.list.content).length != 0) {
 							this.inputs = this.list.content.inputs;
-							if(this.inputs.case1999Img.length != 0) this.imgList = [{ url: this.inputs.case1999Img }];
 							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
 							await this.previewPdf();
 						} else await this.getList();
@@ -245,7 +234,8 @@ export default {
 					resolve();
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
-			});
+			
+			})
 		},
 		async initPDF() {
 			return new Promise(resolve => {
@@ -294,79 +284,40 @@ export default {
 		async getList() {
 			new Promise((resolve, reject) => {
 				this.loading = true;
-				dateWatcher(this.districtList[this.inputs.zipCode].start, [this.reportDate, this.reportDate]);
-				let startDate = moment(this.reportDate).format("YYYY-MM-DD");
+				let startDate = moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD");
 				let endDate = moment(this.reportDate).add(1, "day").format("YYYY-MM-DD");
+				dateWatcher(this.districtList[this.inputs.zipCode].start, [startDate, endDate]);
 
-				this.inputs.listNo1999 = [];
-				this.inputs.listUnreason = [];
+				this.inputs.listNonAccepted = [];
 
 				getCaseList({
 					filterType: 2,
-					caseType: 2,
+					caseType: 1,
 					zipCode: this.inputs.zipCode,
 					timeStart: startDate,
 					timeEnd: endDate
 				}).then(async (response) => {
 					if (response.data.list.length != 0) {
-						const list = response.data.list;
-						this.inputs.listNo1999 = list.filter(l => l.DistressSrc !== "1999交辦案件");
-						this.inputs.listUnreason = list.filter(l => (l.State & 16) && l.StateNotes.Firm !== '優於民眾查報');
+
+						this.inputs.listNonAccepted = response.data.resultList;
+						this.inputs.listNonAccepted.forEach(caseSpec => {
+							caseSpec.CaseDate = moment(caseSpec.CaseDate).format('MM/DD');
+							if(caseSpec.State & 32) {
+								caseSpec.UploadCaseNoSV = caseSpec.UploadCaseNo;
+								caseSpec.StateNotesSV = caseSpec.StateNotes.SV;
+							}
+
+							if(caseSpec.State & 64) {
+								caseSpec.UploadCaseNoOrgan = caseSpec.UploadCaseNo;
+								caseSpec.StateNotesOrgan = caseSpec.StateNotes.Organ;
+							}
+						})
 					}
 					await this.previewPdf()
 					resolve();
 					this.loading = false;
 				}).catch(err => { this.loading = false; });
 			})
-		},
-		async handleChange(file, fileList) {
-			if(fileList.length > 1) fileList.shift();
-
-			const reader = new FileReader();
-			reader.readAsDataURL(file.raw);
-			reader.onloadend = (evt) => {
-				this.imgList = [{
-					url: evt.target.result
-				}];
-				this.inputs.case1999Img = evt.target.result;
-
-				this.previewPdf();
-			};
-		},
-		handleRemove(file, fileList) {
-			this.imgList = [];
-			this.inputs.case1999Img = "";
-			this.previewPdf();
-		},
-		headRows() {
-			return [
-				{ id: '案件編號', name: '通報者', item: '缺失項目', address:'地 點', reason:'原 因' },
-			]
-		},
-		bodyRows(data) {
-			// console.log(data);
-			var body = []
-			for (var j = 0; j <= data.length; j++) {
-				if (data[j]) {
-					// console.log(data[j]);
-					body.push({
-						id: data[j].UploadCaseNo,
-						name: data[j].DistressSrc,
-						item: this.deviceType[data[j].rDeviceType],
-						address: data[j].CaseName,
-						reason: data[j].StateNotes.Firm
-					});
-				}else {
-					body.push({
-						id: '',
-						name: '',
-						item: '',
-						address: '',
-					});
-				}
-			}
-
-			return body
 		},
 		async createPdf_header(pageIndex) {
 			return new Promise((resolve, reject) => {
@@ -375,16 +326,17 @@ export default {
 				this.pdfDoc.setFontSize(15);
 				this.pdfDoc.text(`成效式契約指標檢核表`, width/2, height-280, { align: 'center' });
 				this.pdfDoc.setFontSize(12);
-				this.pdfDoc.text(`項目:【PI-2.1附件】`, width-190, height-270, { align: 'left' })
-				this.pdfDoc.text(`日報表`, width-40, height-270, { align: 'left' });
+				this.pdfDoc.text(`項目:【PI-2.2附件】`, width-190, height-270, { align: 'left' });
+				this.pdfDoc.text(`週報表`, width-40, height-270, { align: 'left' });
 
+				const serialNumber = `${this.inputs.serialNumber}` + (pageIndex == 0 ? "" : `-${pageIndex}`);
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${this.inputs.serialNumber1}-${pageIndex+1}`]],
+					head: [['工程名稱',`${this.districtList[this.inputs.zipCode].tenderName}`,'紀錄編號',`${serialNumber}`]],
 					body: [['施工廠商',`${this.inputs.companyName}`,'檢查日期',`${this.inputs.formatDate}`]],
 					startY: height-265,
-				});
+				})
 
 				resolve();
 			})
@@ -402,100 +354,67 @@ export default {
 		},
 		async createPdf() {
 			return new Promise(async (resolve, reject) => {
-				if(this.inputs.case1999Img.length != 0) {
-					// 獲取圖片實際高度寬度
-					const image = new Image();
-					image.src = this.inputs.case1999Img;
-					await image.decode();
-					this.imageWidth = image.width;
-					this.imageHeight = image.height;
+				const total = this.inputs.listNonAccepted.length;
+				const totalSV = this.inputs.listNonAccepted.filter(l => l.State & 32).length;
+				const totalOrgan = this.inputs.listNonAccepted.filter(l => l.State & 64).length;
+
+				const splitTable = this.inputs.listNonAccepted.reduce((acc, cur) => {
+					const rowLimit = acc.length == 1 ? 22 : 25;
+					if(acc[acc.length-1].length <= rowLimit) acc[acc.length-1].push(cur);
+					else acc.push([cur]);
+					return acc;
+				}, [[]]);
+
+				for(const [ pageIndex, table ] of splitTable.entries()) {
+					this.pdfDoc.addPage();
+					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+					await this.createPdf_header(pageIndex);
+					
+					if(pageIndex == 0) {
+						this.pdfDoc.autoTable({
+							theme: 'plain',
+							styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
+							head: [['認定不正確的案件數資訊: 無不正確']],
+							startY: this.pdfDoc.lastAutoTable.finalY,
+						})
+						this.pdfDoc.autoTable({
+							theme: 'plain',
+							styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, minCellHeight: 12, valign: 'middle', halign: 'center' },
+							head: [['以下空白']],
+							startY: this.pdfDoc.lastAutoTable.finalY,
+						})
+					}
+
+					this.pdfDoc.autoTable({
+						theme: 'plain',
+						styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
+						head: [[`機關或專案管理/監造抽查檢核後發現錯誤的案件數資訊: ${total} 件 (監造 ${totalSV}件 + 機關 ${totalOrgan}件)`]],
+						startY: this.pdfDoc.lastAutoTable.finalY,
+					})
+					this.pdfDoc.autoTable({
+						columns: [
+							{ dataKey: 'CaseDate', header: '日期' },
+							{ dataKey: 'UploadCaseNoSV', header: '抽查案號(監造)' },
+							{ dataKey: 'StateNotesSV', header: '被查報案件數/不合理數(監造)' },
+							{ dataKey: 'UploadCaseNoOrgan', header: '抽查案號(機關)' },
+							{ dataKey: 'StateNotesOrgan', header: '被查報案件數/不合理數(機關)' }
+						],
+						body: table,
+						theme: 'plain',
+						styles: { font: "edukai", lineWidth: 0.1, lineColor: 0, halign: 'center', valign: 'middle'	},
+						headStyles: { textColor: 90, fillColor: 240 },
+						columnStyles: { 
+							CaseDate: { cellWidth: 14 }, 
+							UploadCaseNoSV: { cellWidth: 27 }, 
+							StateNotesSV: { cellWidth: 'auto' }, 
+							UploadCaseNoOrgan: { cellWidth: 27 }, 
+							StateNotesOrgan: { cellWidth: 'auto' } 
+						},
+						startY: this.pdfDoc.lastAutoTable.finalY,
+					})
+
+					await this.createPdf_footer();
 				}
-				
-				this.pdfDoc.addPage();
-				while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
-
-				//第一頁
-				await this.createPdf_header(0);
-				
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['當日被通報案件(議員、單一陳情、管區……等)']],
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
-				let body1 = this.bodyRows(this.inputs.listNo1999)
-				this.pdfDoc.autoTable({
-					columns: [
-						{ dataKey: 'id', header: '案件編號' },
-						{ dataKey: 'name', header: '通報者' },
-						{ dataKey: 'item', header: '缺失項目' },
-						{ dataKey: 'address', header: '地 點' },
-					],
-					body: body1,
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, halign: 'center'	},
-					columnStyles: { id: { cellWidth:30 }, name: { cellWidth:30 }, item: { cellWidth:25 }, address: { cellWidth:'auto',halign:'left' } },
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['當日被通報案件(1999)']],
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					body: [[{content: '',styles: { minCellHeight: 40 }}]],
-					didDrawCell: async (data) => {
-						// 添加圖片到PDF中
-						if (data.column.index === 0 && data.row.index === 0 && this.inputs.case1999Img.length != 0) {
-							const cellWidth = data.cell.width;
-							const cellHeight = data.cell.height;
-
-							// 等比縮放
-							let scale = 1;
-							if (this.imageWidth > cellWidth || this.imageHeight > cellHeight) {
-								const widthRatio = cellWidth / this.imageWidth;
-								const heightRatio = cellHeight / this.imageHeight;
-								scale = Math.min(widthRatio, heightRatio);
-							}
-							const scaledWidth = this.imageWidth * scale;
-							const scaledHeight = this.imageHeight * scale;
-
-							// 居中位置
-							const x = data.cell.x + (cellWidth - scaledWidth) / 2;
-							const y = data.cell.y + (cellHeight - scaledHeight) / 2;
-
-							await this.pdfDoc.addImage(this.inputs.case1999Img, 'JPEG', x, y, scaledWidth, scaledHeight);
-						}
-					},
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
-				await this.createPdf_footer();
-
-				// 第二頁
-				this.pdfDoc.addPage(this.pdfSetting.format, this.pdfSetting.orientation);
-				await this.createPdf_header(1);
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['當日廠商判定不合理案件(1999、議員、單一陳情、管區……等)']],
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
-				let head2 = this.headRows()
-				let body2 = this.bodyRows(this.inputs.listUnreason)
-				this.pdfDoc.autoTable({
-					theme: 'plain',
-					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10, halign: 'center'},
-					columnStyles: { id: { cellWidth:30 }, name: { cellWidth:30 }, item: { cellWidth:25 }, address: { cellWidth:50, halign:'left' }, reason: { halign:'left' } },
-					head: head2,
-					body: body2,
-					startY: this.pdfDoc.lastAutoTable.finalY,
-				})
-
-				await this.createPdf_footer();
-
 				resolve();
 			})
 		},
@@ -508,8 +427,7 @@ export default {
 			//民國年份
 			this.inputs.dateYear = reportDate.year()
 			//紀錄編號
-			this.inputs.serialNumber1 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
-			this.inputs.serialNumber2 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
+			this.inputs.serialNumber = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
 			//行政區
 			this.inputs.district = this.districtList[this.inputs.zipCode].name		
 		},
@@ -573,32 +491,32 @@ export default {
 			});
 		},
 		handleDownload() {
-			this.pdfDoc.save(`PI2-1附件-2.pdf`);
+			this.pdfDoc.save(`PI2-2附件-3.pdf`);
 		},
 		handlePageTurn(type) {
 			switch(type) {
 				case 0:
 					this.$router.push({
-						path: "/PIReport/daily/edit",
+						path: "/PIReport/weekly/edit",
 						query: { reportId: this.listQuery.reportId }
 					})
 					break;
 				case -1:
 					this.$router.push({
-						path: "/PIReport/daily/PI2_1_Att_1",
+						path: "/PIReport/weekly/PI2_2_Att_2",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[0], cidList: this.$route.query.cidList }
 					})
 					break;
 				case 1:
 					this.$router.push({
-						path: "/PIReport/daily/PI3_1",
+						path: "/PIReport/weekly/PI3_2",
 						query: { reportId: this.listQuery.reportId, contentId: this.pageTurn[1], cidList: this.$route.query.cidList }
 					})
 					break;
 				default:
 					const date = moment(this.reportDate).format("YYYY-MM-DD");
 					this.$router.push({
-						path: "/PIReport/daily/list",
+						path: "/PIReport/weekly/list",
 						query: { zipCode: this.inputs.zipCode, timeStart: date, timeEnd: date }
 					})
 					break;
