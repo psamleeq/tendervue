@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container perfReport-List" v-loading="loading" :element-loading-text="`PDF生成中 (${genPercent}%) ...`">
+	<div class="app-container perfReport-List" v-loading.fullscreen="loading" :element-loading-text="genPDF ? `PDF生成中 (${genPercent}%) ...` : ''">
 		<h2>{{ options.reportTypeMap[listQuery.reportType].name }} - 列表</h2>
 		<div class="filter-container">
 			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(options.districtList).length <= 1">
@@ -156,6 +156,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			genPDF: false,
 			genPercent: 0,
 			showNewPdf:false,
 			timeTabId: 4,
@@ -389,6 +390,7 @@ export default {
 		},
 		async previewPdf(row) {
 			this.loading = true;
+			this.genPDF = true;
 			this.rowActive = row;
 			this.perfPagesObj = {};
 			this.genPercentArr = this.listQuery.reportType == 1 ? [ 0, 95, 95, 95, 97, 100 ] : this.listQuery.reportType == 2 ? [ 0, 30, 90, 95, 97, 100 ] : [ 0, 40, 90, 95, 97, 100 ];
@@ -511,6 +513,7 @@ export default {
 			this.viewer.updateTemplate(this.template);
 
 			this.loading = false;
+			this.genPDF = false;
 			this.showPdfDialog = true;
 		},
 		async fetchPdf_weekly() {
@@ -588,6 +591,7 @@ export default {
 			URL.revokeObjectURL(url);
 
 			this.loading = false;
+			this.genPDF = false;
 		},
 		handleDownload() {
 			this.$confirm(`<p>確定下載 ${this.formatDate(this.rowActive.reportDate)} ${this.options.reportTypeMap[this.rowActive.reportType].name}? <br/>(下載封存後將<span style="color: #F56C6C">無法修改</span>。)</p>`, "確認", { dangerouslyUseHTMLString: true, showClose: false }).then(() => {
