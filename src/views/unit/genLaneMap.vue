@@ -732,8 +732,11 @@ export default {
 					acc.push({ range: [ cur.index, endRange ], dist });
 
 					return acc;
-				}, []).sort((a, b) => (b.dist - a.dist));
-				if(this.boundary[0].range[1] == this.boundary[1].range[0]) [ this.boundary[1], this.boundary[2] ] = [ this.boundary[2], this.boundary[1] ]; 
+				}, []);
+				
+				this.boundary.sort((a, b) => (b.dist - a.dist));
+				if(this.boundary[0].range[0] == this.boundary[1].range[1] || this.boundary[0].range[1] == this.boundary[1].range[0]) [ this.boundary[1], this.boundary[2] ] = [ this.boundary[2], this.boundary[1] ];
+				if(this.boundary[0].range[0] == this.boundary[1].range[1] || this.boundary[0].range[1] == this.boundary[1].range[0]) [ this.boundary[1], this.boundary[3] ] = [ this.boundary[3], this.boundary[1] ];
 
 				const points = this.boundary.slice(0, 2).sort((a, b) => (a.range[0] - b.range[0]));
 				this.createLines(points);

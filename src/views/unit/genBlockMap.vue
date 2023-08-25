@@ -807,9 +807,12 @@ export default {
 					acc.push({ range: [ cur.index, endRange ], dist });
 
 					return acc;
-				}, []).sort((a, b) => (b.dist - a.dist));
-				if(this.boundary[0].range[1] == this.boundary[1].range[0]) [ this.boundary[1], this.boundary[2] ] = [ this.boundary[2], this.boundary[1] ];
+				}, []);
 
+				this.boundary.sort((a, b) => (b.dist - a.dist));
+				if(this.boundary[0].range[0] == this.boundary[1].range[1] || this.boundary[0].range[1] == this.boundary[1].range[0]) [ this.boundary[1], this.boundary[2] ] = [ this.boundary[2], this.boundary[1] ];
+				if(this.boundary[0].range[0] == this.boundary[1].range[1] || this.boundary[0].range[1] == this.boundary[1].range[0]) [ this.boundary[1], this.boundary[3] ] = [ this.boundary[3], this.boundary[1] ];
+				
 				const points = this.boundary.slice(0, 2).sort((a, b) => (a.range[0] - b.range[0]));
 				this.createLines(points);
 				this.stepOrder = 1;
@@ -842,7 +845,6 @@ export default {
 						for(let i = 1; i <= range[1]; i++) acc[index+1].points.push({ lat: arr[i][1], lng: arr[i][0]});
 					}
 				}
-
 				return acc;
 			}, {});
 
