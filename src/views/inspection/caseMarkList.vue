@@ -383,32 +383,32 @@ export default {
 
 		getTenderRound().then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
-					let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
-					if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
+				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
 
-					let name = `${cur.tenderName}`;
-					if(cur.title.length != 0) name += `_${cur.title}`;
-					name += ` Round${cur.round}`;
+				let name = `${cur.tenderName}`;
+				if(cur.title.length != 0) name += `_${cur.title}`;
+				name += ` Round${cur.round}`;
 
-					acc[roundId] = { 
-						id: cur.id,
-						name, 
-						tenderId: cur.tenderId, 
-						isMain: cur.zipCodeSpec == 0,
-						zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
-						roundStart: cur.roundStart, 
-						roundEnd: cur.roundEnd
-					};
-					return acc;
-				}, {});
+				acc[roundId] = { 
+					id: cur.id,
+					name, 
+					tenderId: cur.tenderId, 
+					isMain: cur.zipCodeSpec == 0,
+					zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
+					roundStart: cur.roundStart, 
+					roundEnd: cur.roundEnd
+				};
+				return acc;
+			}, {});
 
-				if(Object.keys(this.options.tenderRoundMap).length > 0) {
-					if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
-				}
-				if(Object.keys(this.options.tenderRoundMap).length == 0) {
-					this.options.tenderRoundMap = { "-1": { id: -1 }};
-					this.listQuery.tenderRound = -1;
-				}
+			if(Object.keys(this.options.tenderRoundMap).length > 0) {
+				if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+			}
+			if(Object.keys(this.options.tenderRoundMap).length == 0) {
+				this.options.tenderRoundMap = { "-1": { id: -1 }};
+				this.listQuery.tenderRound = -1;
+			}
 		});
 	},
 	mounted() {
@@ -717,6 +717,8 @@ export default {
 	.dialog-filter
 		.el-select
 			width: 55px
+			margin-top: -5px
+			margin-bottom: 10px
 			.el-input__inner
 				padding: 0 13px 0 5px
 				text-align: center

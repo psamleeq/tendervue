@@ -32,7 +32,14 @@
 
 		<!-- 資料列表 -->
 		<el-table ref="multipleTable" empty-text="目前沒有資料" :data="list" border fit :header-cell-style="{ 'background-color': '#F2F6FC' }" style="width: 100%">
-			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" align="center" :sortable="value.sortable">
+			<el-table-column 
+				v-for="(value, key) in headers" 
+				:key="key" :prop="key" 
+				:label="value.name" 
+				:width="key == 'InspectId' ? 60 : ['ZipCode', 'DateCollect_At'].includes(key) ? 140 : null"
+				align="center" 
+				:sortable="value.sortable"
+			>
 				<template slot-scope="{ row, column }">
 					<span v-if="['State'].includes(column.property)">
 						<span v-if="row.DateCompleted_At">
@@ -41,21 +48,36 @@
 						<span v-else-if="row.Duty_with">
 							{{ row.Duty_with_Name }} 標記中
 						</span>
-						<span v-else> - </span>
+						<el-button v-if="!row.DateCompleted_At" class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">標記</el-button>
 						<el-button v-if="checkPermission(['inspection.marker']) && row.DateCompleted_At" type="danger" size="mini" round plain @click="showDialog(row, -1)">撤銷</el-button>
 					</span>
 					<span v-else-if="['DateCollect_At'].includes(column.property)">
 						<span>{{ formatTime(row[column.property]) }}</span>
 					</span>
+					<span v-else-if="['SurveyId'].includes(column.property)">
+						<span v-if="row.isEdit">
+							<el-select v-model.number="row.tenderRound" class="tender-select" popper-class="type-select tender" size="mini" clearable>
+								<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
+							</el-select>
+							<el-button v-if="row.isEdit" style="padding: 5px 5px" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
+							<el-button v-if="row.isEdit" style="padding: 5px 5px" type="primary" size="mini" @click="setResult(row, 0)">確定</el-button>				
+						</span>
+						<span v-else>
+							<span>{{ options.tenderRoundMap[row.tenderRound] ? options.tenderRoundMap[row.tenderRound].name : "-" }}</span>
+							<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+								<i class="el-icon-edit" />
+							</el-button>
+						</span>
+					</span>
 					<span v-else-if="['Notes'].includes(column.property)">
 						<span v-if="row.isEdit">
-							<el-input v-model="InputNotes" size="mini" style="width: 150px"></el-input>
+							<el-input v-model="row.Notes" size="mini" style="width: 150px"></el-input>
 							<el-button v-if="row.isEdit" style="padding: 5px 5px" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
-							<el-button v-if="row.isEdit" style="padding: 5px 5px" type="primary" size="mini" @click="row.isEdit = false;setNotes(row)">確定</el-button>				
+							<el-button v-if="row.isEdit" style="padding: 5px 5px" type="primary" size="mini" @click="setResult(row, 0)">確定</el-button>				
 						</span>
 						<span v-else>
 							<span>{{ row[column.property] }}</span>
-							<el-button type="text" style="margin-left: 10px" size="mini" @click="beforeEditNotes(row)">
+							<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
 								<i class="el-icon-edit" />
 							</el-button>
 						</span>
@@ -68,10 +90,10 @@
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="checkPermission(['inspection.marker'])" label="操作" align="center">
+			<el-table-column v-if="checkPermission(['inspection.marker'])" label="操作" align="center" width="180">
 				<template slot-scope="{ row }">
 					<el-button-group>
-						<el-button v-if="!row.DateCompleted_At" class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">標記</el-button>
+						<!-- <el-button v-if="!row.DateCompleted_At" class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">檢視</el-button> -->
 						<el-button class="btn-action" type="info" plain size="mini" round @click="showList(row)">列表</el-button>
 						<el-button v-if="!row.DateCompleted_At" type="success" size="mini" round @click="showDialog(row, 2)">完成</el-button>
 					</el-button-group>
@@ -87,7 +109,7 @@
 			</span>
 			<span slot="footer" class="dialog-footer">
 				<el-button @click="dialogVisible = false">取消</el-button>
-				<el-button type="primary" @click="dialogVisible = false; setResult();">確定</el-button>
+				<el-button type="primary" @click="dialogVisible = false; setResult(rowActive, rowActive.state);">確定</el-button>
 			</span>
 		</el-dialog>
 	</div>
@@ -95,6 +117,7 @@
 
 <script>
 import moment from "moment";
+import { getTenderRound } from "@/api/type";
 import { getInspectionList, setInspectionList } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 import TimePicker from '@/components/TimePicker';
@@ -143,6 +166,10 @@ export default {
 				name:'收取日',
 				sortable: false,
 			},
+			SurveyId: {
+				name:'合約',
+				sortable: false,
+			},
 			Notes:{
 				name:'備註',
 				sortable: false,
@@ -153,20 +180,51 @@ export default {
 			}
 		},
 		dialogVisible: false,
-		InputNotes:''
+		InputNotes:'',
+		options: {
+			tenderRoundMap: {}
+		}
 	};
 	},
 	computed: {},
 	watch: {},
-	created() { },
+	created() {
+		getTenderRound().then(response => {
+			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+				if(![1031, 1041].includes(cur.tenderId)) return acc;
+
+				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
+				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+
+				let name = `${cur.tenderName.replace("年度", "")}`;
+				if(cur.title.length != 0) name += `_${cur.title}`;
+
+				acc[roundId] = { 
+					id: cur.id,
+					name, 
+					tenderId: cur.tenderId, 
+					isMain: cur.zipCodeSpec == 0,
+					zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
+					roundStart: cur.roundStart, 
+					roundEnd: cur.roundEnd
+				};
+				return acc;
+			}, {});
+
+			if(Object.keys(this.options.tenderRoundMap).length > 0) {
+				if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+			}
+			if(Object.keys(this.options.tenderRoundMap).length == 0) {
+				this.options.tenderRoundMap = { "-1": { id: -1 }};
+				this.listQuery.tenderRound = -1;
+			}
+		});
+	},
 	mounted() {},
 	methods: {
 		checkPermission,
 		showMap(row) {
-			this.rowActive = JSON.parse(JSON.stringify(row));
-			this.$set(this.rowActive, "state", 1);
-
-			this.setResult().then(() => {
+			this.setResult(row, 1).then(() => {
 				this.$router.push({
 					path: "/inspection/caseMark",
 					query: { inspectId: row.InspectId },
@@ -209,39 +267,30 @@ export default {
 						this.list = response.data.list;
 						this.list.forEach((l)=>{
 							this.$set(l, "isEdit", false);
+							const tenderRound = l.SurveyId
+								? Object.keys(this.options.tenderRoundMap).filter(key => this.options.tenderRoundMap[key].id == l.SurveyId)[0]
+								: 0;
+							this.$set(l, "tenderRound", Number(tenderRound) || null);
 						})
 					}
 					this.loading = false;
 				}).catch(err => {this.loading = false});
 			}
 		},
-		getAreaName(zipcode){
-			const areaMap = {
-				103: '大同區',
-				104: '中山區',
-			};
-			return areaMap[zipcode] || "-"
-		},
 		showDialog(row, state){
 			this.dialogVisible=true;
 			this.rowActive = JSON.parse(JSON.stringify(row));
 			this.$set(this.rowActive, "state", state);
 		},
-		beforeEditNotes(row){
-			row.isEdit = true
-			this.InputNotes = row.Notes
-		},
-		setNotes(row){
-			this.rowActive = JSON.parse(JSON.stringify(row));
-			this.rowActive.Notes = this.InputNotes;
-			this.$set(this.rowActive, "state", 0);
-			this.setResult()
-		},
-		async setResult() {
+		async setResult(row, state = 0) {
 			return new Promise(resolve => {
-				setInspectionList(this.rowActive.InspectId, {
-					state: this.rowActive.state,
-					notes: this.rowActive.Notes,
+				row.isEdit = false;
+				const tenderRound = this.options.tenderRoundMap[row.tenderRound];
+
+				setInspectionList(row.InspectId, {
+					state,
+					surveyId: tenderRound ? tenderRound.id : 0,
+					notes: row.Notes,
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						this.$message({
