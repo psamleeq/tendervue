@@ -324,12 +324,27 @@ export default {
 				timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
 				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
 			}).then(response => {
-				this.inputForm.informed_Num22 = Number(response.data.result.caseTotal_inform);
-				this.inputForm.companyInform_Num22 = Number(response.data.result.caseTotal_report);
-				this.inputForm.unreasonable_Num22 = Number(response.data.result.caseTotal_unreasonable);
 
-				this.setPDFinputs();
-				this.loading = false;
+				getPerfContent({
+					reportId: this.listQuery.reportId,
+					perfItem: 202,
+					perfAtt: 2,
+					perfPages: 0
+				}).then(res => {
+					const content = res.data.list[0].content;
+					let examNum = 0;
+					if(content.inputs && content.inputs.listOther) {
+						console.log(content.inputs.listOther)
+						examNum = content.inputs.listOther.reduce((acc, cur) => (acc += (Number(cur.AC_total) + Number(cur.facility_total))), 0);
+					}
+					
+					this.inputForm.informed_Num22 = Number(response.data.result.caseTotal_inform) + examNum;
+					this.inputForm.companyInform_Num22 = Number(response.data.result.caseTotal_report);
+					this.inputForm.unreasonable_Num22 = Number(response.data.result.caseTotal_unreasonable);
+
+					this.setPDFinputs();
+					this.loading = false;
+				}).catch(err => { this.loading = false; });
 			}).catch(err => this.loading = false);
 		},
 		storeData(){
