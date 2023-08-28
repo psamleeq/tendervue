@@ -92,6 +92,14 @@ export function importInspectionCase(data) {
 	})
 }
 
+export function importAllInspectCase(data) {
+	return request({
+		url: '/inspection/allCaseImport',
+		method: 'post',
+		data
+	})
+}
+
 // 追蹤列表
 export function getCaseTrackingList(query) {
 	return request({

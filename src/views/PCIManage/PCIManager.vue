@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container PCI-Manager" v-loading="loading">
-		<h2>PCI管理</h2>
+		<h2>合約管理</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="filter-item">
@@ -51,52 +51,6 @@
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="checkPermission(['rAdm'])" label="即時運算" align="center" width='120'>
-				<template slot-scope="{ row }">
-					<el-button-group v-if="!row.archiveTime">
-						<el-button class="btn-action" type="primary" plain @click="calPCI(row.id, 0)">重算</el-button>
-						<el-button class="btn-action" type="success" plain @click="calPCI(row.id, 100)">滿值</el-button>
-					</el-button-group>
-					<span v-else> - </span>
-				</template>
-			</el-table-column>
-
-			<el-table-column label="區塊" align="center">
-				<template slot-scope="{ row }">
-					<el-row v-if="!row.archiveTime" :gutter="5" type="flex" justify="center" align="middle">
-						<el-col :span="14">
-							<el-input v-model="row.blockId" placeholder="區塊編碼" />
-						</el-col>
-						<el-col :span="10">
-							<el-button-group>
-								<el-button class="btn-action" type="primary" plain @click="calPCISpec(row.id, row.blockId, 0)">重算</el-button>
-								<el-button class="btn-action" type="info" plain @click="calPCISpec(row.id, row.blockId, -1)">重置</el-button>
-								<el-button class="btn-action" type="success" plain @click="calPCISpec(row.id, row.blockId, 100)">滿值</el-button>
-							</el-button-group>
-						</el-col>
-					</el-row>
-					<span v-else> - </span>
-				</template>
-			</el-table-column>
-
-			<el-table-column label="路段" align="center">
-				<template slot-scope="{ row }">
-					<el-row v-if="!row.archiveTime" :gutter="5" type="flex" justify="center" align="middle">
-						<el-col :span="14">
-							<el-input v-model="row.roadName" placeholder="道路名稱" />
-						</el-col>
-						<el-col :span="10">
-							<el-button-group>
-								<el-button class="btn-action" type="primary" plain @click="calPCIRoad(row.id, row.roadName, 0)">重算</el-button>
-								<el-button class="btn-action" type="info" plain @click="calPCIRoad(row.id, row.roadName, -1)">重置</el-button>
-								<el-button class="btn-action" type="success" plain @click="calPCIRoad(row.id, row.roadName, 100)">填滿</el-button>
-							</el-button-group>
-						</el-col>
-					</el-row>
-					<span v-else>  - </span>
-				</template>
-			</el-table-column>
-
 			<el-table-column label="操作" width="120" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="!row.archiveTime">
@@ -107,6 +61,62 @@
 						<el-button v-else type="info" class="btn-action" @click="row.edit = false; getList();">取消</el-button>
 					</span>
 					<span v-else style="color: #F56C6C">已封存 <br> ({{ formatTime(row.archiveTime) }})</span>
+				</template>
+			</el-table-column>
+			<el-table-column label="PCI計算" align="center" >
+				<el-table-column v-if="checkPermission(['rAdm'])" label="即時運算" align="center" width='120'>
+					<template slot-scope="{ row }">
+						<el-button-group v-if="!row.archiveTime">
+							<el-button class="btn-action" type="primary" plain @click="calPCI(row.id, 0)">重算</el-button>
+							<el-button class="btn-action" type="success" plain @click="calPCI(row.id, 100)">滿值</el-button>
+						</el-button-group>
+						<span v-else> - </span>
+					</template>
+				</el-table-column>
+
+				<el-table-column label="區塊" align="center">
+					<template slot-scope="{ row }">
+						<el-row v-if="!row.archiveTime" :gutter="5" type="flex" justify="center" align="middle">
+							<el-col :span="14">
+								<el-input v-model="row.blockId" placeholder="區塊編碼" />
+							</el-col>
+							<el-col :span="10">
+								<el-button-group>
+									<el-button class="btn-action" type="primary" plain @click="calPCISpec(row.id, row.blockId, 0)">重算</el-button>
+									<el-button class="btn-action" type="info" plain @click="calPCISpec(row.id, row.blockId, -1)">重置</el-button>
+									<el-button class="btn-action" type="success" plain @click="calPCISpec(row.id, row.blockId, 100)">滿值</el-button>
+								</el-button-group>
+							</el-col>
+						</el-row>
+						<span v-else> - </span>
+					</template>
+				</el-table-column>
+
+				<el-table-column label="路段" align="center">
+					<template slot-scope="{ row }">
+						<el-row v-if="!row.archiveTime" :gutter="5" type="flex" justify="center" align="middle">
+							<el-col :span="14">
+								<el-input v-model="row.roadName" placeholder="道路名稱" />
+							</el-col>
+							<el-col :span="10">
+								<el-button-group>
+									<el-button class="btn-action" type="primary" plain @click="calPCIRoad(row.id, row.roadName, 0)">重算</el-button>
+									<el-button class="btn-action" type="info" plain @click="calPCIRoad(row.id, row.roadName, -1)">重置</el-button>
+									<el-button class="btn-action" type="success" plain @click="calPCIRoad(row.id, row.roadName, 100)">填滿</el-button>
+								</el-button-group>
+							</el-col>
+						</el-row>
+						<span v-else>  - </span>
+					</template>
+				</el-table-column>
+			</el-table-column>
+
+			<el-table-column label="缺失匯入" width="120" align="center">
+				<template slot-scope="{ row }">
+					<el-button-group v-if="!row.edit">
+						<el-button class="btn-action" type="primary" plain :disabled="isUpload" @click="uploadCase(row, 1)">通報</el-button>
+						<el-button class="btn-action" type="warning" plain :disabled="isUpload" @click="uploadCase(row, 2)">PCI</el-button>
+					</el-button-group>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -138,6 +148,7 @@
 import moment from "moment";
 import { getTenderMap, getTenderRound, addTenderRound, setTenderRound, archiveTenderRound } from "@/api/type";
 import { resetPCI, updatePCI, updatePCIByName } from "@/api/tool";
+import { importAllInspectCase } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 
 export default {
@@ -352,6 +363,36 @@ export default {
 				}).catch(err => console.log(err))
 			}
 		},
+		uploadCase(row, targetType) {
+			const content = `確定上傳缺失至「${targetType == 1 ? '追蹤列表' : '缺失列表'}」?`;
+			this.$confirm(content, "確認", { showClose: false }).then(() => {
+				this.loading = true;
+				this.isUpload = true;
+
+				importAllInspectCase({
+					surveyId: row.id,
+					targetType
+				}).then(response => {
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: `缺失上傳成功`,
+							type: "success",
+						});
+					} 
+					this.getList();
+					this.isUpload = false;
+					this.loading = false;
+				}).catch(err => {
+					console.log(err);
+					this.loading = false;
+					this.isUpload = false;
+				})
+
+			}).catch(err => {
+				console.log(err);
+			});
+
+		},
 		formatter(row, column) {
 			if (Number(row[column.property])) return row[column.property];
 			else return row[column.property] || "-";
@@ -380,6 +421,8 @@ export default {
 		margin-left: 5px
 		padding: 5px
 	.el-table
+		thead.is-group th
+			padding: 5px 0
 		.el-icon-success
 			margin-right: -10px
 		.el-icon-error
