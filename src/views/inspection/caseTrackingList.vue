@@ -2,10 +2,37 @@
 	<div class="app-container case-tracking-list" v-loading="loading">
 		<h2>追蹤列表</h2>
 		<aside style="white-space: pre-line">
-			1. 列出「中度」以上的追蹤缺失。
+			1. 列出「中度」以上的缺失。
 			<br>
 			2. 超過14天標記為紅底。
 		</aside>
+		<div class="filter-container">
+			<div v-if="listQuery.tenderRound > 0" class="filter-item">
+				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>合約</span>
+					</div>
+					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
+						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
+					</el-select>
+				</div>
+			</div>
+			<el-button v-if="listQuery.tenderRound > 0" type="primary" @click="getList()">搜尋</el-button>
+
+			<el-button
+				class="filter-item"
+				:type="listQuery.caseType.length == 0 ? 'success' : 'danger'"
+				:plain="listQuery.caseType.length != 0"
+				icon="el-icon-s-order"
+				@click="filterDialogOpen"
+				>過濾</el-button>
+			<el-button
+				v-if="listQuery.caseType.length != 0"
+				type="text"
+				size="mini"
+				@click="filterClear"
+				>清空過濾條件</el-button>
+		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
 			<div class="el-input-group__prepend">
@@ -66,6 +93,31 @@
 			:url-list="imgUrls"
 		/>
 
+		<el-dialog
+			class="dialog-filter"
+			:visible.sync="dialogFilterVisible"
+			title="過濾條件"
+			width="900px"
+			:show-close="false"
+			center
+		>
+			<el-row>
+				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId" style="display: flex; justify-content: space-between; width: 200px; margin-right: 10px">
+					<el-checkbox v-model="checked" :label="distressId">
+						{{ options.DistressType[distressId] }} ({{ caseInfo[distressId] || 0 }})
+					</el-checkbox>
+					<el-select v-model="typeLevel[distressId]" placeholder="請選擇" size="mini" popper-class="type-select" multiple :disabled="!checked.includes(distressId)">
+						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="order == 0 ? '全部' : options.DistressLevel[order]" />
+					</el-select>
+				</el-col>
+			</el-row>
+
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="filterCancel">取消</el-button>
+				<el-button type="primary" @click="filterConfirm">確定</el-button>
+			</span>
+		</el-dialog>
+
 		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px">
 			<map-viewer :map.sync="map"/>
 		</el-dialog>
@@ -74,6 +126,7 @@
 
 <script>
 import moment from "moment";
+import { getTenderRound } from "@/api/type";
 import { getCaseTrackingList } from "@/api/inspection";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
@@ -88,6 +141,7 @@ export default {
 			isUpload: false,
 			showImgViewer: false,
 			dialogMapVisible: true,
+			dialogFilterVisible: false,
 			map: {},
 			imgUrls: "",
 			// timeTabId: moment().year(),
@@ -98,6 +152,8 @@ export default {
 			// 	moment().endOf("year").toDate(),
 			// ],
 			listQuery: {
+				tenderRound: 91,
+				caseType: [],
 				pageCurrent: 1,
 				pageSize: 50,
 			},
@@ -168,9 +224,11 @@ export default {
 			total: 0,
 			list: [],
 			headersCheckVal: [],
+			typeLevel: {},
+			caseInfo: {},
 			allHeaders: true,
 			options: {
-				tenderMap: {},
+				tenderRoundMap: {},
 				DistressType: {
 					15: "坑洞",
 					29: "縱向及橫向裂縫",
@@ -190,6 +248,7 @@ export default {
 					66: "骨材剝落",
 					58: "人孔高差"
 				},
+				distressTypeOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58 ],
 				DistressLevel: {
 					1: "輕",
 					2: "中",
@@ -204,6 +263,26 @@ export default {
 		};
 	},
 	computed: {
+		checked: {
+			get() {
+				return this.listQuery.caseType.map(type => (type[0]));
+			},
+			set(val) {
+				const caseTypeArr = this.listQuery.caseType.map(type => type[0]);
+				const addTypeArr = val.filter(type => !caseTypeArr.includes(type));
+				const removeTypeArr = caseTypeArr.filter(type => !val.includes(type));
+
+				for(const type of removeTypeArr) {
+					this.listQuery.caseType = this.listQuery.caseType.filter(typeArr => typeArr[0] != type);
+					this.$delete(this.typeLevel, type);
+				}
+
+				for(const type of addTypeArr) {
+					this.listQuery.caseType.push([type, 0]);
+					this.$set(this.typeLevel, type, 0);
+				}
+			}
+		},
 		partHeaders() {
 			return (this.headersCheckVal.length != 0 && this.headersCheckVal.length < Object.keys(this.headers).length);
 		},
@@ -225,10 +304,40 @@ export default {
 	created() {
 		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
 		else this.headersCheckVal = [];
+
+		getTenderRound().then(response => {
+			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+				if(![1031, 1041].includes(cur.tenderId)) return acc;
+
+				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
+				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+
+				let name = `${cur.tenderName}`;
+				if(cur.title.length != 0) name += `_${cur.title}`;
+
+				acc[roundId] = { 
+					id: cur.id,
+					name, 
+					tenderId: cur.tenderId, 
+					isMain: cur.zipCodeSpec == 0,
+					zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
+					roundStart: cur.roundStart, 
+					roundEnd: cur.roundEnd
+				};
+				return acc;
+			}, {});
+
+			if(Object.keys(this.options.tenderRoundMap).length > 0) {
+				if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+			}
+			if(Object.keys(this.options.tenderRoundMap).length == 0) {
+				this.options.tenderRoundMap = { "-1": { id: -1 }};
+				this.listQuery.tenderRound = -1;
+			}
+		});
 	},
 	mounted() {
 		this.dialogMapVisible = false;
-		this.getList();
 	},
 	methods: {
 		tableRowClassName({row, rowIndex}) {
@@ -281,8 +390,13 @@ export default {
 		getList() {
 			this.loading = true;
 			this.list = [];
+			this.caseInfo = {};
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			this.listQuery.caseType.forEach(typeArr => typeArr[1] = this.typeLevel[typeArr[0]]);
 
 			getCaseTrackingList({
+				surveyId: tenderRound.id,
+				caseType: JSON.stringify(this.listQuery.caseType),
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize
 			}).then(response => {
@@ -309,6 +423,24 @@ export default {
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
+		filterDialogOpen() {
+			this.dialogFilterVisible = true;
+			this.caseTypeTemp = JSON.parse(JSON.stringify(this.listQuery.caseType));
+		},
+		filterConfirm() {
+			this.listQuery.pageCurrent = 1;
+			this.dialogFilterVisible = false;
+			this.getList();
+		},
+		filterCancel() {
+			this.dialogFilterVisible = false;
+			this.listQuery.caseType = JSON.parse(JSON.stringify(this.caseTypeTemp));
+		},
+		filterClear() {
+			this.listQuery.caseType = [];
+			this.listQuery.pageCurrent = 1;
+			this.getList();
+		},
 		formatter(row, column) {
 			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
 			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
@@ -331,6 +463,14 @@ export default {
 	max-width: 400px
 	// height: 400px
 .case-tracking-list
+	.filter-container
+		.filter-item
+			margin-right: 5px
+			.el-select.tender-select
+				width: 400px
+				.el-input__inner
+					padding-left: 10px
+					text-align: left
 	.el-table
 		.danger-row
 			background: #F9EBEB
@@ -342,6 +482,19 @@ export default {
 			opacity: 0.7
 		.el-icon-circle-close
 			color:  #FFF
+	.dialog-filter
+		.el-select
+			width: 55px
+			margin-top: -5px
+			margin-bottom: 10px
+			.el-input__inner
+				padding: 0 13px 0 5px
+				text-align: center
+				background-color: transparent
+			.el-input__suffix
+				right: 0px
+				margin-right: -3px
+				transform: scale(0.7)
 	.dialog-map
 		min-height: 300px 
 		.el-dialog__body
