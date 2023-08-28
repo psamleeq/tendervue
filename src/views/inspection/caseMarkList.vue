@@ -118,9 +118,11 @@
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.isEdit">
-						<el-button v-if="row.IsActive && !Object.values(importCaseObj).flat().includes(row.id)" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
-						<el-button v-if="row.IsActive && !Object.values(importCaseObj).flat().includes(row.id)" class="btn-action" type="danger" plain size="mini" round @click="setCaseState(row, 0)">刪除</el-button>
-						<el-button v-else-if="!row.IsActive && !Object.values(importCaseObj).flat().includes(row.id)" class="btn-action" type="success" plain size="mini" round @click="setCaseState(row, 1)">復原</el-button>
+						<!-- <template v-if="!Object.values(importCaseObj).flat().includes(row.id)" > -->
+							<el-button v-if="row.IsActive" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
+							<el-button v-if="row.IsActive" class="btn-action" type="danger" plain size="mini" round @click="setCaseState(row, 0)">刪除</el-button>
+							<el-button v-else-if="!row.IsActive" class="btn-action" type="success" plain size="mini" round @click="setCaseState(row, 1)">復原</el-button>
+						<!-- </template> -->
 						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
 					</el-button-group>
 					<span v-else> - </span>
