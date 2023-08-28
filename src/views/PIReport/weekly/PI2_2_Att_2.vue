@@ -168,9 +168,6 @@ export default {
 						}
 					}
 				],
-				disabledDate(date) {
-					return moment(date).valueOf() >= moment().endOf("d").valueOf();
-				},
 			},
 			pdfSetting: {
 				format: 'a4',

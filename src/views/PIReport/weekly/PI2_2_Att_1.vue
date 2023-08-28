@@ -121,10 +121,7 @@ export default {
 							picker.$emit("pick", date);
 						}
 					}
-				],
-				disabledDate(date) {
-					return moment(date).valueOf() >= moment().endOf("d").valueOf();
-				},
+				]
 			},
 			checkDate: moment().startOf("d").subtract(1, "d"),
 			reportDate: null,

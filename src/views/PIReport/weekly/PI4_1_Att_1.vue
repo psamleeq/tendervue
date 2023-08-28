@@ -96,9 +96,6 @@ export default {
 						}
 					}
 				],
-				disabledDate(date) {
-					return moment(date).valueOf() >= moment().endOf("d").valueOf();
-				},
 			},
 			headers: {
 				UploadCaseNo: "案件編號",

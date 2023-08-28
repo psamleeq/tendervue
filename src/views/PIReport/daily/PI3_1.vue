@@ -100,9 +100,6 @@ export default {
 						}
 					}
 				],
-				disabledDate(date) {
-					return moment(date).valueOf() >= moment().endOf("d").valueOf();
-				},
 			},
 			initPage:4,
 			listQuery: {
