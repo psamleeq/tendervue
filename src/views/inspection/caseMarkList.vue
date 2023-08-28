@@ -559,6 +559,7 @@ export default {
 		},
 		filterClear() {
 			this.listQuery.caseType = [];
+			this.typeLevel = {};
 			this.listQuery.pageCurrent = 1;
 			this.getList();
 		},

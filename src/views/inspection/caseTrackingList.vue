@@ -2,7 +2,7 @@
 	<div class="app-container case-tracking-list" v-loading="loading">
 		<h2>追蹤列表</h2>
 		<aside style="white-space: pre-line">
-			1. 列出「中度」以上的缺失。
+			1. 預設列出「中度」以上的缺失。
 			<br>
 			2. 超過14天標記為紅底。
 		</aside>
@@ -278,8 +278,8 @@ export default {
 				}
 
 				for(const type of addTypeArr) {
-					this.listQuery.caseType.push([type, 0]);
-					this.$set(this.typeLevel, type, 0);
+					this.listQuery.caseType.push([type, [0]]);
+					this.$set(this.typeLevel, type, [0]);
 				}
 			}
 		},
@@ -407,6 +407,7 @@ export default {
 					});
 					this.total = 0;
 				} else {
+					this.caseInfo = response.data.caseInfo;
 					this.total = response.data.total;
 					this.list = response.data.list;
 					this.list.forEach(l => {
@@ -438,6 +439,7 @@ export default {
 		},
 		filterClear() {
 			this.listQuery.caseType = [];
+			this.typeLevel = {};
 			this.listQuery.pageCurrent = 1;
 			this.getList();
 		},
