@@ -118,6 +118,7 @@
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.isEdit">
+						<!-- NOTE:先解除上傳不可編緝的限制 -->
 						<!-- <template v-if="!Object.values(importCaseObj).flat().includes(row.id)" > -->
 							<el-button v-if="row.IsActive" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
 							<el-button v-if="row.IsActive" class="btn-action" type="danger" plain size="mini" round @click="setCaseState(row, 0)">刪除</el-button>
