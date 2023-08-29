@@ -207,9 +207,6 @@ export default {
 						}
 					}
 				],
-				disabledDate(date) {
-					return moment(date).valueOf() >= moment().endOf("d").valueOf();
-				},
 			},
 			checkDate: moment().startOf("d").subtract(1, "d"),
 			reportDate: null,
@@ -275,7 +272,8 @@ export default {
 				'\n已修復完工(已復標)',
 				'\n本案分隊工班已派員修復完妥',
 				'\n已請管區開立{{單位}}B單',
-				'\n本案{{單位}}已派員改善完妥'
+				'\n本案{{單位}}已派員改善完妥',
+				'該缺失為路面輕微破損，經數日觀察後無變嚴重跡象，故判斷無立即危險，先行方正修復結案並持續觀察(無須復標)'
 			],
 			constructionText: [
 				'\n佐證第一階段已交維處理之照片',
@@ -318,7 +316,7 @@ export default {
 				actualCompleteS1: '',
 				checkReportData_Img: '', 
 				dispatchData_Img: '',
-				completeReportData_Img: '',
+				// completeReportData_Img: '',
 				reportData1999_Img: '',
 				preconstruction_Img: '',
 				completeFixed_Img: '',
