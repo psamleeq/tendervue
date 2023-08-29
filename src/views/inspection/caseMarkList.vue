@@ -2,9 +2,10 @@
 	<div class="app-container case-marker-list" v-loading="loading">
 		<h2>標記列表</h2>
 		<aside style="white-space: pre-line">
-			1. 缺失類型: 人手孔缺失 和 其他 不能匯入。
-			<br>
-			2. 已匯入過的缺失不能重複匯入，且無法編輯。
+			1. 缺失類型:<br>
+				- 「人手孔缺失」 和 「其他」 不能匯入「缺失列表」。<br>
+				- 「人孔高差」 不能匯入「追蹤列表」。<br>
+			2. 已匯入過的缺失無法編輯。
 		</aside>
 		<div class="filter-container">
 			<div class="filter-item">
@@ -291,25 +292,25 @@ export default {
 					58: "人孔高差"
 				},
 				distressTypeOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58 ],
-				pciCaseTypeMap: {
-					15: "坑洞",
-					29: "縱橫裂縫",
-					16: "龜裂",
-					32: "車轍",
-					18: "隆起與凹陷",
-					// 34: "人手孔缺失",
-					51: "薄層剝離",
-					// 21: "其他",
-					50: "塊狀裂縫",
-					53: "推擠",
-					65: "補綻及管線回填",
-					54: "冒油",
-					55: "波浪狀鋪面",
-					56: "車道與路肩分離",
-					49: "滑溜裂縫",
-					66: "骨材剝落",
-					58: "人孔高差"
-				},
+				// pciCaseTypeMap: {
+				// 	15: "坑洞",
+				// 	29: "縱橫裂縫",
+				// 	16: "龜裂",
+				// 	32: "車轍",
+				// 	18: "隆起與凹陷",
+				// 	// 34: "人手孔缺失",
+				// 	51: "薄層剝離",
+				// 	// 21: "其他",
+				// 	50: "塊狀裂縫",
+				// 	53: "推擠",
+				// 	65: "補綻及管線回填",
+				// 	54: "冒油",
+				// 	55: "波浪狀鋪面",
+				// 	56: "車道與路肩分離",
+				// 	49: "滑溜裂縫",
+				// 	66: "骨材剝落",
+				// 	58: "人孔高差"
+				// },
 				DistressLevel: {
 					// 0: "全部",
 					1: "輕",
@@ -583,23 +584,18 @@ export default {
 	max-width: 400px
 	// height: 400px
 .case-marker-list
-	.el-select
-		width: 80px
-		.el-input__inner
-			padding-left: 8px
-			padding-right: 10px
-		.el-input__suffix
-			right: 0
-			margin-right: -3px
-			transform: scale(0.7)
 	.filter-container
 		.filter-item
 			margin-right: 5px
-			.el-select.tender-select
-				width: 400px
+			.el-select
+				width: 80px
 				.el-input__inner
-					padding-left: 10px
-					text-align: left
+					padding-left: 8px
+					padding-right: 10px
+				.el-input__suffix
+					right: 0
+					margin-right: -3px
+					transform: scale(0.7)
 	.road-dir, .el-date-editor
 		width: 110px
 		.el-input-group__prepend .el-select

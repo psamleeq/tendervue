@@ -375,8 +375,9 @@ export default {
 					targetType
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
+						const result = response.result;
 						this.$message({
-							message: `缺失上傳成功`,
+							message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件 / 重複 ${result.fail}件`,
 							type: "success",
 						});
 					} 
