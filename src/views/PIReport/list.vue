@@ -264,7 +264,7 @@ export default {
 		this.listQuery.reportType = this.$route.meta.reportType;
 
 		if(this.$route.query.zipCode && this.$route.query.timeStart && this.$route.query.timeEnd) {
-			this.listQuery.zipCode = this.$route.query.zipCode;
+			this.listQuery.zipCode = Number(this.$route.query.zipCode);
 			this.dateRange = [ this.$route.query.timeStart, this.$route.query.timeEnd ];
 			this.timeTabId = -1;
 		}
