@@ -334,8 +334,10 @@ export default {
 					const content = res.data.list[0].content;
 					let examNum = 0;
 					if(content.inputs && content.inputs.listOther) {
-						console.log(content.inputs.listOther)
-						examNum = content.inputs.listOther.reduce((acc, cur) => (acc += (Number(cur.AC_total) + Number(cur.facility_total))), 0);
+						examNum = content.inputs.listOther.reduce((acc, cur) => {
+							if(cur.distressSrc.includes("抽查")) acc += (Number(cur.AC_total) + Number(cur.facility_total));
+							return acc
+						}, 0);
 					}
 					
 					this.inputForm.informed_Num22 = Number(response.data.result.caseTotal_inform) + examNum;
