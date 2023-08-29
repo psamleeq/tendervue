@@ -183,19 +183,9 @@ export default {
 					sortable: true,
 					width: 150
 				},
-				Duty_With_Name: {
-					name: "標記人員",
-					sortable: false,
-					width: 80
-				},
 				Place: {
 					name: "地址",
 					sortable: true
-				},
-				roadDir: {
-					name: "車道",
-					sortable: false,
-					width: 110
 				},
 				MillingLength: {
 					name: "長度(m)",
@@ -447,7 +437,7 @@ export default {
 			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
 			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
 			else if (["roadDir"].includes(column.property)) return `${this.options.roadDir[row.Direction]}-${row.Lane}`;
-			else if (!["id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
+			else if (!["SerialNo", "id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
 			else return row[column.property] || "-";
 		},
 		formatTime(time) {
