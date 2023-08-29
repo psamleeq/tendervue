@@ -84,14 +84,6 @@ export function getImportCase(query) {
 	})
 }
 
-export function importInspectionCase(data) {
-	return request({
-		url: '/inspection/caseImport',
-		method: 'post',
-		data
-	})
-}
-
 export function importAllInspectCase(data) {
 	return request({
 		url: '/inspection/allCaseImport',

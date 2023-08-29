@@ -32,18 +32,6 @@
 				@click="filterClear"
 				>清空過濾條件</el-button>
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
-			<br>
-			<div v-if="listQuery.tenderRound > 0" class="filter-item">
-				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
-						<span>合約</span>
-					</div>
-					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender" :disabled="list.length == 0 || isUpload" @change="getImportCaseList()">
-						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
-					</el-select>
-				</div>
-			</div>
-			<el-button v-if="listQuery.tenderRound > 0 && !filterNow" type="success" :disabled="tableSelect.length == 0 || isUpload" @click="uploadCase()">上傳</el-button>
 		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
@@ -66,9 +54,7 @@
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
 			stripe
 			style="width: 100%"
-			@selection-change="handleCheckedChange"
 		>
-			<el-table-column v-if="listQuery.tenderRound > 0 && !filterNow" type="selection" width="50" align="center" fixed :selectable="(row)=> (![34, 21].includes(row.DistressType) && importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id] && !importCaseObj[options.tenderRoundMap[listQuery.tenderRound].id].includes(row.id))" />
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"
@@ -170,8 +156,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderRound } from "@/api/type";
-import { getInspectionCaseList, setInspectionCaseList, getImportCase, importInspectionCase } from "@/api/inspection";
+import { getInspectionCaseList, setInspectionCaseList, getImportCase } from "@/api/inspection";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -280,11 +265,9 @@ export default {
 			list: [],
 			typeLevel: {},
 			caseInfo: {},
-			tableSelect: [],
 			headersCheckVal: [],
 			allHeaders: true,
 			options: {
-				tenderRoundMap: {},
 				DistressType: {
 					15: "坑洞",
 					29: "縱向及橫向裂縫",
@@ -380,36 +363,6 @@ export default {
 	created() {
 		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
 		else this.headersCheckVal = [];
-
-		getTenderRound().then(response => {
-			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
-				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
-				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
-
-				let name = `${cur.tenderName}`;
-				if(cur.title.length != 0) name += `_${cur.title}`;
-				name += ` Round${cur.round}`;
-
-				acc[roundId] = { 
-					id: cur.id,
-					name, 
-					tenderId: cur.tenderId, 
-					isMain: cur.zipCodeSpec == 0,
-					zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
-					roundStart: cur.roundStart, 
-					roundEnd: cur.roundEnd
-				};
-				return acc;
-			}, {});
-
-			if(Object.keys(this.options.tenderRoundMap).length > 0) {
-				if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
-			}
-			if(Object.keys(this.options.tenderRoundMap).length == 0) {
-				this.options.tenderRoundMap = { "-1": { id: -1 }};
-				this.listQuery.tenderRound = -1;
-			}
-		});
 	},
 	mounted() {
 		this.dialogMapVisible = false;
@@ -421,9 +374,6 @@ export default {
 		}
 	},
 	methods: {
-		handleCheckedChange(val) {
-			this.tableSelect = val;
-		},
 		showImg(row, prop) {
 			const otherProp = ['ImgZoomIn', 'ImgZoomOut'].filter(imgType => imgType != prop)[0];
 			this.imgUrls = [ row[prop], row[otherProp] ];
@@ -470,7 +420,7 @@ export default {
 		getImportCaseList() {
 			this.loading = true;
 			this.importCaseObj = [];
-			getImportCase({ surveyIdList: Object.values(this.options.tenderRoundMap).map(val => val.id)}).then(response => {
+			getImportCase().then(response => {
 				this.importCaseObj = response.data.caseDetectionIdObj;
 				this.loading = false;
 			}).catch(err => this.loading = false);
@@ -485,7 +435,6 @@ export default {
 				this.loading = true;
 				this.list = [];
 				this.caseInfo = {};
-				this.tableSelect = [];
 				// this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
 				this.listQuery.caseType.forEach(typeArr => typeArr[1] = this.typeLevel[typeArr[0]]);
 
@@ -605,49 +554,6 @@ export default {
 				console.log(err);
 				this.getList();
 			})
-		},
-		uploadCase() {
-			this.$confirm(`確定上傳缺失 ${this.tableSelect.length} 件 至 「${this.options.tenderRoundMap[this.listQuery.tenderRound].name}」?`, "確認", {
-				showClose: false,
-			}).then(() => {
-				this.loading = true;
-				this.isUpload = true;
-
-				const uploadCaseList = this.tableSelect.map(caseSpec => {
-					return { 
-						caseDetectionId: caseSpec.id, 
-						caseName: this.options.pciCaseTypeMap[caseSpec.DistressType], 
-						caseLevel: this.options.DistressLevel[caseSpec.DistressLevel], 
-						dateCollect: moment(caseSpec.DateCollect).format("YYYY-MM-DD"),
-						geoJson: caseSpec.Geometry }
-				});
-				// console.log(uploadCaseList)
-
-				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-				importInspectionCase({
-					surveyId: tenderRound.id,
-					caseList: uploadCaseList
-				}).then(response => {
-					if ( response.statusCode == 20000 ) {
-						const result = response.result;
-						this.$message({
-							message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件 / 重複 ${result.fail}件`,
-							type: "success",
-						});
-					} 
-					this.getList();
-					this.isUpload = false;
-					this.loading = false;
-				}).catch(err => {
-					console.log(err);
-					this.loading = false;
-					this.isUpload = false;
-				})
-
-			}).catch(err => {
-				console.log(err);
-			});
-
 		},
 		calArea(row) {
 			row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
