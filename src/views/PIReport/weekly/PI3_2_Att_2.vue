@@ -401,6 +401,7 @@ export default {
 	methods: {
 		async setData(perfContentId, init=true, initPage=0, perfPages = 0) {
 			return new Promise(resolve => {
+				console.log("setData");
 				getPerfContent({
 					contentId: perfContentId
 				}).then(async (response) => {
@@ -507,6 +508,7 @@ export default {
 		},
 		async changeTemplate() {
 			new Promise((resolve, reject) => {
+				console.log("changeTemplate");
 				// this.loading = true;
 				const fileName = this.srcList[this.inputs.distressSrc].json[this.inputs.inspection];
 				// console.log(fileName);
@@ -635,6 +637,7 @@ export default {
 		},
 		async getList(isReplace = true) {
 			new Promise((resolve, reject) => {
+				console.log("getList");
 				this.loading = true;
 				const date = moment(this.reportDate).format("YYYY-MM-DD");
 				this.caseList = [];
