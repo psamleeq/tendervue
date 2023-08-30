@@ -250,7 +250,7 @@ export default {
 								}
 							}
 							
-							this.initPage = initPage != 0 ? this.list.content.initPage : initPage;
+							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
 						}
 						this.reportDate = this.list.reportDate;
 						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
