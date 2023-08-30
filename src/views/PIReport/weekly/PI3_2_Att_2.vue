@@ -14,15 +14,6 @@
 			<span v-else>PI3.2附件-2 ({{ Number(listQuery.perfPages)+1 }})</span>
 		</el-button>
 
-		<!-- <div class="filter-container">
-			<el-button
-				class="filter-item"
-				type="info"
-				icon="el-icon-document"
-				@click="handleDownload"
-			>輸出PDF</el-button>
-		</div> -->
-
 		<el-row :gutter="10">
 			<el-col :span="12">
 				<el-card shadow="never" style="width: 450px; margin: 20px auto; padding: 5px 10px;">
@@ -30,6 +21,7 @@
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h3>檢核資訊</h3>
 							<el-button-group>
+								<el-button type="primary" plain icon="el-icon-document" size="small" @click="handleDownload()">輸出</el-button>
 								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
 							</el-button-group>

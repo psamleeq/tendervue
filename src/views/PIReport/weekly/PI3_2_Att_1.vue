@@ -18,9 +18,9 @@
 						<div style="display: flex; justify-content: space-between; align-items: center">
 							<h3>通報資訊</h3>
 							<el-button-group>
+								<el-button type="primary" plain icon="el-icon-document" size="small" @click="handleDownload()">輸出</el-button>
 								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>	
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
-								<!-- <el-button type="info" @click="handleDownload()" style="margin: 10px" icon="el-icon-document">輸出PDF</el-button> -->
 							</el-button-group>
 						</div>
 						
