@@ -72,7 +72,7 @@
 					<span v-else-if="['DateReport'].includes(column.property)">
 						<span>{{ row.DateReport }}</span>
 						<br>
-						<span :style="row.DateReportDiff >= 14 ? 'color: #F56C6C' : ''">({{ row.DateReportDiff }}天)</span>
+						<span v-if="row.DateReportDiff > 0" :style="row.DateReportDiff >= 14 ? 'color: #F56C6C' : ''">({{ row.DateReportDiff }}天)</span>
 					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
@@ -401,7 +401,7 @@ export default {
 					this.total = response.data.total;
 					this.list = response.data.list;
 					this.list.forEach(l => {
-						l.DateReportDiff = moment().diff(moment(l.DateReport), 'days');
+						l.DateReportDiff = (l.DistressLevel >= 2) ? moment().diff(moment(l.DateReport), 'days') : 0;
 						l.DateReport = this.formatTime(l.DateReport);
 						l.MillingLength = Math.round(l.MillingLength * 100) / 100;
 						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
