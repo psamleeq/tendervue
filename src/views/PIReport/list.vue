@@ -439,7 +439,7 @@ export default {
 						const initPageArr = this.listContent
 							.map(l => (
 								(l.perfItem == 202 && l.perfAtt == 1) 
-								? 0 : ((l.perfItem == 202 && [2, 3].includes(l.perfAtt) || l.perfItem == 302 && [1, 2].includes(l.perfAtt)))
+								? 0 : ((l.perfItem == 202 && [2, 3].includes(l.perfAtt)) || (l.perfItem == 302 && [1, 2].includes(l.perfAtt)))
 								? 1 + ((l.perfItem == 302 && l.perfAtt == 2 && l.perfPages == PI32Count) ? 1 : 0) : l.pageCount
 							)).map((pageCount, index, array) => array.slice(0, index+1).reduce((acc, cur) => acc+cur) - pageCount + 1);
 						// console.log(initPageArr);

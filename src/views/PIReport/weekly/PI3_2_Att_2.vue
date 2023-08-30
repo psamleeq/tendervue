@@ -667,7 +667,7 @@ export default {
 			setPerfContent(this.listQuery.perfContentId, {
 				caseNo: Number(this.inputForm.caseNumber),
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: (([2, 3].includes(this.inputs.distressSrc)) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0),
+				pageCount: (([2, 3].includes(Number(this.inputs.distressSrc))) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0),
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {

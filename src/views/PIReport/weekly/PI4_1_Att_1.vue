@@ -356,6 +356,7 @@ export default {
 		async createPdf() {
 			return new Promise(async (resolve, reject) => {
 				this.loading = true;
+				let pageIndexT = 0;
 				for(const [ caseIndex, caseTable ] of this.inputs.caseList.entries()) {
 					await this.imgPreload(caseTable);
 					const splitTable = caseTable.reduce((acc, cur) => {
@@ -367,7 +368,7 @@ export default {
 					for(const [ pageIndex, pageTable ] of splitTable.entries()) {
 						this.pdfDoc.addPage();
 						while(caseIndex == 0 && pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
-						await this.createPdf_header(caseIndex+pageIndex);
+						await this.createPdf_header(pageIndexT++);
 						this.pdfDoc.autoTable({
 							theme: 'plain',
 							styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
