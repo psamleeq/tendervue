@@ -526,7 +526,7 @@ export default {
 			for(const caseSpec of this.perfPagesObj[302][2]) {
 				const { id, initPage, perfPages } = caseSpec;
 				await this.$refs.PI32Att2.setData(id, false, initPage, perfPages);
-				await new Promise(r => setTimeout(r, 1500));
+				await new Promise(r => setTimeout(r, 2000));
 				add_pdfUint8_32Att2Arr.push(await this.$refs.PI32Att2.getPDF());
 			}
 			// console.log(add_pdfUint8_32Att2Arr);

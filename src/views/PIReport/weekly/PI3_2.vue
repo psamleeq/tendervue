@@ -370,7 +370,7 @@ export default {
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
 				link.href = url;
-				console.log(link,url);
+				// console.log(link,url);
 				link.download = file.name;
 				document.body.appendChild(link);
 				link.click();
