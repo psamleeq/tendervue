@@ -130,7 +130,7 @@
 								@change="setPDFinputs" />
 						</el-form-item>
 						<el-form-item v-if="['3'].includes(inputs.distressSrc)" label="第一階段回報說明" :label-width="labelWidth1">
-							<el-select v-model.number="inputForm.construction_Text" placeholder="套用模板" clearable @change="setPDFinputs">
+							<el-select v-model.number="inputForm.construction_Text" placeholder="套用模板" clearable @change="changeTemplate">
 								<el-option v-for="text in constructionText" :key="text" :label="text" :value="text" />
 							</el-select>
 							<el-input
@@ -520,8 +520,33 @@ export default {
 				// console.log(fileName);
 				fetch(`/assets/pdf/weekly/${fileName}?t=${Date.now()}`).then(async (response) => {
 					this.template = await response.json();
+					if(this.inputs.distressSrc == '3' && this.inputForm.construction_Text.includes('第一階段無處理')) {
+						//Step1: 替換第二頁PDF
+						const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+						const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
+						ori_pdf.removePage(1);
+
+						let fileNameSpec = fileName.split(".");
+						fileNameSpec.splice(1, 0, "_1", ".");
+						fileNameSpec = fileNameSpec.join("");
+						const addTemplate = await fetch(`/assets/pdf/weekly/${fileNameSpec}?t=${Date.now()}`).then(response => response.json());
+						const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+						const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
+						const mergedPdf = await PDFDocument.create();
+
+						const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
+						const [ add_copiedPage ] = await mergedPdf.copyPages(add_pdf, [0]);
+						ori_copiedPages.forEach(page => mergedPdf.addPage(page));
+						mergedPdf.addPage(add_copiedPage);
+
+						this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
+
+						//Step2: 調整欄位
+						this.template.schemas.splice(this.template.schemas.length-1, 1, addTemplate.schemas[0]);
+					}
+
 					if(this.caseList.length == this.listQuery.perfPages) {
-						//合併PDF
+						//Step1: 合併PDF
 						const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 						const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
 						const addTemplate = await fetch(`/assets/pdf/weekly/PI3_2Att3.json?t=${Date.now()}`).then(response => response.json());
@@ -534,6 +559,8 @@ export default {
 						for(const copiedPage of ori_copiedPages) mergedPdf.addPage(copiedPage);
 						mergedPdf.addPage(add_copiedPage);
 						this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
+
+						//Step2: 調整欄位
 						this.template.schemas.push(addTemplate.schemas[0]);
 					}
 					this.schemasOri = {};
