@@ -305,7 +305,7 @@ export default {
 
 		getTenderRound().then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
-				if(![1031, 1041].includes(cur.tenderId)) return acc;
+				if(cur.tenderId <= 1001) return acc;
 
 				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
 				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
