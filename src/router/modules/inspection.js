@@ -60,24 +60,14 @@ const inspectionRouter = {
 			}
 		},
 		{
-			path: 'caseInform',
-			component: () => import('@/views/inspection/caseInform'),
-			name: 'caseInform',
-			meta: {
-				title: '缺失通報',
-				roles: ['inspection.marker'],
-				vTag: 'alpha'
-			}
-		},
-		{
 			path: 'caseEdit',
 			component: () => import('@/views/inspection/caseEdit'),
 			name: 'caseEdit',
 			meta: {
 				title: '缺失編輯',
-				roles: ['inspection.marker'],
-				vTag: 'alpha'
-			}
+				roles: ['inspection.marker']
+			},
+			hidden: true
 		}
 	]
 }

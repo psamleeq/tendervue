@@ -100,3 +100,11 @@ export function getCaseTrackingList(query) {
 		params: query
 	})
 }
+
+export function getCaseTrackingSpec(id, query) {
+	return request({
+		url: `/inspection/caseTrackingList/${id}`,
+		method: 'get',
+		params: query
+	})
+}

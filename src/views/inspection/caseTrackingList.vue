@@ -79,7 +79,10 @@
 			</el-table-column>
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
+					<el-button-group>
+						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
+						<el-button class="btn-action" type="primary" plain size="mini" round @click="editCase(row)">編輯</el-button>
+					</el-button-group>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -186,6 +189,11 @@ export default {
 				Place: {
 					name: "地址",
 					sortable: true
+				},
+				roadDir: {
+					name: "車道",
+					sortable: false,
+					width: 110
 				},
 				MillingLength: {
 					name: "長度(m)",
@@ -413,6 +421,12 @@ export default {
 				this.getImportCaseList();
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		editCase(row) {
+			this.$router.push({
+				name: "caseEdit",
+				query: { caseId: row.id },
+			});
 		},
 		filterDialogOpen() {
 			this.dialogFilterVisible = true;
