@@ -15,9 +15,9 @@
 						<div style="display: flex; justify-content: space-between; align-items: center">
 							<h3>通報資訊</h3>
 							<el-button-group>
+								<el-button type="primary" plain icon="el-icon-document" size="small" @click="handleDownload()">輸出</el-button>
 								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>	
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
-								<!-- <el-button type="info" @click="handleDownload()" style="margin: 10px" icon="el-icon-document">輸出PDF</el-button> -->
 							</el-button-group>
 						</div>
 						
@@ -356,6 +356,7 @@ export default {
 		async createPdf() {
 			return new Promise(async (resolve, reject) => {
 				this.loading = true;
+				let pageIndexT = 0;
 				for(const [ caseIndex, caseTable ] of this.inputs.caseList.entries()) {
 					await this.imgPreload(caseTable);
 					const splitTable = caseTable.reduce((acc, cur) => {
@@ -367,7 +368,7 @@ export default {
 					for(const [ pageIndex, pageTable ] of splitTable.entries()) {
 						this.pdfDoc.addPage();
 						while(caseIndex == 0 && pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
-						await this.createPdf_header(caseIndex+pageIndex);
+						await this.createPdf_header(pageIndexT++);
 						this.pdfDoc.autoTable({
 							theme: 'plain',
 							styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
@@ -522,7 +523,23 @@ export default {
 			});
 		},
 		handleDownload() {
-			this.pdfDoc.save(`PI4-1附件.pdf`);
+			generate({ template: this.viewer.getTemplate(), inputs: this.viewer.getInputs(), options: { font: this.viewer.getFont() } }).then((pdf) => {
+				// console.log(pdf);
+				const blob = new Blob([pdf.buffer], { type: 'application/pdf' });
+				// window.open(URL.createObjectURL(blob));
+
+				const filename = "PI4-1附件.pdf"; 
+				const file = new File([blob], filename, { type: 'application/pdf' });
+				const link = document.createElement('a');
+				const url = URL.createObjectURL(file);
+				link.href = url;
+				// console.log(link,url);
+				link.download = file.name;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+			});
 		},
 		handlePageTurn(type) {
 			switch(type) {

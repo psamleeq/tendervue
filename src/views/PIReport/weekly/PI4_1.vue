@@ -8,15 +8,6 @@
 		<el-button type="text" size="mini" style="margin: 0 5px" @click="handlePageTurn(0)">{{ districtList[inputs.zipCode].name }} ({{ formatDate(reportDate) }})</el-button>
 		<el-button v-if="pageTurn[1] != -1" type="primary" icon="el-icon-arrow-right" size="mini" plain :disabled="pageTurn[1] == -1"  @click="handlePageTurn(1)">PI4.1附件</el-button>
 
-		<!-- <div class="filter-container">
-			<el-button
-				class="filter-item"
-				type="info"
-				icon="el-icon-document"
-				@click="handleDownload"
-			>輸出PDF</el-button>
-		</div> -->
-
 		<el-row :gutter="10">
 			<el-col :span="12">
 				<el-card shadow="never" style="width: 450px; margin: 20px auto; padding: 5px 10px;">
@@ -24,6 +15,7 @@
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h3>檢核資訊</h3>
 							<el-button-group>
+								<el-button type="primary" plain icon="el-icon-document" size="small" @click="handleDownload()">輸出</el-button>
 								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
 							</el-button-group>
@@ -434,7 +426,7 @@ export default {
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
 				link.href = url;
-				console.log(link,url);
+				// console.log(link,url);
 				link.download = file.name;
 				document.body.appendChild(link);
 				link.click();

@@ -19,12 +19,12 @@
 			<el-table-column type="index" label="序號" width="60" align="center" />
 			<el-table-column label="項目" width="200" align="center">
 				<template slot-scope="{ row }">
-					{{ formatItem(row.perfItem, row.perfAtt, row.perfPages) }}
+					{{ formatItem(row) }}
 				</template>
 			</el-table-column>
 			<el-table-column label="說明" align="center">
 				<template slot-scope="{ row }">
-					{{ getDescription(row.perfItem, row.perfAtt) }}
+					{{ getDescription(row) }}
 				</template>
 			</el-table-column>
 			<el-table-column label="頁數" align="center">
@@ -252,13 +252,13 @@ export default {
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
-		formatItem(perfItem, perfAtt, perfPages) {
-			let item = this.options.itemMap[perfItem]?.[perfAtt];
-			return item ? item.name + (perfPages > 0 ? ` (${perfPages})` : "") : "";
+		formatItem(row) {
+			let item = this.options.itemMap[row.perfItem]?.[row.perfAtt];
+			return item ? item.name + (row.perfPages > 0 ? ` (${row.perfPages})` : "") : "";
 		},
-		getDescription(perfItem, perfAtt){
-			const item = this.options.itemMap[perfItem]?.[perfAtt];
-			return item ? item.description : "";
+		getDescription(row){
+			const item = this.options.itemMap[row.perfItem]?.[row.perfAtt];
+			return item ? item.description + (row.caseNumber ? ` \n(案件編號: ${row.caseNumber})` : "") : "";
 		},
 		beforeEdit(row) {
 			const item = this.options.itemMap[row.perfItem]?.[row.perfAtt];
@@ -279,6 +279,8 @@ export default {
 <style lang="sass">
 .perfReport-Edit
 	.el-table
+		.cell
+			white-space: pre-line
 		.item-main
 			background-color: #F5F5F5
 </style>

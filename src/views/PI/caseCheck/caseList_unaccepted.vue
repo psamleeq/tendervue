@@ -151,7 +151,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="['StateNotes', 'CaseName'].includes(key) ? 150 : ['CaseDate', 'DeviceType', 'rDeviceType', 'BType', 'BrokeStatus', 'DuplicateCase'].includes(key) ? 100 : null"
+				:width="['StateNotes', 'CaseName'].includes(key) ? 150 : ['CaseDate', 'DeviceType', 'rDeviceType', 'BType', 'BrokeType', 'BrokeStatus', 'DuplicateCase'].includes(key) ? 100 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>
@@ -365,14 +365,14 @@ export default {
 					name: "損壞態樣",
 					sortable: false
 				},
-				// BrokeType: {
-				// 	name: "損壞程度",
-				// 	sortable: false
-				// },
-				BrokeStatus: {
-					name: "損壞狀況",
+				BrokeType: {
+					name: "損壞程度",
 					sortable: false
 				},
+				// BrokeStatus: {
+				// 	name: "損壞狀況",
+				// 	sortable: false
+				// },
 				// PCIValue: {
 				// 	name: "PCI",
 				// 	sortable: false
@@ -440,11 +440,16 @@ export default {
 			options: {
 				DeviceType: {},
 				BType: {},
-				BrokeStatus: {
-					1: "觀察", //輕度
-					2: "短期改善", //中度
-					3: "立即改善", //重度
+				BrokeType: {
+					1: "輕",
+					2: "中",
+					3: "重"
 				},
+				// BrokeStatus: {
+				// 	1: "觀察", //輕度
+				// 	2: "短期改善", //中度
+				// 	3: "立即改善", //重度
+				// },
 				resultType: {
 					MF:{
 						1: "合理",
@@ -589,8 +594,8 @@ export default {
 			if([ 'organAssign', 'State' ].includes(column.property)) return row[column.property] == 1 ? '是' : '-';
 			else if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
-			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
-			else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];
+			else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+			// else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];
 			else if(column.property == 'StateNotes') return row.StateNotes.Firm || "-";
 			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
@@ -611,7 +616,8 @@ export default {
 				l.rDeviceType = this.options.DeviceType[l.rDeviceType];
 				l.organAssign =  l.organAssign == 1 ? "是" : "";
 				l.BType = this.options.BType[l.BType];
-				l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
+				l.BrokeType = this.options.BrokeType[l.BrokeType];
+				// l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
 				l.priorDuplicateCase = l.DuplicateCase?"是":"否"
 				l.MFCheck = (l.State & 16) ? "V" : (l.State & 1) ? "X" : "-";
 				l.SVCheck = (l.State & 2) ? "X" : (l.State & 32) ? "V" : "-";

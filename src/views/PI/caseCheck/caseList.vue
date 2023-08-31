@@ -214,12 +214,12 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'UploadCaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
-					<span v-else-if="!isArchive && checkPermission(['PIcase.editor']) && [ 'organAssign', 'BType', 'BrokeType', 'BrokeStatus', 'PCIValue' ].includes(column.property)">
+					<span v-else-if="!isArchive && checkPermission(['PIcase.editor']) && [ 'organAssign', 'BType', 'BrokeType', 'BrokeType', 'BrokeStatus', 'PCIValue' ].includes(column.property)">
 						<span v-if="row.edit">
 							<span v-if="[ 'organAssign' ].includes(column.property)">
 								<el-checkbox v-model.number="row[column.property]" :true-label="1" :false-label="0" />
 							</span>
-							<el-select v-else-if="[ 'BType', 'BrokeType', 'BrokeStatus' ].includes(column.property)" class="edit-select" v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]" size="mini" popper-class="type-select">
+							<el-select v-else-if="[ 'BType', 'BrokeType', 'BrokeType', 'BrokeStatus' ].includes(column.property)" class="edit-select" v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]" size="mini" popper-class="type-select">
 								<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 							</el-select>
 							<el-input-number 
@@ -421,14 +421,14 @@ export default {
 					name: "損壞態樣",
 					sortable: false
 				},
-				// BrokeType: {
-				// 	name: "損壞程度",
-				// 	sortable: false
-				// },
-				BrokeStatus: {
-					name: "損壞狀況",
+				BrokeType: {
+					name: "損壞程度",
 					sortable: false
 				},
+				// BrokeStatus: {
+				// 	name: "損壞狀況",
+				// 	sortable: false
+				// },
 				PCIValue: {
 					name: "PCI",
 					sortable: false
@@ -478,16 +478,16 @@ export default {
 			options: {
 				DeviceType: {},
 				BType: {},
-				// BrokeType: {
-				// 	1: "輕度",
-				// 	2: "中度",
-				// 	3: "重度"
-				// },
-				BrokeStatus: {
-					1: "觀察", //輕度
-					2: "短期改善", //中度
-					3: "立即改善", //重度
+				BrokeType: {
+					1: "輕",
+					2: "中",
+					3: "重"
 				},
+				// BrokeStatus: {
+				// 	1: "觀察", //輕度
+				// 	2: "短期改善", //中度
+				// 	3: "立即改善", //重度
+				// },
 				resultType: {
 					SV: {
 						2: "合格",
@@ -662,8 +662,8 @@ export default {
 			if([ 'organAssign' ].includes(column.property)) return row[column.property] == 1 ? '是' : '-';
 			else if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];
 			else if(column.property == 'BType') return this.options.BType[row[column.property]];
-			// else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
-			else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];
+			else if(column.property == 'BrokeType') return this.options.BrokeType[row[column.property]];
+			// else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.BrokeType];
 			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
 			else if(column.property.indexOf('Area') != -1) return Number(row[column.property]) ? row[column.property].toLocaleString() : "-";
 			else return row[column.property] && row[column.property] != '0' ? row[column.property] : "-";
@@ -690,8 +690,8 @@ export default {
 					l.DeviceType = this.options.DeviceType[l.DeviceType];
 					l.organAssign =  l.organAssign == 1 ? "是" : "";
 					l.BType = this.options.BType[l.BType];
-					// l.BrokeType = this.options.BrokeType[l.BrokeType];
-					l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
+					l.BrokeType = this.options.BrokeType[l.BrokeType];
+					// l.BrokeStatus = this.options.BrokeStatus[l.BrokeType];
 					l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
 
 					l.SVCheck = (l.State & 2) ? "V" : (l.State & 32) ? "X" : "";

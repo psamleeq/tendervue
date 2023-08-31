@@ -14,15 +14,6 @@
 			<span v-else>PI3.2附件-2 ({{ Number(listQuery.perfPages)+1 }})</span>
 		</el-button>
 
-		<!-- <div class="filter-container">
-			<el-button
-				class="filter-item"
-				type="info"
-				icon="el-icon-document"
-				@click="handleDownload"
-			>輸出PDF</el-button>
-		</div> -->
-
 		<el-row :gutter="10">
 			<el-col :span="12">
 				<el-card shadow="never" style="width: 450px; margin: 20px auto; padding: 5px 10px;">
@@ -30,6 +21,7 @@
 						<div style="display:flex;justify-content:space-between;align-items: center">
 							<h3>檢核資訊</h3>
 							<el-button-group>
+								<el-button type="primary" plain icon="el-icon-document" size="small" @click="handleDownload()">輸出</el-button>
 								<el-button type="info" icon="el-icon-refresh" size="small" @click="getList()">刷新</el-button>
 								<el-button class="filter-item" type="success" icon="el-icon-document" size="small" @click="storeData">儲存</el-button>
 							</el-button-group>
@@ -130,7 +122,7 @@
 								@change="setPDFinputs" />
 						</el-form-item>
 						<el-form-item v-if="['3'].includes(inputs.distressSrc)" label="第一階段回報說明" :label-width="labelWidth1">
-							<el-select v-model.number="inputForm.construction_Text" placeholder="套用模板" clearable @change="setPDFinputs">
+							<el-select v-model.number="inputForm.construction_Text" placeholder="套用模板" clearable @change="changeTemplate">
 								<el-option v-for="text in constructionText" :key="text" :label="text" :value="text" />
 							</el-select>
 							<el-input
@@ -407,7 +399,7 @@ export default {
 	},
 	mounted() {},
 	methods: {
-		async setData(perfContentId, init=true, initPage=0, perfPages = 0) {
+		async setData(perfContentId, init=true, initPage=0, perfPages=0) {
 			return new Promise(resolve => {
 				getPerfContent({
 					contentId: perfContentId
@@ -440,17 +432,29 @@ export default {
 							this.inputs = this.list.content.inputs;
 
 							// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
-							for(const key in this.inputs) {
-								if(key.includes('Img') && this.inputs[key].length != 0) {
-									await fetch(this.inputs[key])
+							const fetchImg = async (key) => {
+								return new Promise( resolve => {
+									fetch(this.inputs[key])
 										.then(res => res.blob())
 										.then(blob => {
 											const reader = new FileReader();
-											reader.onloadend = () => { this.inputs[key] = reader.result };
+											reader.onloadend = () => { 
+												this.inputs[key] = reader.result; 
+												resolve();
+											};
 											reader.readAsDataURL(blob);
 										})
+								})
+							};
+
+							let fetchImgList = [];
+							for(const key in this.inputs) {
+								if(key.includes('Img') && this.inputs[key] && this.inputs[key].length != 0) {
+									fetchImgList.push(fetchImg(key));
 								}
 							}
+							await Promise.all(fetchImgList);
+
 							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
 							this.listQuery.perfPages = perfPages != 0 ? perfPages : this.listQuery.perfPages;
 						}
@@ -458,11 +462,12 @@ export default {
 						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 						this.inputs.zipCode = String(this.list.zipCode);
 
-						await new Promise(r => setTimeout(r, 100));
+						// await new Promise(r => setTimeout(r, 1500));
 
 						if(init) await this.initPDF();
 						else {
-							for(const [key, value] of Object.entries(this.inputs)) this.changeInput({ key, value });
+							for await (const promise of Object.entries(this.inputs).map(([key, value])  => this.changeInput({ key, value })) );
+							// await new Promise(r => setTimeout(r, 1000));
 							await this.getList(Object.keys(this.list.content).length == 0);
 						}
 					}
@@ -486,42 +491,71 @@ export default {
 							fallback: true
 						}
 					};
-
+					if(this.form) this.form.destroy();	
 					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 					this.form.onChangeInput(arg => this.changeInput(arg));
 
-					for(const [key, value] of Object.entries(this.inputs)) this.changeInput({ key, value });
+					for await (const promise of Object.entries(this.inputs).map(([key, value])  => this.changeInput({ key, value })) );
 					await this.getList(Object.keys(this.list.content).length == 0);
-						
 					resolve();
 				})
 			})
 		},
 		async changeInput(arg) {
-			if(['caseNumber', 'completeFixed_Text', 'construction_Text'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
-			if(['checkReportDate', 'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT', ].includes(arg.key)) {
-				const dateTime = moment(arg.value);
-				this.inputForm[arg.key] = dateTime.isValid() 
-					? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
-					: '';
-			}
-
-			if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
-				if(arg.value != undefined) {
-					this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
-					await this.aspectRatioImg(arg);
+			return new Promise(async resolve=> {
+				if(['caseNumber', 'completeFixed_Text', 'construction_Text'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
+				if(['checkReportDate', 'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT', ].includes(arg.key)) {
+					const dateTime = moment(arg.value);
+					this.inputForm[arg.key] = dateTime.isValid() 
+						? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
+						: '';
 				}
-			}
+
+				const aspectRatioImgList = [];
+				if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
+					if(arg.value != undefined) {
+						this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
+						aspectRatioImgList.push(this.aspectRatioImg(arg));
+					}
+				}
+				await Promise.all(aspectRatioImgList);
+				resolve();
+			})
 		},
 		async changeTemplate() {
-			new Promise((resolve, reject) => {
+			return new Promise(resolve => {
 				// this.loading = true;
 				const fileName = this.srcList[this.inputs.distressSrc].json[this.inputs.inspection];
 				// console.log(fileName);
 				fetch(`/assets/pdf/weekly/${fileName}?t=${Date.now()}`).then(async (response) => {
 					this.template = await response.json();
+					if(this.inputs.distressSrc == '3' && this.inputForm.construction_Text.includes('第一階段無處理')) {
+						//Step1: 替換第二頁PDF
+						const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+						const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
+						ori_pdf.removePage(1);
+
+						let fileNameSpec = fileName.split(".");
+						fileNameSpec.splice(1, 0, "_1", ".");
+						fileNameSpec = fileNameSpec.join("");
+						const addTemplate = await fetch(`/assets/pdf/weekly/${fileNameSpec}?t=${Date.now()}`).then(response => response.json());
+						const add_pdfUint8 = Uint8Array.from(window.atob(addTemplate.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
+						const add_pdf = await PDFDocument.load(add_pdfUint8.buffer);
+						const mergedPdf = await PDFDocument.create();
+
+						const ori_copiedPages = await mergedPdf.copyPages(ori_pdf, ori_pdf.getPageIndices());
+						const [ add_copiedPage ] = await mergedPdf.copyPages(add_pdf, [0]);
+						ori_copiedPages.forEach(page => mergedPdf.addPage(page));
+						mergedPdf.addPage(add_copiedPage);
+
+						this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
+
+						//Step2: 調整欄位
+						this.template.schemas.splice(this.template.schemas.length-1, 1, addTemplate.schemas[0]);
+					}
+
 					if(this.caseList.length == this.listQuery.perfPages) {
-						//合併PDF
+						//Step1: 合併PDF
 						const ori_pdfUint8 = Uint8Array.from(window.atob(this.template.basePdf.replace(/^data:application\/pdf;base64,/, '')), c => c.charCodeAt(0));
 						const ori_pdf = await PDFDocument.load(ori_pdfUint8.buffer);
 						const addTemplate = await fetch(`/assets/pdf/weekly/PI3_2Att3.json?t=${Date.now()}`).then(response => response.json());
@@ -534,24 +568,28 @@ export default {
 						for(const copiedPage of ori_copiedPages) mergedPdf.addPage(copiedPage);
 						mergedPdf.addPage(add_copiedPage);
 						this.template.basePdf = await mergedPdf.saveAsBase64({ dataUri: true });
+
+						//Step2: 調整欄位
 						this.template.schemas.push(addTemplate.schemas[0]);
 					}
 					this.schemasOri = {};
 					this.form.updateTemplate(this.template);
-					this.setPDFinputs();
-					this.form.render();
+					// this.form.render();
 
+					// await new Promise(r => setTimeout(r, 500));
+					await this.setPDFinputs();
 					resolve();
+				
 					this.loading = false;
 				})
 			})
 		},
 		async aspectRatioImg(arg) {
-			new Promise((resolve, reject) => {
+			return new Promise(resolve=> {
 				const keyArray = this.template.schemas.map(item => Object.keys(item));
-				const keyIndex =  keyArray.findIndex(el => el.includes(arg.key));
-				if(keyIndex == -1) return;
-
+				const keyIndex = keyArray.findIndex(el => el.includes(arg.key));
+				// console.log(this.template.schemas.length, keyIndex, arg.key, arg.value);
+				if(keyIndex == -1) return resolve();
 				if(this.schemasOri[arg.key]) {
 					this.template.schemas[keyIndex][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[arg.key]));
 					delete this.schemasOri[arg.key];
@@ -576,46 +614,52 @@ export default {
 					resolve();
 				}
 				img.src = arg.value;
+				if(arg.value.length == 0) resolve();
 			})
 		},
-		setPDFinputs() {
-			// console.log('setPDFinputs');
-			//工程名稱
-			const reportDate = moment(this.reportDate).subtract(1911, 'year');
-			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
-			//紀錄編號
-			this.inputs.serialNumber1 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
-			this.inputs.serialNumber2 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0') + "-1";	
-			this.inputs.serialNumber3 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage+1).padStart(2, '0');	
-			//檢查日期
-			const checkDate = moment(this.checkDate).subtract(1911, 'year');
-			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
-			//查報來源
-			this.inputs.distressSrc_Text = (this.inputs.distressSrc == '1') ? '自主' : (this.inputs.distressSrc == '2') ? '隊部' : '';
+		async setPDFinputs() {
+			return new Promise(async resolve=> {
+				//工程名稱
+				const reportDate = moment(this.reportDate).subtract(1911, 'year');
+				this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
+				//紀錄編號
+				this.inputs.serialNumber1 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
+				this.inputs.serialNumber2 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0') + "-1";	
+				this.inputs.serialNumber3 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage+1).padStart(2, '0');	
+				//檢查日期
+				const checkDate = moment(this.checkDate).subtract(1911, 'year');
+				this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
+				//查報來源
+				this.inputs.distressSrc_Text = (this.inputs.distressSrc == '1') ? '自主' : (this.inputs.distressSrc == '2') ? '隊部' : '';
 
-			for(const key of ['caseNumber', 'completeFixed_Text', 'construction_Text']) {
-				this.inputs[key] = String(this.inputForm[key]);
-			}
+				for(const key of ['caseNumber', 'completeFixed_Text', 'construction_Text']) {
+					this.inputs[key] = String(this.inputForm[key]);
+				}
 
-			for(const key of ['checkReportDate',  'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT']) {
-				const dateTime = moment(this.inputForm[key]);
-				this.inputs[key] = dateTime.isValid() 
-					? dateTime.subtract(1911, 'year').format("YYYY/MM/DD HH:mm").slice(1)
-					: '';
-			}
+				for(const key of ['checkReportDate',  'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT']) {
+					const dateTime = moment(this.inputForm[key]);
+					this.inputs[key] = dateTime.isValid() 
+						? dateTime.subtract(1911, 'year').format("YYYY/MM/DD HH:mm").slice(1)
+						: '';
+				}
 
-			for(const key of ['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img']) {
-				if(this.inputForm[key] != undefined && this.inputForm[key].length != 0) {
-					this.inputs[key] = this.inputForm[key];
-					this.aspectRatioImg({ key, value: this.inputs[key] });
-				} 
-			}
+				const aspectRatioImgList = [];
+				for(const key of ['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img']) {
+					if(this.inputForm[key] != undefined && this.inputForm[key].length != 0) {
+						this.inputs[key] = this.inputForm[key];
+						aspectRatioImgList.push(this.aspectRatioImg({ key, value: this.inputs[key] }));
+					} 
+				}
+				
+				await Promise.all(aspectRatioImgList)
+				this.form.setInputs([this.inputs]);
+				this.form.render();
 
-			this.form.setInputs([this.inputs]);
-			this.form.render();
+				resolve();
+			})
 		},
 		async getList(isReplace = true) {
-			new Promise((resolve, reject) => {
+			return new Promise(resolve => {
 				this.loading = true;
 				const date = moment(this.reportDate).format("YYYY-MM-DD");
 				this.caseList = [];
@@ -644,6 +688,7 @@ export default {
 
 					await this.changeTemplate();
 					resolve();
+					// resolve();
 					// this.loading = false;
 				}).catch(err => this.loading = false);
 			})
@@ -667,7 +712,7 @@ export default {
 			setPerfContent(this.listQuery.perfContentId, {
 				caseNo: Number(this.inputForm.caseNumber),
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: (([2, 3].includes(this.inputs.distressSrc)) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0),
+				pageCount: (([2, 3].includes(Number(this.inputs.distressSrc))) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0),
 				content: JSON.stringify(storedContent),
 				imgObj
 			}).then(response => {
@@ -703,7 +748,7 @@ export default {
 				const link = document.createElement('a');
 				const url = URL.createObjectURL(file);
 				link.href = url;
-				console.log(link,url);
+				// console.log(link,url);
 				link.download = file.name;
 				document.body.appendChild(link);
 				link.click();
