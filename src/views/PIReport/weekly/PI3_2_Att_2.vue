@@ -399,9 +399,8 @@ export default {
 	},
 	mounted() {},
 	methods: {
-		async setData(perfContentId, init=true, initPage=0, perfPages = 0) {
+		async setData(perfContentId, init=true, initPage=0, perfPages=0) {
 			return new Promise(resolve => {
-				console.log("setData");
 				getPerfContent({
 					contentId: perfContentId
 				}).then(async (response) => {
@@ -433,17 +432,29 @@ export default {
 							this.inputs = this.list.content.inputs;
 
 							// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
-							for(const key in this.inputs) {
-								if(key.includes('Img') && this.inputs[key].length != 0) {
-									await fetch(this.inputs[key])
+							const fetchImg = async (key) => {
+								return new Promise( resolve => {
+									fetch(this.inputs[key])
 										.then(res => res.blob())
 										.then(blob => {
 											const reader = new FileReader();
-											reader.onloadend = () => { this.inputs[key] = reader.result };
+											reader.onloadend = () => { 
+												this.inputs[key] = reader.result; 
+												resolve();
+											};
 											reader.readAsDataURL(blob);
 										})
+								})
+							};
+
+							let fetchImgList = [];
+							for(const key in this.inputs) {
+								if(key.includes('Img') && this.inputs[key] && this.inputs[key].length != 0) {
+									fetchImgList.push(fetchImg(key));
 								}
 							}
+							await Promise.all(fetchImgList);
+
 							this.initPage = initPage != 0 ? initPage : this.list.content.initPage;
 							this.listQuery.perfPages = perfPages != 0 ? perfPages : this.listQuery.perfPages;
 						}
@@ -451,11 +462,12 @@ export default {
 						this.checkDate = this.list.checkDate ? this.list.checkDate : this.list.reportDate;
 						this.inputs.zipCode = String(this.list.zipCode);
 
-						await new Promise(r => setTimeout(r, 100));
+						// await new Promise(r => setTimeout(r, 1500));
 
 						if(init) await this.initPDF();
 						else {
-							for(const [key, value] of Object.entries(this.inputs)) this.changeInput({ key, value });
+							for await (const promise of Object.entries(this.inputs).map(([key, value])  => this.changeInput({ key, value })) );
+							// await new Promise(r => setTimeout(r, 1000));
 							await this.getList(Object.keys(this.list.content).length == 0);
 						}
 					}
@@ -479,36 +491,39 @@ export default {
 							fallback: true
 						}
 					};
-
+					if(this.form) this.form.destroy();	
 					this.form = new Form({ domContainer, template: this.template, inputs: [ this.inputs ], options: { font } });
 					this.form.onChangeInput(arg => this.changeInput(arg));
 
-					for(const [key, value] of Object.entries(this.inputs)) this.changeInput({ key, value });
+					for await (const promise of Object.entries(this.inputs).map(([key, value])  => this.changeInput({ key, value })) );
 					await this.getList(Object.keys(this.list.content).length == 0);
-						
 					resolve();
 				})
 			})
 		},
 		async changeInput(arg) {
-			if(['caseNumber', 'completeFixed_Text', 'construction_Text'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
-			if(['checkReportDate', 'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT', ].includes(arg.key)) {
-				const dateTime = moment(arg.value);
-				this.inputForm[arg.key] = dateTime.isValid() 
-					? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
-					: '';
-			}
-
-			if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
-				if(arg.value != undefined) {
-					this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
-					await this.aspectRatioImg(arg);
+			return new Promise(async resolve=> {
+				if(['caseNumber', 'completeFixed_Text', 'construction_Text'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
+				if(['checkReportDate', 'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT', ].includes(arg.key)) {
+					const dateTime = moment(arg.value);
+					this.inputForm[arg.key] = dateTime.isValid() 
+						? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
+						: '';
 				}
-			}
+
+				const aspectRatioImgList = [];
+				if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
+					if(arg.value != undefined) {
+						this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
+						aspectRatioImgList.push(this.aspectRatioImg(arg));
+					}
+				}
+				await Promise.all(aspectRatioImgList);
+				resolve();
+			})
 		},
 		async changeTemplate() {
-			new Promise((resolve, reject) => {
-				console.log("changeTemplate");
+			return new Promise(resolve => {
 				// this.loading = true;
 				const fileName = this.srcList[this.inputs.distressSrc].json[this.inputs.inspection];
 				// console.log(fileName);
@@ -559,20 +574,22 @@ export default {
 					}
 					this.schemasOri = {};
 					this.form.updateTemplate(this.template);
-					this.setPDFinputs();
-					this.form.render();
+					// this.form.render();
 
+					// await new Promise(r => setTimeout(r, 500));
+					await this.setPDFinputs();
 					resolve();
+				
 					this.loading = false;
 				})
 			})
 		},
 		async aspectRatioImg(arg) {
-			new Promise((resolve, reject) => {
+			return new Promise(resolve=> {
 				const keyArray = this.template.schemas.map(item => Object.keys(item));
-				const keyIndex =  keyArray.findIndex(el => el.includes(arg.key));
-				if(keyIndex == -1) return;
-
+				const keyIndex = keyArray.findIndex(el => el.includes(arg.key));
+				// console.log(this.template.schemas.length, keyIndex, arg.key, arg.value);
+				if(keyIndex == -1) return resolve();
 				if(this.schemasOri[arg.key]) {
 					this.template.schemas[keyIndex][arg.key] = JSON.parse(JSON.stringify(this.schemasOri[arg.key]));
 					delete this.schemasOri[arg.key];
@@ -597,47 +614,52 @@ export default {
 					resolve();
 				}
 				img.src = arg.value;
+				if(arg.value.length == 0) resolve();
 			})
 		},
-		setPDFinputs() {
-			// console.log('setPDFinputs');
-			//工程名稱
-			const reportDate = moment(this.reportDate).subtract(1911, 'year');
-			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
-			//紀錄編號
-			this.inputs.serialNumber1 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
-			this.inputs.serialNumber2 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0') + "-1";	
-			this.inputs.serialNumber3 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage+1).padStart(2, '0');	
-			//檢查日期
-			const checkDate = moment(this.checkDate).subtract(1911, 'year');
-			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
-			//查報來源
-			this.inputs.distressSrc_Text = (this.inputs.distressSrc == '1') ? '自主' : (this.inputs.distressSrc == '2') ? '隊部' : '';
+		async setPDFinputs() {
+			return new Promise(async resolve=> {
+				//工程名稱
+				const reportDate = moment(this.reportDate).subtract(1911, 'year');
+				this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
+				//紀錄編號
+				this.inputs.serialNumber1 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
+				this.inputs.serialNumber2 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0') + "-1";	
+				this.inputs.serialNumber3 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage+1).padStart(2, '0');	
+				//檢查日期
+				const checkDate = moment(this.checkDate).subtract(1911, 'year');
+				this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
+				//查報來源
+				this.inputs.distressSrc_Text = (this.inputs.distressSrc == '1') ? '自主' : (this.inputs.distressSrc == '2') ? '隊部' : '';
 
-			for(const key of ['caseNumber', 'completeFixed_Text', 'construction_Text']) {
-				this.inputs[key] = String(this.inputForm[key]);
-			}
+				for(const key of ['caseNumber', 'completeFixed_Text', 'construction_Text']) {
+					this.inputs[key] = String(this.inputForm[key]);
+				}
 
-			for(const key of ['checkReportDate',  'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT']) {
-				const dateTime = moment(this.inputForm[key]);
-				this.inputs[key] = dateTime.isValid() 
-					? dateTime.subtract(1911, 'year').format("YYYY/MM/DD HH:mm").slice(1)
-					: '';
-			}
+				for(const key of ['checkReportDate',  'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT']) {
+					const dateTime = moment(this.inputForm[key]);
+					this.inputs[key] = dateTime.isValid() 
+						? dateTime.subtract(1911, 'year').format("YYYY/MM/DD HH:mm").slice(1)
+						: '';
+				}
 
-			for(const key of ['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img']) {
-				if(this.inputForm[key] != undefined && this.inputForm[key].length != 0) {
-					this.inputs[key] = this.inputForm[key];
-					this.aspectRatioImg({ key, value: this.inputs[key] });
-				} 
-			}
+				const aspectRatioImgList = [];
+				for(const key of ['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img']) {
+					if(this.inputForm[key] != undefined && this.inputForm[key].length != 0) {
+						this.inputs[key] = this.inputForm[key];
+						aspectRatioImgList.push(this.aspectRatioImg({ key, value: this.inputs[key] }));
+					} 
+				}
+				
+				await Promise.all(aspectRatioImgList)
+				this.form.setInputs([this.inputs]);
+				this.form.render();
 
-			this.form.setInputs([this.inputs]);
-			this.form.render();
+				resolve();
+			})
 		},
 		async getList(isReplace = true) {
-			new Promise((resolve, reject) => {
-				console.log("getList");
+			return new Promise(resolve => {
 				this.loading = true;
 				const date = moment(this.reportDate).format("YYYY-MM-DD");
 				this.caseList = [];
@@ -666,6 +688,7 @@ export default {
 
 					await this.changeTemplate();
 					resolve();
+					// resolve();
 					// this.loading = false;
 				}).catch(err => this.loading = false);
 			})

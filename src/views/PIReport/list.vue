@@ -397,7 +397,7 @@ export default {
 			this.timer = setInterval(() => { 
 				if(this.genPercentIndex-1 > 0 && this.genPercent < this.genPercentArr[this.genPercentIndex-1]) this.genPercent += Math.floor(Math.floor(Math.random() * (this.genPercentArr[this.genPercentIndex-1] - this.genPercent) * 0.5));
 				if(this.genPercent < this.genPercentArr[this.genPercentIndex]) this.genPercent++;
-				else if(this.genPercent < 99 && Math.floor(Math.random() * 2)) this.genPercent++;
+				else if(this.genPercent >= 90 && this.genPercent < 99 && Math.floor(Math.random() * 2)) this.genPercent++;
 			}, intervalSec);
 			
 			await getPerfReportList({
@@ -525,9 +525,8 @@ export default {
 			let add_pdfUint8_32Att2Arr = [ await this.$refs.PI32Att2.getPDF() ];
 			for(const caseSpec of this.perfPagesObj[302][2]) {
 				const { id, initPage, perfPages } = caseSpec;
-				console.log(id, initPage, perfPages);
 				await this.$refs.PI32Att2.setData(id, false, initPage, perfPages);
-				await new Promise(r => setTimeout(r, 1500));
+				// await new Promise(r => setTimeout(r, 1500));
 				add_pdfUint8_32Att2Arr.push(await this.$refs.PI32Att2.getPDF());
 			}
 			// console.log(add_pdfUint8_32Att2Arr);
