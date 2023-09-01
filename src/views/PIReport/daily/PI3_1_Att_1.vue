@@ -332,7 +332,7 @@ export default {
 					this.form.onChangeInput(arg => changeInput(arg));
 
 					if(Object.keys(this.list.content).length != 0) {
-						for(let i = 1; i < this.list.content.pageCount-1; i++) await this.addPage(true);
+						for(let i = 1; i < this.list.pageCount-1; i++) await this.addPage(true);
 					}
 
 					for(const [key, value] of Object.entries(this.inputs)) changeInput({ key, value });
