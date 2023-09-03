@@ -111,7 +111,7 @@
 				</el-table-column>
 			</el-table-column>
 
-			<el-table-column v-if="[ 1031, 1041 ].includes(listQuery.tenderId) " label="缺失匯入" width="120" align="center">
+			<el-table-column v-if="listQuery.tenderId > 1001" label="缺失匯入" width="120" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
 						<el-button class="btn-action" type="primary" plain :disabled="isUpload" @click="uploadCase(row, 1)">通報</el-button>
