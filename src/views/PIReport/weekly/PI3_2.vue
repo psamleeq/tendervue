@@ -197,6 +197,7 @@ export default {
 				Hr1_Num32: '0',
 				Hr4_Num32: '0',
 				Day15_Num32: '0',
+				Day45_Num32: '0',
 				Day2_Num32:'0',
 				sumCompleteMaintain_Num32:'0',
 				failTime_Num32: '0',//C
@@ -271,7 +272,7 @@ export default {
 					const changeInput = (arg) => {
 						// console.log(arg);
 						if(['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
-						if(['maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32', 'Day2_Num32', 'failTime_Num32', 'companyCheck_Num32'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+						if(['maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32', 'Day45_Num32', 'Day2_Num32', 'failTime_Num32', 'companyCheck_Num32'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 						this.setPDFinputs();
 					}
 
@@ -297,8 +298,8 @@ export default {
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
 			//案件數
-			this.inputForm.Hr1_Num32 = this.inputForm.Hr4_Num32 = this.inputForm.Day15_Num32 = this.inputForm.Day2_Num32 = this.inputForm.sumCompleteMaintain_Num32 = this.inputForm.companyCheck_Num32 = this.inputForm.maintainAll_Num32;
-			for(const key of [ 'maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32', 'Day2_Num32', 'sumCompleteMaintain_Num32', 'failTime_Num32', 'companyCheck_Num32']) this.inputs[key] = String(this.inputForm[key]);
+			this.inputForm.Hr1_Num32 = this.inputForm.Hr4_Num32 = this.inputForm.Day15_Num32 = this.inputForm.Day45_Num32 = this.inputForm.Day2_Num32 = this.inputForm.sumCompleteMaintain_Num32 = this.inputForm.companyCheck_Num32 = this.inputForm.maintainAll_Num32;
+			for(const key of [ 'maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32', 'Day45_Num32', 'Day2_Num32', 'sumCompleteMaintain_Num32', 'failTime_Num32', 'companyCheck_Num32']) this.inputs[key] = String(this.inputForm[key]);
 
 			//計算指標數值
 			const A = this.inputForm.maintainAll_Num32;

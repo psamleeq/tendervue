@@ -36,46 +36,41 @@
 							/>
 						</el-form-item>
 						<el-divider />
-						<el-collapse v-model="activeName">
-							<el-collapse-item v-for="key in ['AC', 'FA']" :key="`form_${key}`" class="collapse-label" :title="`${inputs['serialNumber_'+key]} (${key == 'FA' ? '設施' : key})`" :name="key">
-								<!-- <el-form-item label="維護各項缺失之總項次數" :label-width="labelWidth1">
-									<el-input-number v-model="inputForm.maintainAll_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-								</el-form-item>
-								<el-divider /> -->
-								<el-form-item label="坑洞" :label-width="labelWidth1">
-									<el-input-number v-model="inputForm[`hole_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
-								</el-form-item>
-								<el-form-item :label="key == 'AC' ? '人孔高差' : '人行道'" :label-width="labelWidth1">
-									<el-input-number v-model="inputForm[`sidewalk_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
-								</el-form-item>
-								<el-form-item label="縱橫向裂縫/龜裂" :label-width="labelWidth1">
-									<el-input-number v-model="inputForm[`crack_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
-								</el-form-item>
-								<el-form-item label="車轍/隆起與凹陷" :label-width="labelWidth1">
-									<el-input-number v-model="inputForm[`uplift_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
-								</el-form-item>
-								<el-divider />
-								<el-form-item label="未滿足契約要求案件資訊" :label-width="labelWidth1">
-									<el-input-number v-model="inputForm[`failContractRequire_Num41_${key}`]" controls-position="right" :min="0" @change="setPDFinputs" />
-								</el-form-item>
-								<el-divider />
-								<!-- <el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
-									<el-input-number v-model="inputForm.companyCheck_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
-								</el-form-item>
-								<el-divider /> -->
-								
-								<h4>應檢附文件</h4>
-								<el-form-item label="" :label-width="labelWidth2">
-									<el-checkbox v-model="inputForm[`checkInTime_doc41_${key}`]" @change="setPDFinputs">滿足與未滿足各項契約時間要求資訊</el-checkbox>
-									<br/>
-									<el-checkbox v-model="inputForm[`checkCoFail_doc41_${key}`]" @change="setPDFinputs">廠商自主發現未滿足契約要求案件資訊</el-checkbox>
-									<br/>
-									<el-checkbox v-model="inputForm[`checkSandOFail_doc41_${key}`]" @change="setPDFinputs">機關或監造抽查檢核後發現未滿足要求的案件數資訊</el-checkbox>
-									<br/>
-									<el-checkbox v-model="inputForm[`checkCoUnreason_doc41_${key}`]" @change="setPDFinputs">廠商認為為滿足判定不合理資訊</el-checkbox>
-								</el-form-item>
-							</el-collapse-item>
-						</el-collapse>
+						<el-form-item label="坑洞" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.hole_Num41_AC" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item>
+						<el-form-item label="人孔高差" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.sidewalk_Num41_AC" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item>
+						<el-form-item label="縱橫向裂縫/龜裂" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.crack_Num41_AC" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item>
+						<el-form-item label="車轍/隆起與凹陷" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.uplift_Num41_AC" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item>
+						<el-form-item label="人行道(含附屬設施)" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.sidewalk_Num41_FA" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item>
+						<el-divider />
+						<el-form-item label="未滿足契約要求案件資訊" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.failContractRequire_Num41_AC" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item>
+						<el-divider />
+						<!-- <el-form-item label="廠商自主檢查人次數" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.companyCheck_Num41" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item>
+						<el-divider /> -->
+						
+						<h4>應檢附文件</h4>
+						<el-form-item label="" :label-width="labelWidth2">
+							<el-checkbox v-model="inputForm.checkInTime_doc41_AC" @change="setPDFinputs">滿足與未滿足各項契約時間要求資訊</el-checkbox>
+							<br/>
+							<el-checkbox v-model="inputForm.checkCoFail_doc41_AC" @change="setPDFinputs">廠商自主發現未滿足契約要求案件資訊</el-checkbox>
+							<br/>
+							<el-checkbox v-model="inputForm.checkSandOFail_doc41_AC" @change="setPDFinputs">機關或監造抽查檢核後發現未滿足要求的案件數資訊</el-checkbox>
+							<br/>
+							<el-checkbox v-model="inputForm.checkCoUnreason_doc41_AC" @change="setPDFinputs">廠商認為為滿足判定不合理資訊</el-checkbox>
+						</el-form-item>
 					</el-form>
 				</el-card>
 			</el-col>
@@ -172,7 +167,6 @@ export default {
 				// 	"name": "文山區"
 				// }
 			},
-			activeName: ['AC'],
 			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
@@ -182,31 +176,18 @@ export default {
 				sidewalk_Num41_AC: 0,
 				crack_Num41_AC: 0,
 				uplift_Num41_AC: 0,
+				sidewalk_Num41_FA: 0,
 				failContractRequire_Num41_AC: 0,
 				companyCheck_Num41_AC: 0,
 				BCA_41_AC: 0,
 				checkInTime_doc41_AC: true,
 				checkCoFail_doc41_AC: true,
 				checkSandOFail_doc41_AC: true,
-				checkCoUnreason_doc41_AC: true,
-
-				//FA
-				hole_Num41_FA: 0,
-				sidewalk_Num41_FA: 0,
-				crack_Num41_FA: 0,
-				uplift_Num41_FA: 0,
-				failContractRequire_Num41_FA: 0,
-				companyCheck_Num41_FA: 0,
-				BCA_41_FA: 0,
-				checkInTime_doc41_FA: true,
-				checkCoFail_doc41_FA: true,
-				checkSandOFail_doc41_FA: true,
-				checkCoUnreason_doc41_FA: true,
+				checkCoUnreason_doc41_AC: true
 			},
 			inputs: {
 				contractName: '111年度中山區道路巡查維護修繕成效式契約',//工程名稱
 				serialNumber_AC: '11206250201',//紀錄編號
-				serialNumber_FA: '11206250202',//紀錄編號
 				companyName: '聖東營造股份有限公司',//施工廠商
 				date: '',//檢查日期
 				zipCode: '104',
@@ -220,6 +201,7 @@ export default {
 				sidewalk_Num41_AC: '0',
 				crack_Num41_AC: '0',
 				uplift_Num41_AC: '0',
+				sidewalk_Num41_FA: '0',
 				sumQualified_Num41_AC: '0',
 				failContractRequire_Num41_AC: '0',//C
 				companyCheck_Num41_AC: '0',
@@ -227,22 +209,7 @@ export default {
 				checkInTime_doc41_AC: 'V',
 				checkCoFail_doc41_AC: 'V',
 				checkSandOFail_doc41_AC: 'V',
-				checkCoUnreason_doc41_AC: 'V',
-
-				// FA
-				maintainAll_Num41_FA: '0',//A
-				hole_Num41_FA: '0',
-				sidewalk_Num41_FA: '0',
-				crack_Num41_FA: '0',
-				uplift_Num41_FA: '0',
-				sumQualified_Num41_FA: '0',
-				failContractRequire_Num41_FA: '0',//C
-				companyCheck_Num41_FA: '0',
-				BCA_41_FA: '',
-				checkInTime_doc41_FA: 'V',
-				checkCoFail_doc41_FA: 'V',
-				checkSandOFail_doc41_FA: 'V',
-				checkCoUnreason_doc41_FA: 'V'
+				checkCoUnreason_doc41_AC: 'V'
 			},
 		};
 	},
@@ -308,10 +275,8 @@ export default {
 
 					const changeInput = (arg) => {
 						// console.log(arg);
-						for(const caseKey of ['AC', 'FA']) { 
-							if([`checkInTime_doc41_${caseKey}`, `checkCoFail_doc41_${caseKey}`, `checkSandOFail_doc41_${caseKey}`, `checkCoUnreason_doc41_${caseKey}`].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
-							if([`maintainAll_Num41_${caseKey}`, `hole_Num41_${caseKey}`, `sidewalk_Num41_${caseKey}`, `crack_Num41_${caseKey}`, `uplift_Num41_${caseKey}`, `failContractRequire_Num41_${caseKey}`, `companyCheck_Num41_${caseKey}`].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
-						}
+						if([`checkInTime_doc41_AC`, `checkCoFail_doc41_AC`, `checkSandOFail_doc41_AC`, `checkCoUnreason_doc41_AC`].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
+						if([`maintainAll_Num41_AC`, `hole_Num41_AC`, `sidewalk_Num41_AC`, `crack_Num41_AC`, `uplift_Num41_AC`, `sidewalk_Num41_FA`, `failContractRequire_Num41_AC`, `companyCheck_Num41_AC`].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 						this.setPDFinputs();
 					}
 
@@ -331,31 +296,28 @@ export default {
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
 			this.inputs.serialNumber_AC = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
-			this.inputs.serialNumber_FA = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage+1).padStart(2, '0');	
 			//檢查日期
 			const checkDate = moment(this.checkDate).subtract(1911, 'year');
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
 			//缺失次數
-			for(const caseKey of ['AC', 'FA']) {
-				for(const key of ['hole_Num41', 'sidewalk_Num41', 'crack_Num41', 'uplift_Num41', 'failContractRequire_Num41', 'companyCheck_Num41']) {
-					this.inputs[`${key}_${caseKey}`] = String(this.inputForm[`${key}_${caseKey}`]);
-				}
-				//計算(B)
-				this.inputs[`sumQualified_Num41_${caseKey}`] = String(this.inputForm[`hole_Num41_${caseKey}`]+this.inputForm[`sidewalk_Num41_${caseKey}`]+this.inputForm[`crack_Num41_${caseKey}`]+this.inputForm[`uplift_Num41_${caseKey}`]);
-				//(A)=(B) && 廠商自主檢查件數 = (A)
-				this.inputs[`maintainAll_Num41_${caseKey}`] = this.inputs[`companyCheck_Num41_${caseKey}`] = this.inputs[`sumQualified_Num41_${caseKey}`];
+			for(const key of ['hole_Num41_AC', 'sidewalk_Num41_AC', 'crack_Num41_AC', 'uplift_Num41_AC', 'sidewalk_Num41_FA', 'failContractRequire_Num41_AC', 'companyCheck_Num41_AC']) {
+				this.inputs[key] = String(this.inputForm[key]);
+			}
+			//計算(B)
+			this.inputs.sumQualified_Num41_AC = String(this.inputForm.hole_Num41_AC+this.inputForm.sidewalk_Num41_AC+this.inputForm.crack_Num41_AC+this.inputForm.uplift_Num41_AC+this.inputForm.sidewalk_Num41_FA);
+			//(A)=(B) && 廠商自主檢查件數 = (A)
+			this.inputs.maintainAll_Num41_AC = this.inputs.companyCheck_Num41_AC = this.inputs.sumQualified_Num41_AC;
 
-				//計算指標數值
-				const A = this.inputs[`maintainAll_Num41_${caseKey}`];
-				const B = this.inputForm[`hole_Num41_${caseKey}`]+this.inputForm[`sidewalk_Num41_${caseKey}`]+this.inputForm[`crack_Num41_${caseKey}`]+this.inputForm[`uplift_Num41_${caseKey}`];
-				const C = this.inputForm[`failContractRequire_Num41_${caseKey}`];
-				if(A==0) this.inputs[`BCA_41_${caseKey}`] = '';
-				else this.inputs[`BCA_41_${caseKey}`] = String(Math.round(((B-C)/A)*10000) / 100);
+			//計算指標數值
+			const A = this.inputs.maintainAll_Num41_AC;
+			const B = this.inputForm.hole_Num41_AC+this.inputForm.sidewalk_Num41_AC+this.inputForm.crack_Num41_AC+this.inputForm.uplift_Num41_AC+this.inputForm.sidewalk_Num41_FA;
+			const C = this.inputForm.failContractRequire_Num41_AC;
+			if(A==0) this.inputs.BCA_41_AC = '';
+			else this.inputs.BCA_41_AC = String(Math.round(((B-C)/A)*10000) / 100);
 
-				//應檢附文件
-				for(const key of ['checkInTime_doc41','checkCoFail_doc41','checkSandOFail_doc41','checkCoUnreason_doc41']){
-					this.inputs[`${key}_${caseKey}`] = this.inputForm[`${key}_${caseKey}`] ? 'V' : '';
-				}
+			//應檢附文件
+			for(const key of ['checkInTime_doc41_AC', 'checkCoFail_doc41_AC', 'checkSandOFail_doc41_AC', 'checkCoUnreason_doc41_AC']){
+				this.inputs[key] = this.inputForm[key] ? 'V' : '';
 			}
 			this.form.setInputs([this.inputs]);
 			this.form.render();
@@ -375,10 +337,7 @@ export default {
 				this.inputForm.sidewalk_Num41_AC = Number(response.data.result.caseTotal_holeCover_AC);
 				this.inputForm.crack_Num41_AC = Number(response.data.result.caseTotal_crack_AC);
 				this.inputForm.uplift_Num41_AC = Number(response.data.result.caseTotal_uplift_AC);
-				this.inputForm.hole_Num41_FA = Number(response.data.result.caseTotal_hole_FA);
 				this.inputForm.sidewalk_Num41_FA = Number(response.data.result.caseTotal_holeCover_FA);
-				this.inputForm.crack_Num41_FA = Number(response.data.result.caseTotal_crack_FA);
-				this.inputForm.uplift_Num41_FA = Number(response.data.result.caseTotal_uplift_FA);
 
 				this.setPDFinputs();
 				this.loading = false;
@@ -392,7 +351,7 @@ export default {
 			}
 			setPerfContent(this.listQuery.perfContentId, {
 				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: 2,
+				pageCount: 1,
 				content: JSON.stringify(storedContent)
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
