@@ -58,16 +58,6 @@ const inspectionRouter = {
 				title: '追蹤列表',
 				roles: ['inspection.marker']
 			}
-		},
-		{
-			path: 'caseEdit',
-			component: () => import('@/views/inspection/caseEdit'),
-			name: 'caseEdit',
-			meta: {
-				title: '缺失編輯',
-				roles: ['inspection.marker']
-			},
-			hidden: true
 		}
 	]
 }

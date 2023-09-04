@@ -69,8 +69,8 @@
 							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
 						</el-popover>
 					</span>
-					<span v-else-if="['DateReport'].includes(column.property)">
-						<span>{{ row.DateReport }}</span>
+					<span v-else-if="['DateCreate'].includes(column.property)">
+						<span>{{ row.DateCreate }}</span>
 						<br>
 						<span v-if="row.DateReportDiff > 0" :style="row.DateReportDiff >= 14 ? 'color: #F56C6C' : ''">({{ row.DateReportDiff }}天)</span>
 					</span>
@@ -81,7 +81,7 @@
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
-						<el-button class="btn-action" type="primary" plain size="mini" round @click="editCase(row)">編輯</el-button>
+						<el-button class="btn-action" type="primary" plain size="mini" round @click="rowActive= row; dialogEditVisible = true">編輯</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
@@ -96,6 +96,7 @@
 			:url-list="imgUrls"
 		/>
 
+		<!-- 過濾 -->
 		<el-dialog
 			class="dialog-filter"
 			:visible.sync="dialogFilterVisible"
@@ -121,6 +122,107 @@
 			</span>
 		</el-dialog>
 
+		<!-- 修改 -->
+		<el-dialog
+			class="dialog-editor"
+			:visible.sync="dialogEditVisible"
+			title="缺失編輯"
+			width="700px"
+			:show-close="false"
+			center
+		>
+			<el-form label-position="left" :model="rowActive" :rules="rules" ref="form" label-width="140px" class="case-edit-form">
+				<el-row :gutter="10">
+					<el-col :span="12">
+						<el-form-item prop="id" label="缺失Id">
+							<span>{{ rowActive.id }}</span>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item prop="SerialNo" label="查報案號">
+							<span>{{ rowActive.SerialNo }}</span>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-form-item label="設施類型" prop="type" size="small">
+					<div style="display: flex; width: 300px; gap: 5px;">
+						<el-select class="edit-select" v-model.number="rowActive.RoadType" size="mini" popper-class="type-select" style="width: 100px" @change="changeDeviceType()">
+							<el-option label="道路" :value="1" /> 
+							<el-option label="設施" :value="2" /> 
+						</el-select>
+						<el-select v-model="rowActive.DeviceType" placeholder="請選擇" size="mini" style="width: 100px">
+							<el-option v-for="(val, key) in deviceTypeFilter" :key="key" :label="val.name" :value="Number(key)" />
+						</el-select>
+						<el-checkbox v-if="rowActive.RoadType == 1" v-model="rowActive.RestoredType" :true-label="2" :false-label="1" style="margin-left: 10px;" @change="rowActive.MillingDepth = 0">熱再生</el-checkbox>
+					</div>
+				</el-form-item>
+				<el-form-item prop="Postal_vil" label="里別">
+					<el-input v-model="rowActive.Postal_vil" style="width: 200px" size="small" />
+				</el-form-item>
+				<el-form-item prop="Place" label="地址">
+					<el-input v-model="rowActive.Place" size="small" />
+				</el-form-item>
+				<el-form-item prop="Direction" label="車道">
+					<el-input class="road-dir" v-model="rowActive.Lane" size="small">
+						<el-select slot="prepend" v-model="rowActive.Direction" popper-class="type-select" size="small">
+							<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
+						</el-select>
+					</el-input>
+				</el-form-item>
+				<el-form-item label="通報日期" prop="DateCreate" required>
+					<el-date-picker v-model="rowActive.DateCreate" type="date" placeholder="選擇日期" size="small" />
+				</el-form-item>
+				<el-form-item label="損壞類別" prop="DistressType">
+					<div style="display: flex; width: 220px; gap: 5px;">
+						<el-select class="edit-select" v-model.number="rowActive.DistressType" size="mini" popper-class="type-select" style="flex: 2">
+							<el-option v-for="(name, type) in options.DistressType" :key="`DistressType_${type}`" :label="name" :value="Number(type)" />
+						</el-select>
+						<el-select class="edit-select" v-model.number="rowActive.DistressLevel" size="mini" popper-class="type-select" style="flex: 1">
+							<el-option v-for="(name, type) in options.DistressLevel" :key="`DistressLevel_${type}`" :label="name" :value="Number(type)" />
+						</el-select>
+					</div>
+				</el-form-item>
+				<el-form-item label="施工前照片" prop="image">
+					<el-row :gutter="10">
+						<el-col v-if="String(rowActive.ImgZoomIn).match(/.JPG|.jpg|.Jpg/g)" :span="6">
+							<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="rowActive.ImgZoomIn" :preview-src-list="[rowActive.ImgZoomIn, rowActive.ImgZoomOut]" fit="contain" :z-index="99" />
+						</el-col>
+						<el-col v-if="String(rowActive.ImgZoomOut).match(/.JPG|.jpg|.Jpg/g)" :span="6">
+							<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="rowActive.ImgZoomOut" :preview-src-list="[rowActive.ImgZoomIn, rowActive.ImgZoomOut]" fit="contain" :z-index="99" />
+						</el-col>
+					</el-row>
+				</el-form-item>
+				<el-form-item v-if="rowActive.RoadType == 1" label="預估銑刨深度" prop="MillingDepth">
+					<el-radio-group v-model="rowActive.MillingDepth">
+						<el-radio :label="0">0cm</el-radio>
+						<el-radio v-if="rowActive.RestoredType == 2" :label="4">4cm</el-radio>
+						<el-radio v-if="rowActive.RestoredType != 2" :label="5">5cm</el-radio>
+						<el-radio v-if="rowActive.RestoredType != 2" :label="10">10cm</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="預估銑鋪面積" prop="desc">
+					<el-row v-if="rowActive.editFormula" :gutter="5" type="flex" align="middle">
+						<el-col :span="4"><el-tag class="btn-tag" type="success" @click="rowActive.editFormula = false; calArea(rowActive);">自訂</el-tag></el-col>
+						<el-col :span="16"><el-input v-model="rowActive.MillingFormula" @change="calArea(rowActive)" /></el-col>
+						<el-col :span="4" style="line-height: 36px"> = {{ rowActive.MillingArea }}㎡</el-col>
+					</el-row>
+					<el-row v-else :gutter="5" type="flex" align="middle">
+						<el-col :span="4"><el-tag class="btn-tag" @click="rowActive.editFormula = true; calArea(rowActive);">簡單</el-tag></el-col>
+						<el-col :span="6"><el-input v-model="rowActive.MillingLength" @change="calArea(rowActive)" /></el-col>
+						<el-col :span="2" style="line-height: 36px; text-align: center">✕</el-col>
+						<el-col :span="6"><el-input v-model="rowActive.MillingWidth" @change="calArea(rowActive)" /></el-col>
+						<el-col :span="4" style="line-height: 36px"> = {{ rowActive.MillingArea }}㎡</el-col>
+					</el-row>
+				</el-form-item>
+			</el-form>
+
+			<span slot="footer" class="dialog-footer">
+				<el-button type="primary" @click="editCase()">確定</el-button>
+				<el-button @click="dialogEditVisible = false">取消</el-button>
+			</span>
+		</el-dialog>
+
+		<!-- map -->
 		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px">
 			<map-viewer :map.sync="map"/>
 		</el-dialog>
@@ -130,7 +232,7 @@
 <script>
 import moment from "moment";
 import { getTenderRound } from "@/api/type";
-import { getCaseTrackingList } from "@/api/inspection";
+import { getCaseTrackingList, setCaseTrackingSpec } from "@/api/inspection";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -144,6 +246,7 @@ export default {
 			isUpload: false,
 			showImgViewer: false,
 			dialogMapVisible: true,
+			dialogEditVisible: false,
 			dialogFilterVisible: false,
 			map: {},
 			imgUrls: "",
@@ -181,7 +284,7 @@ export default {
 					sortable: true,
 					width: 80
 				},
-				DateReport: {
+				DateCreate: {
 					name: "通報時間",
 					sortable: true,
 					width: 150
@@ -221,12 +324,41 @@ export default {
 			},
 			total: 0,
 			list: [],
+			rowActive: {},
 			headersCheckVal: [],
 			typeLevel: {},
 			caseInfo: {},
 			allHeaders: true,
+			rules: {
+				Place: [
+					{ required: true, message: '必填', trigger: 'blur' }
+				],
+				Direction: [
+					{ required: true, message: '必填', trigger: 'blur' }
+				],
+				DateCreate: [
+					{ required: true, message: '必填', trigger: 'change' }
+				],
+			},
 			options: {
 				tenderRoundMap: {},
+				DeviceType: {
+					1: {
+						name: "AC路面",
+						roadType: 1
+					},
+					2: {
+						name: "人行道",
+						roadType: 2
+					},
+					3: {
+						name: "側溝",
+						roadType: 2
+					},
+					// 4: {
+					// 	name: "標線",
+					// }
+				},
 				DistressType: {
 					15: "坑洞",
 					29: "縱向及橫向裂縫",
@@ -253,7 +385,7 @@ export default {
 					3: "重"
 				},
 				roadDir: {
-					0: "無",
+					// 0: "無",
 					1: "順",
 					2: "逆"
 				}
@@ -261,6 +393,13 @@ export default {
 		};
 	},
 	computed: {
+		deviceTypeFilter() {
+			const deviceTypeFilter = {};
+			Object.keys(this.options.DeviceType).forEach(key => {
+				if(this.options.DeviceType[key].roadType == this.rowActive.RoadType) deviceTypeFilter[key] = this.options.DeviceType[key];
+			})
+			return deviceTypeFilter
+		},
 		checked: {
 			get() {
 				return this.listQuery.caseType.map(type => (type[0]));
@@ -326,7 +465,9 @@ export default {
 			}, {});
 
 			if(Object.keys(this.options.tenderRoundMap).length > 0) {
-				if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) this.listQuery.tenderRound = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) {
+					this.listQuery.tenderRound = this.$route.query.surveyId = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				}
 			}
 			if(Object.keys(this.options.tenderRoundMap).length == 0) {
 				this.options.tenderRoundMap = { "-1": { id: -1 }};
@@ -346,6 +487,10 @@ export default {
 			const otherProp = ['ImgZoomIn', 'ImgZoomOut'].filter(imgType => imgType != prop)[0];
 			this.imgUrls = [ row[prop], row[otherProp] ];
 			this.showImgViewer = true;
+		},
+		changeDeviceType() {
+			this.rowActive.DeviceType = Number(Object.keys(this.deviceTypeFilter)[0]); 
+			this.rowActive.RestoredType = (this.rowActive.DeviceType == 2) ? 0 : 1;
 		},
 		showMapViewer(row) {
 			// console.log("showMap");
@@ -409,23 +554,58 @@ export default {
 					this.total = response.data.total;
 					this.list = response.data.list;
 					this.list.forEach(l => {
-						l.DateReportDiff = (l.DistressLevel >= 2) ? moment().diff(moment(l.DateReport), 'days') : 0;
-						l.DateReport = this.formatTime(l.DateReport);
+						l.DateCreateDiff = (l.DistressLevel >= 2) ? moment().diff(moment(l.DateCreate), 'days') : 0;
+						l.DateCreate = this.formatTime(l.DateCreate);
 						l.MillingLength = Math.round(l.MillingLength * 100) / 100;
 						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
-
-						this.$set(l, "isEdit", false);
+						this.$set(l, "editFormula", l.MillingFormula != '0');
 					})
 				}
 				this.getImportCaseList();
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
-		editCase(row) {
-			this.$router.push({
-				name: "caseEdit",
-				query: { caseId: row.id },
+		editCase() {
+			this.$refs.form.validate((valid) => {
+				if (valid) {
+					setCaseTrackingSpec(this.rowActive.SerialNo, {
+						DetectionId: this.rowActive.id,
+						RoadType: this.rowActive.RoadType,
+						RestoredType: this.rowActive.RestoredType,
+						DeviceType: this.rowActive.DeviceType,
+						Place: this.rowActive.Place,
+						Postal_vil: this.rowActive.Postal_vil,
+						Lane: this.rowActive.Lane,
+						Direction: this.rowActive.Direction,
+						DateCreate: this.rowActive.DateCreate,
+						DistressType: this.rowActive.DistressType,
+						DistressLevel: this.rowActive.DistressLevel,
+						MillingLength: this.rowActive.MillingLength,
+						MillingWidth: this.rowActive.MillingWidth,
+						MillingDepth: this.rowActive.MillingDepth,
+						MillingFormula: this.rowActive.MillingFormula,
+						MillingArea: this.rowActive.MillingArea
+					}).then(response => {
+						if (response.statusCode == 20000) {
+							this.$message({
+								message: "修改成功",
+								type: "success",
+							});
+						} else {
+							this.$message({
+								message: "修改失敗",
+								type: "error",
+							});
+						}
+						this.dialogEditVisible = false;
+					}).catch((err) => {
+						console.log(err);
+					});
+				} else {
+					console.log('error submit!!');
+					return false;
+				}
 			});
 		},
 		filterDialogOpen() {
@@ -446,6 +626,17 @@ export default {
 			this.typeLevel = {};
 			this.listQuery.pageCurrent = 1;
 			this.getList();
+		},
+		calArea(row) {
+			const replaceObj = { " ": "", "m": "", "M": "", "=": "", "＝": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
+				"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
+			// const regex = new RegExp('^[0-9*+\/().-]+$', 'g');
+			const regex = /^[^*+/-](?:[*+/\-]?[(]*\d+\.?\d*[)]*)+$/g;
+			
+			if( (row.editFormula == undefined && row.MillingFormula && row.MillingFormula != '0' && row.MillingFormula.length != 0) || row.editFormula)  {
+				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
+				row.MillingArea = regex.test(row.MillingFormula) ? Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100 : 0;
+			} else row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
 		},
 		formatter(row, column) {
 			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
@@ -501,6 +692,22 @@ export default {
 				right: 0px
 				margin-right: -3px
 				transform: scale(0.7)
+	.dialog-editor
+		.case-edit-form
+			width: 65vw
+			max-width: 650px
+			.el-form-item
+				margin-bottom: 16px
+				.el-form-item__label
+					color: #999
+				.road-dir 
+					width: 160px
+					.el-input__inner
+						text-align: center
+					& > .el-input-group__prepend .el-select
+						width: 80px
+				.btn-tag
+					cursor: pointer
 	.dialog-map
 		min-height: 300px 
 		.el-dialog__body
