@@ -706,6 +706,7 @@ export default {
 						text-align: center
 					& > .el-input-group__prepend .el-select
 						width: 80px
+						margin: -2px -20px
 				.btn-tag
 					cursor: pointer
 	.dialog-map
