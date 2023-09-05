@@ -661,15 +661,20 @@ export default {
 		async getList(isReplace = true) {
 			return new Promise(resolve => {
 				this.loading = true;
-				const date = moment(this.reportDate).format("YYYY-MM-DD");
 				this.caseList = [];
+
+				let timeStart = moment(this.reportDate).day() == 0 
+					? moment(this.reportDate).day(-6).format("YYYY-MM-DD") 
+					: moment(this.reportDate).day(1).format("YYYY-MM-DD");
+				if(moment(timeStart).month() != moment(this.reportDate).month()) timeStart = moment(this.reportDate).startOf('month').format("YYYY-MM-DD");
+				const timeEnd = moment(this.reportDate).add(1, "d").format("YYYY-MM-DD");
 
 				getCaseWarrantyList({
 					zipCode: Number(this.inputs.zipCode),
 					caseType: 1,
 					filterType: 2,
-					timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
-					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+					timeStart,
+					timeEnd
 				}).then(async(response) => {
 					this.caseList = response.data.list;
 					this.caseList.sort((a,b) => a.UploadCaseNo - b.UploadCaseNo);

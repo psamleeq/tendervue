@@ -307,14 +307,19 @@ export default {
 		},
 		getList() {
 			this.loading = true;
-			const date = moment(this.reportDate).format("YYYY-MM-DD");
 			this.inputForm.companyInform_Num22 = 0;
 			this.inputForm.unreasonable_Num22 = 0;
 
+			let timeStart = moment(this.reportDate).day() == 0 
+				? moment(this.reportDate).day(-6).format("YYYY-MM-DD") 
+				: moment(this.reportDate).day(1).format("YYYY-MM-DD");
+			if(moment(timeStart).month() != moment(this.reportDate).month()) timeStart = moment(this.reportDate).startOf('month').format("YYYY-MM-DD");
+			const timeEnd = moment(this.reportDate).add(1, "d").format("YYYY-MM-DD");
+
 			getCaseCount({
 				zipCode: Number(this.inputs.zipCode),
-				timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
-				timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+				timeStart,
+				timeEnd
 			}).then(response => {
 
 				getPerfContent({

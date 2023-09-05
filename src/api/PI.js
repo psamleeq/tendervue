@@ -91,7 +91,7 @@ export function getCaseWarrantyCount(query) {
 	})
 }
 
-//日報表
+//PI報表
 export function getPerfReport(query) {
 	return request({
 		url: '/PI/perfReport',

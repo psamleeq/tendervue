@@ -281,9 +281,12 @@ export default {
 		async getList() {
 			new Promise((resolve, reject) => {
 				this.loading = true;
-				let startDate = moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD");
-				let endDate = moment(this.reportDate).add(1, "day").format("YYYY-MM-DD");
-				dateWatcher(this.districtList[this.inputs.zipCode].start, [startDate, endDate]);
+				let timeStart = moment(this.reportDate).day() == 0 
+					? moment(this.reportDate).day(-6).format("YYYY-MM-DD") 
+					: moment(this.reportDate).day(1).format("YYYY-MM-DD");
+				if(moment(timeStart).month() != moment(this.reportDate).month()) timeStart = moment(this.reportDate).startOf('month').format("YYYY-MM-DD");
+				const timeEnd = moment(this.reportDate).add(1, "d").format("YYYY-MM-DD");
+				dateWatcher(this.districtList[this.inputs.zipCode].start, [timeStart, timeEnd]);
 
 				this.inputs.listNonAccepted = [];
 
@@ -291,8 +294,8 @@ export default {
 					filterType: 2,
 					caseType: 1,
 					zipCode: this.inputs.zipCode,
-					timeStart: startDate,
-					timeEnd: endDate
+					timeStart,
+					timeEnd
 				}).then(async (response) => {
 					if (response.data.list.length != 0) {
 

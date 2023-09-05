@@ -244,6 +244,7 @@ export default {
 						this.reportInfo.reportDateStart = moment(this.reportInfo.reportDate).day() == 0 
 							? moment(this.reportInfo.reportDate).day(-6).format("YYYY-MM-DD") 
 							: moment(this.reportInfo.reportDate).day(1).format("YYYY-MM-DD");
+						if(moment(this.reportInfo.reportDateStart).month() != moment(this.reportInfo.reportDate).month()) this.reportInfo.reportDateStart = moment(this.reportInfo.reportDate).startOf('month').format("YYYY-MM-DD");
 					} else if(this.listQuery.reportType == 3) {
 						this.reportInfo.reportDateStart = moment(this.reportInfo.reportDate).startOf('month').format("YYYY-MM-DD");
 					}

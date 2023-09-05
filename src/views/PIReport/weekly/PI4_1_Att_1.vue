@@ -267,15 +267,20 @@ export default {
 		async getList() {
 			new Promise((resolve, reject) => {
 				this.loading = true;
-				const date = moment(this.reportDate).format("YYYY-MM-DD");
 				this.inputs.caseList = [];
+
+				let timeStart = moment(this.reportDate).day() == 0 
+					? moment(this.reportDate).day(-6).format("YYYY-MM-DD") 
+					: moment(this.reportDate).day(1).format("YYYY-MM-DD");
+				if(moment(timeStart).month() != moment(this.reportDate).month()) timeStart = moment(this.reportDate).startOf('month').format("YYYY-MM-DD");
+				const timeEnd = moment(this.reportDate).add(1, "d").format("YYYY-MM-DD");
 
 				getCaseWarrantyList({
 					zipCode: Number(this.inputs.zipCode),
 					caseType: 2,
 					filterType: 2,
-					timeStart: moment(this.reportDate).day() == 0 ? moment(this.reportDate).day(-6).format("YYYY-MM-DD") : moment(this.reportDate).day(1).format("YYYY-MM-DD"),
-					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD")
+					timeStart,
+					timeEnd
 				}).then(async(response) => {
 					const list = response.data.list;
 					const sortList = { "坑洞": 1, "人孔高差": 2, "縱橫向裂縫/龜裂": 3, "車轍/隆起與凹陷": 4, "人行道": 5 };
