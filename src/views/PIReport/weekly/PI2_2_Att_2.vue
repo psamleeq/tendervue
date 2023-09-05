@@ -405,7 +405,7 @@ export default {
 					if (response.data.list.length != 0) {
 
 						const list = response.data.list;
-						this.inputs.listOther = list.filter(l => !l.DistressSrc.includes("1999")).reduce((acc, cur) => {
+						this.inputs.listOther = list.filter(l => !l.DistressSrc.includes("1999") && l.StateNotes.Firm !== '優於民眾查報').reduce((acc, cur) => {
 							const itemList = acc.filter(item => item.reportDate == moment(cur.ReportDate).format('MM/DD') && item.distressSrc == cur.DistressSrc);
 							if(itemList.length == 0) {
 								acc.push({
