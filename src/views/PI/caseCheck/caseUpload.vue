@@ -145,7 +145,7 @@
 									<el-option v-for="(name, type) in options[column.property == 'rDeviceType' ? 'DeviceType' : column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 								</el-select>
 							</span>
-							<span v-else-if="[ 'organAssign' ].includes(column.property)">
+							<span v-else-if="[ 'organAssign', 'IsObserve' ].includes(column.property)">
 								<el-checkbox v-model.number="row[column.property]" :true-label="1" :false-label="0" />
 							</span>
 							<span v-else>{{ formatter(row, column) }}</span>
@@ -584,11 +584,12 @@ export default {
 			for(const val of value) {
 				let msgArr = [];
 				for(const column in this.headers) {
-					if(!['CaseNo', 'organAssign', 'BrokeType', 'BrokeStatus'].includes(column) && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
+					console.log(column, val[column]);
+					if(!['CaseNo', 'organAssign', 'BrokeType', 'BrokeStatus', 'IsObserve' ].includes(column) && !val[column]) msgArr.push(`「${this.headers[column].name}」`);
 				}
 
 				//驗證BrokeType
-				if(!val.BrokeType) msgArr.push(`「${this.headers.BrokeStatus.name}」`);
+				if(!val.BrokeType) msgArr.push(`「${this.headers.BrokeType.name}」`);
 
 				if(msgArr.length > 0) {
 					this.$message({
