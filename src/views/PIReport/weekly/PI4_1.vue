@@ -338,11 +338,11 @@ export default {
 				timeEnd
 			}).then(response => {
 				this.initPage = Number(response.data.result.caseTotal);
-				this.inputForm.hole_Num41_AC = Number(response.data.result.caseTotal_hole_AC);
-				this.inputForm.sidewalk_Num41_AC = Number(response.data.result.caseTotal_holeCover_AC);
-				this.inputForm.crack_Num41_AC = Number(response.data.result.caseTotal_crack_AC);
-				this.inputForm.uplift_Num41_AC = Number(response.data.result.caseTotal_uplift_AC);
-				this.inputForm.sidewalk_Num41_FA = Number(response.data.result.caseTotal_holeCover_FA);
+				this.inputForm.hole_Num41_AC = Number(response.data.result.caseDispatch_hole_AC);
+				this.inputForm.sidewalk_Num41_AC = Number(response.data.result.caseDispatch_holeCover_AC);
+				this.inputForm.crack_Num41_AC = Number(response.data.result.caseDispatch.crack_AC);
+				this.inputForm.uplift_Num41_AC = Number(response.data.result.caseDispatch_uplift_AC);
+				this.inputForm.sidewalk_Num41_FA = Number(response.data.result.caseDispatch_sidewalk_FA);
 
 				this.setPDFinputs();
 				this.loading = false;

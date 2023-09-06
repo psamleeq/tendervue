@@ -47,11 +47,19 @@
 						</el-form-item>
 						<el-form-item label="4小時內完成臨補或設置安全措施案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.Hr4_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item> -->
+						<el-divider content-position="left">查報次日起15日內(含例假日)修復完成案件數</el-divider>
+						<el-form-item label="坑洞" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.Day15_Num32_hole" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-form-item label="坑洞查報次日起15日內(含例假日)修復完成含標線復原案件數" :label-width="labelWidth1">
-							<el-input-number v-model="inputForm.Day15_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
+						<el-form-item label="其他AC類型" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.Day15_Num32_AC" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
-						<el-form-item label="標線復原案件於修復完成後2日內(含例假日)將標線復原案件數" :label-width="labelWidth1">
+						<el-divider content-position="left">查報次日起45日內(含例假日)修復完成案件數</el-divider>
+						<el-form-item label="人行道(含附屬設施)" :label-width="labelWidth1">
+							<el-input-number v-model="inputForm.Day45_Num32_FA" controls-position="right" :min="0" @change="setPDFinputs" />
+						</el-form-item>
+						<!-- <el-form-item label="標線復原案件於修復完成後2日內(含例假日)將標線復原案件數" :label-width="labelWidth1">
 							<el-input-number v-model="inputForm.Day2_Num32" controls-position="right" :min="0" @change="setPDFinputs" />
 						</el-form-item>
 						<el-divider /> -->
@@ -176,7 +184,9 @@ export default {
 				maintainAll_Num32:0,
 				// Hr1_Num32: 0,
 				// Hr4_Num32: 0,
-				// Day15_Num32: 0,
+				Day15_Num32_hole: 0,
+				Day15_Num32_AC: 0,
+				Day45_Num32_FA: 0,
 				// Day2_Num32:0,
 				failTime_Num32: 0,
 				// companyCheck_Num32: 0,
@@ -196,8 +206,9 @@ export default {
 				maintainAll_Num32: '0',//A
 				Hr1_Num32: '0',
 				Hr4_Num32: '0',
-				Day15_Num32: '0',
-				Day45_Num32: '0',
+				Day15_Num32_hole: '0',
+				Day15_Num32_AC: '0',
+				Day45_Num32_FA: '0',
 				Day2_Num32:'0',
 				sumCompleteMaintain_Num32:'0',
 				failTime_Num32: '0',//C
@@ -272,7 +283,7 @@ export default {
 					const changeInput = (arg) => {
 						// console.log(arg);
 						if(['checkInTime_doc32','checkCoFail_doc32','checkSandOFail_doc32','checkCoUnreason_doc32'].includes(arg.key)) this.inputForm[arg.key] = (arg.value == 'V' || arg.value == 'v');
-						if(['maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32', 'Day45_Num32', 'Day2_Num32', 'failTime_Num32', 'companyCheck_Num32'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
+						if(['maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32_hole', 'Day15_Num32_AC', 'Day45_Num32_FA', 'Day2_Num32', 'failTime_Num32', 'companyCheck_Num32'].includes(arg.key)) this.inputForm[arg.key] = parseInt(arg.value);
 						this.setPDFinputs();
 					}
 
@@ -299,7 +310,7 @@ export default {
 			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
 			//案件數
 			this.inputForm.Hr1_Num32 = this.inputForm.Hr4_Num32 = this.inputForm.Day15_Num32 = this.inputForm.Day45_Num32 = this.inputForm.Day2_Num32 = this.inputForm.sumCompleteMaintain_Num32 = this.inputForm.companyCheck_Num32 = this.inputForm.maintainAll_Num32;
-			for(const key of [ 'maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32', 'Day45_Num32', 'Day2_Num32', 'sumCompleteMaintain_Num32', 'failTime_Num32', 'companyCheck_Num32']) this.inputs[key] = String(this.inputForm[key]);
+			for(const key of [ 'maintainAll_Num32', 'Hr1_Num32', 'Hr4_Num32', 'Day15_Num32_hole', 'Day15_Num32_AC', 'Day45_Num32_FA', 'Day2_Num32', 'sumCompleteMaintain_Num32', 'failTime_Num32', 'companyCheck_Num32']) this.inputs[key] = String(this.inputForm[key]);
 
 			//計算指標數值
 			const A = this.inputForm.maintainAll_Num32;
@@ -329,6 +340,9 @@ export default {
 				timeEnd
 			}).then(response => {
 				this.inputForm.maintainAll_Num32 = Number(response.data.result.caseTotal);
+				this.inputForm.Day15_Num32_hole = Number(response.data.result.caseTotal_hole_AC);
+				this.inputForm.Day15_Num32_AC = Number(response.data.result.caseTotal_other_AC);
+				this.inputForm.Day45_Num32_FA = Number(response.data.result.caseTotal_sidewalk_FA);
 
 				this.setPDFinputs();
 				this.loading = false;
