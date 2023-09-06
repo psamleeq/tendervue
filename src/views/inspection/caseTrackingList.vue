@@ -248,6 +248,7 @@ export default {
 			dialogMapVisible: true,
 			dialogEditVisible: false,
 			dialogFilterVisible: false,
+			scrollTop: 0,
 			map: {},
 			imgUrls: "",
 			// timeTabId: moment().year(),
@@ -561,6 +562,8 @@ export default {
 						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
 						this.$set(l, "editFormula", l.MillingFormula != '0');
 					})
+
+					this.$nextTick(() => document.documentElement.scrollTop = this.scrollTop);
 				}
 				this.getImportCaseList();
 				this.loading = false;
@@ -569,6 +572,8 @@ export default {
 		editCase() {
 			this.$refs.form.validate((valid) => {
 				if (valid) {
+					this.scrollTop = document.documentElement.scrollTop;
+
 					setCaseTrackingSpec(this.rowActive.SerialNo, {
 						DetectionId: this.rowActive.id,
 						RoadType: this.rowActive.RoadType,
@@ -598,9 +603,11 @@ export default {
 								type: "error",
 							});
 						}
+						this.getList();
 						this.dialogEditVisible = false;
 					}).catch((err) => {
 						console.log(err);
+						this.getList();
 					});
 				} else {
 					console.log('error submit!!');

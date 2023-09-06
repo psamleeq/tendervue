@@ -176,6 +176,7 @@ export default {
 			dialogMapVisible: true,
 			dialogFilterVisible: false,
 			filterNow: false,
+			scrollTop: 0,
 			map: {},
 			imgUrls: "",
 			// timeTabId: moment().year(),
@@ -491,6 +492,8 @@ export default {
 
 							this.$set(l, "isEdit", false);
 						})
+
+						this.$nextTick(() => document.documentElement.scrollTop = this.scrollTop);
 					}
 					this.getImportCaseList();
 					this.loading = false;
@@ -518,6 +521,7 @@ export default {
 		},
 		setCaseInfo(row) {
 			this.loading = true;
+			this.scrollTop = document.documentElement.scrollTop;
 
 			setInspectionCaseList(row.id, {
 				trackingId: row.TrackingId,
