@@ -63,6 +63,11 @@
 					<span v-else style="color: #F56C6C">已封存 <br> ({{ formatTime(row.archiveTime) }})</span>
 				</template>
 			</el-table-column>
+			<el-table-column v-if="listQuery.tenderId > 1001" :key="listQuery.tenderId" label="上傳至新工" width="80" align="center">
+				<template slot-scope="{ row }">
+					<el-button class="btn-action" type="warning" plain :disabled="isUpload" @click="uploadCase2NCO(row)">上傳</el-button>
+				</template>
+			</el-table-column>
 			<el-table-column label="PCI計算" align="center" >
 				<el-table-column v-if="checkPermission(['rAdm'])" label="即時運算" align="center" width='120'>
 					<template slot-scope="{ row }">
@@ -111,7 +116,7 @@
 				</el-table-column>
 			</el-table-column>
 
-			<el-table-column v-if="listQuery.tenderId > 1001" label="缺失匯入" width="120" align="center">
+			<el-table-column v-if="listQuery.tenderId > 1001" :key="listQuery.tenderId" label="缺失匯入" width="120" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
 						<el-button class="btn-action" type="primary" plain :disabled="isUpload" @click="uploadCase(row, 1)">通報</el-button>
@@ -148,7 +153,7 @@
 import moment from "moment";
 import { getTenderMap, getTenderRound, addTenderRound, setTenderRound, archiveTenderRound } from "@/api/type";
 import { resetPCI, updatePCI, updatePCIByName } from "@/api/tool";
-import { importAllInspectCase } from "@/api/inspection";
+import { importAllInspectCase,  uploadInspectionCaseNco } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 
 export default {
@@ -377,7 +382,37 @@ export default {
 					if ( response.statusCode == 20000 ) {
 						const result = response.result;
 						this.$message({
-							message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件 / 重複 ${result.fail}件`,
+							message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件 / 重複 ${result.duplicate}件`,
+							type: "success",
+						});
+					} 
+					this.getList();
+					this.isUpload = false;
+					this.loading = false;
+				}).catch(err => {
+					console.log(err);
+					this.loading = false;
+					this.isUpload = false;
+				})
+
+			}).catch(err => {
+				console.log(err);
+			});
+
+		},
+		uploadCase2NCO(row) {
+			const content = `確定上傳缺失至「新工處」?`;
+			this.$confirm(content, "確認", { showClose: false }).then(() => {
+				this.loading = true;
+				this.isUpload = true;
+
+				uploadInspectionCaseNco({
+					surveyId: row.id
+				}).then(response => {
+					if ( response.statusCode == 20000 ) {
+						const result = response.result;
+						this.$message({
+							message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件 / 失敗 ${result.fail}件 / 重複 ${result.duplicate}件`,
 							type: "success",
 						});
 					} 
