@@ -160,7 +160,9 @@
 					<el-input v-model="rowActive.Postal_vil" style="width: 200px" size="small" />
 				</el-form-item>
 				<el-form-item prop="Place" label="地址">
-					<el-input v-model="rowActive.Place" size="small" />
+					<el-input v-model="rowActive.Place" size="small">
+						<el-button slot="append" class="btn-action" type="info" icon="el-icon-search" plain size="mini" @click="showMapViewer(rowActive, true)" />
+					</el-input>
 				</el-form-item>
 				<el-form-item prop="Direction" label="車道">
 					<el-input class="road-dir" v-model="rowActive.Lane" size="small">
@@ -493,7 +495,7 @@ export default {
 			this.rowActive.DeviceType = Number(Object.keys(this.deviceTypeFilter)[0]); 
 			this.rowActive.RestoredType = (this.rowActive.DeviceType == 2) ? 0 : 1;
 		},
-		showMapViewer(row) {
+		showMapViewer(row, isPoint=false) {
 			// console.log("showMap");
 			this.map.data.forEach(feature => this.map.data.remove(feature));
 			this.dialogMapVisible = true;
@@ -508,7 +510,7 @@ export default {
 			geoJSON_case.features.push({
 				"type": "Feature",
 				"properties": { },
-				"geometry": row.Geometry
+				"geometry": isPoint? row.CenterPt : row.Geometry
 			});
 
 			// console.log(geoJSON_case);
