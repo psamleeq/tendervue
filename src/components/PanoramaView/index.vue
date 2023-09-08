@@ -190,7 +190,10 @@ export default {
 			}
 		}
 	},
-	created() { },
+	created() {
+		// google Map 查詢地址
+		this.geocoder = new google.maps.Geocoder();
+	},
 	mounted() {
 		// init panorama
 		// console.log("panorama_mounted");
@@ -474,9 +477,8 @@ export default {
 				const addressJson = JSON.parse(resJson.string['#text']);
 				// console.log(addressJson);
 
-				if(addressJson.AddressList.length > 0) {
-					this.caseInfo.place = addressJson.AddressList[0].FULL_ADDR;
-				} else {
+				if(addressJson.AddressList.length > 0) this.caseInfo.place = addressJson.AddressList[0].FULL_ADDR;
+				else {
 					this.$message({
 						message: "查無地址",
 						type: "error",
@@ -485,7 +487,22 @@ export default {
 				this.isGetAddress = false;
 			}).catch(err => {
 				console.log(err);
-				this.isGetAddress = false;
+				// this.isGetAddress = false;
+
+				// google Map 查詢地址
+				this.geocoder.geocode({ location: point }).then(res => {
+					if (res.results[0]) this.caseInfo.place = res.results[0].formatted_address;
+					else {
+						this.$message({
+							message: "查無地址",
+							type: "error",
+						});
+					}
+					this.isGetAddress = false;
+				}).catch(err => {
+					console.log(err);
+					this.isGetAddress = false;
+				});
 			});
 		},
 		screenshot(imgType="imgZoomIn", hfov) {
