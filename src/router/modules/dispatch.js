@@ -19,21 +19,21 @@ const dispatchRouter = {
 			component: () => import('@/views/dispatch/caseInform'),
 			name: 'caseInform',
 			meta: {
-				title: '缺失通報',
-				roles: ['inspection.marker'],
+				title: '製作通報單',
+				roles: ['restored.assign'],
 				vTag: 'alpha'
 			}
 		},
-		{
-			path: 'caseEdit',
-			component: () => import('@/views/dispatch/caseEdit'),
-			name: 'caseEdit',
-			meta: {
-				title: '缺失編輯',
-				roles: ['inspection.marker'],
-				vTag: 'alpha'
-			}
-		},
+		// {
+		// 	path: 'caseEdit',
+		// 	component: () => import('@/views/dispatch/caseEdit'),
+		// 	name: 'caseEdit',
+		// 	meta: {
+		// 		title: '缺失編輯',
+		// 		roles: ['restored.assign'],
+		// 		vTag: 'alpha'
+		// 	}
+		// },
 		{
 			path: 'kit',
 			component: () => import('@/views/dispatch/kit'),

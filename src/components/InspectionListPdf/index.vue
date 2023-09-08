@@ -1,8 +1,8 @@
 <template>
 	<div class="job-ticket-pdf">
 		<el-button-group>
-			<el-button type="info" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽</el-button>
-			<el-button type="primary" icon="el-icon-download" :disabled="tableSelect.length == 0" @click="previewPdf(true)">列印</el-button>
+			<!-- <el-button type="info" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽</el-button> -->
+			<el-button type="success" icon="el-icon-download" :disabled="tableSelect.length == 0" @click="previewPdf(true)">建立</el-button>
 		</el-button-group>
 
 		<!-- Dialog: PDF預覽 -->
@@ -42,8 +42,8 @@ export default {
 			showJobTicket: true,
 			pdfSetting: {
 				format: 'a4',
-				fontSize: 14,
-				lineHeight: (14 + 2) * 0.35,
+				fontSize: 12,
+				lineHeight: (12 + 2) * 0.35,
 				orientation: 'p'
 			}
 		}
@@ -67,8 +67,6 @@ export default {
 		};
 
 		fetch('/assets/font/edukai-4.0.ttf')
-			// .then(res => res.arrayBuffer())
-			// .then(arrayBuffer => window.btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte))));
 			.then(res => res.blob())
 			.then(async(blob) => { 
 				this.viewer = new Viewer({ 
@@ -107,24 +105,21 @@ export default {
 			//img preload
 			this.imgDOMObj = {};
 			data.forEach(l => { 
-				let image = new Image();
-				image.src = "https://storage.googleapis.com/adm_distress_image/tbl_case_image/5477785_ImgZoomOut_1.jpg"
-				this.imgDOMObj [l.id] = image;
+				this.imgDOMObj[l.id] = {};
+				for(const key of ['ImgZoomIn', 'ImgZoomOut']) {
+					let image = new Image();
+					image.src = l[key];
+					this.imgDOMObj[l.id][key] = image;
+				} 
 			});
 			
 		},
 		async createPdf() {
 			return new Promise((resolve, reject) => {
-				const splitTable = this.tableSelect.reduce((acc, cur) => {
-					if(acc[acc.length-1].length < 1) acc[acc.length-1].push(cur);
-					else acc.push([cur]);
-					return acc;
-				}, [[]]);
-				// console.log(splitTable);
-				for(const [ pageIndex, table ] of splitTable.entries()) {
+				for(const [ pageIndex, caseSpec ] of this.tableSelect.entries()) {
 					this.pdfDoc.addPage(this.pdfSetting.format,this.pdfSetting.orientation)
 					while(pageIndex == 0 && this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
-					console.log( pageIndex, table);
+					// console.log( pageIndex, caseSpec);
 					const { width, height } = this.pdfDoc.internal.pageSize;
 					//表頭
 					this.pdfDoc.setFontSize(this.pdfSetting.fontSize+4);
@@ -136,90 +131,81 @@ export default {
 					this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
 					this.pdfDoc.setCharSpace(0);
 					this.pdfDoc.text(`編　　號:`, width - 195, height-267, { align: 'left' });
-					this.pdfDoc.text(`${table[0].id}`, width - 170, height-267, { align: 'left' });
+					this.pdfDoc.text(`${caseSpec.CaseSN}`, width - 170, height-267, { align: 'left' });
 					this.pdfDoc.text(`道管系統案號:`, width - 100, height-267, { align: 'left' });
-					this.pdfDoc.text(`道管AAAAAAAAAAA`, width - 65, height-267, { align: 'left' });
+					this.pdfDoc.text(`${caseSpec.CaseNo}`, width - 65, height-267, { align: 'left' });
 					this.pdfDoc.text(`工程名稱:`, width - 195, height-257, { align: 'left' });
-					this.pdfDoc.text(`BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB`, width - 170, height-259, { align: 'left',maxWidth:60 });
+					this.pdfDoc.text(`111年度中山區道路巡查維護修繕成效式契約`, width - 170, height-259, { align: 'left', maxWidth: 60 });
 					this.pdfDoc.text(`座　　　　標:`, width - 100, height-257, { align: 'left' });
-					this.pdfDoc.text(`座標11111111111`, width - 65, height-259.5, { align: 'left',maxWidth:60 });
-					this.pdfDoc.text(`座標22222222222`, width - 65, height-254.5, { align: 'left',maxWidth:60 });
+					this.pdfDoc.text(`${caseSpec.CoordinateX}`, width - 65, height-259.5, { align: 'left', maxWidth: 60 });
+					this.pdfDoc.text(`${caseSpec.CoordinateY}`, width - 65, height-254.5, { align: 'left', maxWidth: 60 });
 					this.pdfDoc.text(`修復地點:`, width - 195, height-246, { align: 'left' });
-					this.pdfDoc.text(`CCCCCC`, width - 170, height-246, { align: 'left' });
+					this.pdfDoc.text(`${caseSpec.Place}C`, width - 170, height-246, { align: 'left', maxWidth: 60 });
 					this.pdfDoc.text(`修 復　項 目:`, width - 100, height-246, { align: 'left' });
-					this.pdfDoc.text(`${table[0].caseName}`, width - 65, height-246, { align: 'left' });
-					this.pdfDoc.text(`申請日期:`, width - 195, height-237, { align: 'left' });
-					this.pdfDoc.text(`DDDDDDD`, width - 170, height-237, { align: 'left' });
+					this.pdfDoc.text(`${caseSpec.DName}`, width - 65, height-246, { align: 'left' });
+					this.pdfDoc.text(`申請日期:`, width - 195, height-232, { align: 'left' });
+					const dateCreateStr = moment(caseSpec.DateCreate).isValid() ? moment(caseSpec.DateCreate).subtract(1911, 'year').format("YYYY年MM月DD日").slice(1) : "-";
+					this.pdfDoc.text(dateCreateStr, width - 170, height-232, { align: 'left' });
 					this.pdfDoc.text(`預定施工日期:`, width - 100, height-237, { align: 'left' });
-					this.pdfDoc.text(`SSSSSSSSSSSSS`, width - 65, height-237, { align: 'left' });
+					const dateDeadStr = moment(caseSpec.DateDeadline).isValid() ? moment(caseSpec.DateDeadline).subtract(1911, 'year').format("YYYY年MM月DD日").slice(1) : "-";
+					this.pdfDoc.text(dateDeadStr, width - 65, height-237, { align: 'left' });
 					this.pdfDoc.text(`預 定　數 量:`, width - 100, height-227, { align: 'left' });
-					this.pdfDoc.text(`RRRRRRRRRRRR`, width - 65, height-227, { align: 'left' });
+					const formulaStr = caseSpec.MillingFormula != '0' ? `${caseSpec.MillingFormula} = ${caseSpec.MillingArea}` : `${caseSpec.MillingLength} * ${caseSpec.MillingWidth} = ${caseSpec.MillingArea}`;
+					this.pdfDoc.text(formulaStr, width - 65, height-227, { align: 'left' });
 
 
-					const splitImgTable = table.reduce((acc, cur) => {
-						if(acc[acc.length-1].length < 1) acc[acc.length-1].push(cur);
-						else acc.push([cur]);
-						return acc;
-					}, [[]]);
-					for(const [imgIndex, imgTable] of splitImgTable.entries()){
-						//圖片
-						this.pdfDoc.autoTable({ 
-							head: [['修復地點相片']],
-							// body: [ imgTable.map(l => l.ImgZoomOut) ],
-							body: [imgTable.map(l=>l.id)],
-							theme: 'plain',
-							styles: { font: "edukai", lineWidth: 0.5, lineColor: 10},
-							headStyles: { halign: 'center',fontSize:14 },
-							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 130, minCellHeight: 75, halign: 'center', valign: 'middle' }, 
-							didDrawCell: (data) => {
-								if(data.cell.section === 'body') {
-									// console.log(data);
-									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 130, 75);
-								}
-							},
-							margin: 40,
-							startY: height-222,
-							pageBreak: 'avoid'
-						});
-						this.pdfDoc.autoTable({ 
-							head: [['臨時修補相片']],
-							// body: [ imgTable.map(l => l.ImgZoomOut) ],
-							body: [imgTable.map(l=>l.id)],
-							theme: 'plain',
-							styles: { font: "edukai", lineWidth: 0.5, lineColor: 10 },
-							headStyles: { halign: 'center',fontSize:14},
-							bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 130, minCellHeight: 75, halign: 'center', valign: 'middle' }, 
-							didDrawCell: (data) => {
-								console.log(data);
-								if(data.cell.section === 'body') {
-									// console.log(data);
-									this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 130, 75);
-								}
-							},
-							margin: 40,
-							startY: height-134,
-							pageBreak: 'avoid'
-						});
+					this.pdfDoc.autoTable({ 
+						head: [['修復地點相片']],
+						// body: [ imgTable.map(l => l.ImgZoomOut) ],
+						body: [[caseSpec.id]],
+						theme: 'plain',
+						styles: { font: "edukai", lineWidth: 0.5, lineColor: 10},
+						headStyles: { halign: 'center',fontSize:14 },
+						bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 130, minCellHeight: 75, halign: 'center', valign: 'middle' }, 
+						didDrawCell: (data) => {
+							if(data.cell.section === 'body') {
+								// console.log(data);
+								this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw].ImgZoomIn, 'JPEG', data.cell.x, data.cell.y, 130, 75);
+							}
+						},
+						margin: 40,
+						startY: height-222,
+						pageBreak: 'avoid'
+					});
 
-					}
+					// this.pdfDoc.autoTable({ 
+					// 	head: [['臨時修補相片']],
+					// 	// body: [ imgTable.map(l => l.ImgZoomOut) ],
+					// 	body: [[caseSpec.id]],
+					// 	theme: 'plain',
+					// 	styles: { font: "edukai", lineWidth: 0.5, lineColor: 10 },
+					// 	headStyles: { halign: 'center',fontSize:14},
+					// 	bodyStyles: { overflow: 'hidden', textColor: 255, cellWidth: 130, minCellHeight: 75, halign: 'center', valign: 'middle' }, 
+					// 	didDrawCell: (data) => {
+					// 		console.log(data);
+					// 		if(data.cell.section === 'body') {
+					// 			// console.log(data);
+					// 			this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 130, 75);
+					// 		}
+					// 	},
+					// 	margin: 40,
+					// 	startY: height-134,
+					// 	pageBreak: 'avoid'
+					// });
 					
 
 					this.pdfDoc.text(`工程師`, width - 185, height-38, { align: 'left' });
 					this.pdfDoc.text(`專案組長`, width - 125, height-38, { align: 'left' });
 					this.pdfDoc.text(`專案組任`, width - 55, height-38, { align: 'left' });
 				}
-				
-				
-
-				
 
 				resolve();
 			})
 		},
-		
 		previewPdf(isInstant = false) {
 			console.log(this.tableSelect);
-			this.$emit('update:loading', true);
+			// this.$emit('update:loading', true);
+			this.imgPreload(this.tableSelect);
 			this.createPdf().then(() => {
 				const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => (
 					{

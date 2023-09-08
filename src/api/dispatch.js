@@ -62,6 +62,16 @@ export function getTaskReal(query) {
 }
 
 //---------------------------------------
+// 案件通報
+export function getInform(query) {
+	return request({
+		url: '/dispatch/inform',
+		method: 'get',
+		params: query
+	})
+}
+
+//---------------------------------------
 // 主任分派
 export function getDispatch(query) {
 	return request({
