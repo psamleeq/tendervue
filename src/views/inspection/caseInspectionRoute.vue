@@ -149,7 +149,7 @@ const loaderOpt = {
 	version: "weekly",
 	language: "zh-TW",
 	region: "TW",
-	libraries: ["places"]
+	libraries: ["places", "geocoding"],
 };
 
 // apiKey
