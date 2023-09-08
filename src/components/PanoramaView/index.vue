@@ -101,12 +101,26 @@
 </template>
 
 <script>
+import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 import html2canvas from 'html2canvas';
 import { parseXml, xml2json } from '../../utils/xml2json';
 import { getAddress } from "@/api/tool";
 const { calcDistance, calArea } = require('@/utils/geo-tools');
 const cameraHeight = 2.25; // 攝影機高度
+
+// 載入 Google Map API
+const loaderOpt = {
+	apiKey: "",
+	version: "weekly",
+	language: "zh-TW",
+	region: "TW",
+	libraries: ["places", "geocoding"],
+};
+
+// apiKey
+if(!sessionStorage.devMode && process.env.VUE_APP_MAP_KEY != undefined) loaderOpt.apiKey = process.env.VUE_APP_MAP_KEY;
+const loader = new Loader(loaderOpt);
 
 export default {
 	name: "panoramaView",
@@ -190,11 +204,13 @@ export default {
 			}
 		}
 	},
-	created() {
-		// google Map 查詢地址
-		this.geocoder = new google.maps.Geocoder();
-	},
+	created() { },
 	mounted() {
+		// google Map 查詢地址
+		loader.load().then(() => {
+			this.geocoder = new google.maps.Geocoder();
+		}).catch(err => console.log("err: ", err));
+
 		// init panorama
 		// console.log("panorama_mounted");
 		this.panorama = pannellum.viewer("panorama", { scenes: {}, keyboardZoom: false, hotSpotDebug: false });
