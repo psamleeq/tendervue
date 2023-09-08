@@ -337,12 +337,14 @@ export default {
 				timeStart,
 				timeEnd
 			}).then(response => {
-				this.initPage = Number(response.data.result.caseTotal);
-				this.inputForm.hole_Num41_AC = Number(response.data.result.caseDispatch_hole_AC);
-				this.inputForm.sidewalk_Num41_AC = Number(response.data.result.caseDispatch_holeCover_AC);
-				this.inputForm.crack_Num41_AC = Number(response.data.result.caseDispatch.crack_AC);
-				this.inputForm.uplift_Num41_AC = Number(response.data.result.caseDispatch_uplift_AC);
-				this.inputForm.sidewalk_Num41_FA = Number(response.data.result.caseDispatch_sidewalk_FA);
+				const result = response.data.result;
+				// console.log(result);
+				this.initPage = Number(result.caseTotal);
+				this.inputForm.hole_Num41_AC = Number(result.caseDispatch_hole_AC);
+				this.inputForm.sidewalk_Num41_AC = Number(result.caseDispatch_holeCover_AC);
+				this.inputForm.crack_Num41_AC = Number(result.caseDispatch_crack_AC);
+				this.inputForm.uplift_Num41_AC = Number(result.caseDispatch_uplift_AC);
+				this.inputForm.sidewalk_Num41_FA = Number(result.caseDispatch_sidewalk_FA);
 
 				this.setPDFinputs();
 				this.loading = false;
