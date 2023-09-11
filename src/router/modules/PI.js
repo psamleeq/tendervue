@@ -67,8 +67,7 @@ const PIRouter = {
 					name: 'PICaseUploadList',
 					meta: {
 						title: '案件上傳結果',
-						roles: ['PIcase.editor'],
-						isNew: true
+						roles: ['PIcase.editor']
 					}
 				},
 			]
@@ -79,8 +78,7 @@ const PIRouter = {
 			name: 'caseWarrantyList',
 			meta: {
 				title: '保固案件列表',
-				roles: ['PIcase.editor'],
-				vTag: 'Alpha'
+				roles: ['PIcase.editor']
 			}
 		},
 		{

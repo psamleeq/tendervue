@@ -97,7 +97,7 @@ export default {
 	},
 	watch: {
 		dateRangeProps(newValue, oldValue) {
-			dateWatcher(this.dataStart, newValue);
+			if(this.disabledDate) dateWatcher(this.dataStart, newValue);
 		},
 	},
 	methods: {
