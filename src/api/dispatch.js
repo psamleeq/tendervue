@@ -71,6 +71,14 @@ export function getInform(query) {
 	})
 }
 
+export function confirmInform(data) {
+	return request({
+		url: '/dispatch/inform',
+		method: 'post',
+		data
+	})
+}
+
 //---------------------------------------
 // 主任分派
 export function getDispatch(query) {

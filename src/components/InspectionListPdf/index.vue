@@ -131,7 +131,7 @@ export default {
 					this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
 					this.pdfDoc.setCharSpace(0);
 					this.pdfDoc.text(`編　　號:`, width - 195, height-267, { align: 'left' });
-					this.pdfDoc.text(`${caseSpec.CaseSN}`, width - 170, height-267, { align: 'left' });
+					// this.pdfDoc.text(`${caseSpec.CaseSN}`, width - 170, height-267, { align: 'left' });
 					this.pdfDoc.text(`道管系統案號:`, width - 100, height-267, { align: 'left' });
 					this.pdfDoc.text(`${caseSpec.CaseNo}`, width - 65, height-267, { align: 'left' });
 					this.pdfDoc.text(`工程名稱:`, width - 195, height-257, { align: 'left' });
@@ -196,29 +196,29 @@ export default {
 
 					this.pdfDoc.text(`工程師`, width - 185, height-38, { align: 'left' });
 					this.pdfDoc.text(`專案組長`, width - 125, height-38, { align: 'left' });
-					this.pdfDoc.text(`專案組任`, width - 55, height-38, { align: 'left' });
+					this.pdfDoc.text(`專案主任`, width - 55, height-38, { align: 'left' });
 				}
 
 				resolve();
 			})
 		},
 		previewPdf(isInstant = false) {
-			console.log(this.tableSelect);
-			// this.$emit('update:loading', true);
+			// console.log(this.tableSelect);
+			this.$emit('update:loading', true);
 			this.imgPreload(this.tableSelect);
 			this.createPdf().then(() => {
 				const schemas = Array.from({ length: this.pdfDoc.internal.getNumberOfPages() }, () => (
 					{
-						"OrderSN": {
+						"CaseSN": {
 							"type": "text",
 							"position": {
-								"x": 10,
-								"y": 10
+								"x": 40,
+								"y": 26
 							},
 							"width": 27.24,
 							"height": 6.12,
 							"fontSize": 14,
-							"alignment": "center"
+							"alignment": "left"
 						}
 					}
 				));
@@ -227,7 +227,7 @@ export default {
 
 				if(isInstant) this.downloadPdf();
 				else {
-					this.viewer.setInputs([{ "OrderSN": "(預覽列印)" }]);
+					this.viewer.setInputs([{ "CaseSN": "(預覽列印)" }]);
 
 					this.$emit('update:loading', false);
 					this.showJobTicket = true;	
@@ -235,11 +235,10 @@ export default {
 			})
 		},
 		downloadPdf() {
-			this.$emit("downloadPdf", () => {
-				this.viewer.setInputs([{ "OrderSN": '' }]);
+			this.$emit("downloadPdf", (caseSN) => {
+				this.viewer.setInputs([{ "CaseSN":  String(caseSN) }]);
 				this.showJobTicket = false;
-				this.handleDownload(`修復申請單.pdf`);
-				// this.pdfDoc.save(`維修派工單_${orderSN}.pdf`);
+				this.handleDownload(`修復申請單_${caseSN}.pdf`);
 			});
 		},
 		handleDownload(filename) {
