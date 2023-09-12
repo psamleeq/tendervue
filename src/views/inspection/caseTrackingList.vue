@@ -3,8 +3,6 @@
 		<h2>追蹤列表</h2>
 		<aside style="white-space: pre-line">
 			1. 預設列出「中度」以上的缺失。
-			<br>
-			2. 超過14天標記為紅底。
 		</aside>
 		<div class="filter-container">
 			<div v-if="listQuery.tenderRound > 0" class="filter-item">
@@ -68,11 +66,6 @@
 							<el-image style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" />
 							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
 						</el-popover>
-					</span>
-					<span v-else-if="['DateCreate'].includes(column.property)">
-						<span>{{ row.DateCreate }}</span>
-						<br>
-						<span v-if="row.DateReportDiff > 0" :style="row.DateReportDiff >= 14 ? 'color: #F56C6C' : ''">({{ row.DateReportDiff }}天)</span>
 					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
@@ -150,10 +143,9 @@
 							<el-option label="道路" :value="1" /> 
 							<el-option label="設施" :value="2" /> 
 						</el-select>
-						<el-select v-model="rowActive.DeviceType" placeholder="請選擇" size="mini" style="width: 100px">
+						<el-select v-model="rowActive.DeviceTypePlus" placeholder="請選擇" size="mini" style="width: 100px" @change="rowActive.MillingDepth = 0">
 							<el-option v-for="(val, key) in deviceTypeFilter" :key="key" :label="val.name" :value="Number(key)" />
 						</el-select>
-						<el-checkbox v-if="rowActive.RoadType == 1" v-model="rowActive.RestoredType" :true-label="2" :false-label="1" style="margin-left: 10px;" @change="rowActive.MillingDepth = 0">熱再生</el-checkbox>
 					</div>
 				</el-form-item>
 				<el-form-item prop="Postal_vil" label="里別">
@@ -197,9 +189,9 @@
 				<el-form-item v-if="rowActive.RoadType == 1" label="預估銑刨深度" prop="MillingDepth">
 					<el-radio-group v-model="rowActive.MillingDepth">
 						<el-radio :label="0">0cm</el-radio>
-						<el-radio v-if="rowActive.RestoredType == 2" :label="4">4cm</el-radio>
-						<el-radio v-if="rowActive.RestoredType != 2" :label="5">5cm</el-radio>
-						<el-radio v-if="rowActive.RestoredType != 2" :label="10">10cm</el-radio>
+						<el-radio v-if="rowActive.DeviceTypePlus == 11" :label="4">4cm</el-radio>
+						<el-radio v-if="rowActive.DeviceTypePlus != 11" :label="5">5cm</el-radio>
+						<el-radio v-if="rowActive.DeviceTypePlus != 11" :label="10">10cm</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item label="預估銑鋪面積" prop="desc">
@@ -346,15 +338,19 @@ export default {
 			options: {
 				tenderRoundMap: {},
 				DeviceType: {
-					1: {
+					10: {
 						name: "AC路面",
 						roadType: 1
 					},
-					2: {
+					11: {
+						name: "熱再生",
+						roadType: 1
+					},
+					20: {
 						name: "人行道",
 						roadType: 2
 					},
-					3: {
+					30: {
 						name: "側溝",
 						roadType: 2
 					},
@@ -492,8 +488,7 @@ export default {
 			this.showImgViewer = true;
 		},
 		changeDeviceType() {
-			this.rowActive.DeviceType = Number(Object.keys(this.deviceTypeFilter)[0]); 
-			this.rowActive.RestoredType = (this.rowActive.DeviceType == 2) ? 0 : 1;
+			this.rowActive.DeviceTypePlus = Number(Object.keys(this.deviceTypeFilter)[0]); 
 		},
 		showMapViewer(row, isPoint=false) {
 			// console.log("showMap");
@@ -557,8 +552,8 @@ export default {
 					this.total = response.data.total;
 					this.list = response.data.list;
 					this.list.forEach(l => {
-						l.DateCreateDiff = (l.DistressLevel >= 2) ? moment().diff(moment(l.DateCreate), 'days') : 0;
 						l.DateCreate = this.formatTime(l.DateCreate);
+						this.$set(l, "DeviceTypePlus", Number(`${l.DeviceType}${l.RestoredType}`));
 						l.MillingLength = Math.round(l.MillingLength * 100) / 100;
 						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
@@ -575,12 +570,13 @@ export default {
 			this.$refs.form.validate((valid) => {
 				if (valid) {
 					this.scrollTop = document.documentElement.scrollTop;
+					const [ DeviceType, RestoredType ] = String(this.rowActive.DeviceTypePlus).split("").map(type => Number(type));
 
 					setCaseTrackingSpec(this.rowActive.SerialNo, {
 						DetectionId: this.rowActive.id,
 						RoadType: this.rowActive.RoadType,
-						RestoredType: this.rowActive.RestoredType,
-						DeviceType: this.rowActive.DeviceType,
+						DeviceType,
+						RestoredType,
 						Place: this.rowActive.Place,
 						Postal_vil: this.rowActive.Postal_vil,
 						Lane: this.rowActive.Lane,
