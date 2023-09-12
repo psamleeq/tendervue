@@ -94,16 +94,16 @@
 			class="dialog-filter"
 			:visible.sync="dialogFilterVisible"
 			title="過濾條件"
-			width="900px"
+			width="1100px"
 			:show-close="false"
 			center
 		>
-			<el-row>
-				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId" style="display: flex; justify-content: space-between; width: 200px; margin-right: 10px">
+			<el-row :gutter="15">
+				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId" style="display: flex; justify-content: space-between">
 					<el-checkbox v-model="checked" :label="distressId">
 						{{ options.DistressType[distressId] }} ({{ caseInfo[distressId] || 0 }})
 					</el-checkbox>
-					<el-select v-model="typeLevel[distressId]" placeholder="請選擇" size="mini" popper-class="type-select" multiple :disabled="!checked.includes(distressId)">
+					<el-select v-model="typeLevel[distressId]" placeholder="請選擇" size="mini" popper-class="type-select" multiple :disabled="!checked.includes(distressId)" @change="changeTypeLevel">
 						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="order == 0 ? '全部' : options.DistressLevel[order]" />
 					</el-select>
 				</el-col>
@@ -487,6 +487,12 @@ export default {
 			this.imgUrls = [ row[prop], row[otherProp] ];
 			this.showImgViewer = true;
 		},
+		changeTypeLevel() {
+			Object.keys(this.typeLevel).forEach(key => {
+				if(this.typeLevel[key].includes(0) || (this.typeLevel[key].includes(1) && this.typeLevel[key].includes(2) && this.typeLevel[key].includes(3))) 
+					this.typeLevel[key] = [0];
+			})
+		},
 		changeDeviceType() {
 			this.rowActive.DeviceTypePlus = Number(Object.keys(this.deviceTypeFilter)[0]); 
 		},
@@ -685,10 +691,14 @@ export default {
 		.el-icon-circle-close
 			color:  #FFF
 	.dialog-filter
+		.el-checkbox__label
+			font-size: 12px
 		.el-select
-			width: 55px
+			width: 100px
 			margin-top: -5px
 			margin-bottom: 10px
+			.el-select__tags > span
+				display: flex
 			.el-input__inner
 				padding: 0 13px 0 5px
 				text-align: center
