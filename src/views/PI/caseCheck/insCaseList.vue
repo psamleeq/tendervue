@@ -170,6 +170,12 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'CaseNo'"> <el-link :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link></span>
+					<span v-else-if="column.property.includes('Img')">
+						<el-popover popper-class="imgHover" placement="top" trigger="hover" :close-delay="0">
+							<el-image style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" />
+							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
+						</el-popover>
+					</span>
 					<span v-else-if="checkPermission(['PIcase.editor']) && [ 'PCIValue' ].includes(column.property)">
 						<span v-if="row.edit">
 							<el-input-number 
@@ -263,6 +269,13 @@
 				<el-button type="primary" :loading="loading" @click="setResult()">確定</el-button>
 			</span>
 		</el-dialog>
+
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="img-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgUrls"
+		/>
 	</div>
 </template>
 
@@ -273,15 +286,17 @@ import { getInsCaseList, setInsCaseList } from "@/api/PI";
 import checkPermission from '@/utils/permission';
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "insCaseList",
-	components: { TimePicker },
+	components: { TimePicker, ElImageViewer },
 	data() {
 		return {
 			loading: false,
 			timeTabId: 1,
 			showResultConfirm: false,
+			showImgViewer: false,
 			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
 			searchRange: "",
 			zipCodeNow: 0,
@@ -339,6 +354,10 @@ export default {
 				// 	name: "損壞狀況",
 				// 	sortable: false
 				// },
+				ImgZoomOut: {
+					name: "照片",
+					sortable: false
+				},
 				PCIValue: {
 					name: "PCI",
 					sortable: false
@@ -466,6 +485,11 @@ export default {
 	},
 	methods: {
 		checkPermission,
+		showImg(row, prop) {
+			const otherProp = ['ImgZoomIn', 'ImgZoomOut'].filter(imgType => imgType != prop)[0];
+			this.imgUrls = [ row[prop], row[otherProp] ];
+			this.showImgViewer = true;
+		},
 		getList() {
 			this.loading = true;
 			dateWatcher(this.districtList[this.listQuery.zipCode].start, this.dateRange);
@@ -600,6 +624,8 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
+.imgHover
+	max-width: 400px
 .inspected-case-list
 	height: calc(100vh - 50px)
 	overflow: scroll
@@ -736,4 +762,10 @@ export default {
 		.footer-btns
 			display: flex
 			justify-content: center
+	.img-preview
+		width: 100%
+		.el-image-viewer__mask
+			opacity: 0.7
+		.el-icon-circle-close
+			color:  #FFF
 </style>
