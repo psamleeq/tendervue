@@ -2,7 +2,7 @@
 	<div class="app-container case-tracking-list" v-loading="loading">
 		<h2>追蹤列表</h2>
 		<aside style="white-space: pre-line">
-			1. 預設列出「中度」以上的缺失。
+			預設列出「中度」以上的缺失。
 		</aside>
 		<div class="filter-container">
 			<div v-if="listQuery.tenderRound > 0" class="filter-item">
@@ -30,6 +30,7 @@
 				size="mini"
 				@click="filterClear"
 				>清空過濾條件</el-button>
+			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
@@ -74,20 +75,16 @@
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
-						<el-button class="btn-action" type="primary" plain size="mini" round @click="rowActive= row; dialogEditVisible = true">編輯</el-button>
+						<el-button v-if="!(row.PIState & 16) && row.PIState & 1" size="mini" plain round @click="setResult(row, -1)">撤銷</el-button>
+						<el-button v-else-if="!(row.PIState & 16)" type="success" size="mini" @click="setResult(row, 1)">抽查</el-button>
+						<el-button v-if="(row.PIState & 16)" size="mini" plain round @click="setResult(row, -16)">撤銷</el-button>
+						<el-button v-if="!(row.PIState & 16)" class="btn-action" type="primary" plain size="mini" round @click="rowActive= row; dialogEditVisible = true">編輯</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
-
-		<el-image-viewer
-			v-if="showImgViewer"
-			class="img-preview"
-			:on-close="() => { showImgViewer = false; }"
-			:url-list="imgUrls"
-		/>
 
 		<!-- 過濾 -->
 		<el-dialog
@@ -211,10 +208,18 @@
 			</el-form>
 
 			<span slot="footer" class="dialog-footer">
+				<el-button type="danger" @click="setResult(rowActive, 16)">刪除</el-button>
 				<el-button type="primary" @click="editCase()">確定</el-button>
 				<el-button @click="dialogEditVisible = false">取消</el-button>
 			</span>
 		</el-dialog>
+
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="img-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgUrls"
+		/>
 
 		<!-- map -->
 		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px">
@@ -227,6 +232,7 @@
 import moment from "moment";
 import { getTenderRound } from "@/api/type";
 import { getCaseTrackingList, setCaseTrackingSpec } from "@/api/inspection";
+import { setInsCaseList } from "@/api/PI";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -253,6 +259,7 @@ export default {
 			// 	moment().endOf("year").toDate(),
 			// ],
 			listQuery: {
+				filter: false,
 				tenderRound: 91,
 				caseType: [],
 				pageCurrent: 1,
@@ -479,7 +486,8 @@ export default {
 	},
 	methods: {
 		tableRowClassName({row, rowIndex}) {
-			if (row.DateReportDiff >= 14) return 'danger-row';
+			if (row.PIState & 1) return 'success-row';
+			else if (row.PIState & 16) return 'danger-row';
 			else return '';
 		},
 		showImg(row, prop) {
@@ -542,6 +550,7 @@ export default {
 			this.listQuery.caseType.forEach(typeArr => typeArr[1] = this.typeLevel[typeArr[0]]);
 
 			getCaseTrackingList({
+				filter: this.listQuery.filter,
 				surveyId: tenderRound.id,
 				caseType: JSON.stringify(this.listQuery.caseType),
 				pageCurrent: this.listQuery.pageCurrent,
@@ -619,6 +628,30 @@ export default {
 				}
 			});
 		},
+		setResult(row, result) {
+			this.$confirm(`確定提交?`, "確認", { showClose: false }).then(() => {
+				this.loading = true;
+				row.PIState += result;
+
+				setInsCaseList( row.SerialNo, {
+					PCIValue: row.PCIValue,
+					PIState: row.PIState,
+					PIStateNotes: row.PIStateNotes
+				}).then(response => {
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: "提交成功",
+							type: "success",
+						});
+						this.getList();
+						this.dialogEditVisible = false;
+					} 
+				}).catch(err => {
+					console.log(err);
+					this.getList();
+				})
+			}).catch(err => console.log(err));
+		},
 		filterDialogOpen() {
 			this.dialogFilterVisible = true;
 			this.caseTypeTemp = JSON.parse(JSON.stringify(this.listQuery.caseType));
@@ -680,6 +713,10 @@ export default {
 					padding-left: 10px
 					text-align: left
 	.el-table
+		.success-row
+			background: #BAED9A
+			&.hover-row > td
+				background-color: initial !important
 		.danger-row
 			background: #F9EBEB
 			&.hover-row > td
