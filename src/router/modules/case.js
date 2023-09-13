@@ -10,8 +10,7 @@ const caseRouter = {
 	meta: {
 		title: '鋪面管理',
 		icon: 'el-icon-s-release', 
-		roles: ['distress'],
-		isNew: true
+		roles: ['distress']
 	},
 	children: [
 		{

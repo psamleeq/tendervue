@@ -8,8 +8,7 @@ const accountRouter = {
 	meta: {
 		title: '帳號管理',
 		icon: 'el-icon-user-solid',
-		roles: ['rAdm'],
-		isNew: true
+		roles: ['rAdm']
 	},
 	children: [
 		
@@ -19,8 +18,7 @@ const accountRouter = {
 			name: 'accountList',
 			meta: {
 				title: '帳號列表',
-				roles: ['rAdm'],
-				isNew: true
+				roles: ['rAdm']
 			}
 		},
 		{
@@ -29,8 +27,7 @@ const accountRouter = {
 			name: 'accountPermission',
 			meta: {
 				title: '權限管理',
-				roles: ['rAdm'],
-				isNew: true
+				roles: ['rAdm']
 			},
 			hidden: true
 		},

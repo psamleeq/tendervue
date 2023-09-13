@@ -56,7 +56,8 @@ const inspectionRouter = {
 			name: 'caseTrackingList',
 			meta: {
 				title: '追蹤列表',
-				roles: ['inspection.marker']
+				roles: ['inspection.marker'],
+				isNew: true
 			}
 		}
 	]
