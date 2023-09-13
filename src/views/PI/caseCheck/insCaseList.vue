@@ -134,30 +134,7 @@
 			:header-cell-style="{'background-color': '#F2F6FC'}"
 			style="width: 100%"
 		>
-			<el-table-column label="序號" type="index" width="45" align="center" />
-			<!-- <el-table-column label="案件編號" prop="CaseNo" align="center">
-				<template slot-scope="{ row }">
-					<template v-if="row.edit">
-						<el-input
-							v-model="row.CaseNo"
-							size="mini"
-							style="width: 100px"
-						/>
-						<el-button type="text" @click="row.edit = false;">
-							<i class="el-icon-success" />
-						</el-button>
-						<el-button type="text" @click="row.edit = false; getList()">
-							<i class="el-icon-error" />
-						</el-button>
-					</template>
-					<template v-else>
-						<span>{{ row.CaseNo || "-" }}</span>
-						<el-link v-if="!row.CaseNo" @click="row.edit = true" style="margin-left: 5px">
-							<i class="el-icon-edit" />
-						</el-link>
-					</template>
-				</template>
-			</el-table-column> -->
+			<el-table-column label="序號" type="index" width="45" align="center" :index="indexMethod" />
 			<el-table-column
 				v-for="(value, key) in headers"
 				:key="key"
@@ -243,6 +220,8 @@
 			</el-table-column>
 		</el-table>
 
+		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
+
 		<!-- 抽查結果Dialog -->
 		<el-dialog
 			:visible.sync="showResultConfirm"
@@ -286,11 +265,12 @@ import { getInsCaseList, setInsCaseList } from "@/api/PI";
 import checkPermission from '@/utils/permission';
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
+import Pagination from "@/components/Pagination";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "insCaseList",
-	components: { TimePicker, ElImageViewer },
+	components: { Pagination, TimePicker, ElImageViewer },
 	data() {
 		return {
 			loading: false,
@@ -301,7 +281,9 @@ export default {
 			searchRange: "",
 			zipCodeNow: 0,
 			listQuery: {
-				zipCode: 1041
+				zipCode: 1041,
+				pageCurrent: 1,
+				pageSize: 50
 			},
 			resultHeader: {
 				CaseNo: {
@@ -363,6 +345,7 @@ export default {
 					sortable: false
 				}
 			},
+			total: 0,
 			resultList: [],
 			list: [],
 			rowActive: {},
@@ -502,7 +485,9 @@ export default {
 			getInsCaseList({
 				tenderId: this.listQuery.zipCode,
 				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: this.listQuery.pageSize
 			}).then((response) => {
 				if (response.data.list.length == 0) {
 					this.$message({
@@ -511,6 +496,7 @@ export default {
 					});
 				} else {
 					this.zipCodeNow = this.listQuery.zipCode;
+					this.total = response.data.total;
 					this.list = response.data.list;
 					this.list.forEach(l => {
 						l.PIStateNotes = JSON.parse(l.PIStateNotes);
@@ -570,6 +556,9 @@ export default {
 				this.getList();
 			})
 		},
+		indexMethod(index) {
+			return (index + 1 + (this.listQuery.pageCurrent - 1) * this.listQuery.pageSize);
+		},
 		formatter(row, column) {
 			if([ 'organAssign' ].includes(column.property)) return row[column.property] == 1 ? '是' : '-';
 			else if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];
@@ -584,34 +573,48 @@ export default {
 			return moment(time).format("YYYY/MM/DD");
 		},
 		handleDownload() {
-			const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
-			const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
-			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
-			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
-			const dataList = JSON.parse(JSON.stringify(this.list)).map(l => {
-				l.DateCreate = this.formatTime(l.DateCreate);
-				l.DeviceType = this.options.DeviceType[l.DeviceType];
-				l.organAssign =  l.organAssign == 1 ? "是" : "";
-				l.DistressType = this.options.DistressType[l.DistressType];
-				l.DistressLevel = this.options.DistressLevel[l.DistressLevel];
-				// l.BrokeStatus = this.options.BrokeStatus[l.DistressLevel];
-				l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
+			this.loading = true;
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 
-				l.SVCheck = (l.PIState & 2) ? "V" : (l.PIState & 32) ? "X" : "";
-				l.OrganCheck = (l.PIState & 4) ? "V" : (l.PIState & 64) ? "X" : "";
+			getInsCaseList({
+				tenderId: this.listQuery.zipCode,
+				timeStart: startDate,
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				pageCurrent: 1,
+				pageSize: this.total
+			}).then(response => {
+				const list = response.data.list;
 
-				l.Note = (l.PIState & 32) ? l.PIStateNotes.SV : (l.PIState & 64) ? l.PIStateNotes.Organ : "";
-				return l
-			}) 
-			const data = this.formatJson(filterVal, dataList);
+				const tHeader = Object.values(this.headers).map(value => value.name).concat(["監造抽查", "機關抽查", "備註"]);
+				const filterVal = Object.keys(this.headers).concat(["SVCheck", "OrganCheck", "Note"]);
+				// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ];
+				// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ];
+				const dataList = list.map(l => {
+					l.DateCreate = this.formatTime(l.DateCreate);
+					l.DeviceType = this.options.DeviceType[l.DeviceType];
+					l.organAssign =  l.organAssign == 1 ? "是" : "";
+					l.DistressType = this.options.DistressType[l.DistressType];
+					l.DistressLevel = this.options.DistressLevel[l.DistressLevel];
+					// l.BrokeStatus = this.options.BrokeStatus[l.DistressLevel];
+					l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;
 
-			import("@/vendor/Export2Excel").then((excel) => {
-				excel.export_json_to_excel({
-					header: tHeader,
-					data,
+					l.SVCheck = (l.PIState & 2) ? "V" : (l.PIState & 32) ? "X" : "";
+					l.OrganCheck = (l.PIState & 4) ? "V" : (l.PIState & 64) ? "X" : "";
+
+					l.Note = (l.PIState & 32) ? l.PIStateNotes.SV : (l.PIState & 64) ? l.PIStateNotes.Organ : "";
+					return l
+				}) 
+				const data = this.formatJson(filterVal, dataList);
+
+				import("@/vendor/Export2Excel").then((excel) => {
+					excel.export_json_to_excel({
+						header: tHeader,
+						data,
+					});
+					this.loading = false;
 				});
-			});
-			this.getList();
+			})
 		},
 		formatJson(filterVal, jsonData) {
 			return jsonData.map((v) => filterVal.map((j) => v[j]));
