@@ -274,7 +274,6 @@ export default {
 					49: "滑溜裂縫",
 					66: "骨材剝落",
 					58: "人孔高差(只列入PCI)"
-
 				},
 				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58 ],
 				caseLevelMap: {
@@ -528,7 +527,7 @@ export default {
 			getPanoramaJson({
 				inspectId: this.listQuery.inspectId
 			}).then(response => {
-				if(Object.keys(response.data).length == 0) {
+				if(response.data.inspection.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
@@ -537,7 +536,7 @@ export default {
 					this.loading = false;
 				} else {
 					this.inspectIdNow = this.listQuery.inspectId;
-					const jsonUrl = response.data.inspection.url;
+					const jsonUrl = response.data.inspection[0].url;
 
 					// fetch('/test/streetViewFix.json').then(response => response.json()).then(json => {
 					fetch(jsonUrl).then(response => response.json()).then(json => {
