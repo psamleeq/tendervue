@@ -2,14 +2,17 @@
 	<div class="app-container inspected-case-list" v-loading="loading">
 		<h2>案件稽核(環景)</h2>
 		<div class="filter-container">
-			<el-select class="filter-item" v-model="listQuery.zipCode" :disabled="Object.keys(districtList).length <= 1">
-				<el-option v-for="(info, zip) in districtList" :key="zip" :label="info.name" :value="Number(zip)" />
-			</el-select>
-			<span class="filter-item time-picker">
-				<div style="font-size: 12px; color: #909399">成案日期</div>
-				<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
-				<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			</span>
+			<div v-if="listQuery.tenderRound > 0" class="filter-item">
+				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>合約</span>
+					</div>
+					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
+						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
+					</el-select>
+				</div>
+			</div>
+			<el-button v-if="listQuery.tenderRound > 0" type="primary" @click="getList()">搜尋</el-button>
 
 			<el-button
 				slot="reference"
@@ -21,8 +24,6 @@
 				@click="handleDownload"
 			>輸出報表</el-button>
 		</div>
-		
-		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
 		<!-- 資訊列表 -->
 		<el-row :gutter="40" class="panel-group">
@@ -33,7 +34,7 @@
 					</div>
 					<div class="card-panel-description">
 						<div class="card-panel-text">廠商通報數</div>
-						<div class="card-panel-num">{{ list.length }}</div>
+						<div class="card-panel-num">{{ total }}</div>
 					</div>
 				</div>
 			</el-col>
@@ -260,28 +261,22 @@
 
 <script>
 import moment from "moment";
-import { getTypeMap } from "@/api/type";
-import { getInsCaseList, setInsCaseList } from "@/api/PI";
+import { getTypeMap, getTenderRound } from "@/api/type";
+import { getInsCaseList, setInsCaseList, getInsCaseCount } from "@/api/PI";
 import checkPermission from '@/utils/permission';
-import TimePicker from '@/components/TimePicker';
-import { dateWatcher } from "@/utils/pickerOptions";
 import Pagination from "@/components/Pagination";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "insCaseList",
-	components: { Pagination, TimePicker, ElImageViewer },
+	components: { Pagination, ElImageViewer },
 	data() {
 		return {
 			loading: false,
-			timeTabId: 1,
 			showResultConfirm: false,
 			showImgViewer: false,
-			dateRange: [ moment().subtract(1, 'month').startOf("month").toDate(), moment().subtract(1, 'month').endOf("month").toDate() ],
-			searchRange: "",
-			zipCodeNow: 0,
 			listQuery: {
-				zipCode: 1041,
+				tenderRound: 91,
 				pageCurrent: 1,
 				pageSize: 50
 			},
@@ -346,50 +341,21 @@ export default {
 				}
 			},
 			total: 0,
+			checkNum: {
+				SV: { 
+					AC: { check: 0, fail: 0, total: 0 }, 
+					facility: { check: 0, fail: 0, total: 0 } 
+				}, 
+				Organ: { 
+					AC: { check: 0, fail: 0, total: 0 }, 
+					facility: { check: 0, fail: 0, total: 0 } 
+				} 
+			},
 			resultList: [],
 			list: [],
 			rowActive: {},
-			districtList: {
-				// 100: {
-				// 	"name": "中正區"
-				// },
-				1031: {
-					"name": "大同區",
-					"start": "2023/2/1"
-				},
-				1041: {
-					"name": "中山區",
-					"start": "2022/6/1"
-				},
-				// 105: {
-				// 	"name": "松山區"
-				// },
-				// 106: {
-				// 	"name": "大安區"
-				// },
-				// 108: {
-				// 	"name": "萬華區"
-				// },
-				// 110: {
-				// 	"name": "信義區"
-				// },
-				// 111: {
-				// 	"name": "士林區"
-				// },
-				// 112: {
-				// 	"name": "北投區"
-				// },
-				// 114: {
-				// 	"name": "內湖區"
-				// },
-				// 115: {
-				// 	"name": "南港區"
-				// },
-				// 116: {
-				// 	"name": "文山區"
-				// }
-			},
 			options: {
+				tenderRoundMap: {},
 				DeviceType: {},
 				DistressType: {},
 				DistressLevel: {
@@ -431,40 +397,53 @@ export default {
 			return reasonTypeArr
 		},
 		checkNum() {
-			return { 
-				SV: { 
-					AC: { 
-						check: this.list.filter(l => ((l.PIState & 2) || (l.PIState & 32)) && l.DeviceType == 1).length, 
-						fail: this.list.filter(l => (l.PIState & 32) && l.DeviceType == 1).length,
-						total: Math.round(this.list.length * 0.15 * 0.6, 0) 
-					}, 
-					facility: { 
-						check: this.list.filter(l => ((l.PIState & 2) || (l.PIState & 32)) && l.DeviceType != 1).length, 
-						fail: this.list.filter(l => (l.PIState & 32) && l.DeviceType != 1).length,
-						total: Math.round(this.list.length * 0.15 * 0.4, 0) 
-					} 
-				}, 
-				Organ: { 
-					AC: { 
-						check: this.list.filter(l => ((l.PIState & 4) || (l.PIState & 64)) && l.DeviceType == 1).length, 
-						fail: this.list.filter(l => (l.PIState & 64) && l.DeviceType == 1).length,
-						total: Math.round(this.list.length * 0.05 * 0.6, 0) 
-					}, 
-					facility: {
-						check: this.list.filter(l => ((l.PIState & 4) || (l.PIState & 64)) && l.DeviceType != 1).length, 
-						fail: this.list.filter(l => (l.PIState & 64) && l.DeviceType != 1).length,
-						total: Math.round(this.list.length * 0.05 * 0.4, 0) 
-					} 
-				} 
+			let checkNum = { 
+				
 			};
+
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			
+
+			return checkNum;
 		}
 	},
 	created() {
 		getTypeMap().then(response => {
 			this.options.DeviceType = response.data.DeviceTypeMap;
 			this.options.DistressType = response.data.BTypeMap;
+		})
+		getTenderRound().then(response => {
+			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+				if(cur.tenderId <= 1001) return acc;
+
+				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
+				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+
+				let name = `${cur.tenderName}`;
+				if(cur.title.length != 0) name += `_${cur.title}`;
+
+				acc[roundId] = { 
+					id: cur.id,
+					name, 
+					tenderId: cur.tenderId, 
+					isMain: cur.zipCodeSpec == 0,
+					zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
+					roundStart: cur.roundStart, 
+					roundEnd: cur.roundEnd
+				};
+				return acc;
+			}, {});
+
+			if(Object.keys(this.options.tenderRoundMap).length > 0) {
+				if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) {
+					this.listQuery.tenderRound = this.$route.query.surveyId = Number(Object.keys(this.options.tenderRoundMap)[0]);
+				}
+			}
+			if(Object.keys(this.options.tenderRoundMap).length == 0) {
+				this.options.tenderRoundMap = { "-1": { id: -1 }};
+				this.listQuery.tenderRound = -1;
+			}
 		});
-		this.getList();
 	},
 	methods: {
 		checkPermission,
@@ -475,17 +454,22 @@ export default {
 		},
 		getList() {
 			this.loading = true;
-			dateWatcher(this.districtList[this.listQuery.zipCode].start, this.dateRange);
-			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
 			this.list = [];
 			this.resultList = [];
+			this.checkNum = {
+				SV: { 
+					AC: { check: 0, fail: 0, total: 0 }, 
+					facility: { check: 0, fail: 0, total: 0 } 
+				}, 
+				Organ: { 
+					AC: { check: 0, fail: 0, total: 0 }, 
+					facility: { check: 0, fail: 0, total: 0 } 
+				} 
+			};
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 
 			getInsCaseList({
-				tenderId: this.listQuery.zipCode,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				surveyId: tenderRound.id,
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize
 			}).then((response) => {
@@ -495,8 +479,22 @@ export default {
 						type: "error",
 					});
 				} else {
-					this.zipCodeNow = this.listQuery.zipCode;
 					this.total = response.data.total;
+					this.checkNum.SV.AC.total = Math.round(this.total * 0.15 * 0.6, 0);
+					this.checkNum.SV.facility.total = Math.round(this.total * 0.15 * 0.4, 0);
+					this.checkNum.Organ.AC.total = Math.round(this.total * 0.05 * 0.6, 0);
+					this.checkNum.Organ.facility.total = Math.round(this.total * 0.05 * 0.4, 0);
+
+					getInsCaseCount({
+						surveyId: tenderRound.id,
+					}).then(response => { 
+						const result = response.data.result;
+						for(const key in result) {
+							const [ from, type, subtype ] = key.split("_");
+							this.checkNum[from][type][subtype] = Number(result[key]);
+						}
+					});
+
 					this.list = response.data.list;
 					this.list.forEach(l => {
 						l.PIStateNotes = JSON.parse(l.PIStateNotes);
@@ -633,21 +631,16 @@ export default {
 	height: calc(100vh - 50px)
 	overflow: scroll
 	.filter-container 
-		.el-select
-			width: 110px
+		.el-select.tender-select
+			width: 400px
+			.el-input__inner
+					padding-left: 10px
+					text-align: left
 		.el-input__inner
 			padding-left: 5px
 			text-align: center
 		.filter-item
 			margin-right: 5px
-		.time-picker 
-			& > *
-				margin-right: 5px
-			.el-date-editor.el-input
-				width: 165px
-				.el-input__inner
-					width: 155px
-					padding: 0 10px
 	.panel-group 
 		position: sticky
 		top: -20px

@@ -49,6 +49,15 @@ export function getCheckResult(query) {
 	})
 }
 
+// 成效指標報表
+export function getCaseCount(query) {
+	return request({
+		url: '/PI/caseCount',
+		method: 'get',
+		params: query
+	})
+}
+
 // 成效指標 - 案件稽核(環景)
 export function getInsCaseList(query) {
 	return request({
@@ -66,10 +75,9 @@ export function setInsCaseList(id, data) {
 	})
 }
 
-// 成效指標報表
-export function getCaseCount(query) {
+export function getInsCaseCount(query) {
 	return request({
-		url: '/PI/caseCount',
+		url: '/PI/insCaseCount',
 		method: 'get',
 		params: query
 	})
