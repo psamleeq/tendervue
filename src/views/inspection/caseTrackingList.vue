@@ -714,7 +714,7 @@ export default {
 					text-align: left
 	.el-table
 		.success-row
-			background: #BAED9A
+			background: #F3FDED
 			&.hover-row > td
 				background-color: initial !important
 		.danger-row
