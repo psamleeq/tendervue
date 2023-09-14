@@ -269,59 +269,71 @@ export default {
 				id: {
 					name: "缺失Id",
 					sortable: true,
+					default: true,
 					width: 80
 				},
 				TrackingId: {
 					name: "追蹤Id",
 					sortable: false,
+					default: false,
 					width: 80
 				},
 				DistressType: {
 					name: "缺失類型",
 					sortable: true,
+					default: true,
 					width: 160
 				},
 				DistressLevel: {
 					name: "損壞程度",
 					sortable: true,
+					default: true,
 					width: 80
 				},
 				DateCreate: {
 					name: "通報時間",
 					sortable: true,
+					default: false,
 					width: 150
 				},
 				Place: {
 					name: "地址",
-					sortable: true
+					sortable: true,
+					default: true
 				},
 				roadDir: {
 					name: "車道",
 					sortable: false,
+					default: false,
 					width: 110
 				},
 				MillingLength: {
 					name: "長度(m)",
 					sortable: true,
+					default: false,
 					width: 80
 				},
 				MillingWidth: {
 					name: "寬度(m)",
 					sortable: true,
+					default: false,
 					width: 80
 				},
 				MillingArea: {
 					name: "面積(㎡)",
 					sortable: true,
+					default: false,
 					width: 80
 				},
 				ImgZoomIn: {
 					name: "近照",
-					sortable: false
+					sortable: false,
+					default: true
 				},
 				ImgZoomOut: {
 					name: "遠照",
-					sortable: false
+					sortable: false,
+					default: true
 				}
 			},
 			total: 0,
@@ -431,11 +443,11 @@ export default {
 		},
 		headersFilter() {
 			return Object.keys(this.headers)
-			.filter(key => this.headersCheckVal.includes(key))
-			.reduce((result, key) => {
-				result[key] = this.headers[key];
-				return result;
-			}, {});
+				.filter(key => this.headersCheckVal.includes(key))
+				.reduce((result, key) => {
+					result[key] = this.headers[key];
+					return result;
+				}, {});
 		},
 	},
 	watch: {
@@ -445,7 +457,7 @@ export default {
 		}
 	},
 	created() {
-		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
+		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers).filter(key => this.headers[key].default);
 		else this.headersCheckVal = [];
 
 		getTenderRound().then(response => {
