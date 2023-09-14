@@ -38,7 +38,6 @@
 			<el-card>
 				<el-collapse>
 					<el-collapse-item class="collapse-label" title="鋪面狀況指數">
-						<!-- TODO: 關閉鋪面圖層 -->
 						<el-row slot="title">
 							<el-col :span="18">鋪面狀況指數</el-col>
 							<el-col :span="6">
@@ -871,10 +870,6 @@ export default {
 
 			// 載入case GeoJSON
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
-			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
-			
 			if(this.caseSwitch) await this.getCaseGeo();
 			
 			// 載入區塊
@@ -964,11 +959,7 @@ export default {
 		},
 		async getCaseGeo() {
 			this.loading = true;
-
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-			const startDate = moment(tenderRound.roundStart).format("YYYY-MM-DD");
-			const endDate = moment(tenderRound.roundEnd).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
 
 			return new Promise((resolve, reject) => {
 				getRoadCaseGeo({
