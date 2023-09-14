@@ -395,16 +395,6 @@ export default {
 				}
 			})
 			return reasonTypeArr
-		},
-		checkNum() {
-			let checkNum = { 
-				
-			};
-
-			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
-			
-
-			return checkNum;
 		}
 	},
 	created() {
