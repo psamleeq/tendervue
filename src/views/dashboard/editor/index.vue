@@ -55,6 +55,7 @@ import { mapGetters } from "vuex";
 import PanThumb from "@/components/PanThumb";
 // import { getLoginLog } from "@/api/cms"
 import moment from "moment";
+import { getLoginLog } from "@/api/auth";
 
 export default {
   name: "DashboardEditor",
@@ -85,17 +86,16 @@ export default {
   },
   methods: {
     formatTime(time) {
-      return moment(time).utc().format("YYYY-MM-DD") + "\n" + moment(time).utc().format("HH:mm:ss");
+      return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hour').format("HH:mm:ss");
     },
     getLoginList() {
-      // getLoginLog({
-      //   userName: localStorage.username
-      // }).then((response) => {
-      //   this.loginList = response.data.list;
-      //   this.loginList.forEach((l) => {
-      //     l.LoginTime = this.formatTime(l.LoginTime);
-      //   })
-      // })
+      getLoginLog()
+        .then((response) => { 
+          this.loginList = response.data; 
+          this.loginList.forEach(l => {
+            l.LoginTime = this.formatTime(l.LoginTime);
+          })
+        }).catch((error) => console.log(error));
     }
   }
 };

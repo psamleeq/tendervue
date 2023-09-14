@@ -113,13 +113,16 @@
 				<el-button type="primary" @click="updatePassword()">確定</el-button>
 			</span>
 		</el-dialog>
+
+		
+
 	</div>
 </template>
 
 <script>
 import moment from "moment";
 import Pagination from "@/components/Pagination";
-import { getAccountList,addAccount,changeActive,updatePassword,updateNotes } from "@/api/auth";   
+import { getAccountList,addAccount,changeActive,updatePassword,updateNotes,getLoginLog } from "@/api/auth";   
 
 export default {
 	name: "accountList",
@@ -231,6 +234,19 @@ export default {
 			
 			this.loading = false;
 			
+		},
+		//登入紀錄
+		getLoginLog() {
+			const query = {
+				UserId: this.rowActive.UserId,
+				Ip: this.rowActive.Ip,
+				LoginTime: this.rowActive.LoginTime,
+			};
+			getLoginLog(query)
+				.then((response) => {
+					this.loginList = response.data.loginList;
+				})
+				.catch((error) => console.log(error));
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD");
