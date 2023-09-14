@@ -51,6 +51,16 @@ const inspectionRouter = {
 			}
 		},
 		{
+			path: 'caseInspectionMap',
+			component: () => import('@/views/inspection/caseInspectionMap'),
+			name: 'caseInspectionMap',
+			meta: {
+				title: '巡查地圖',
+				roles: ['inspection.viewer'],
+				isNew: true
+			}
+		},
+		{
 			path: 'caseTrackingList',
 			component: () => import('@/views/inspection/caseTrackingList'),
 			name: 'caseTrackingList',
