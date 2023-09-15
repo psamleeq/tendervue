@@ -52,6 +52,32 @@
 			</el-row>
 		</el-card>
 
+		<el-card v-if="caseList.length > 0" class="info-box right">
+			<el-table 
+				empty-text="目前沒有資料" 
+				:data="caseList"
+				size="mini"
+				fit 
+				:header-cell-style="{'background-color': '#F2F6FC'}"
+				max-height="550px"
+				style="width: 100%;"
+				@cell-mouse-enter="handleMouseEnter"
+				@cell-mouse-leave="handleMouseLeave"
+			>
+				<el-table-column 
+					v-for="(value, key) in headers" 
+					:key="key" 
+					:prop="key" 
+					:label="value"
+					:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
+					:width="['caseId', 'caseLevel'].includes(key) ? 70 : null"
+					align="center"
+					:filters="getFilter(key)"
+					:filter-method="handleFilter"
+				/>
+			</el-table>
+		</el-card>
+
 		<el-image-viewer
 			v-if="showImgViewer"
 			class="img-preview"
@@ -93,6 +119,7 @@ export default {
 			// polyLine: {},
 			infoWindow: null,
 			caseInfo: {},
+			caseList: [],
 			inspectIdList: [],
 			blockList: [],
 			caseGeoJson: {},
@@ -106,6 +133,11 @@ export default {
 				total: 0,
 				intersect: 0,
 				ratio: 0
+			},
+			headers: {
+				caseId: "Id",
+				caseName: "類型",
+				caseLevel: "程度"
 			},
 			options: { 
 				tenderRoundMap: { },
@@ -172,7 +204,6 @@ export default {
 				},
 				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58 ],
 				caseLevelMap: {
-					0: "全部",
 					1: "輕",
 					2: "中",
 					3: "重"
@@ -533,6 +564,7 @@ export default {
 				this.caseGeoJson[0] = response.data.caseGeoJson.caseNow;
 				this.caseGeoJson[0].features.sort((a, b) => (a.properties.DistressType - b.properties.DistressType));
 				this.createCaseInfo();
+				this.createCaseList();
 
 				for(const inspectId of this.inspectIdList) {
 					const featureFilter = response.data.caseGeoJson.caseNow.features.filter(feature => feature.properties.InspectId == inspectId);
@@ -585,6 +617,42 @@ export default {
 			}, [])
 
 			this.caseInfo.sort((a, b) => (b.total - a.total));
+		},
+		createCaseList(featureList = this.caseGeoJson[this.listQuery.inspectId].features) {
+			this.caseList = featureList.map(feature => ({
+				caseId: feature.properties.Id,
+				caseName: this.options.caseTypeMap[feature.properties.DistressType],
+				caseLevel: this.options.caseLevelMap[feature.properties.DistressLevel]
+			}));
+
+			this.caseInfo.sort((a, b) => (b.total - a.total));
+		},
+		getFilter(property) {
+			if(property == 'caseName') return this.caseInfo.map(caseSpec => ({ text: caseSpec.caseName, value: caseSpec.caseName }));
+			else if(property == 'caseLevel') return Object.keys(this.options.caseLevelMap).map(key => ({ text: this.options.caseLevelMap[key], value: this.options.caseLevelMap[key] }));
+			else return null;
+		},
+		handleFilter(value, row, column) {
+			return row[column.property] === value;
+		},
+		handleMouseEnter(row, column, cell, event) {
+			let featureList = [];
+			this.dataLayer.caseNow.forEach(feature =>{ 
+				if(feature.getProperty("Id") == row.caseId) featureList.push(feature);
+			});
+			const bounds = new google.maps.LatLngBounds();
+			for(const feature of featureList) {
+				this.dataLayer.caseNow.overrideStyle(feature, { strokeColor: "#8FBC8F", strokeWeight: 4 });
+				const paths = feature.getGeometry();
+				this.showCaseContent(feature, feature.getProperty("CenterPt"));
+				// console.log(paths);
+				paths.forEachLatLng(position => bounds.extend(position));
+			}
+			this.map.fitBounds(bounds);
+		},
+		handleMouseLeave(row, column, cell, event) {
+			// console.log(row.blockId);
+			this.dataLayer.caseNow.revertStyle();
 		},
 		getRouteList() {
 			this.loading = true;
@@ -770,11 +838,6 @@ export default {
 				.filter(block => block.roadName == this.listQuery.filterId)
 				.map(block => this.createJstsGeometry(JSON.parse(block.geometry).coordinates.flat(2)));
 
-			// const jstsCasePolygon = this.caseGeoJson[this.inspectIdNow].features.map(feature => {
-			// 	const flatNum = (feature.geometry.type == 'MultiLineString') ? 1 : 2;
-			// 	return this.createJstsGeometry(feature.geometry.coordinates.flat(flatNum));
-			// });
-
 			let featureList = [];
 			this.dataLayer.caseNow.forEach(feature => {
 				feature.toGeoJson(json => {
@@ -789,7 +852,8 @@ export default {
 							featureList.push(json);
 							// console.log(featureList);
 							this.createCaseInfo(featureList);
-							this.dataLayer.caseNow.overrideStyle(feature, { strokeColor: "#8FBC8F", strokeWeight: 4, strokeOpacity: 0.4 });
+							this.createCaseList(featureList);
+							// this.dataLayer.caseNow.overrideStyle(feature, { strokeColor: "#8FBC8F", strokeWeight: 4 });
 							this.loading = false;
 							break;
 						} else if(i == jstsCasePolygon.length - 1) {
@@ -897,6 +961,11 @@ export default {
 				*
 					color: #ECEFF1
 					text-shadow: 0px 0px 1px rgba(#263238, 0.6)
+			.el-table
+				.el-table__body
+					width: 100% !important
+					.el-table__row
+						cursor: pointer
 	.img-preview
 		width: 100%
 		.el-image-viewer__mask
