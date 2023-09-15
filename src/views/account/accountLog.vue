@@ -14,22 +14,31 @@
 		</div>
 		
 		<el-table
-			:data="list"
-			empty-text="目前沒有資料"
-			style="width: 100%"
-			border
-			fit
-			:header-cell-style="{ 'background-color': '#F2F6FC' }">
-			<el-table-column
-				v-for="(value, key) in headers"
-				:key="key"
-				:prop="key"
-				:label="value.name"
-				:sortable="value.sortable"
-				:width="value.width"
-				align="center"
-			/>
-		</el-table>
+      :data="list"
+      empty-text="目前沒有資料"
+      style="width: 100%"
+      border
+      fit
+      :header-cell-style="{ 'background-color': '#F2F6FC' }"
+    >
+      <el-table-column
+        v-for="(value, key) in headers"
+        :key="key"
+        :prop="key"
+        :label="value.name"
+        :sortable="value.sortable"
+        :width="value.width"
+        align="center"
+      >
+        
+        <template slot-scope="{ row, column }">
+          <span v-if="key === 'ActionType'">{{ statusTextMap[row.ActionType] }}</span>
+          <span v-else>{{ row[column.property] }}</span>
+        </template>
+
+      </el-table-column>
+    </el-table>
+
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
   </div>
@@ -59,13 +68,18 @@ export default {
         id: {
           name: 'ID',
           sortable: false,
-          width:150
+          width:100
         },
 				UserId: {
 					name: "User ID",
 					sortable: false,
-					width:150
+					width:100
 				},
+        UserName: {
+          name: "使用者名稱",
+          sortable: false,
+          width:150
+        },
         ActionType: {
           name: "狀態操作",
           sortable: false,
@@ -79,8 +93,13 @@ export default {
 				Create_At: {
 					name: "創建日期",
 					sortable: false,
-					width:150
+					width:200
 				},
+        FromUsername: {
+          name: '操作者',
+          sortable: false,
+          width:150
+        },
         Notes: {
 					name: "備註",
 					sortable: false
@@ -89,7 +108,12 @@ export default {
 		};
 	},
 	computed: {
-		
+		statusTextMap() {
+      return {
+        30: '停用',
+        31: '啟用',
+      };
+    },
 	},
 	watch: {},
 	created() {
@@ -102,6 +126,8 @@ export default {
       const query = {
         id: this.rowActive.id,
         UserId: this.rowActive.UserId,
+        UserName: this.rowActive.UserName,
+        FromUsername: this.rowActive.FromUsername,
         ActionType: this.rowActive.ActionType,
         FromUid: this.rowActive.FromUid,
         Create_At: this.rowActive.Create_At,
@@ -109,11 +135,12 @@ export default {
       };
       getUsersData()
         .then((response) => {
-          this.list = response.data;
+          this.list = response.data.printUid;
         })
         .catch((error) => console.log(error));
     },
   },
+
 };
 
 </script>
