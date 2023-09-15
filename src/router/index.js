@@ -16,13 +16,14 @@ import pciManageRouter from './modules/PCIManage';
 import caseHistRouter from './modules/caseHist';
 import dispatchV0Router from './modules/dispatchV0';
 import dispatchRouter from './modules/dispatch';
+import priceRouter from './modules/price';
 import PCIRouter from './modules/PCI';
 import expAnalysisRouter from './modules/expAnalysis';
 import PIRouter from './modules/PI';
 import PIReportRouter from './modules/PIReport';
 import otherRouter from './modules/other';
 import carRouter from './modules/car';
-import priceRouter from './modules/price';
+import appRouter from './modules/app';
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -121,6 +122,7 @@ export const asyncRoutes = [
 	expAnalysisRouter,
 	otherRouter,
 	carRouter,
+	appRouter,
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]
