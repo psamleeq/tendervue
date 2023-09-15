@@ -715,6 +715,7 @@ export default {
 
 			this.loading = true;
 			this.createCaseInfo();
+			this.createCaseList();
 			if(inspectId != 0) for(const polyLine of this.polyLine[inspectId]) polyLine.setMap(this.map);
 
 			this.dataLayer.caseNow.forEach(feature => this.dataLayer.caseNow.remove(feature));
