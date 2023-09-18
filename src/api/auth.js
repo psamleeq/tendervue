@@ -59,6 +59,15 @@ export function getUsersData(query) {
 	})
 }
 
+//登入歷程
+export function getLoginData(query) {
+	return request({
+		url: '/auth/loginData',
+		method: 'get',
+		params: query
+	})
+}
+
 //帳號新增
 export function addAccount(data) {
 	return request({

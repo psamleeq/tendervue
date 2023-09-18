@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container" v-loading="loading">
-		<h2>帳號歷程</h2>
+		<h2>登入歷程</h2>
 		<div class="filter-container">
 			<span class="filter-item" >
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -30,15 +30,9 @@
         :width="value.width"
         align="center"
       >
-        
-        <template slot-scope="{ row, column }">
-          <span v-if="key === 'ActionType'">{{ statusTextMap[row.ActionType] }}</span>
-          <span v-else>{{ row[column.property] }}</span>
-        </template>
-
+      
       </el-table-column>
     </el-table>
-
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
   </div>
@@ -46,11 +40,11 @@
 
 <script>
 import Pagination from "@/components/Pagination";
-import { getUsersData } from "@/api/auth";
+import { getLoginData } from "@/api/auth";
 import moment from "moment";
 
 export default {
-  name: "usersData",
+  name: "loginData",
 	components: { Pagination },
 	data() {
 		return {
@@ -69,79 +63,55 @@ export default {
         id: {
           name: 'ID',
           sortable: false,
-          width:100
+          width:200
         },
 				UserId: {
 					name: "User ID",
 					sortable: false,
-					width:100
+					width:200
 				},
         UserName: {
           name: "使用者名稱",
           sortable: false,
-          width:150
+          width:200
         },
-        ActionType: {
-          name: "狀態操作",
+        Ip: {
+          name: "IP",
           sortable: false,
-          width: 150
+          width:200
         },
-				FromUid: {
-					name: "FromUid",
-					sortable: false,
-					width:150
-				},
-				Create_At: {
-					name: "創建日期",
-					sortable: false,
-					width:200
-				},
-        FromUsername: {
-          name: '操作者',
-          sortable: false,
-          width:150
+        LoginTime: {
+          name: '登入時間',
+          sortable: false
         },
-        Notes: {
-					name: "備註",
-					sortable: false
-				},
-			},
-		};
+      },
+    };
 	},
 	computed: {
-		statusTextMap() {
-      return {
-        30: '停用',
-        31: '啟用',
-      };
-    },
 	},
 	watch: {},
 	created() {
 	},
   mounted() {
-    this.getUsersData()
+    this.getLoginData()
   },
   methods: {
     formatTime(time) {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
-    getUsersData() {
+    getLoginData() {
       const query = {
         id: this.rowActive.id,
         UserId: this.rowActive.UserId,
         UserName: this.rowActive.UserName,
-        FromUsername: this.rowActive.FromUsername,
-        ActionType: this.rowActive.ActionType,
-        FromUid: this.rowActive.FromUid,
-        Create_At: this.rowActive.Create_At,
-        Notes: this.rowActive.Notes
+        Ip: this.rowActive.Ip,
+        LoginTime: this.rowActive.LoginTime
       };
-      getUsersData()
+      getLoginData()
         .then((response) => {
-          this.list = response.data.printUid;
+          this.list = response.data.printUserName;
           this.list.forEach(l => {
-            l.Create_At = this.formatTime(l.Create_At);
+            l.LoginTime = this.formatTime(l.LoginTime);
           })
         })
         .catch((error) => console.log(error));

@@ -40,6 +40,15 @@ const accountRouter = {
 				roles: ['rAdm']
 			}
 		},
+		{
+			path: 'accountLoginList',
+			component: () => import('@/views/account/accountLoginList'),
+			name: 'accountLoginList',
+			meta: {
+				title: '登入歷程',
+				roles: ['rAdm']
+			}
+		},
 	]
 }
 export default accountRouter
