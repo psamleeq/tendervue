@@ -1,25 +1,37 @@
 <template>
 	<div class="app-container inspect-fin-report" v-loading="loading">
-		<h2>巡查回報</h2>
+		<h2>巡查回報
+			<el-checkbox-button v-model="listQuery.filter" :disabled="listQuery.tenderRound == null" @change="getList">
+				<span v-if="listQuery.filter">已完工</span>
+				<span v-else>未完工</span>
+			</el-checkbox-button>
+		</h2>
 		<div class="filter-container">
-			<div v-if="listQuery.tenderRound > 0" class="filter-item">
+			<div v-if="listQuery.tenderRound != -1" class="filter-item">
 				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
+					<!-- <div class="el-input-group__prepend">
 						<span>合約</span>
-					</div>
-					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
+					</div> -->
+					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender" @change="getList()">
 						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
 					</el-select>
-					<div class="el-input-group__append">
-						<el-button v-if="listQuery.tenderRound > 0" type="primary" size="mini" icon="el-icon-search" @click="getList()" />
-					</div>
+					<!-- <div class="el-input-group__append">
+						<el-button v-if="listQuery.tenderRound != -1" type="primary" size="mini" icon="el-icon-search" @click="getList()" />
+					</div> -->
 				</div>
+			</div>
+
+			<div class="filter-item">
+				<el-input v-model="listQuery.filterStr" placeholder="請輸入" size="mini" style="width: 250px" >
+					<span slot="prepend">缺失Id</span>
+					<el-button slot="append" type="primary" size="mini" icon="el-icon-search" @click="getList()" />
+				</el-input>
 			</div>
 		</div>
 		<div v-for="caseSpec in list" :key="caseSpec.id" class="case-list">
 			<el-row :gutter="10" type="flex" align="center" justify="center">
 				<el-col :span="6">
-					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.ImgZoomIn" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.ImgZoomOut]" fit="cover" />
+					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.ImgZoomIn" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.ImgZoomOut, ...caseSpec.Image.map(file=>file.url)]" fit="cover" />
 				</el-col>
 				<el-col :span="16" class="case-info">
 					<el-row :gutter="3">
@@ -42,61 +54,77 @@
 				<el-col :span="4">
 					<el-button type="info" size="mini" @click="showMapViewer(caseSpec, false)">地圖</el-button>
 					<br>
-					<el-button type="primary" size="mini">完工</el-button>
+					<el-button v-if="caseSpec.finState == 0" type="primary" size="mini" @click="setResult(caseSpec, 1)">完工</el-button>
+					<el-button v-else size="mini" @click="setResult(caseSpec, 0)">撤銷</el-button>
 					<br>
-					<el-button type="success" size="mini" @click="openCamera()">照片</el-button>
+					<el-button v-if="caseSpec.finState == 0" :type="caseSpec.Image.length == 0 ? 'success' : ''" size="mini" @click="openImgUpload(caseSpec)">照片</el-button> 
 				</el-col>
 			</el-row>
 			<el-divider />
 		</div>
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
-		<canvas ref="canvasCamera" style="display: none" />
-
-		<!-- 拍攝視窗 -->
-		<el-dialog title="拍攝" :visible.sync="showCameraDialog" width="100%" :before-close="() => closeCamera()">
-			<el-image v-if="imgSrc.length != 0" style="width: 100%" :src="imgSrc" fit="contain" />
-			<video v-else ref="video" v-loading="loading" style="width: 100%" />
-			<span slot="footer" class="dialog-footer">
-				<el-button size="mini" @click="closeCamera()">取消</el-button>
-				<el-button v-if="imgSrc.length == 0" type="primary" size="mini" @click="shoot()">拍攝</el-button>
-				<span v-else>
-					<el-button type="info" size="mini" @click="reShoot()">重拍</el-button>
-					<el-button type="success" @click="closeCamera()">上傳</el-button>
-				</span>
-			</span>
+		<!-- Dialog: 照片上傳 -->
+		<el-dialog v-loading="loading" width="360px" title="照片上傳" :visible.sync="showImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
+			<el-row type="flex" align="middle">
+				<el-upload class="img-upload" action="#" accept="image/jpeg, image/jpg" :auto-upload="false" list-type="picture-card" :file-list="rowActive.Image" :on-change="handleChange" :on-preview="handlePreview" :on-remove="handleRemove">
+					<i class="el-icon-plus" />
+					<div slot="tip" class="el-upload__tip">只能上傳jpg文件，且不超過500kb</div>
+				</el-upload>
+			</el-row>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="showImgUploadDialog = false; getList();">取消</el-button>
+				<el-button type="success" @click="submitImgUpload()">上傳</el-button>
+			</div>
 		</el-dialog>
 
-		<!-- map -->
+		<!-- Dialog: map -->
 		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="100%">
 			<map-viewer :map.sync="map"/>
 		</el-dialog>
+
+		<!-- Dialog: 照片預覽 -->
+		<el-image-viewer
+			v-if="showImgViewer"
+			class="upload-preview"
+			:on-close="() => { showImgViewer = false; }"
+			:url-list="imgPreviewUrls"
+			:initial-index="imgPreviewIndex"
+		/>
 	</div>
 </template>
 
 <script>
 import moment from "moment";
 import { getTenderRound } from "@/api/type";
-import { getCaseTrackingList } from "@/api/inspection";
+import { getInspectFinList, setInspectFinList, trackingImgUpload } from "@/api/app";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "inspectFinReport",
-	components: { Pagination, MapViewer },
+	components: { Pagination, MapViewer, ElImageViewer },
 	data() {
 		return {
 			loading: false,
 			dialogMapVisible: true,
-			showCameraDialog: false,
+			showImgViewer: false,
+			showImgUploadDialog: false,
 			listQuery: {
-				tenderRound: 91,
+				filter: false,
+				filterStr: "",
+				tenderRound: null,
 				pageCurrent: 1,
 				pageSize: 50
 			},
 			total: 0,
 			list: [],
-			imgSrc: "",
+			rowActive: {},
+			imgObj: {
+				add: [], 
+				remove: []
+			},
 			map: {},
 			options: {
 				tenderRoundMap: {},
@@ -128,29 +156,6 @@ export default {
 		}
 	},
 	created() {
-		// 支援舊版瀏覽器
-		if(navigator.mediaDevices == undefined) {
-			navigator.mediaDevices = {};
-			if (navigator.mediaDevices.getUserMedia === undefined) {
-				navigator.mediaDevices.getUserMedia = function (constraints) {
-					// 如果有 getUserMedia 的話
-					const getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-
-					// 如果瀏覽器根本没實現它 - 那麽就返回一个 error 到 promise 的 reject 来保持一個统一的接口
-					if (!getUserMedia) {
-						return Promise.reject(
-							new Error("getUserMedia is not implemented in this browser"),
-						);
-					}
-
-					// 否则，为老的 navigator.getUserMedia 方法包裹一个 Promise
-					return new Promise(function (resolve, reject) {
-						getUserMedia.call(navigator, constraints, resolve, reject);
-					});
-				};
-			}
-		} 
-			
 		getTenderRound().then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
 				if(cur.tenderId <= 1001) return acc;
@@ -173,11 +178,11 @@ export default {
 				return acc;
 			}, {});
 
-			if(Object.keys(this.options.tenderRoundMap).length > 0) {
-				if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) {
-					this.listQuery.tenderRound = this.$route.query.surveyId = Number(Object.keys(this.options.tenderRoundMap)[0]);
-				}
-			}
+			// if(Object.keys(this.options.tenderRoundMap).length > 0) {
+			// 	if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) {
+			// 		this.listQuery.tenderRound = this.$route.query.surveyId = Number(Object.keys(this.options.tenderRoundMap)[0]);
+			// 	}
+			// }
 			if(Object.keys(this.options.tenderRoundMap).length == 0) {
 				this.options.tenderRoundMap = { "-1": { id: -1 }};
 				this.listQuery.tenderRound = -1;
@@ -189,37 +194,68 @@ export default {
 	},
 	methods: {
 		getList() {
-			this.loading = true;
-			this.list = [];
-			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+			if(this.listQuery.tenderRound == null) {
+				this.$message({
+					message: "請選擇合約",
+					type: "error",
+				});
+			} else {
+				this.loading = true;
+				this.list = [];
+				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 
-			getCaseTrackingList({
-				surveyId: tenderRound.id,
-				pageCurrent: this.listQuery.pageCurrent,
-				pageSize: this.listQuery.pageSize
-			}).then(response => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-					this.total = 0;
-				} else {
-					this.total = response.data.total;
-					this.list = response.data.list;
-					this.list.forEach(l => {
-						l.DateCreate = this.formatTime(l.DateCreate);
-						this.$set(l, "DeviceTypePlus", Number(`${l.DeviceType}${l.RestoredType}`));
-						l.MillingLength = Math.round(l.MillingLength * 100) / 100;
-						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
-						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
-					})
+				getInspectFinList({
+					filter: this.listQuery.filter,
+					surveyId: tenderRound.id,
+					caseId: (this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
+					pageCurrent: this.listQuery.pageCurrent,
+					pageSize: this.listQuery.pageSize
+				}).then(response => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+						this.total = 0;
+					} else {
+						this.total = response.data.total;
+						this.list = response.data.list;
+						this.list.forEach(l => {
+							l.DateCreate = this.formatTime(l.DateCreate);
+							l.MillingLength = Math.round(l.MillingLength * 100) / 100;
+							l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
+							l.MillingArea = Math.round(l.MillingArea * 100) / 100;
+							l.Image = JSON.parse(l.Image).map(url => ({ name: url.split("/").slice(-1), status: "success", url }));
+						})
 
-					this.$nextTick(() => document.documentElement.scrollTop = this.scrollTop);
-				}
-				this.getImportCaseList();
-				this.loading = false;
-			}).catch(err => this.loading = false);
+						this.$nextTick(() => document.documentElement.scrollTop = this.scrollTop);
+					}
+					this.getImportCaseList();
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			}
+		},
+		setResult(row, finState) {
+			this.$confirm(`確定${ finState ? '標記' : '撤銷'} 缺失ID ${row.id} 完工？`, "確認", {
+				showClose: false,
+			}).then(() => {
+				this.loading = true;
+
+				setInspectFinList( row.SerialNo, {
+					finState
+				}).then(response => {
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: "提交成功",
+							type: "success",
+						});
+						this.getList();
+					} 
+				}).catch(err => {
+					console.log(err);
+					this.getList();
+				})
+			})
 		},
 		showMapViewer(row, isPoint=false) {
 			// console.log("showMap");
@@ -259,45 +295,96 @@ export default {
 			const zoom = this.map.getZoom();
 			this.map.setZoom(zoom < 21 ? 21 : zoom);
 		},
-		openCamera() {
-			if(navigator.mediaDevices == undefined) {
-				this.$message({
-					message: "不支援拍照",
-					type: "error",
-				});
-			} else {
-				this.showCameraDialog = true; 
-				this.loading = true;
-				navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment"  } }).then(stream => {
-					this.$refs.video.srcObject = stream;
-					this.$refs.video.onloadedmetadata = () => { 
-						this.$refs.video.play(); 
-						this.loading = false;
-					};
-				}).catch(err => console.log(err));
-			}
-		},
-		shoot() {
-			const { videoWidth, videoHeight } = this.$refs.video;
-			const scale = Math.max(videoWidth, videoHeight) >= 1024 ? 1024/Math.max(videoWidth, videoHeight) : 1;
+		openImgUpload(row) {
+			this.showImgUploadDialog = true;
+			this.rowActive = JSON.parse(JSON.stringify(row));
+			this.imgObj = { add: [], remove: [] };
 
-			const canvas = this.$refs.canvasCamera;
-			canvas.width = videoWidth * scale;
-			canvas.height = videoHeight * scale;
-			const context = canvas.getContext("2d");
-			context.drawImage(this.$refs.video, 0, 0, canvas.width, canvas.height);
+			// NOTE: 強制照片上傳
+			// this.$nextTick(() => {
+			// 	console.log(this.$el.querySelectorAll(".img-upload"));
+			// 	this.$el.querySelectorAll(".img-upload").forEach(el => {
+			// 		console.log(el);
+			// 		el.children[1].children[1].setAttribute('capture', 'environment');
+			// 	});
+			// })
+		},
+		handleChange(file, fileList) {
+			// console.log(file, fileList);
+			if(file.status == 'ready') this.imgObj.add.push(file);
+			this.rowActive.Image = fileList;
+			// this.imgPreviewUrls = fileList.map(file => file.url);
+		},
+		handlePreview(file) {
+			// console.log(file);
+			this.imgPreviewUrls = this.rowActive.Image.map(file => file.url)
+			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
+			this.showImgViewer = true;
+		},
+		handleRemove(file, fileList) {
+			// console.log(file, fileList);
+			if(file.status == 'success') this.imgObj.remove.push(file);
+			else if(file.status == 'ready') this.imgObj.add = this.imgObj.add.filter(img => img.uid != file.uid);
+			this.rowActive.Image = fileList;
+		},
+		photoCompress(file) {
+			return new Promise(resolve => {
+				const fileReader = new FileReader();
+				fileReader.readAsDataURL(file);
 
-			const image = canvas.toDataURL('image/jpeg', 0.8);
-			this.imgSrc = image;
-			this.$refs.video.srcObject.getTracks()[0].stop();
+				fileReader.onload = () => { 
+					const img = new Image();
+					img.onload = () => {
+						const canvas = document.createElement('canvas');
+						// console.log("image: ", img.width, img.height);
+						const scale = Math.max(img.width, img.height) >= 1024 ? 1024/Math.max(img.width, img.height) : 1;
+						canvas.width = img.width * scale;
+						canvas.height = img.height * scale;
+						// console.log("canvas: ", canvas.width, canvas.height);
+						const canvasContext = canvas.getContext('2d');
+						canvasContext.drawImage(img, 0, 0, canvas.width, canvas.height);
+						const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+						
+						const arr = dataUrl.split(',');
+						const mime = arr[0].match(/:(.*?);/)[1];
+						const byteStr = atob(arr[1], 'base64');
+						console.log(byteStr);
+						let uint8arr = new Uint8Array(byteStr.length);
+						for(let i = 0; i <= byteStr.length; i++) uint8arr[i] = byteStr.charCodeAt(i);
+						const newFile = new File( [uint8arr], file.name, { type: mime });
+						
+						resolve(newFile);
+					}
+					img.src = fileReader.result;
+				}
+			})
 		},
-		reShoot() {
-			this.imgSrc = '';
-			this.openCamera();
-		},
-		closeCamera() {
-			if(this.$refs.video != undefined) this.$refs.video.srcObject.getTracks()[0].stop();
-			this.showCameraDialog = false;
+		async submitImgUpload() {
+			this.loading = true;
+
+			let uploadForm = new FormData();
+			uploadForm.append('serialNo', this.rowActive.SerialNo);
+
+			for(const file of this.imgObj.add.filter(f => (f.raw))) uploadForm.append('fileAddList', await this.photoCompress(file.raw));
+			for(const file of this.imgObj.remove.filter(f => (f.url))) uploadForm.append('fileRemoveList', file.url);
+
+			await trackingImgUpload(uploadForm).then(response => {
+				if ( response.statusCode == 20000 ) {
+					this.$message({
+						message: "更新成功",
+						type: "success",
+					});
+					this.showImgUploadDialog = false;
+					// this.rowActive[`${key}Img`] = response.imgList.map(url => ({ name: url.split("/").slice(-1), status: "success", url }));
+					this.getList();
+				} else {
+					this.$message({
+						message: "更新失敗",
+						type: "error",
+					});
+				}
+				this.loading = false;
+			}).catch(err => this.loading = false);	
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD");
@@ -309,11 +396,21 @@ export default {
 <style lang="sass">
 .inspect-fin-report
 	margin-bottom: 16px
+	.el-checkbox-button
+		margin-right: 5px
+		.el-checkbox-button__inner
+			padding: 6px
+			font-size: 12px
+			background-color: #1890ff
+			color: white
+		&.is-checked .el-checkbox-button__inner
+			background-color: #67C23A
+			border-color: #67C23A
 	.filter-container
 		.filter-item
 			margin-right: 5px
 			.el-select.tender-select
-				min-width: 230px
+				width: 250px
 				max-width: 80vw
 				.el-input__inner
 					padding-left: 10px
@@ -330,10 +427,11 @@ export default {
 			margin: 8px 0
 		.el-button
 			padding: 5px 10px
-	.img-preview
+	.upload-preview
 		width: 100%
-		.el-image-viewer__mask
-			opacity: 0.7
+		z-index: 3000 !important
 		.el-icon-circle-close
-			color:  #FFF
+			color: white
+	.el-upload-list__item 
+		transition-duration: 0.02s !important
 </style>

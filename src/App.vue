@@ -6,11 +6,30 @@
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
+	mounted() {
+		this.vhCheck();
+		window.addEventListener('resize', this.vhCheck);
+	},
+	methods: {
+		vhCheck() {
+			let vh = window.innerHeight * 0.01;
+			// Then we set the value in the --vh custom property to the root of the document
+			document.documentElement.style.setProperty('--vh', `${vh}px`);
+		}
+	}
 }
 </script>
 
 <style lang="sass">
+html, body
+	position: relative
+	// font-family: 'Noto Sans TC', '微軟正黑體', 'Microsoft JhengHei', sans-serif
+	height: 100vh
+	height: calc(var(--vh, 1vh) * 100)
+	width: 100vw
+	padding: 0
+	margin: 0
 .type-select 
 	.el-select-dropdown__item
 		padding: 0 5px
