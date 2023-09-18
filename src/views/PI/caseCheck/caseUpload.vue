@@ -116,7 +116,6 @@
 								size="mini"
 								:clearable="false"
 								value-format="yyyy/MM/dd"
-								@input="() => $set(list, $index, row)"
 							/>
 						</span>
 							<span v-else-if="[ 'CaseNo' ].includes(column.property)">
@@ -220,11 +219,10 @@
 							size="mini"
 							:clearable="false"
 							value-format="yyyy/MM/dd"
-							@input="() => $set(list, $index, row)"
 						/>
 					</span>
 					<span v-else-if="[ 'rDeviceType' ].includes(column.property)">
-						<el-select v-model.number="row[column.property]" @input="() => $set(list, $index, row)">
+						<el-select v-model.number="row[column.property]">
 							<el-option v-for="(name, type) in options.DeviceType" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 						</el-select>
 					</span>
@@ -452,7 +450,7 @@ export default {
 	computed: {
 		caseList() {
 			const errArr = this.caseErrList.map(l => l.CaseNo.length > 0 ? l.CaseNo : l.UploadCaseNo );
-			return this.list.filter(row => (row.CaseNo.length > 0 && !errArr.includes(row.CaseNo)) || (row.CaseNo.length <= 0 && row.UploadCaseNo && !errArr.includes(row.UploadCaseNo)));
+			return JSON.parse(JSON.stringify(this.list)).filter(row => (row.CaseNo.length > 0 && !errArr.includes(row.CaseNo)) || (row.CaseNo.length <= 0 && row.UploadCaseNo && !errArr.includes(row.UploadCaseNo)));
 		},
 		caseErrList() {
 			let caseErrList = [];

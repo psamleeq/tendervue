@@ -695,10 +695,10 @@
 
 <script>
 import moment from "moment";
-import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 import { getTenderMap, getKitItemMap, getGuildMap, getSCTypeItemMap, getRestoredImgMap } from "@/api/type";
 import { getFinRegister, finImgUpload, finRegisterSpec, finRegister, caseCancel ,revokeDispatch, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 import CaseDetail from "@/components/CaseDetail";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 // import Pagination from "@/components/Pagination";
 
 export default {
