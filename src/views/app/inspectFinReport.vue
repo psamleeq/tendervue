@@ -9,15 +9,9 @@
 		<div class="filter-container">
 			<div v-if="listQuery.tenderRound != -1" class="filter-item">
 				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
-					<!-- <div class="el-input-group__prepend">
-						<span>合約</span>
-					</div> -->
 					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender" @change="getList()">
 						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
 					</el-select>
-					<!-- <div class="el-input-group__append">
-						<el-button v-if="listQuery.tenderRound != -1" type="primary" size="mini" icon="el-icon-search" @click="getList()" />
-					</div> -->
 				</div>
 			</div>
 
@@ -30,36 +24,46 @@
 		</div>
 		<div v-for="caseSpec in list" :key="caseSpec.id" class="case-list">
 			<el-row :gutter="10" type="flex" align="center" justify="center">
-				<el-col :span="6">
+				<el-col :span="8">
 					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.ImgZoomIn" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.ImgZoomOut, ...caseSpec.Image.map(file=>file.url)]" fit="cover" />
 				</el-col>
-				<el-col :span="16" class="case-info">
-					<el-row :gutter="3">
-						<el-col :span="4" class="case-title">日期: </el-col>
-						<el-col :span="10">{{ formatTime(caseSpec.DateCreate) }}</el-col>
-						<el-col :span="4" class="case-title">ID: </el-col>
-						<el-col :span="6">{{ caseSpec.id }}</el-col>
-					</el-row>
-					<el-row :gutter="3">
-						<el-col :span="4" class="case-title">類型: </el-col>
-						<el-col :span="10">{{ options.DistressType[caseSpec.DistressType] }}</el-col>
-						<el-col :span="4" class="case-title">程度: </el-col>
-						<el-col :span="6">{{ options.DistressLevel[caseSpec.DistressLevel] }}</el-col>
-					</el-row>
-					<el-row>
-						<el-col :span="4" class="case-title">地址: </el-col>
-						<el-col :span="20">{{ caseSpec.Place }}</el-col>
-					</el-row>
+				<el-col :span="16" :md="12" class="case-info">
+					<el-popover placement="right" :disabled="screenWidth >= 992">
+						<el-button-group>
+							<el-button type="info" size="mini" @click="showMapViewer(caseSpec, false)">地圖</el-button>
+							<el-button v-if="caseSpec.finState == 0" type="primary" size="mini" @click="setResult(caseSpec, 1)">完工</el-button>
+							<el-button v-else size="mini" @click="setResult(caseSpec, 0)">撤銷</el-button>
+							<el-button v-if="caseSpec.finState == 0" :type="caseSpec.Image.length == 0 ? 'success' : ''" size="mini" @click="openImgUpload(caseSpec)">照片</el-button> 
+						</el-button-group>
+						<span slot="reference">
+							<el-row :gutter="3">
+								<el-col :span="4" class="case-title">日期: </el-col>
+								<el-col :span="10">{{ formatTime(caseSpec.DateCreate) }}</el-col>
+								<el-col :span="4" class="case-title">ID: </el-col>
+								<el-col :span="6">{{ caseSpec.id }}</el-col>
+							</el-row>
+							<el-row :gutter="3">
+								<el-col :span="4" class="case-title">類型: </el-col>
+								<el-col :span="10">{{ options.DistressType[caseSpec.DistressType] }}</el-col>
+								<el-col :span="4" class="case-title">程度: </el-col>
+								<el-col :span="6">{{ options.DistressLevel[caseSpec.DistressLevel] }}</el-col>
+							</el-row>
+							<el-row>
+								<el-col :span="4" class="case-title">地址: </el-col>
+								<el-col :span="20">{{ caseSpec.Place }}</el-col>
+							</el-row>
+						</span>
+					</el-popover>
 				</el-col>
-				<el-col :span="4">
-					<el-button type="info" size="mini" @click="showMapViewer(caseSpec, false)">地圖</el-button>
-					<br>
-					<el-button v-if="caseSpec.finState == 0" type="primary" size="mini" @click="setResult(caseSpec, 1)">完工</el-button>
+				<el-col :md="4" class="hidden-sm-and-down" style="display: flex; flex-direction: column; justify-content: space-evenly;">
+					<el-button type="info" @click="showMapViewer(caseSpec, false)">地圖</el-button>
+					<!-- <br> -->
+					<el-button v-if="caseSpec.finState == 0" type="primary" @click="setResult(caseSpec, 1)">完工</el-button>
 					<el-button v-else size="mini" @click="setResult(caseSpec, 0)">撤銷</el-button>
-					<br>
-					<el-button v-if="caseSpec.finState == 0" :type="caseSpec.Image.length == 0 ? 'success' : ''" size="mini" @click="openImgUpload(caseSpec)">照片</el-button> 
+					<!-- <br> -->
+					<el-button v-if="caseSpec.finState == 0" :type="caseSpec.Image.length == 0 ? 'success' : ''" @click="openImgUpload(caseSpec)">照片</el-button> 
 				</el-col>
-			</el-row>
+				</el-row>
 			<el-divider />
 		</div>
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
@@ -79,14 +83,15 @@
 		</el-dialog>
 
 		<!-- Dialog: map -->
-		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="100%">
+		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="350px">
+			<span>{{ place }}</span>
 			<map-viewer :map.sync="map"/>
 		</el-dialog>
 
 		<!-- Dialog: 照片預覽 -->
 		<el-image-viewer
 			v-if="showImgViewer"
-			class="upload-preview"
+			class="img-preview"
 			:on-close="() => { showImgViewer = false; }"
 			:url-list="imgPreviewUrls"
 			:initial-index="imgPreviewIndex"
@@ -111,6 +116,7 @@ export default {
 			dialogMapVisible: true,
 			showImgViewer: false,
 			showImgUploadDialog: false,
+			screenWidth: window.innerWidth,
 			listQuery: {
 				filter: false,
 				filterStr: "",
@@ -118,6 +124,7 @@ export default {
 				pageCurrent: 1,
 				pageSize: 50
 			},
+			place: "",
 			total: 0,
 			list: [],
 			rowActive: {},
@@ -260,6 +267,7 @@ export default {
 		showMapViewer(row, isPoint=false) {
 			// console.log("showMap");
 			this.map.data.forEach(feature => this.map.data.remove(feature));
+			this.place = row.Place;
 			this.dialogMapVisible = true;
 
 			let geoJSON_case = { 
@@ -419,17 +427,21 @@ export default {
 		margin-bottom: 0px
 		.el-row
 			margin-bottom: 4px
-		.case-info > *
-			font-size: 12px
+		.case-info
+			margin: auto
+			& > *
+				font-size: 12px
 			.case-title
 				color: #444
+				margin-bottom: 2px
 		.el-divider
 			margin: 8px 0
 		.el-button
-			padding: 5px 10px
-	.upload-preview
+			margin: 0 20px
+		// 	padding: 5px 10px
+	.img-preview
 		width: 100%
-		z-index: 3000 !important
+		// z-index: 3000 !important
 		.el-icon-circle-close
 			color: white
 	.el-upload-list__item 
