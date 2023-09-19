@@ -4,62 +4,70 @@
 		<div class="header-bar">
 			<h2 class="case-title">巡查地圖</h2>
 			<div class="filter-container">
-				<span class="filter-item" style="display: inline-flex">
-					<el-button :type="showLayerAttach ? 'primary' : 'info'" @click="beforeShowLayerAttach()">路線圖層</el-button>
-					<el-card v-if="showLayerAttach" :body-style="{ padding: '5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
-						<span v-if="blockInfo.total != 0">覆蓋率: {{ blockInfo.ratio }}% </span>
-						<el-button-group>
-							<!-- <el-button type="primary" size="small" @click="getRouteList()">載入</el-button> -->
-							<el-button type="success" size="small" :disabled="blockList.length == 0" @click="intersectRoute()">比對</el-button>
-							<el-button type="info" size="small" :disabled="blockList.length == 0" @click="clearRouteLayer()">清空</el-button>
-						</el-button-group>
-						<el-divider direction="vertical" />
-
-						<div class="filter-item">
-							<el-input v-model="listQuery.filterId" size="small" placeholder="請輸入">
-								<span slot="prepend">道路名稱</span>
-							</el-input>
+				<span v-if="inspectIdList.length == 0" class="filter-container">
+					<div class="filter-item">
+						<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
+							<div class="el-input-group__prepend">
+								<span>合約</span>
+							</div>
+							<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
+								<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
+							</el-select>
 						</div>
-						<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
-					</el-card>
-				</span>
-				<br>
-				<div v-if="listQuery.tenderRound > 0" class="filter-item">
-					<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
-						<div class="el-input-group__prepend">
-							<span>合約</span>
-						</div>
-						<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
-							<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
-						</el-select>
 					</div>
-				</div>
-				<el-button v-if="listQuery.tenderRound > 0" class="filter-item" type="success" @click="getList()">載入</el-button>
-				<br>
-				<el-button-group v-if="inspectIdList.length > 0"  style="margin: -5px 0 10px 20px">
-					<el-button type="success" size="mini" :plain="listQuery.inspectId != 0" @click="changeInspect(0)">全部</el-button>
-					<el-button v-for="inspectId in inspectIdList" :key="inspectId" type="primary" size="mini" :plain="listQuery.inspectId != inspectId" @click="changeInspect(inspectId)">{{ inspectId }}</el-button>
-					<el-button type="info" size="mini" @click="changeInspect(-1)">隱藏</el-button>
-				</el-button-group>
+					<el-button class="filter-item" type="success" @click="getList()">載入</el-button>
+				</span>
+				<span v-else class="filter-container">
+					<el-button-group v-if="inspectIdList.length > 0" class="filter-item">
+						<el-button type="success" size="small" :plain="listQuery.inspectId != 0" @click="changeInspect(0)">全部</el-button>
+						<el-button v-for="inspectId in inspectIdList" :key="inspectId" type="primary" size="small" :plain="listQuery.inspectId != inspectId" @click="changeInspect(inspectId)">{{ inspectId }}</el-button>
+						<el-button type="info" size="small" @click="changeInspect(-1)">隱藏</el-button>
+					</el-button-group>
+					<el-button class="filter-item" type="primary" size="small" @click="inspectIdList = []; clearAll();">更改</el-button>
+					<br>
+					<span class="filter-item" style="display: inline-flex">
+						<el-button :type="showCoverRatioLayer ? 'primary' : 'info'" size="small" @click="showCoverRatio()">覆蓋</el-button>
+						<el-card v-if="showCoverRatioLayer" :body-style="{ padding: '5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
+							<span v-if="blockInfo.total != 0">{{ blockInfo.ratio }}% </span>
+						</el-card>
+					</span>
+					<br>
+					<span class="filter-item" style="display: inline-flex">
+						<el-button :type="showSearchRoadLayer ? 'primary' : 'info'" size="small" @click="showSearchRoad()">搜尋</el-button>
+						<el-card v-if="showSearchRoadLayer" :body-style="{ padding: '5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
+							<div class="filter-item">
+								<el-input v-model="listQuery.filterId" size="small" placeholder="請輸入">
+									<span slot="prepend">道路名稱</span>
+								</el-input>
+							</div>
+							<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
+						</el-card>
+					</span>
+				</span>
 			</div>
 		</div>
 
-		<el-card v-if="caseInfo.length > 0" class="info-box left">
+		<!-- <el-card v-if="caseInfo.length > 0" class="info-box left">
 			<el-row style="text-align: center">缺失類型_{{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }}</el-row>
 			<el-row class="color-box active" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
 				<el-col :span="14" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
 				<el-col :span="10" style="text-align: right; padding: 0 5px">{{ info.total }}</el-col>
 			</el-row>
-		</el-card>
+		</el-card> -->
 
-		<el-card v-if="caseList.length > 0" class="info-box right">
+		<el-card v-if="caseList.length > 0" class="info-box left">
+			<div style="width: 100%; text-align: center; line-height: 30px">案件列表({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
+			<el-button-group style="width: 100%; margin-bottom: 5px;">
+				<el-button style="width: 50%" @click="handleDownload()">下載CSV</el-button>
+				<el-button type="primary" style="width: 50%" @click="uploadCase()">圖表</el-button>
+			</el-button-group>
 			<el-table 
 				empty-text="目前沒有資料" 
 				:data="caseList"
 				size="mini"
 				fit 
 				:header-cell-style="{'background-color': '#F2F6FC'}"
-				max-height="550px"
+				max-height="500px"
 				style="width: 100%;"
 				@cell-mouse-enter="handleMouseEnter"
 				@cell-mouse-leave="handleMouseLeave"
@@ -78,6 +86,40 @@
 			</el-table>
 		</el-card>
 
+		<el-card v-if="Object.keys(caseSpecInfo).length > 0" class="info-box bottom">
+			<el-button type="text" style="float: right;" @click="caseSpecInfo={}"><i class="el-icon-close" style="font-size: 20px;" /></el-button>
+			<el-row :gutter="10" type="flex" align="center" justify="center">
+				<el-col :span="8">
+					<el-carousel height="200px" :autoplay="false" indicator-position="none">
+						<el-carousel-item >
+							<el-image :src="caseSpecInfo.ImgZoomOut" fit="cover" @click="showImgViewer = true" />
+						</el-carousel-item>
+						<el-carousel-item >
+							<el-image :src="caseSpecInfo.ImgZoomIn" fit="cover" @click="showImgViewer = true" />
+						</el-carousel-item>
+					</el-carousel>
+				</el-col>
+				<el-col :span="16" class="case-info">
+					<el-row :gutter="3">
+						<el-col :span="4" class="case-title">日期: </el-col>
+						<el-col :span="10">{{ formatTime(caseSpecInfo.DateReport) }}</el-col>
+						<el-col :span="4" class="case-title">ID: </el-col>
+						<el-col :span="6">{{ caseSpecInfo.Id }}</el-col>
+					</el-row>
+					<el-row :gutter="3">
+						<el-col :span="4" class="case-title">類型: </el-col>
+						<el-col :span="10">{{ options.caseTypeMap[caseSpecInfo.DistressType] }}</el-col>
+						<el-col :span="4" class="case-title">程度: </el-col>
+						<el-col :span="6">{{ options.caseLevelMap[caseSpecInfo.DistressLevel] }}</el-col>
+					</el-row>
+					<el-row>
+						<el-col :span="4" class="case-title">地址: </el-col>
+						<el-col :span="20">{{ caseSpecInfo.Place }}</el-col>
+					</el-row>
+				</el-col>
+			</el-row>
+		</el-card>
+
 		<el-image-viewer
 			v-if="showImgViewer"
 			class="img-preview"
@@ -88,6 +130,7 @@
 </template>
 
 <script>
+import moment from "moment";
 import { Loader } from "@googlemaps/js-api-loader";
 import { getPanoramaJson, getInspectionCaseGeoJson, getInspectionRoute } from "@/api/inspection";
 import { getTenderRound, getDistMap } from "@/api/type";
@@ -112,13 +155,15 @@ export default {
 	data() {
 		return {
 			loading: false,
-			showLayerAttach: false,
+			showCoverRatioLayer: false,
+			showSearchRoadLayer: false,
 			showImgViewer: false,
 			// map: null,
 			// dataLayer: {},
 			// polyLine: {},
 			infoWindow: null,
 			caseInfo: {},
+			caseSpecInfo: {},
 			caseList: [],
 			inspectIdList: [],
 			blockList: [],
@@ -432,15 +477,15 @@ export default {
 				});
 				
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
-				this.infoWindow.addListener('domready', () => {
-					const caseImg = this.$el.querySelector("#map #case-img");
-					if(caseImg) {
-						const clickHandle = caseImg.addEventListener("click", () => { 
-							this.showImgViewer = true;
-							caseImg.removeEventListener("click", clickHandle);
-						});
-					}
-				});
+				// this.infoWindow.addListener('domready', () => {
+				// 	const caseImg = this.$el.querySelector("#map #case-img");
+				// 	if(caseImg) {
+				// 		const clickHandle = caseImg.addEventListener("click", () => { 
+				// 			this.showImgViewer = true;
+				// 			caseImg.removeEventListener("click", clickHandle);
+				// 		});
+				// 	}
+				// });
 
 				// jsts
 				this.geometryFactory = new jsts.geom.GeometryFactory();
@@ -503,10 +548,12 @@ export default {
 			dataLayer.addListener('mouseout', (event) => { 
 				this.infoWindow.close();
 			});
+			dataLayer.addListener('click', (event) => { 
+				this.showCaseDetail(event.feature);
+			});
 		},
 		getList() {
 			this.loading = true;
-			this.inspectIdList = [];
 			this.clearAll();
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 
@@ -543,8 +590,6 @@ export default {
 						});
 					}
 					this.getCaseList();
-					if(this.showLayerAttach) this.getRouteList();
-					else this.clearRouteLayer();
 
 					const bounds = new google.maps.LatLngBounds();
 					path.forEach(position => {
@@ -654,57 +699,75 @@ export default {
 			// console.log(row.blockId);
 			this.dataLayer.caseNow.revertStyle();
 		},
-		getRouteList() {
-			this.loading = true;
-			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
-			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+		async getRouteList() {
+			return new Promise (resolve => {
+				this.loading = true;
+				this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
+				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 
-			getInspectionRoute({
-				zipCode: tenderRound.zipCode,
-				inspectRound: 0,
-			}).then(response => {
-				if (response.data.blockList.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.blockList = response.data.blockList;
+				getInspectionRoute({
+					zipCode: tenderRound.zipCode,
+					inspectRound: 0,
+				}).then(response => {
+					if (response.data.blockList.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						this.blockList = response.data.blockList;
 
-					let geoJSON = {
-						"type": "FeatureCollection",
-						"name": "blockJSON",
-						"features": []
-					};
-
-					for (const blockSpec of this.blockList) {
-						let feature = {
-							"type": "Feature",
-							"properties": {
-								"id": blockSpec.id,
-								"roadName": blockSpec.roadName
-							},
-							"geometry": JSON.parse(blockSpec.geometry)
+						let geoJSON = {
+							"type": "FeatureCollection",
+							"name": "blockJSON",
+							"features": []
 						};
-						geoJSON.features.push(feature);
+
+						for (const blockSpec of this.blockList) {
+							let feature = {
+								"type": "Feature",
+								"properties": {
+									"id": blockSpec.id,
+									"roadName": blockSpec.roadName
+								},
+								"geometry": JSON.parse(blockSpec.geometry)
+							};
+							geoJSON.features.push(feature);
+						}
+						this.dataLayer.route.addGeoJson(geoJSON);
+
+						resolve();
 					}
-					this.dataLayer.route.addGeoJson(geoJSON);
-				}
-				this.loading = false;
-			}).catch(err => this.loading = false);
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			})
 		},
 		clearRouteLayer() {
 			this.blockInfo = { total: 0, intersect: 0, ratio: 0 };
 			this.filterIdNow = "";
 
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
-			this.showLayerAttach = false;
 		},
-		beforeShowLayerAttach() {
-			this.showLayerAttach = !this.showLayerAttach; 
-			this.filterIdNow = "";
-			if(this.showLayerAttach) this.getRouteList();
-			else this.clearRouteLayer();
+		showCoverRatio() {
+			this.showCoverRatioLayer = !this.showCoverRatioLayer;
+			if(this.showCoverRatioLayer) {
+				if(this.showSearchRoadLayer) {
+					this.showSearchRoadLayer = false;
+					this.dataLayer.route.revertStyle();
+					this.intersectRoute();
+				} else this.getRouteList().then(() => this.intersectRoute());
+			} else this.clearRouteLayer();
+		},
+		showSearchRoad() {
+			this.showSearchRoadLayer = !this.showSearchRoadLayer;
+			this.dataLayer.route.revertStyle();
+
+			if(this.showSearchRoadLayer) {
+				if(this.showCoverRatioLayer) {
+					this.dataLayer.route.revertStyle();
+					this.showCoverRatioLayer = false;
+				} else this.getRouteList();
+			} else this.clearRouteLayer();
 		},
 		changeInspect(inspectId) {
 			for(const key in this.polyLine) for(const polyline of this.polyLine[key]) polyline.setMap(inspectId == 0 ? this.map : null);
@@ -788,7 +851,7 @@ export default {
 			this.setCaseImgViewer({ imgUrls: [ `${feature.getProperty("ImgZoomOut")}` ] });
 			let contentText = `<div style="width: 200px;">`;
 			contentText += `<div> ${caseTypeStr} </div>`;
-			contentText += `<img src="${feature.getProperty("ImgZoomOut")}" class="case-img" id ="case-img" onerror="this.className='case-img hide-img'">`;
+			// contentText += `<img src="${feature.getProperty("ImgZoomOut")}" class="case-img" id ="case-img" onerror="this.className='case-img hide-img'">`;
 			contentText += `</div>`;
 
 			this.infoWindow.setContent(contentText);
@@ -796,6 +859,20 @@ export default {
 			this.infoWindow.setPosition(position);
 
 			this.infoWindow.open(this.map);
+		},
+		showCaseDetail(feature) {
+			this.caseSpecInfo = {};
+			this.setCaseImgViewer({ imgUrls: [ feature.getProperty("ImgZoomOut") , feature.getProperty("ImgZoomIn")] });
+
+			this.caseSpecInfo = {
+				Id: feature.getProperty("Id"),
+				DateReport: feature.getProperty("DateReport"),
+				DistressType: feature.getProperty("DistressType"),
+				DistressLevel: feature.getProperty("DistressLevel"),
+				Place: feature.getProperty("Place"),
+				ImgZoomIn: feature.getProperty("ImgZoomIn"),
+				ImgZoomOut: feature.getProperty("ImgZoomOut"),
+			}
 		},
 		setCaseImgViewer({ imgUrls, isOpen=false }) {
 			if(imgUrls != null) this.imgUrls = imgUrls;
@@ -880,17 +957,59 @@ export default {
 		clearAll() {
 			// console.log("clearAll");
 			this.listQuery.inspectId = 0;
+			this.inspectIdList = [];
 			this.blockInfo = { total: 0, intersect: 0, ratio: 0 };
 
 			this.dataLayer.caseNow.forEach(feature => this.dataLayer.caseNow.remove(feature));
 			this.caseGeoJson = {};
-			this.caseInfo = {};
+			this.caseInfo = [];
+			this.caseList = [];
 
 			for(const key in this.polyLine) for(const polyline of this.polyLine[key]) polyline.setMap(null);
 			this.polyLine = {};
 
 			this.dataLayer.route.revertStyle();
 		},
+		handleDownload() {
+			let json = {
+				"kml":{
+					"@xmlns": "http://www.opengis.net/kml/2.2",
+					"Document": {
+						"Style": {
+							"@id": "style1",
+							"LineStyle": {
+									"color": "ffe1e1e1",
+									"width": "3"
+							},
+							"PolyStyle": {
+									"color": "ffe1e1e1",
+									"fill": "false"
+							}
+						},
+						"Folder": {
+							"name": "Layer1",
+							"styleUrl": "#style1",
+							"Placemark": this.caseErrList.map(caseErrSpec => caseErrSpec.list.map(caseSpec => caseSpec.oriJSON)).flat()
+						}
+					}
+				}
+			};
+
+			const filenameOri = this.kmlFileList[0].name.split(".")[0];
+			const filename = `${filenameOri}_err.kml`; 
+			const file = new File([json2xml(json)], filename, { type: 'text/plain' });
+			const link = document.createElement('a');
+			const url = URL.createObjectURL(file);
+			link.href = url;
+			link.download = file.name;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+		},
+		formatTime(time) {
+			return moment(time).format("YYYY-MM-DD");
+		}
 	},
 };
 </script>
@@ -912,16 +1031,8 @@ export default {
 			text-shadow: 0px 0px 5px white
 			text-stroke: 0.6px white
 			-webkit-text-stroke: 0.6px white
-		.filter-item.filter
-			position: relative
-			margin: -8px 10px auto 5px
-			& > div:first-child
-				display: inline-block
-				width: auto
-				padding: 0 5px
-				color: #bbb
-				font-size: 12px
-				// background-color: white
+		.filter-item
+			vertical-align: text-bottom
 		.el-select.tender-select
 			width: 400px
 			.el-input__inner
@@ -931,15 +1042,9 @@ export default {
 				right: 0
 				margin-right: -3px
 				transform: scale(0.7)
-		.select-district
-			.el-select .el-input__inner
-				border-top-left-radius: 0
-				border-bottom-left-radius: 0
-				padding-left: 10px
-				text-align: left
 	.info-box
 		position: absolute
-		width: 250px
+		width: 280px
 		background-color: rgba(white, 0.7)
 		z-index: 1
 		&.right
@@ -963,10 +1068,35 @@ export default {
 					color: #ECEFF1
 					text-shadow: 0px 0px 1px rgba(#263238, 0.6)
 			.el-table
+				th.gutter
+					display: none !important
+					width: 0 !important
+				colgroup col[name='gutter']
+					display: none !important
+					width: 0 !important
 				.el-table__body
 					width: 100% !important
 					.el-table__row
 						cursor: pointer
+		&.bottom
+			width: 600px
+			bottom: 15px
+			left: 50%
+			transform: translateX(-50%)
+			border-radius: 10px
+			.el-card__body
+				overflow: hidden
+				padding: 0
+				.el-image
+					height: 200px
+					cursor: pointer
+				.case-info
+					margin: auto
+					& > *
+						font-size: 14px
+					.case-title
+						color: #444
+						margin-bottom: 2px
 	.img-preview
 		width: 100%
 		.el-image-viewer__mask
