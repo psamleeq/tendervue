@@ -128,8 +128,13 @@ export default {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
     getList() {
-      getUsersData()
+      let query = {
+        pageCurrent: this.listQuery.pageCurrent,
+        pageSize: this.listQuery.pageSize,
+      };
+      getUsersData(query)
         .then((response) => {
+          this.total = response.data.total;
           this.list = response.data.usersData;
           this.list.forEach(l => {
             l.Create_At = this.formatTime(l.Create_At);

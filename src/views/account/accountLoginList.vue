@@ -10,6 +10,7 @@
 					<el-input type="text" v-model="listQuery.userName"></el-input>
 				</div>
 			</span>
+    
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 		</div>
 		
@@ -35,6 +36,7 @@
     </el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
+    
   </div>
 </template>
 
@@ -97,37 +99,27 @@ export default {
     this.getList();
   },
   methods: {
-    getList() {
-      const query = {
-        userName: this.listQuery.userName,
-        pageCurrent: this.listQuery.pageCurrent,
-        pageSize: this.listQuery.pageSize,
-      };
-
-      getLoginData(query)
-        .then((response) => {
-          this.list = response.data.loginData;
-          this.total = response.data.total || 0;
-        })
-        .catch((error) => {
-          console.log('Error fetching login data: ', error);
-        });
-    },
     formatTime(time) {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
     getList() {
-      getLoginData()
+      // 傳入參數
+      let query = {
+        pageCurrent: this.listQuery.pageCurrent,
+        pageSize: this.listQuery.pageSize,
+      };
+      // 輸出參數
+      getLoginData(query)
         .then((response) => {
+          this.total = response.data.total;
           this.list = response.data.loginData;
           this.list.forEach(l => {
             l.LoginTime = this.formatTime(l.LoginTime);
-          })
-        })
-        .catch((error) => console.log(error));
+          });
+        }).catch((error) => console.log(error));
     },
   },
-
 };
 
 </script>
+
