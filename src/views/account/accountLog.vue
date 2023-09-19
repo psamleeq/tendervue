@@ -121,13 +121,13 @@ export default {
 	created() {
 	},
   mounted() {
-    this.getUsersData()
+    this.getList()
   },
   methods: {
     formatTime(time) {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
-    getUsersData() {
+    getList() {
       getUsersData()
         .then((response) => {
           this.list = response.data.usersData;

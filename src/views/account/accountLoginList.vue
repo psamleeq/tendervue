@@ -91,10 +91,10 @@ export default {
 	},
 	watch: {},
 	created() {
-    this.getList();
+
 	},
   mounted() {
-    this.getLoginData();
+    this.getList();
   },
   methods: {
     getList() {
@@ -116,7 +116,7 @@ export default {
     formatTime(time) {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
-    getLoginData() {
+    getList() {
       getLoginData()
         .then((response) => {
           this.list = response.data.loginData;
