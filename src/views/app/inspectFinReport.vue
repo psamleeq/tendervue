@@ -16,10 +16,17 @@
 			</div>
 
 			<div class="filter-item">
-				<el-input v-model="listQuery.filterStr" placeholder="請輸入" size="mini" style="width: 250px" >
-					<span slot="prepend">缺失Id</span>
-					<el-button slot="append" type="primary" size="mini" icon="el-icon-search" @click="getList()" />
-				</el-input>
+				<div class="el-input el-input--mini el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<el-select v-model.number="listQuery.filterType" popper-class="type-select tender" style="width: 80px">
+							<el-option label="路名" :value="1" />
+							<el-option label="缺失Id" :value="2" />
+						</el-select>
+					</div>
+					<el-input v-model="listQuery.filterStr" placeholder="請輸入" size="mini" style="width: 170px" >
+						<el-button slot="append" type="primary" size="mini" icon="el-icon-search" @click="getList()" />
+					</el-input>
+				</div>
 			</div>
 		</div>
 		<div v-for="caseSpec in list" :key="caseSpec.id" class="case-list">
@@ -119,6 +126,7 @@ export default {
 			screenWidth: window.innerWidth,
 			listQuery: {
 				filter: false,
+				filterType: 1,
 				filterStr: "",
 				tenderRound: null,
 				pageCurrent: 1,
@@ -214,7 +222,8 @@ export default {
 				getInspectFinList({
 					filter: this.listQuery.filter,
 					surveyId: tenderRound.id,
-					caseId: (this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
+					roadName: (this.listQuery.filterType == 1 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
+					caseId: (this.listQuery.filterType == 2 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
