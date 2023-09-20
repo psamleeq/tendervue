@@ -10,8 +10,12 @@
 					<el-input type="text" v-model="listQuery.userName"></el-input>
 				</div>
 			</span>
-    
-			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+      <!-- <span class="filter-item">
+				<div style="font-size: 12px; color: #909399">報告日期</div>
+				<time-picker class="filter-item" shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+			</span> -->
+
 		</div>
 		
 		<el-table
@@ -54,6 +58,7 @@ export default {
 			showAddDialog:false,
 			showUpdateDialog:false,
 			total: 0,
+      searchText: '',
 			list: [],
 			listQuery:{
 				userName:'',
@@ -103,11 +108,16 @@ export default {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
     getList() {
+      
       // 傳入參數
       let query = {
         pageCurrent: this.listQuery.pageCurrent,
         pageSize: this.listQuery.pageSize,
+        userName: this.listQuery.userName,
+        // timeStart: this.listQuery.timeStart,
+        // timeEnd: this.listQuery.timeEnd,
       };
+      
       // 輸出參數
       getLoginData(query)
         .then((response) => {
@@ -116,10 +126,12 @@ export default {
           this.list.forEach(l => {
             l.LoginTime = this.formatTime(l.LoginTime);
           });
+          
         }).catch((error) => console.log(error));
     },
   },
 };
 
 </script>
+
 
