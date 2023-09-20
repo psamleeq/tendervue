@@ -31,16 +31,15 @@
 							<span v-if="blockInfo.total != 0">{{ blockInfo.ratio }}% </span>
 						</el-card>
 					</span>
-					<br>
 					<span class="filter-item" style="display: inline-flex">
 						<el-button :type="showSearchRoadLayer ? 'primary' : 'info'" size="small" @click="showSearchRoad()">搜尋</el-button>
-						<el-card v-if="showSearchRoadLayer" :body-style="{ padding: '5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
+						<el-card v-if="showSearchRoadLayer" :body-style="{ padding: '0px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
 							<div class="filter-item">
 								<el-input v-model="listQuery.filterId" size="small" placeholder="請輸入">
 									<span slot="prepend">道路名稱</span>
 								</el-input>
 							</div>
-							<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
+							<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()" />
 						</el-card>
 					</span>
 				</span>
@@ -55,70 +54,85 @@
 			</el-row>
 		</el-card> -->
 
-		<el-card v-if="caseList.length > 0" class="info-box left">
-			<div style="width: 100%; text-align: center; line-height: 30px">案件列表({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
-			<el-button-group style="width: 100%; margin-bottom: 5px;">
-				<el-button style="width: 50%" @click="handleDownload()">下載CSV</el-button>
-				<el-button type="primary" style="width: 50%" @click="uploadCase()">圖表</el-button>
-			</el-button-group>
-			<el-table 
-				empty-text="目前沒有資料" 
-				:data="caseList"
-				size="mini"
-				fit 
-				:header-cell-style="{'background-color': '#F2F6FC'}"
-				max-height="500px"
-				style="width: 100%;"
-				@cell-mouse-enter="handleMouseEnter"
-				@cell-mouse-leave="handleMouseLeave"
-			>
-				<el-table-column 
-					v-for="(value, key) in headers" 
-					:key="key" 
-					:prop="key" 
-					:label="value"
-					:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
-					:width="['caseId', 'caseLevel'].includes(key) ? 70 : null"
-					align="center"
-					:filters="getFilter(key)"
-					:filter-method="handleFilter"
-				/>
-			</el-table>
-		</el-card>
+		<transition name="el-zoom-in-top">
+			<el-card v-if="caseList.length > 0" class="info-box left">
+				<div style="width: 100%; text-align: center; line-height: 30px">案件列表({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
+				<el-button-group style="width: 100%; margin-bottom: 5px;">
+					<el-button style="width: 50%" @click="handleDownload()">下載CSV</el-button>
+					<el-button type="primary" style="width: 50%" @click="showChart = !showChart">圖表</el-button>
+				</el-button-group>
+				<el-table 
+					empty-text="目前沒有資料" 
+					:data="caseList"
+					size="mini"
+					fit 
+					:header-cell-style="{'background-color': '#F2F6FC'}"
+					max-height="500px"
+					style="width: 100%;"
+					@cell-mouse-enter="handleMouseEnter"
+					@cell-mouse-leave="handleMouseLeave"
+				>
+					<el-table-column 
+						v-for="(value, key) in headers" 
+						:key="key" 
+						:prop="key" 
+						:label="value"
+						:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
+						:width="['caseId', 'caseLevel'].includes(key) ? 70 : null"
+						align="center"
+						:filters="getFilter(key)"
+						:filter-method="handleFilter"
+					/>
+				</el-table>
+			</el-card>
+		</transition>
 
-		<el-card v-if="Object.keys(caseSpecInfo).length > 0" class="info-box bottom">
-			<el-button type="text" style="float: right;" @click="caseSpecInfo={}"><i class="el-icon-close" style="font-size: 20px;" /></el-button>
-			<el-row :gutter="10" type="flex" align="center" justify="center">
-				<el-col :span="8">
-					<el-carousel height="200px" :autoplay="false" indicator-position="none">
-						<el-carousel-item >
-							<el-image :src="caseSpecInfo.ImgZoomOut" fit="cover" @click="showImgViewer = true" />
-						</el-carousel-item>
-						<el-carousel-item >
-							<el-image :src="caseSpecInfo.ImgZoomIn" fit="cover" @click="showImgViewer = true" />
-						</el-carousel-item>
-					</el-carousel>
-				</el-col>
-				<el-col :span="16" class="case-info">
-					<el-row :gutter="3">
-						<el-col :span="4" class="case-title">日期: </el-col>
-						<el-col :span="10">{{ formatTime(caseSpecInfo.DateReport) }}</el-col>
-						<el-col :span="4" class="case-title">ID: </el-col>
-						<el-col :span="6">{{ caseSpecInfo.Id }}</el-col>
-					</el-row>
-					<el-row :gutter="3">
-						<el-col :span="4" class="case-title">類型: </el-col>
-						<el-col :span="10">{{ options.caseTypeMap[caseSpecInfo.DistressType] }}</el-col>
-						<el-col :span="4" class="case-title">程度: </el-col>
-						<el-col :span="6">{{ options.caseLevelMap[caseSpecInfo.DistressLevel] }}</el-col>
-					</el-row>
-					<el-row>
-						<el-col :span="4" class="case-title">地址: </el-col>
-						<el-col :span="20">{{ caseSpecInfo.Place }}</el-col>
-					</el-row>
-				</el-col>
-			</el-row>
-		</el-card>
+		<transition name="el-zoom-in-top">
+			<el-card v-if="showChart" class="info-box right">
+				<div style="text-align: center">缺失類型({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
+				<pie-chart title="" :pie-data="{ chartType: 'pie', data: caseInfo.map(caseSpec => ({ value: caseSpec.total, name: caseSpec.caseName })) }" />
+			</el-card>
+		</transition>
+		
+		<transition name="el-zoom-in-center">
+			<el-card v-if="Object.keys(caseSpecInfo).length > 0" class="info-box bottom">
+				<el-button type="text" style="float: right;" @click="caseSpecInfo={}"><i class="el-icon-close" style="font-size: 20px;" /></el-button>
+				<el-row :gutter="10" type="flex" align="center" justify="center">
+					<el-col :span="8">
+						<el-carousel height="200px" :autoplay="false" indicator-position="none">
+							<el-carousel-item >
+								<el-image :src="caseSpecInfo.ImgZoomOut" fit="cover" @click="showImgViewer = true" />
+							</el-carousel-item>
+							<el-carousel-item >
+								<el-image :src="caseSpecInfo.ImgZoomIn" fit="cover" @click="showImgViewer = true" />
+							</el-carousel-item>
+						</el-carousel>
+					</el-col>
+					<el-col :span="16" class="case-info">
+						<el-row :gutter="3">
+							<el-col :span="4" class="case-title">日期: </el-col>
+							<el-col :span="10">{{ formatTime(caseSpecInfo.DateReport) }}</el-col>
+							<el-col :span="4" class="case-title">ID: </el-col>
+							<el-col :span="6">{{ caseSpecInfo.Id }}</el-col>
+						</el-row>
+						<el-row :gutter="3">
+							<el-col :span="4" class="case-title">類型: </el-col>
+							<el-col :span="10">{{ options.caseTypeMap[caseSpecInfo.DistressType] }}</el-col>
+							<el-col :span="4" class="case-title">程度: </el-col>
+							<el-col :span="6">{{ options.caseLevelMap[caseSpecInfo.DistressLevel] }}</el-col>
+						</el-row>
+						<el-row>
+							<el-col :span="4" class="case-title">面積: </el-col>
+							<el-col :span="20">{{ caseSpecInfo.MillingLength }} x {{ caseSpecInfo.MillingWidth }} = {{ caseSpecInfo.MillingArea }}</el-col>
+						</el-row>
+						<el-row>
+							<el-col :span="4" class="case-title">地址: </el-col>
+							<el-col :span="20">{{ caseSpecInfo.Place }}</el-col>
+						</el-row>
+					</el-col>
+				</el-row>
+			</el-card>
+		</transition>
 
 		<el-image-viewer
 			v-if="showImgViewer"
@@ -132,9 +146,12 @@
 <script>
 import moment from "moment";
 import { Loader } from "@googlemaps/js-api-loader";
+import { stringify } from 'csv-stringify/dist/esm/sync';
 import { getPanoramaJson, getInspectionCaseGeoJson, getInspectionRoute } from "@/api/inspection";
 import { getTenderRound, getDistMap } from "@/api/type";
+import PieChart from "@/components/Charts/PieChart";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
+import 'element-ui/lib/theme-chalk/base.css';
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -151,12 +168,13 @@ const loader = new Loader(loaderOpt);
 
 export default {
 	name: "caseInspectionMap",
-	components: { ElImageViewer },
+	components: { ElImageViewer, PieChart },
 	data() {
 		return {
 			loading: false,
 			showCoverRatioLayer: false,
 			showSearchRoadLayer: false,
+			showChart: false,
 			showImgViewer: false,
 			// map: null,
 			// dataLayer: {},
@@ -662,12 +680,22 @@ export default {
 			}, [])
 
 			this.caseInfo.sort((a, b) => (b.total - a.total));
+			if(this.showChart) {
+				this.showChart = false;
+				this.$nextTick(() => this.showChart = true);
+			}
 		},
 		createCaseList(featureList = this.caseGeoJson[this.listQuery.inspectId].features) {
 			this.caseList = featureList.map(feature => ({
 				caseId: feature.properties.Id,
 				caseName: this.options.caseTypeMap[feature.properties.DistressType],
-				caseLevel: this.options.caseLevelMap[feature.properties.DistressLevel]
+				caseLevel: this.options.caseLevelMap[feature.properties.DistressLevel],
+				place: feature.properties.Place,
+				millingLength: Math.round(feature.properties.MillingLength * 100) / 100,
+				millingWidth: Math.round(feature.properties.MillingWidth * 100) / 100,
+				millingArea: Math.round(feature.properties.MillingArea * 100) / 100,
+				imgZoomIn: feature.properties.ImgZoomIn,
+				imgZoomOut: feature.properties.ImgZoomOut
 			}));
 
 			this.caseInfo.sort((a, b) => (b.total - a.total));
@@ -772,6 +800,8 @@ export default {
 		changeInspect(inspectId) {
 			for(const key in this.polyLine) for(const polyline of this.polyLine[key]) polyline.setMap(inspectId == 0 ? this.map : null);
 			this.listQuery.inspectId = inspectId;
+			this.showCoverRatioLayer = false;
+			this.showSearchRoadLayer = false;
 
 			if(inspectId == -1) return;
 			else this.inspectIdNow = inspectId;
@@ -864,15 +894,20 @@ export default {
 			this.caseSpecInfo = {};
 			this.setCaseImgViewer({ imgUrls: [ feature.getProperty("ImgZoomOut") , feature.getProperty("ImgZoomIn")] });
 
-			this.caseSpecInfo = {
-				Id: feature.getProperty("Id"),
-				DateReport: feature.getProperty("DateReport"),
-				DistressType: feature.getProperty("DistressType"),
-				DistressLevel: feature.getProperty("DistressLevel"),
-				Place: feature.getProperty("Place"),
-				ImgZoomIn: feature.getProperty("ImgZoomIn"),
-				ImgZoomOut: feature.getProperty("ImgZoomOut"),
-			}
+			this.$nextTick(() => {
+				this.caseSpecInfo = {
+					Id: feature.getProperty("Id"),
+					DateReport: feature.getProperty("DateReport"),
+					DistressType: feature.getProperty("DistressType"),
+					DistressLevel: feature.getProperty("DistressLevel"),
+					Place: feature.getProperty("Place"),
+					MillingLength: Math.round(feature.getProperty("MillingLength") * 100) / 100,
+					MillingWidth: Math.round(feature.getProperty("MillingWidth") * 100) / 100,
+					MillingArea: Math.round(feature.getProperty("MillingArea") * 100) / 100,
+					ImgZoomIn: feature.getProperty("ImgZoomIn"),
+					ImgZoomOut: feature.getProperty("ImgZoomOut"),
+				}
+			})
 		},
 		setCaseImgViewer({ imgUrls, isOpen=false }) {
 			if(imgUrls != null) this.imgUrls = imgUrls;
@@ -971,41 +1006,28 @@ export default {
 			this.dataLayer.route.revertStyle();
 		},
 		handleDownload() {
-			let json = {
-				"kml":{
-					"@xmlns": "http://www.opengis.net/kml/2.2",
-					"Document": {
-						"Style": {
-							"@id": "style1",
-							"LineStyle": {
-									"color": "ffe1e1e1",
-									"width": "3"
-							},
-							"PolyStyle": {
-									"color": "ffe1e1e1",
-									"fill": "false"
-							}
-						},
-						"Folder": {
-							"name": "Layer1",
-							"styleUrl": "#style1",
-							"Placemark": this.caseErrList.map(caseErrSpec => caseErrSpec.list.map(caseSpec => caseSpec.oriJSON)).flat()
-						}
-					}
-				}
+			let outputCSV = stringify(this.caseList, { header: true });
+			const headers = {
+				caseId: "Id",
+				caseName: "類型",
+				caseLevel: "程度",
+				place: "地址",
+				millingLength: "長",
+				millingWidth: "寬",
+				millingArea: "面積",
+				imgZoomIn: "近照",
+				imgZoomOut: "遠照"
 			};
+			for(const key in headers) {
+				outputCSV = outputCSV.replace(key, headers[key]);
+			}
 
-			const filenameOri = this.kmlFileList[0].name.split(".")[0];
-			const filename = `${filenameOri}_err.kml`; 
-			const file = new File([json2xml(json)], filename, { type: 'text/plain' });
 			const link = document.createElement('a');
-			const url = URL.createObjectURL(file);
-			link.href = url;
-			link.download = file.name;
+			link.setAttribute("href", "data:text/csv;charset=utf-8,%EF%BB%BF" + encodeURI(outputCSV));
+			link.setAttribute("download", `案件列表(${ this.filterIdNow.length != 0 ? this.filterIdNow : this.inspectIdNow == 0 ? '全部' : inspectIdNow }).csv`);
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-			URL.revokeObjectURL(url);
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD");
@@ -1078,6 +1100,8 @@ export default {
 					width: 100% !important
 					.el-table__row
 						cursor: pointer
+			.chart
+				height: 400px
 		&.bottom
 			width: 600px
 			bottom: 15px
@@ -1087,6 +1111,7 @@ export default {
 			.el-card__body
 				overflow: hidden
 				padding: 0
+				margin-left: -5px
 				.el-image
 					height: 200px
 					cursor: pointer
