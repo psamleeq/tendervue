@@ -2,7 +2,7 @@
 	<div class="case-inspection-map" v-loading="loading">
 		<div id="map" ref="map" />
 		<div class="header-bar">
-			<h2 class="case-title">巡查地圖</h2>
+			<h2 class="case-title">案件地圖</h2>
 			<div class="filter-container">
 				<span v-if="inspectIdList.length == 0" class="filter-container">
 					<div class="filter-item">

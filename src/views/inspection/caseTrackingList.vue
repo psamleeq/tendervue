@@ -1,8 +1,8 @@
 <template>
 	<div class="app-container case-tracking-list" v-loading="loading">
-		<h2>追蹤列表</h2>
+		<h2>案件列表</h2>
 		<aside style="white-space: pre-line">
-			預設列出「中度」以上的缺失。
+			預設列出「中度」以上的案件。
 		</aside>
 		<div class="filter-container">
 			<div v-if="listQuery.tenderRound > 0" class="filter-item">

@@ -37,7 +37,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspection/caseMark'),
 			name: 'caseMark',
 			meta: {
-				title: '缺失標記',
+				title: '標記缺失',
 				roles: ['inspection.marker'],
 			}
 		},
@@ -55,7 +55,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspection/caseInspectionMap'),
 			name: 'caseInspectionMap',
 			meta: {
-				title: '巡查地圖',
+				title: '案件地圖',
 				roles: ['inspection.viewer'],
 				isNew: true
 			}
@@ -65,7 +65,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspection/caseTrackingList'),
 			name: 'caseTrackingList',
 			meta: {
-				title: '追蹤列表',
+				title: '案件列表',
 				roles: ['inspection.marker'],
 				isNew: true
 			}
