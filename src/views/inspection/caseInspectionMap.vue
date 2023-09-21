@@ -51,7 +51,7 @@
 				<div style="width: 100%; text-align: center; line-height: 30px">案件列表({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
 				<el-button-group style="width: 100%; margin-bottom: 5px;">
 					<el-button style="width: 50%" @click="handleDownload()">下載CSV</el-button>
-					<el-button :type="showChart ? 'primary' : 'info'" style="width: 50%" @click="showChartDialog()">圖表</el-button>
+					<el-button :type="showChart ? 'primary' : 'info'" style="width: 50%" @click="showChart = !showChart">圖表</el-button>
 				</el-button-group>
 				<el-table 
 					empty-text="目前沒有資料" 
@@ -117,6 +117,13 @@
 				<pie-chart ref="pieChart" title="" :showLegend="false" :pie-data="{ chartType: 'pie', data: caseInfo.map(caseSpec => ({ value: caseSpec.total, name: caseSpec.caseName })) }" />
 			</el-card>
 		</transition>
+
+		<transition name="el-zoom-in-top">
+			<el-card v-if="showChart" class="info-box chart-3">
+				<div style="text-align: center">堆疊長條圖({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
+				<div ref="barChart" style="width: 100%; height: 400px;" />
+			</el-card>
+		</transition>
 		
 		<transition name="el-zoom-in-center">
 			<el-card v-if="Object.keys(caseSpecInfo).length > 0" class="info-box bottom">
@@ -171,6 +178,9 @@
 import moment from "moment";
 import { Loader } from "@googlemaps/js-api-loader";
 import { stringify } from 'csv-stringify/dist/esm/sync';
+import echarts from "echarts/lib/echarts";
+require("echarts/theme/macarons");
+require("echarts/lib/chart/bar");
 import { getPanoramaJson, getInspectionCaseGeoJson, getInspectionRoute } from "@/api/inspection";
 import { getTenderRound, getDistMap } from "@/api/type";
 import PieChart from "@/components/Charts/PieChart";
@@ -215,7 +225,8 @@ export default {
 			filterIdNow: "",
 			listQuery: {
 				tenderRound: 91,
-				inspectId: 0
+				inspectId: 0,
+				filterId: ""
 			},
 			blockInfo: {
 				total: 0,
@@ -309,7 +320,33 @@ export default {
 		};
 	},
 	computed: { },
-	watch: { },
+	watch: { 
+		showCoverRatioLayer() {
+			if(!this.showSearchRoadLayer && !this.showCoverRatioLayer) this.clearRouteLayer();
+		},
+		showSearchRoadLayer() {
+			if(!this.showCoverRatioLayer && !this.showSearchRoadLayer) this.clearRouteLayer();
+		},
+		showChart() {
+			if(!this.showChart) return;
+
+			this.$nextTick(() => {
+				this.setBarChart(true);
+
+				if(this.showChart) {
+					this.$nextTick(() => {
+						this.$refs.pieChart.chart.on('mouseover', (params) => {
+							const rowIndex = this.caseInfo.filter(caseSpec => caseSpec.caseName == params.name)[0].index;
+							this.rowIndexNow = rowIndex;
+						})
+						this.$refs.pieChart.chart.on('mouseout', (params) => {
+							this.rowIndexNow = -1;
+						})
+					})
+				}
+			})
+		}
+	},
 	created() {
 		this.dataLayer = { caseNow: {}, route: {} };
 		this.polyLine = {};
@@ -619,17 +656,17 @@ export default {
 					});
 					this.loading = false;
 				} else {
-					this.dataLayer.district.setStyle(feature => {
+					this.dataLayer.district.forEach(feature => {
 						// console.log(feature);
 						const condition = tenderRound.zipCode == 1001 || this.options.districtMap[tenderRound.zipCode].district.includes(feature.getProperty("TOWNNAME"));
-						return {
+						this.dataLayer.district.overrideStyle(feature, {
 							strokeColor: "#827717",
 							strokeWeight: 3,
 							strokeOpacity: 0.2,
 							fillColor: "#000000",
 							fillOpacity: condition ? 0 : 0.7,
 							zIndex: 0
-						}
+						})
 					});
 
 					this.inspectIdList = response.data.inspection.map(l => l.InspectId);
@@ -678,37 +715,22 @@ export default {
 		createCaseInfo(featureList = this.caseGeoJson[this.listQuery.inspectId].features) {
 			this.caseInfo = featureList.reduce((acc, cur) => {
 				if(acc.length == 0 || acc[acc.length-1].DistressType != cur.properties.DistressType) {
-					let color = this.options.caseColorMap.filter(color => color.name == '其他')[0].color;
-					let index = this.options.caseColorMap.filter(color => color.name == '其他')[0].index;
 					const caseName = this.options.caseTypeMap[cur.properties.DistressType];
-
-					if(caseName != undefined) {
-						const colorFilter = this.options.caseColorMap.filter(color => {
-							let caseFlag = false;
-							for(const name of color.name) {
-								caseFlag = (caseName.indexOf(name) != -1);
-								// console.log(info.caseName, name, caseFlag);
-								if(caseFlag) break;
-							}
-
-							return caseFlag; 
-						})
-						// console.log(colorFilter);
-						
-						if(colorFilter.length > 0) {
-							color = colorFilter[0].color;
-							index = colorFilter[0].index;
-						}
-					}
 
 					acc.push({ 
 						DistressType: cur.properties.DistressType, 
 						caseName, 
-						color,
-						index,
+						1: cur.properties.DistressLevel == 1 ? 1 : 0,
+						2: cur.properties.DistressLevel == 2 ? 1 : 0,
+						3: cur.properties.DistressLevel == 3 ? 1 : 0,
 						total: 1 
 					});
-				} else acc[acc.length-1].total++;
+				} else {
+					acc[acc.length-1].total++;
+					if(cur.properties.DistressLevel == 1) acc[acc.length-1]['1']++;
+					if(cur.properties.DistressLevel == 2) acc[acc.length-1]['2']++;
+					if(cur.properties.DistressLevel == 3) acc[acc.length-1]['3']++;
+				}
 
 				return acc
 			}, [])
@@ -771,12 +793,28 @@ export default {
 				name: row.caseName,
 				position: ['50%', '50%']
 			});
+
+			this.barChart.dispatchAction({
+				type: 'highlight',
+				name: row.caseName
+			});
+			this.barChart.dispatchAction({
+				type: 'showTip',
+				name: row.caseName
+			});
 		},
 		handleMouseLeaveInfo(row, column, cell, event) {
 			this.$refs.pieChart.chart.dispatchAction({
 				type: 'downplay',
 			});
 			this.$refs.pieChart.chart.dispatchAction({
+				type: 'hideTip'
+			});
+
+			this.barChart.dispatchAction({
+				type: 'downplay',
+			});
+			this.barChart.dispatchAction({
 				type: 'hideTip'
 			});
 		},
@@ -825,37 +863,35 @@ export default {
 		},
 		clearRouteLayer() {
 			this.blockInfo = { total: 0, intersect: 0, ratio: 0 };
+			this.listQuery.filterId = "";
 			this.filterIdNow = "";
 
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
 		},
 		showCoverRatio() {
 			this.showCoverRatioLayer = !this.showCoverRatioLayer;
+
 			if(this.showCoverRatioLayer) {
 				if(this.showSearchRoadLayer) {
 					this.showSearchRoadLayer = false;
-					this.dataLayer.route.revertStyle();
 					this.intersectRoute();
 				} else this.getRouteList().then(() => this.intersectRoute());
 			} else this.clearRouteLayer();
 		},
 		showSearchRoad() {
 			this.showSearchRoadLayer = !this.showSearchRoadLayer;
-			this.dataLayer.route.revertStyle();
 
 			if(this.showSearchRoadLayer) {
-				if(this.showCoverRatioLayer) {
-					this.dataLayer.route.revertStyle();
-					this.showCoverRatioLayer = false;
-				} else this.getRouteList();
+				if(this.showCoverRatioLayer) this.showCoverRatioLayer = false;
+				else this.getRouteList();
 			} else this.clearRouteLayer();
 		},
 		changeTender() {
 			this.inspectIdList = []; 
-			this.showCaseDetail = false;
 			this.showChart = false;
-			this.showCoverRatio = false;
+			this.showCoverRatioLayer = false;
 			this.showSearchRoadLayer = false;
+			this.dataLayer.district.revertStyle();
 			this.clearAll();
 		},
 		changeInspect(inspectId) {
@@ -874,7 +910,6 @@ export default {
 
 			this.dataLayer.caseNow.forEach(feature => this.dataLayer.caseNow.remove(feature));
 			this.dataLayer.caseNow.addGeoJson(this.caseGeoJson[inspectId]);
-
 			this.loading = false;
 		},
 		async search() {
@@ -937,21 +972,84 @@ export default {
 				);
 			})
 		},
-		showChartDialog() {
-			this.showChart = !this.showChart;
-			this.$nextTick(() => {
-				if(this.showChart) {
-					this.$nextTick(() => {
-						this.$refs.pieChart.chart.on('mouseover', (params) => {
-							const rowIndex = this.caseInfo.filter(caseSpec => caseSpec.caseName == params.name)[0].index;
-							this.rowIndexNow = rowIndex;
-						})
-						this.$refs.pieChart.chart.on('mouseout', (params) => {
-							this.rowIndexNow = -1;
-						})
-					})
-				}
-			})
+		setBarChart(init=false) {
+			if(init) {
+				this.barChart = echarts.init(this.$refs.barChart, "macarons", {
+					width: "auto",
+					height: "auto",
+				});
+
+				this.barChart.on('mouseover', (params) => {
+					const rowIndex = this.caseInfo.filter(caseSpec => caseSpec.caseName == params.name)[0].index;
+					this.rowIndexNow = rowIndex;
+				})
+				this.barChart.on('mouseout', (params) => {
+					this.rowIndexNow = -1;
+				})
+			}
+
+			let series = [];
+			for (const level in this.options.caseLevelMap) {
+				series.push({
+					type: "bar",
+					name: this.options.caseLevelMap[level],
+					data: this.caseInfo.map(caseSpec => caseSpec[level]),
+					stack: "數量",
+					barWidth: "30%",
+					itemStyle: {
+						borderColor: "#aaa",
+						borderWidth: 1,
+						borderType: "solid",
+						opacity: 1,
+					},
+					offset: [0, 20]
+				});
+			}
+
+			// console.log(series);
+
+			const options = {
+				xAxis: {
+					name: "類型",
+					type: "category",
+					data: this.caseInfo.map(caseSpec => caseSpec.caseName),
+					axisTick: {
+						show: false,
+						// alignWithLabel: true
+					},
+					axisLabel: {
+						rotate: -35
+					}
+				},
+				yAxis: {
+					name: "數量",
+					type: "value",
+					axisTick: {
+						show: false,
+					},
+				},
+				tooltip: {
+					trigger: "axis",
+					axisPointer: {
+						type: "shadow",
+						shadowStyle: {
+							opacity: 0.9,
+						},
+					},
+					padding: [5, 10]
+				},
+				grid: {
+					top: 55,
+					bottom: 20,
+					left: 30,
+					right: 100,
+					containLabel: true,
+				},
+				legend: { show: false },
+				series: series,
+			};
+
+			this.barChart.setOption(options);
 		},
 		showCaseContent(feature, position) {
 			const caseTypeStr = `${feature.getProperty("Id")} - ${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
@@ -1154,18 +1252,18 @@ export default {
 			top: 180px
 			left: 15px
 		&.chart-1
-			width: 240px
+			width: 220px
 			top: 180px
 			left: 320px
 		&.chart-2
-			width: 400px
+			width: 320px
 			top: 180px
-			left: 570px
+			left: 550px
 			background-color: rgba(white, 0.94)
 		&.chart-3
-			width: 400px
+			width: 620px
 			top: 180px
-			left: 980px
+			left: 880px
 			background-color: rgba(white, 0.94)
 		.el-card__body
 			padding: 2px
