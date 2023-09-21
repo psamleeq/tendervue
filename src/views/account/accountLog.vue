@@ -110,7 +110,7 @@ export default {
 					sortable: false,
 					width:200
 				},
-        FromUsername: {
+        FromUserName: {
           name: '操作者',
           sortable: false,
           width:150
@@ -145,6 +145,7 @@ export default {
         pageCurrent: this.listQuery.pageCurrent,
         pageSize: this.listQuery.pageSize,
         userName: this.listQuery.userName,
+        FromUserName: this.listQuery.FromUserName,
         timeStart: startDate,
         timeEnd: moment(endDate).add(1, 'd').format("YYYY-MM-DD"),
       };
