@@ -10,11 +10,14 @@
 					<el-input type="text" v-model="listQuery.userName"></el-input>
 				</div>
 			</span>
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-      <!-- <span class="filter-item">
-				<div style="font-size: 12px; color: #909399">報告日期</div>
+
+      <span class="filter-item">
+				<div style="font-size: 12px; color: #909399">登入日期</div>
 				<time-picker class="filter-item" shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
-			</span> -->
+			</span>
+
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+      
 
 		</div>
 		
@@ -48,17 +51,19 @@
 import Pagination from "@/components/Pagination";
 import { getLoginData } from "@/api/auth";
 import moment from "moment";
+import TimePicker from '@/components/TimePicker';
 
 export default {
   name: "loginData",
-	components: { Pagination },
+	components: { Pagination, TimePicker },
 	data() {
 		return {
 			loading: false,
 			showAddDialog:false,
 			showUpdateDialog:false,
 			total: 0,
-      searchText: '',
+      timeTabId: 4,
+			dateRange: [ moment().startOf("month").toDate(), moment().endOf("month").toDate() ],
 			list: [],
 			listQuery:{
 				userName:'',
@@ -104,19 +109,25 @@ export default {
     this.getList();
   },
   methods: {
+    
     formatTime(time) {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
     getList() {
-      
+
+      let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+			this.searchRange = startDate + " - " + endDate;
+
       // 傳入參數
       let query = {
         pageCurrent: this.listQuery.pageCurrent,
         pageSize: this.listQuery.pageSize,
         userName: this.listQuery.userName,
-        // timeStart: this.listQuery.timeStart,
-        // timeEnd: this.listQuery.timeEnd,
+        timeStart: startDate,
+        timeEnd: moment(endDate).add(1, 'd').format("YYYY-MM-DD"),
       };
+      
       
       // 輸出參數
       getLoginData(query)
