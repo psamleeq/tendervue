@@ -23,16 +23,16 @@
 						<el-button v-for="inspectId in inspectIdList" :key="inspectId" type="primary" size="small" :plain="listQuery.inspectId != inspectId" @click="changeInspect(inspectId)">{{ inspectId }}</el-button>
 						<el-button type="info" size="small" @click="changeInspect(-1)">隱藏</el-button>
 					</el-button-group>
-					<el-button class="filter-item" type="primary" size="small" @click="inspectIdList = []; clearAll();">更改</el-button>
+					<el-button class="filter-item" type="primary" size="small" @click="changeTender()">更改</el-button>
 					<br>
-					<span class="filter-item" style="display: inline-flex">
-						<el-button :type="showCoverRatioLayer ? 'primary' : 'info'" size="small" @click="showCoverRatio()">覆蓋</el-button>
+					<span class="filter-item" style="display: inline-flex; height: 45px; align-items: center">
+						<el-button :type="showCoverRatioLayer ? 'primary' : 'info'" size="small" style="height: 32px" @click="showCoverRatio()">覆蓋</el-button>
 						<el-card v-if="showCoverRatioLayer" :body-style="{ padding: '5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
 							<span v-if="blockInfo.total != 0">{{ blockInfo.ratio }}% </span>
 						</el-card>
 					</span>
-					<span class="filter-item" style="display: inline-flex">
-						<el-button :type="showSearchRoadLayer ? 'primary' : 'info'" size="small" @click="showSearchRoad()">搜尋</el-button>
+					<span class="filter-item" style="display: inline-flex; height: 45px; align-items: center">
+						<el-button :type="showSearchRoadLayer ? 'primary' : 'info'" size="small" style="height: 32px" @click="showSearchRoad()">搜尋</el-button>
 						<el-card v-if="showSearchRoadLayer" :body-style="{ padding: '0px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
 							<div class="filter-item">
 								<el-input v-model="listQuery.filterId" size="small" placeholder="請輸入">
@@ -46,20 +46,12 @@
 			</div>
 		</div>
 
-		<!-- <el-card v-if="caseInfo.length > 0" class="info-box left">
-			<el-row style="text-align: center">缺失類型_{{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }}</el-row>
-			<el-row class="color-box active" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
-				<el-col :span="14" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
-				<el-col :span="10" style="text-align: right; padding: 0 5px">{{ info.total }}</el-col>
-			</el-row>
-		</el-card> -->
-
 		<transition name="el-zoom-in-top">
 			<el-card v-if="caseList.length > 0" class="info-box left">
 				<div style="width: 100%; text-align: center; line-height: 30px">案件列表({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
 				<el-button-group style="width: 100%; margin-bottom: 5px;">
 					<el-button style="width: 50%" @click="handleDownload()">下載CSV</el-button>
-					<el-button type="primary" style="width: 50%" @click="showChart = !showChart">圖表</el-button>
+					<el-button :type="showChart ? 'primary' : 'info'" style="width: 50%" @click="showChartDialog()">圖表</el-button>
 				</el-button-group>
 				<el-table 
 					empty-text="目前沒有資料" 
@@ -67,13 +59,13 @@
 					size="mini"
 					fit 
 					:header-cell-style="{'background-color': '#F2F6FC'}"
-					max-height="500px"
+					max-height="465px"
 					style="width: 100%;"
-					@cell-mouse-enter="handleMouseEnter"
-					@cell-mouse-leave="handleMouseLeave"
+					@cell-mouse-enter="handleMouseEnterList"
+					@cell-mouse-leave="handleMouseLeaveList"
 				>
 					<el-table-column 
-						v-for="(value, key) in headers" 
+						v-for="(value, key) in headerList" 
 						:key="key" 
 						:prop="key" 
 						:label="value"
@@ -88,9 +80,41 @@
 		</transition>
 
 		<transition name="el-zoom-in-top">
-			<el-card v-if="showChart" class="info-box right">
-				<div style="text-align: center">缺失類型({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
-				<pie-chart title="" :pie-data="{ chartType: 'pie', data: caseInfo.map(caseSpec => ({ value: caseSpec.total, name: caseSpec.caseName })) }" />
+			<el-card v-if="showChart" class="info-box chart-1">
+				<el-row style="text-align: center">缺失類型({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</el-row>
+				<!-- <el-row class="color-box active" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
+					<el-col :span="14" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
+					<el-col :span="10" style="text-align: right; padding: 0 5px">{{ info.total }}</el-col>
+				</el-row> -->
+				<el-table 
+					empty-text="目前沒有資料" 
+					:data="caseInfo"
+					size="mini"
+					fit 
+					:header-cell-style="{'background-color': '#F2F6FC'}"
+					max-height="555px"
+					style="width: 100%;"
+					:row-class-name="tableRowClassName"
+					@cell-mouse-enter="handleMouseEnterInfo"
+					@cell-mouse-leave="handleMouseLeaveInfo"
+				>
+					<el-table-column 
+						v-for="(value, key) in headerInfo" 
+						:key="key" 
+						:prop="key" 
+						:label="value"
+						:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
+						:width="['caseLevel', 'total'].includes(key) ? 70 : null"
+						align="center"
+					/>
+				</el-table>
+			</el-card>
+		</transition>
+
+		<transition name="el-zoom-in-top">
+			<el-card v-if="showChart" class="info-box chart-2">
+				<div style="text-align: center">圓餅圖({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
+				<pie-chart ref="pieChart" title="" :showLegend="false" :pie-data="{ chartType: 'pie', data: caseInfo.map(caseSpec => ({ value: caseSpec.total, name: caseSpec.caseName })) }" />
 			</el-card>
 		</transition>
 		
@@ -187,6 +211,7 @@ export default {
 			blockList: [],
 			caseGeoJson: {},
 			inspectIdNow: 0,
+			rowIndexNow: -1,
 			filterIdNow: "",
 			listQuery: {
 				tenderRound: 91,
@@ -197,10 +222,14 @@ export default {
 				intersect: 0,
 				ratio: 0
 			},
-			headers: {
+			headerList: {
 				caseId: "Id",
 				caseName: "類型",
 				caseLevel: "程度"
+			},
+			headerInfo: {
+				caseName: "類型",
+				total: "數量"
 			},
 			options: { 
 				tenderRoundMap: { },
@@ -570,6 +599,11 @@ export default {
 				this.showCaseDetail(event.feature);
 			});
 		},
+		tableRowClassName({ row, rowIndex }) {
+			row.index = rowIndex;
+			if(rowIndex == this.rowIndexNow) return 'highlight-row';
+			return '';
+		},
 		getList() {
 			this.loading = true;
 			this.clearAll();
@@ -708,7 +742,7 @@ export default {
 		handleFilter(value, row, column) {
 			return row[column.property] === value;
 		},
-		handleMouseEnter(row, column, cell, event) {
+		handleMouseEnterList(row, column, cell, event) {
 			let featureList = [];
 			this.dataLayer.caseNow.forEach(feature =>{ 
 				if(feature.getProperty("Id") == row.caseId) featureList.push(feature);
@@ -723,9 +757,28 @@ export default {
 			}
 			this.map.fitBounds(bounds);
 		},
-		handleMouseLeave(row, column, cell, event) {
+		handleMouseLeaveList(row, column, cell, event) {
 			// console.log(row.blockId);
 			this.dataLayer.caseNow.revertStyle();
+		},
+		handleMouseEnterInfo(row, column, cell, event) {
+			this.$refs.pieChart.chart.dispatchAction({
+				type: 'highlight',
+				name: row.caseName
+			});
+			this.$refs.pieChart.chart.dispatchAction({
+				type: 'showTip',
+				name: row.caseName,
+				position: ['50%', '50%']
+			});
+		},
+		handleMouseLeaveInfo(row, column, cell, event) {
+			this.$refs.pieChart.chart.dispatchAction({
+				type: 'downplay',
+			});
+			this.$refs.pieChart.chart.dispatchAction({
+				type: 'hideTip'
+			});
 		},
 		async getRouteList() {
 			return new Promise (resolve => {
@@ -796,6 +849,14 @@ export default {
 					this.showCoverRatioLayer = false;
 				} else this.getRouteList();
 			} else this.clearRouteLayer();
+		},
+		changeTender() {
+			this.inspectIdList = []; 
+			this.showCaseDetail = false;
+			this.showChart = false;
+			this.showCoverRatio = false;
+			this.showSearchRoadLayer = false;
+			this.clearAll();
 		},
 		changeInspect(inspectId) {
 			for(const key in this.polyLine) for(const polyline of this.polyLine[key]) polyline.setMap(inspectId == 0 ? this.map : null);
@@ -874,6 +935,22 @@ export default {
 						zIndex: 10
 					})
 				);
+			})
+		},
+		showChartDialog() {
+			this.showChart = !this.showChart;
+			this.$nextTick(() => {
+				if(this.showChart) {
+					this.$nextTick(() => {
+						this.$refs.pieChart.chart.on('mouseover', (params) => {
+							const rowIndex = this.caseInfo.filter(caseSpec => caseSpec.caseName == params.name)[0].index;
+							this.rowIndexNow = rowIndex;
+						})
+						this.$refs.pieChart.chart.on('mouseout', (params) => {
+							this.rowIndexNow = -1;
+						})
+					})
+				}
 			})
 		},
 		showCaseContent(feature, position) {
@@ -1067,26 +1144,38 @@ export default {
 	.info-box
 		position: absolute
 		width: 280px
+		max-height: 70%
 		background-color: rgba(white, 0.7)
 		z-index: 1
 		&.right
 			top: 120px
 			right: 15px
 		&.left
-			top: 220px
+			top: 180px
 			left: 15px
+		&.chart-1
+			width: 240px
+			top: 180px
+			left: 320px
+		&.chart-2
+			width: 400px
+			top: 180px
+			left: 570px
+			background-color: rgba(white, 0.94)
+		&.chart-3
+			width: 400px
+			top: 180px
+			left: 980px
+			background-color: rgba(white, 0.94)
 		.el-card__body
 			padding: 2px
-			max-height: 600px
+			height: 100%
 			overflow-x: hidden
 			overflow-y: auto
-			.info-title
-				text-align: center
-				margin-bottom: 0
-				line-height: 24px
 			.color-box
-				line-height: 30px
+				line-height: 28px
 				*
+					font-size: 14px
 					color: #ECEFF1
 					text-shadow: 0px 0px 1px rgba(#263238, 0.6)
 			.el-table
@@ -1100,20 +1189,29 @@ export default {
 					width: 100% !important
 					.el-table__row
 						cursor: pointer
+						&.highlight-row
+							background: #f5f7fa
 			.chart
 				height: 400px
 		&.bottom
-			width: 600px
+			width: 40%
+			min-width: 600px
+			max-width: 640px
+			height: 20%
+			min-height: 200px
+			max-height: 240px
 			bottom: 15px
 			left: 50%
 			transform: translateX(-50%)
 			border-radius: 10px
+			background-color: rgba(white, 0.95)
 			.el-card__body
 				overflow: hidden
 				padding: 0
 				margin-left: -5px
+				max-height: 100%
 				.el-image
-					height: 200px
+					height: 101%
 					cursor: pointer
 				.case-info
 					margin: auto

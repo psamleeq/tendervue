@@ -22,6 +22,10 @@ export default {
 		pieData: {
 			type: Object,
 			default: null
+		},
+		showLegend: {
+			type: Boolean,
+			default: true
 		}
 	},
 	data() {
@@ -84,6 +88,7 @@ export default {
 						formatter: '{b} : {d}%'
 					},
 					legend: {
+						show: this.showLegend,
 						width: '100%',
 						height: '32%',
 						orient: 'vertical',
