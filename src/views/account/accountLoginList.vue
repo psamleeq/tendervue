@@ -114,6 +114,8 @@ export default {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
     getList() {
+      this.loading = true;
+      this.list = [];
 
       let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
@@ -137,8 +139,8 @@ export default {
           this.list.forEach(l => {
             l.LoginTime = this.formatTime(l.LoginTime);
           });
-          
-        }).catch((error) => console.log(error));
+          this.loading = false;
+        }).catch((error) => this.loading = false);
     },
   },
 };

@@ -132,10 +132,13 @@ export default {
     this.getList()
   },
   methods: {
+    
     formatTime(time) {
       return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hours').format("HH:mm:ss");
     },
     getList() {
+      this.loading = true;
+      this.list = [];
 
       let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
@@ -156,8 +159,10 @@ export default {
           this.list.forEach(l => {
             l.Create_At = this.formatTime(l.Create_At);
           })
+          this.loading = false
         })
-        .catch((error) => console.log(error));
+        .catch((error) => this.loading = false);
+
     },
   },
 
