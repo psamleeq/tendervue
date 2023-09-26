@@ -11,7 +11,9 @@
 								<span>合約</span>
 							</div>
 							<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
-								<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
+								<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
+									<div :style="`color: #${Math.floor(val.tenderId*16777215).toString(16).substr(0, 8)}`">{{ val.name }}</div>
+								</el-option>
 							</el-select>
 						</div>
 					</div>
@@ -48,78 +50,78 @@
 
 		<transition name="el-zoom-in-top">
 			<el-card v-if="caseList.length > 0" class="info-box left">
-				<div style="width: 100%; text-align: center; line-height: 30px">案件列表({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
-				<el-button-group style="width: 100%; margin-bottom: 5px;">
-					<el-button style="width: 50%" @click="handleDownload()">下載CSV</el-button>
-					<el-button :type="showChart ? 'primary' : 'info'" style="width: 50%" @click="showChart = !showChart">圖表</el-button>
-				</el-button-group>
-				<el-table 
-					empty-text="目前沒有資料" 
-					:data="caseList"
-					size="mini"
-					fit 
-					:header-cell-style="{'background-color': '#F2F6FC'}"
-					max-height="465px"
-					style="width: 100%;"
-					@cell-mouse-enter="handleMouseEnterList"
-					@cell-mouse-leave="handleMouseLeaveList"
-				>
-					<el-table-column 
-						v-for="(value, key) in headerList" 
-						:key="key" 
-						:prop="key" 
-						:label="value"
-						:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
-						:width="['caseId', 'caseLevel'].includes(key) ? 70 : null"
-						align="center"
-						:filters="getFilter(key)"
-						:filter-method="handleFilter"
-					/>
-				</el-table>
+				<span v-if="!showChart">
+					<div style="width: 100%; text-align: center; line-height: 30px">案件列表({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
+					<el-button-group style="width: 100%; margin-bottom: 5px;">
+						<el-button style="width: 50%" @click="handleDownload()">下載CSV</el-button>
+						<el-button :type="showChart ? 'primary' : 'info'" style="width: 50%" @click="showChart = !showChart">圖表</el-button>
+					</el-button-group>
+
+					<el-table 
+						empty-text="目前沒有資料" 
+						:data="caseList"
+						size="mini"
+						fit 
+						:header-cell-style="{'background-color': '#F2F6FC'}"
+						max-height="465px"
+						style="width: 100%;"
+						@cell-mouse-enter="handleMouseEnterList"
+						@cell-mouse-leave="handleMouseLeaveList"
+					>
+						<el-table-column 
+							v-for="(value, key) in headerList" 
+							:key="key" 
+							:prop="key" 
+							:label="value"
+							:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
+							:width="['caseId', 'caseLevel'].includes(key) ? 70 : null"
+							align="center"
+							:filters="getFilter(key)"
+							:filter-method="handleFilter"
+						/>
+					</el-table>
+				</span>
+
+				<span v-else>
+					<div style="width: 100%; text-align: center; line-height: 30px">缺失類型({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
+					<el-button-group style="width: 100%; margin-bottom: 5px;">
+						<el-button type="primary" style="width: 100%" @click="showChart = !showChart">圖表</el-button>
+					</el-button-group>
+					<el-table 
+						empty-text="目前沒有資料" 
+						:data="caseInfo"
+						size="mini"
+						fit 
+						:header-cell-style="{'background-color': '#F2F6FC'}"
+						max-height="555px"
+						style="width: 100%;"
+						:row-class-name="tableRowClassName"
+						@cell-mouse-enter="handleMouseEnterInfo"
+						@cell-mouse-leave="handleMouseLeaveInfo"
+					>
+						<el-table-column 
+							v-for="(value, key) in headerInfo" 
+							:key="key" 
+							:prop="key" 
+							:label="value"
+							:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
+							:width="['total', 'ratio'].includes(key) ? 70 : null"
+							align="center"
+						/>
+					</el-table>
+				</span>
 			</el-card>
 		</transition>
 
 		<transition name="el-zoom-in-top">
 			<el-card v-if="showChart" class="info-box chart-1">
-				<el-row style="text-align: center">缺失類型({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</el-row>
-				<!-- <el-row class="color-box active" v-for="(info, index) in caseInfo" :key="`caseInfo_${index}`"  :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
-					<el-col :span="14" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
-					<el-col :span="10" style="text-align: right; padding: 0 5px">{{ info.total }}</el-col>
-				</el-row> -->
-				<el-table 
-					empty-text="目前沒有資料" 
-					:data="caseInfo"
-					size="mini"
-					fit 
-					:header-cell-style="{'background-color': '#F2F6FC'}"
-					max-height="555px"
-					style="width: 100%;"
-					:row-class-name="tableRowClassName"
-					@cell-mouse-enter="handleMouseEnterInfo"
-					@cell-mouse-leave="handleMouseLeaveInfo"
-				>
-					<el-table-column 
-						v-for="(value, key) in headerInfo" 
-						:key="key" 
-						:prop="key" 
-						:label="value"
-						:formatter="(row, column, cellValue) => (cellValue != undefined ? cellValue : '-')"
-						:width="['caseLevel', 'total'].includes(key) ? 70 : null"
-						align="center"
-					/>
-				</el-table>
-			</el-card>
-		</transition>
-
-		<transition name="el-zoom-in-top">
-			<el-card v-if="showChart" class="info-box chart-2">
 				<div style="text-align: center">圓餅圖({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
 				<pie-chart ref="pieChart" title="" :showLegend="false" :pie-data="{ chartType: 'pie', data: caseInfo.map(caseSpec => ({ value: caseSpec.total, name: caseSpec.caseName })) }" />
 			</el-card>
 		</transition>
 
 		<transition name="el-zoom-in-top">
-			<el-card v-if="showChart" class="info-box chart-3">
+			<el-card v-if="showChart" class="info-box chart-2">
 				<div style="text-align: center">堆疊長條圖({{ filterIdNow.length != 0 ? filterIdNow : inspectIdNow == 0 ? '全部' : inspectIdNow }})</div>
 				<div ref="barChart" style="width: 100%; height: 400px;" />
 			</el-card>
@@ -240,7 +242,8 @@ export default {
 			},
 			headerInfo: {
 				caseName: "類型",
-				total: "數量"
+				total: "數量",
+				ratio: "佔比"
 			},
 			options: { 
 				tenderRoundMap: { },
@@ -713,6 +716,7 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		createCaseInfo(featureList = this.caseGeoJson[this.listQuery.inspectId].features) {
+			let caseTotal = 0;
 			this.caseInfo = featureList.reduce((acc, cur) => {
 				if(acc.length == 0 || acc[acc.length-1].DistressType != cur.properties.DistressType) {
 					const caseName = this.options.caseTypeMap[cur.properties.DistressType];
@@ -731,9 +735,11 @@ export default {
 					if(cur.properties.DistressLevel == 2) acc[acc.length-1]['2']++;
 					if(cur.properties.DistressLevel == 3) acc[acc.length-1]['3']++;
 				}
+				caseTotal++;
 
 				return acc
-			}, [])
+			}, []);
+			this.caseInfo.forEach(caseSpec => caseSpec.ratio = `${Math.round(caseSpec.total/caseTotal *10000) / 100}%`);
 
 			this.caseInfo.sort((a, b) => (b.total - a.total));
 			if(this.showChart) {
@@ -1252,18 +1258,14 @@ export default {
 			top: 180px
 			left: 15px
 		&.chart-1
-			width: 220px
-			top: 180px
-			left: 320px
-		&.chart-2
 			width: 320px
 			top: 180px
-			left: 550px
+			left: 310px
 			background-color: rgba(white, 0.94)
-		&.chart-3
+		&.chart-2
 			width: 620px
 			top: 180px
-			left: 880px
+			left: 640px
 			background-color: rgba(white, 0.94)
 		.el-card__body
 			padding: 2px
