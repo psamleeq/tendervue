@@ -8,7 +8,8 @@ const accountRouter = {
 	meta: {
 		title: '帳號管理',
 		icon: 'el-icon-user-solid',
-		roles: ['rAdm']
+		roles: ['rAdm'],
+		isNew: true
 	},
 	children: [
 		
@@ -37,7 +38,8 @@ const accountRouter = {
 			name: 'accountLog',
 			meta: {
 				title: '帳號歷程',
-				roles: ['rAdm']
+				roles: ['rAdm'],
+				isNew: true
 			}
 		},
 		{
@@ -46,7 +48,8 @@ const accountRouter = {
 			name: 'accountLoginList',
 			meta: {
 				title: '登入歷程',
-				roles: ['rAdm']
+				roles: ['rAdm'],
+				isNew: true
 			}
 		},
 	]
