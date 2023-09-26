@@ -31,6 +31,24 @@ const accountRouter = {
 			},
 			hidden: true
 		},
+		{
+			path: 'accountLog',
+			component: () => import('@/views/account/accountLog'),
+			name: 'accountLog',
+			meta: {
+				title: '帳號歷程',
+				roles: ['rAdm']
+			}
+		},
+		{
+			path: 'accountLoginList',
+			component: () => import('@/views/account/accountLoginList'),
+			name: 'accountLoginList',
+			meta: {
+				title: '登入歷程',
+				roles: ['rAdm']
+			}
+		},
 	]
 }
 export default accountRouter

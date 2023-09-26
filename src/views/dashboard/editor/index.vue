@@ -55,13 +55,14 @@ import { mapGetters } from "vuex";
 import PanThumb from "@/components/PanThumb";
 // import { getLoginLog } from "@/api/cms"
 import moment from "moment";
+import { getLoginLog } from "@/api/auth";
 
 export default {
   name: "DashboardEditor",
   components: { PanThumb },
   data() {
     return {
-      name: localStorage.username,
+      name: localStorage.userName,
       // emptyGif: 'https://wpimg.wallstcn.com/0e03b7da-db9e-4819-ba10-9016ddfdaed3',
       emptyGif: "/assets/gif/report.gif",
       headers: {
@@ -81,21 +82,20 @@ export default {
     ]),
   },
   mounted() {
-    this.getLoginList();
+    this.getList();
   },
   methods: {
     formatTime(time) {
-      return moment(time).utc().format("YYYY-MM-DD") + "\n" + moment(time).utc().format("HH:mm:ss");
+      return moment(time).add(8, 'hour').format("YYYY-MM-DD") + "\n" + moment(time).add(8, 'hour').format("HH:mm:ss");
     },
-    getLoginList() {
-      // getLoginLog({
-      //   userName: localStorage.username
-      // }).then((response) => {
-      //   this.loginList = response.data.list;
-      //   this.loginList.forEach((l) => {
-      //     l.LoginTime = this.formatTime(l.LoginTime);
-      //   })
-      // })
+    getList() {
+      getLoginLog()
+        .then((response) => { 
+          this.loginList = response.data.loginLogs; 
+          this.loginList.forEach(l => {
+            l.LoginTime = this.formatTime(l.LoginTime);
+          })
+        }).catch((error) => console.log(error));
     }
   }
 };
