@@ -1,6 +1,6 @@
 <template>
 	<div ref="panoramaView" class="panorama-view">
-		<div id="panorama">
+		<div v-show="showPanorama" id="panorama">
 			<div v-if="localEnv && panorama" style="position: absolute; top: 0; left: 0; z-index:99; background-color: rgba(255, 255, 255, 0.6); padding: 5px 10px">
 				<el-input
 					class="searchBox"
@@ -96,6 +96,8 @@
 
 			<el-button class="btn-forward" size="mini" round plain @click="forwardPanorama"><i class="el-icon-caret-top" /></el-button>
 			<el-button class="btn-backward" size="mini" round plain @click="backwardPanorama"><i class="el-icon-caret-bottom" /></el-button>
+
+			<el-button v-if="!isEdit" class="btn-exit" type="primary" size="mini" round @click="showPanorama = false">返回</el-button>
 		</div>
 	</div>
 </template>
@@ -125,17 +127,17 @@ const loader = new Loader(loaderOpt);
 export default {
 	name: "panoramaView",
 	props: {
+		isEdit: {
+			type: Boolean,
+			default: true,
+		},
 		loading: {
-			required: true,
-			type: Boolean
+			type: Boolean,
+			required: true
 		},
 		isUpload: {
-			required: true,
-			type: Boolean
-		},
-		listQuery: {
-			type: Object,
-			required: true
+			type: Boolean,
+			default: false
 		},
 		panoramaInfo: {
 			type: Object,
@@ -153,6 +155,7 @@ export default {
 	data() {
 		return {
 			localEnv: process.env.NODE_ENV == 'development',
+			showPanorama: true,
 			isGetAddress: false,
 			isAutoMove: false,
 			isAutoRotate: false,
@@ -223,7 +226,7 @@ export default {
 			if(this.isAutoMove) {
 				await new Promise(r => setTimeout(r, delay));
 				this.panorama.stopAutoRotate();
-				const lineInfoList = this.panoramaInfoProps.data.flat();
+				const lineInfoList = this.panoramaInfoProps.data.flat(2);
 				const sceneId = this.panorama.getScene();
 				const index = lineInfoList.map((el, index) => { if(el.fileName == sceneId) return index }).filter(el => el != undefined)[0];
 				this.showPanoramaLayer(lineInfoList[index+1].fileName);
@@ -231,6 +234,8 @@ export default {
 		});
 
 		this.panorama.on('mousedown', (evt) => {
+			if(!this.isEdit) return;
+
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 			if(!evt.shiftKey) return;
 
@@ -270,10 +275,12 @@ export default {
 			this.calcCaseInfo();
 		});
 		this.panorama.on('mouseup', (evt) => {
+			if(!this.isEdit) return;
+
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		});
 		this.panorama.on('animatefinished', () => {
-			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat(2).filter(l => l.fileName == this.panorama.getScene())[0];
 			this.panoramaTestInfo = { Pitch: this.panorama.getPitch(), Yaw: this.panorama.getYaw(), Hfov: this.panorama.getHfov(), position: panoramaInfo.position };
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		});
@@ -312,25 +319,27 @@ export default {
 		setHeading() {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		},
-		setStreetViewList() {
+		async setStreetViewList() {
 			// console.log("setStreetViewList");
 			// console.log(JSON.parse(JSON.stringify(this.panoramaInfo)));
 			// this.panoramaInfoProps.streetViewList = {};
 			// console.log(JSON.parse(JSON.stringify(this.panoramaInfoProps)));
 
 			const lineInfoList = this.panoramaInfoProps.data;
-			const panoramaUrl = this.panoramaInfoProps.sceneSetting.assetsUrl;
 
-			for (const lineInfo of lineInfoList) {
+			for (const [index, lineInfos] of lineInfoList.entries()) {
+				const panoramaInfo = this.panoramaInfoProps.sceneSetting[index];
+				const lineInfo = lineInfos.flat(1);
+
 				lineInfo.forEach((info, index) => {
-					const panoramaPhotoUrl = `${panoramaUrl}/${info.fileName}`;
+					const panoramaPhotoUrl = `${panoramaInfo.assetsUrl}/${info.fileName}`;
 
 					this.panoramaInfoProps.streetViewList[info.fileName] = {
 						type: "equirectangular",
 						panorama: panoramaPhotoUrl,
-						hfov: this.panoramaInfoProps.sceneSetting.hfov,
-						yaw: this.panoramaInfoProps.sceneSetting.yaw,
-						horizonRoll: this.panoramaInfoProps.sceneSetting.horizonRoll,
+						hfov: panoramaInfo.hfov,
+						yaw: panoramaInfo.yaw,
+						horizonRoll: panoramaInfo.horizonRoll,
 						compass: true,
 						northOffset: info.azimuth,
 						autoLoad: true,
@@ -347,8 +356,8 @@ export default {
 
 					if (index >= 0 && index < lineInfo.length - 1) {
 						hotSpots.push({
-							pitch: this.panoramaInfoProps.sceneSetting.pitch,
-							yaw: this.panoramaInfoProps.sceneSetting.yaw,
+							pitch: panoramaInfo.pitch,
+							yaw: panoramaInfo.yaw,
 							type: "scene",
 							text: lineInfo[index + 1].fileName,
 							sceneId: lineInfo[index + 1].fileName,
@@ -361,12 +370,12 @@ export default {
 
 					if (index > 0 && index < lineInfo.length) {
 						hotSpots.push({
-							pitch: this.panoramaInfoProps.sceneSetting.pitch,
-							yaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
+							pitch: panoramaInfo.pitch,
+							yaw: panoramaInfo.yaw + 180,
 							type: "scene",
 							text: lineInfo[index - 1].fileName,
 							sceneId: lineInfo[index - 1].fileName,
-							targetYaw: this.panoramaInfoProps.sceneSetting.yaw + 180,
+							targetYaw: panoramaInfo.yaw + 180,
 							clickHandlerArgs: {
 								sceneIdNow: lineInfo[index - 1].fileName
 							},
@@ -378,12 +387,16 @@ export default {
 					this.$emit('update:panoramaInfo',this.panoramaInfoProps);
 				});
 			}	
+
+			this.setPanoramaScene();
 		},
 		removeAllScene() {
 			for (const sceneId of this.prevSceneId) this.panorama.removeScene(sceneId);
 			this.prevSceneId = [];
 		},
 		setPanoramaScene() {
+			// console.log("setPanoramaScene");
+			// console.log(JSON.parse(JSON.stringify(this.panoramaInfo)));
 			this.removeAllScene();
 
 			// 掛載panorama scene
@@ -398,14 +411,14 @@ export default {
 			this.$emit("showPanoramaLayer", sceneId);
 		},
 		forwardPanorama() {
-			const lineInfoList = this.panoramaInfoProps.data.flat();
+			const lineInfoList = this.panoramaInfoProps.data.flat(2);
 			const sceneId = this.panorama.getScene();
 			const index = lineInfoList.map((el, index) => { if(el.fileName == sceneId) return index }).filter(el => el != undefined)[0];
 			if(index == lineInfoList.length - 1) return;
 			else this.showPanoramaLayer(lineInfoList[index+1].fileName);
 		},
 		backwardPanorama() {
-			const lineInfoList = this.panoramaInfoProps.data.flat();
+			const lineInfoList = this.panoramaInfoProps.data.flat(2);
 			const sceneId = this.panorama.getScene();
 			const index = lineInfoList.map((el, index) => { if(el.fileName == sceneId) return index }).filter(el => el != undefined)[0];
 			if(index == 0) return;
@@ -621,7 +634,7 @@ export default {
 			return angle;
 		},
 		getCoords(position) {
-			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat(2).filter(l => l.fileName == this.panorama.getScene())[0];
 			// console.log(panoramaInfo);
 			const yaw = this.getYaw(panoramaInfo.position, position) - panoramaInfo.azimuth;
 			const pitch = this.getPitch(panoramaInfo.position, position, 0);
@@ -710,7 +723,7 @@ export default {
 						}
 					} 
 
-					this.isReview = !clickHandlerArgs.isPrev;
+					this.isReview = this.isEdit ? !clickHandlerArgs.isPrev : true;
 					this.isSticky = !this.isSticky; 
 				}
 			};
@@ -722,7 +735,7 @@ export default {
 			this.clearAll();
 
 			if(this.panoramaInfoProps.data.length == 0) return;
-			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat(2).filter(l => l.fileName == this.panorama.getScene())[0];
 			// if(!panoramaInfo) return;
 
 			for(const caseType in this.caseGeoJson) {
@@ -785,7 +798,7 @@ export default {
 		// NOTE: 預估缺失位置(詹博)
 		transformMatrix(pitch, yaw) {
 			// NOTE: test Transform - Omega(roll): X軸旋轉; Phi(yaw): Y軸旋轉; Kappa(pitch): Z軸旋轉
-			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat().filter(l => l.fileName == this.panorama.getScene())[0];
+			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat(2).filter(l => l.fileName == this.panorama.getScene())[0];
 			const [ Omega, Phi, Kappa ] = [ 0, panoramaInfo.azimuth * Math.PI / 180, 0 ];
 			// const [ Omega, Phi, Kappa ] = [ 0, 0, 0 ];
 
@@ -867,6 +880,11 @@ export default {
 			cursor: pointer
 			right: 10px
 			bottom: 114px
+		.btn-exit
+			position: absolute
+			right: 10px
+			top: 50px
+			z-index: 10
 		.btn-forward, .btn-backward
 			position: absolute
 			right: 18px
@@ -988,21 +1006,4 @@ export default {
 						padding: 10px 0
 				.road-dir > .el-input-group__prepend .el-select
 						width: 100px
-	.btn_panorama
-		position: absolute
-		bottom: 40px
-		left: 40px
-		height: 80px
-		background-color: white
-		background-color: #E1F5FE
-		overflow: hidden
-		padding: 5px
-		z-index: 15
-		.v-btn__content
-			display: flex
-			flex-direction: column
-		.name
-			white-space: pre-wrap
-			text-align: center
-			font-size: 14px
 </style>

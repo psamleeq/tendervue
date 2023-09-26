@@ -68,7 +68,7 @@
 					<span />
 					<span />
 				</div>
-				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :listQuery="listQuery" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @setCaseImgViewer="setCaseImgViewer" @ @uploadCase="uploadCase" />
+				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @setCaseImgViewer="setCaseImgViewer" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
 
@@ -124,37 +124,6 @@ export default {
 			polyLine: [],
 			markersTemp: {},
 			pointCurr: null,
-			pickerOptions: {
-				firstDayOfWeek: 1,
-				shortcuts: [
-					{
-						text: "今日",
-						onClick(picker) {
-							const date = moment();
-							picker.$emit("pick", date);
-						},
-					},
-					{
-						text: "昨日",
-						onClick(picker) {
-							const date = moment().subtract(1, "d");
-							picker.$emit("pick", date);
-						}
-					},
-					{
-						text: "前日",
-						onClick(picker) {
-							const date = moment().subtract(2, "d");
-							picker.$emit("pick", date);
-						}
-					}
-				],
-				disabledDate(date) {
-					return moment(date).valueOf() >= moment().endOf("d").valueOf();
-				},
-			},
-			searchDate: moment().startOf("d"),
-			searchRange: "",
 			screenWidth: 0,
 			listQuery: {
 				inspectId: "",
@@ -163,7 +132,7 @@ export default {
 			},
 			panoramaInfo: {
 				data: [],
-				sceneSetting: {}, 
+				sceneSetting: [], 
 				streetViewList: {}
 			},
 			options: {
@@ -539,11 +508,12 @@ export default {
 					const jsonUrl = response.data.inspection[0].url;
 
 					// fetch('/test/streetViewFix.json').then(response => response.json()).then(json => {
-					fetch(jsonUrl).then(response => response.json()).then(json => {
+					fetch(jsonUrl).then(response => response.json()).then(async json => {
 						// this.panoramaInfo = json;
 						// this.panoramaInfo = Object.assign({}, this.panoramaInfo, json);
-						this.$set(this.panoramaInfo, "data", json.data);
-						this.$set(this.panoramaInfo, "sceneSetting", json.sceneSetting);
+						this.panoramaInfo.sceneSetting.push(json.sceneSetting);
+						this.panoramaInfo.data.push(json.data);
+
 						// console.log(this.panoramaInfo);
 						this.setPanoramaLayer();
 						// this.openPanorama(true);
@@ -682,10 +652,9 @@ export default {
 			this.pointCurr.setMap(this.map);
 		},
 		async createPolyLine() {
-			const lineInfo = this.panoramaInfo.data;
+			const lineInfo = this.panoramaInfo.data[0];
 			if (!lineInfo) return;
-
-			this.$refs.panoramaView.setPanoramaScene();
+			// this.$refs.panoramaView.setPanoramaScene();
 
 			// 掛載 polyline Layer(street view)
 			lineInfo.forEach((polyInfo, index) => {
@@ -705,7 +674,7 @@ export default {
 				this.polyLine[index].addListener("click", (event) => {
 					this.init = false;
 					const pointPos = event.latLng.toJSON();
-					const posList = this.panoramaInfo.data[index].map(info => ({ ...info.position, sceneId: info.fileName }));
+					const posList = this.panoramaInfo.data[0][index].map(info => ({ ...info.position, sceneId: info.fileName }));
 					const minDistObj = posList.reduce((minDistObj, curr) => {
 							const distance = Math.sqrt(Math.pow(pointPos.lat - curr.lat, 2) + Math.pow(pointPos.lng - curr.lng, 2));
 							if (minDistObj.dist > distance) {
@@ -724,9 +693,9 @@ export default {
 					if(position.lat >= 22 && position.lat <= 26 && position.lng >= 120 && position.lng <= 122) bounds.extend(position);
 				});
 				this.map.fitBounds(bounds);
-				console.log(bounds.getCenter().toString())
+				// console.log(bounds.getCenter().toString())
 			})
-			this.showPanoramaLayer(this.panoramaInfo.data[0][0].fileName);
+			this.showPanoramaLayer(this.panoramaInfo.data[0][0][0].fileName);
 		},
 		showPanoramaLayer(sceneId) {
 			// console.log("showPanoramaLayer");
@@ -770,7 +739,7 @@ export default {
 		setMarkerPosition(sceneId) {
 			// console.log("setMarkerPosition: ", sceneId);
 			this.sceneId = sceneId ? sceneId : this.sceneId;
-			const pointInfo = this.panoramaInfo.data.flat().filter(pt => pt.fileName == this.sceneId)[0];
+			const pointInfo = this.panoramaInfo.data[0].flat().filter(pt => pt.fileName == this.sceneId)[0];
 			this.pointCurr.setPosition(pointInfo.position);
 			
 			if(!this.init) {
@@ -860,7 +829,7 @@ export default {
 		},
 		intersectRoute() {
 			this.dataLayer.route.revertStyle();
-			const jstsRoutePoints = this.panoramaInfo.data.flat(1).map(point => this.createJstsGeometry([[ point.position.lng, point.position.lat ]]));
+			const jstsRoutePoints = this.panoramaInfo.data[0].flat().map(point => this.createJstsGeometry([[ point.position.lng, point.position.lat ]]));
 			// console.log(jstsRoutePoints.length);
 			this.dataLayer.route.forEach(feature => {
 				feature.toGeoJson(json => {
@@ -904,7 +873,7 @@ export default {
 			this.clearMarker();
 			this.dataLayer.route.revertStyle();
 
-			this.panoramaInfo = Object.assign({}, this.panoramaInfo, { data: [], sceneSetting: {}, streetViewList: {} });
+			this.panoramaInfo = Object.assign({}, this.panoramaInfo, { data: [], sceneSetting: [], streetViewList: {} });
 			this.$refs.panoramaView.removeAllScene();
 		},
 		moveHandle(nowClientX) {

@@ -173,6 +173,8 @@
 			:on-close="() => { showImgViewer = false; }"
 			:url-list="imgUrls"
 		/>
+
+		<panorama-view ref="panoramaView" :isEdit="false" :loading.sync="loading" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="{ caseNow: caseGeoJson[0] }" @showPanoramaLayer="showPanoramaLayer" />
 	</div>
 </template>
 
@@ -185,6 +187,7 @@ require("echarts/theme/macarons");
 require("echarts/lib/chart/bar");
 import { getPanoramaJson, getInspectionCaseGeoJson, getInspectionRoute } from "@/api/inspection";
 import { getTenderRound, getDistMap } from "@/api/type";
+import PanoramaView from '@/components/PanoramaView';
 import PieChart from "@/components/Charts/PieChart";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 import 'element-ui/lib/theme-chalk/base.css';
@@ -204,7 +207,7 @@ const loader = new Loader(loaderOpt);
 
 export default {
 	name: "caseInspectionMap",
-	components: { ElImageViewer, PieChart },
+	components: { PanoramaView, ElImageViewer, PieChart },
 	data() {
 		return {
 			loading: false,
@@ -235,6 +238,11 @@ export default {
 				intersect: 0,
 				ratio: 0
 			},
+			// panoramaInfo: {
+			// 	data: [],
+			// 	sceneSetting: {}, 
+			// 	streetViewList: {}
+			// },
 			headerList: {
 				caseId: "Id",
 				caseName: "類型",
@@ -353,6 +361,7 @@ export default {
 	created() {
 		this.dataLayer = { caseNow: {}, route: {} };
 		this.polyLine = {};
+		this.panoramaInfo = { data: [], sceneSetting: [], streetViewList: {} };
 
 		getTenderRound().then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
@@ -389,6 +398,7 @@ export default {
 	},
 	async mounted() {
 		// this.loading = true;
+		this.$refs.panoramaView.showPanorama = false;
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
 			console.log("Google Map Failure");
@@ -676,6 +686,9 @@ export default {
 					let path = [];
 					for(const inspecData of response.data.inspection) {
 						await fetch(inspecData.url).then(response => response.json()).then(async (json) => {
+							this.panoramaInfo.sceneSetting.push(json.sceneSetting);
+							this.panoramaInfo.data.push(json.data);
+
 							const posData = json.data.flat().map(info => info.position);
 							path.push(...posData);
 							await this.createPolyLine(inspecData.InspectId, json.data);
@@ -688,7 +701,6 @@ export default {
 						if(position.lat >= 22 && position.lat <= 26 && position.lng >= 120 && position.lng <= 122) bounds.extend(position);
 					});
 					this.map.fitBounds(bounds);
-
 					// this.loading = false;
 				}
 			}).catch(err => this.loading = false);
@@ -712,6 +724,7 @@ export default {
 					};
 				}
 				this.dataLayer.caseNow.addGeoJson(this.caseGeoJson[0]);
+				this.$refs.panoramaView.setStreetViewList();
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
@@ -874,6 +887,14 @@ export default {
 
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
 		},
+		showPanoramaLayer(sceneId) {
+			// console.log("showPanoramaLayer");
+			// console.log(sceneId);
+			// console.log(this.panoramaInfo);
+			// this.sceneId = sceneId;
+			this.$refs.panoramaView.panorama.loadScene(sceneId);
+			this.$refs.panoramaView.showPanorama = true;
+		},
 		showCoverRatio() {
 			this.showCoverRatioLayer = !this.showCoverRatioLayer;
 
@@ -961,6 +982,7 @@ export default {
 			})
 		},
 		async createPolyLine(inspectId, lineInfo) {
+
 			// 掛載 polyline Layer(street view)
 			lineInfo.forEach((polyInfo, index) => {
 				const path = polyInfo.map((info) => info.position);
@@ -976,6 +998,23 @@ export default {
 						zIndex: 10
 					})
 				);
+
+				this.polyLine[inspectId][index].addListener("click", (event) => {
+					// console.log("click");
+					const pointPos = event.latLng.toJSON();
+					const posList = this.panoramaInfo.data.flat(2).map(info => ({ ...info.position, sceneId: info.fileName }));
+					const minDistObj = posList.reduce((minDistObj, curr) => {
+							const distance = Math.sqrt(Math.pow(pointPos.lat - curr.lat, 2) + Math.pow(pointPos.lng - curr.lng, 2));
+							if (minDistObj.dist > distance) {
+								minDistObj.dist = distance;
+								minDistObj.sceneId = curr.sceneId;
+							}
+							return minDistObj;
+						},
+						{ dist: Infinity, sceneId: "" }
+					);
+					this.showPanoramaLayer(minDistObj.sceneId);
+				})
 			})
 		},
 		setBarChart(init=false) {
@@ -1175,6 +1214,7 @@ export default {
 			this.listQuery.inspectId = 0;
 			this.inspectIdList = [];
 			this.blockInfo = { total: 0, intersect: 0, ratio: 0 };
+			this.panoramaInfo = { data: [], sceneSetting: [], streetViewList: {} };
 
 			this.dataLayer.caseNow.forEach(feature => this.dataLayer.caseNow.remove(feature));
 			this.caseGeoJson = {};
@@ -1346,4 +1386,12 @@ export default {
 				object-fit: scale-down
 				&.hide-img
 					display: none
+	#panorama
+		position: absolute
+		width: 100％
+		height: 100%
+		top: 50%
+		left: 50%
+		transform: translate(-50%, -50%)
+		z-index: 10
 </style>
