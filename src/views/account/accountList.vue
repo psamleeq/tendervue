@@ -176,6 +176,11 @@ export default {
 					sortable: false,
 					width:120
 				},
+				CreateName: {
+					name: "創建人",
+					sortable: false,
+					width:120
+				},
 				Notes: {
 					name: "備註",
 					sortable: false
