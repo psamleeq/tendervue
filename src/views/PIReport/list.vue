@@ -7,7 +7,7 @@
 			</el-select>
 			<span class="filter-item">
 				<div style="font-size: 12px; color: #909399">報告日期</div>
-				<time-picker class="filter-item" shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+				<time-picker class="filter-item" shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" :disabledDate="false" @search="getList"/>
 			</span>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
