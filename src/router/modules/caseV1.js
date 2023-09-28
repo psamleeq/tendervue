@@ -6,7 +6,7 @@ const caseRouter = {
 	path: '/caseV1',
 	component: Layout,
 	redirect: '/caseV1/caseList',
-	name: 'road',
+	name: 'roadV1',
 	meta: {
 		title: '鋪面管理V1',
 		icon: 'el-icon-s-release', 

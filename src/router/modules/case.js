@@ -46,7 +46,7 @@ const caseRouter = {
 			name: 'PCIMap',
 			meta: { 
 				title: '查核地圖', 
-				roles: ['distress.inspectorOrtho']
+				roles: ['distress.inspectorMap']
 			}
 		}
 	]
