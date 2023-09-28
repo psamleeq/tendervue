@@ -66,8 +66,13 @@
 						<el-button size="mini" type="success" @click="permissionManage(row)">管理</el-button>
 					</span>
 					<span v-else>
-							<span>{{ row[column.property] }}</span>
+						<span>{{ row[column.property] }}</span>
 					</span>
+
+					<span v-if="['CreateName'].includes(column.property)">
+						{{ row.CreateName ? '' : '—' }}
+					</span>
+
 				</template>
 			</el-table-column>
 		</el-table>
