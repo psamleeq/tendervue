@@ -70,7 +70,7 @@
 					</span>
 
 					<span v-if="['CreateName'].includes(column.property)">
-						{{ row.CreateName ? '' : '—' }}
+						{{ row.CreateName ? '' : '-' }}
 					</span>
 
 				</template>
