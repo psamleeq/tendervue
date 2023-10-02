@@ -11,7 +11,9 @@
 						<span>合約</span>
 					</div>
 					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
-						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
+						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
+							<div :style="`color: #${Math.floor(val.tenderId*16777215).toString(16).substr(0, 8)}`">{{ val.name }}</div>
+						</el-option>
 					</el-select>
 				</div>
 			</div>

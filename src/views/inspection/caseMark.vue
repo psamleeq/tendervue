@@ -913,8 +913,7 @@ export default {
 // 	box-sizing: border-box
 .case-mark
 	position: relative
-	height: 100%
-	width: 100%
+	height: calc(100vh - 50px)
 	.header-bar
 		position: absolute
 		top: 0
