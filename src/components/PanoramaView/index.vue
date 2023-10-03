@@ -11,7 +11,7 @@
 				/>
 				<el-checkbox v-model="isAutoMove" @change="showPanoramaLayer(panorama.getScene())">自動前進</el-checkbox>
 				<el-checkbox v-model="isAutoRotate" @change="setAutoRotate()">自動旋轉</el-checkbox>
-				<div> {{ panorama.getScene() }}</div>
+				<div>{{ panorama.getScene() }}</div>
 				<div>{{ panoramaTestInfo }} </div>
 				<div>{{ panoramaTestInfo.position }}</div>
 			</div>
@@ -350,6 +350,7 @@ export default {
 						if(clickHandlerArgs) {
 							this.clearHotSpot(clickHandlerArgs.sceneIdNow);
 							this.$emit('setMarkerPosition', clickHandlerArgs.sceneIdNow);
+							localStorage.inspectIdNow = clickHandlerArgs.inspectIdNow;
 							localStorage.sceneIdNow = clickHandlerArgs.sceneIdNow;
 						}
 					};
@@ -362,6 +363,7 @@ export default {
 							text: lineInfo[index + 1].fileName,
 							sceneId: lineInfo[index + 1].fileName,
 							clickHandlerArgs: {
+								inspectIdNow: panoramaInfo.inspectId,
 								sceneIdNow: lineInfo[index + 1].fileName
 							},
 							clickHandlerFunc
@@ -377,6 +379,7 @@ export default {
 							sceneId: lineInfo[index - 1].fileName,
 							targetYaw: panoramaInfo.yaw + 180,
 							clickHandlerArgs: {
+								inspectIdNow: panoramaInfo.inspectId,
 								sceneIdNow: lineInfo[index - 1].fileName
 							},
 							clickHandlerFunc
@@ -736,7 +739,7 @@ export default {
 
 			if(this.panoramaInfoProps.data.length == 0) return;
 			const panoramaInfo = Object.values(this.panoramaInfoProps.data).flat(2).filter(l => l.fileName == this.panorama.getScene())[0];
-			// if(!panoramaInfo) return;
+			if(!panoramaInfo) return;
 
 			for(const caseType in this.caseGeoJson) {
 				for(const caseSpec of this.caseGeoJson[caseType].features) {

@@ -686,7 +686,7 @@ export default {
 					let path = [];
 					for(const inspecData of response.data.inspection) {
 						await fetch(inspecData.url).then(response => response.json()).then(async (json) => {
-							this.panoramaInfo.sceneSetting.push(json.sceneSetting);
+							this.panoramaInfo.sceneSetting.push({ inspectId: inspecData.InspectId, ...json.sceneSetting });
 							this.panoramaInfo.data.push(json.data);
 
 							const posData = json.data.flat().map(info => info.position);
