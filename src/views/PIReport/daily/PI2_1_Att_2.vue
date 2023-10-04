@@ -74,7 +74,7 @@ import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
-import { getCaseList, getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseList, getCaseCount, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
@@ -182,7 +182,9 @@ export default {
 				serialNumber2: '',
 				case1999Img: '',
 				listNo1999: [],
-				listUnreason: []
+				listUnreason: [],
+				AC1999: 0,
+				fac1999: 0
 			},
 			deviceType:{
 				1:'AC路面',
@@ -217,7 +219,7 @@ export default {
 	methods: {
 		async setData(perfContentId, initPage=0) {
 			return new Promise(resolve => {
-			getPerfContent({
+				getPerfContent({
 					contentId: perfContentId
 				}).then(async(response) => {
 					if (response.data.list.length == 0) {
@@ -304,15 +306,25 @@ export default {
 					zipCode: this.inputs.zipCode,
 					timeStart: startDate,
 					timeEnd: endDate
-				}).then(async (response) => {
+				}).then(response => {
 					if (response.data.list.length != 0) {
 						const list = response.data.list;
 						this.inputs.listNo1999 = list.filter(l => l.DistressSrc !== "1999交辦案件");
 						this.inputs.listUnreason = list.filter(l => (l.State & 16) && l.StateNotes.Firm !== '優於民眾查報');
 					}
-					await this.previewPdf()
-					resolve();
-					this.loading = false;
+
+					getCaseCount({
+						zipCode: Number(this.inputs.zipCode),
+						timeStart: startDate,
+						timeEnd: endDate
+					}).then(async (response) => {
+						this.inputs.AC1999 = Number(response.data.result.AC1999);
+						this.inputs.fac1999 = Number(response.data.result.fac1999);
+
+						await this.previewPdf()
+						resolve();
+						this.loading = false;
+					}).catch(err => this.loading = false);
 				}).catch(err => { this.loading = false; });
 			})
 		},
@@ -437,7 +449,7 @@ export default {
 				this.pdfDoc.autoTable({
 					theme: 'plain',
 					styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-					head: [['當日被通報案件(1999)']],
+					head: [[`當日被通報案件(1999) (AC路面: ${this.inputs.AC1999 || 0}件、人行道: ${this.inputs.fac1999 || 0}件)`]],
 					startY: this.pdfDoc.lastAutoTable.finalY,
 				})
 				this.pdfDoc.autoTable({
