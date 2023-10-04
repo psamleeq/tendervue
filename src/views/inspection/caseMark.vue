@@ -37,8 +37,8 @@
 				<span class="filter-item">
 					<div v-if="listQuery.filterType == 2" class="select-contract">
 						<el-select v-model="listQuery.filterType" popper-class="type-select">
-							<el-option label="路線" :value="1"></el-option>
-							<el-option label="合約" :value="2"></el-option>
+							<el-option label="路線" :value="1" />
+							<el-option label="合約" :value="2" />
 						</el-select>
 						<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
 							<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
@@ -53,8 +53,8 @@
 					</div>
 					<el-input v-else v-model="listQuery.inspectId" placeholder="請輸入" size="medium" style="width: 254px;">
 						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-							<el-option label="路線" :value="1"></el-option>
-							<el-option label="合約" :value="2"></el-option>
+							<el-option label="路線" :value="1" />
+							<el-option label="合約" :value="2" />
 						</el-select>
 					</el-input>
 				</span>
@@ -175,7 +175,7 @@ export default {
 				streetViewList: {}
 			},
 			options: {
-				tenderRoundMap: { },
+				tenderRoundMap: {},
 				districtList: {
 					100: {
 						name: "中正區"
@@ -1073,45 +1073,32 @@ export default {
 			.el-input__inner
 				padding-left: 5px
 				text-align: center
-		.filter-item
-			margin: 2px 5px
-		.el-tabs__header
-			background-color: rgba(#eee, 0.8)
-			.el-tabs__active-bar
-				height: 39px !important
-			.el-tabs__item
-				border: 1px solid #fff
-				border-radius: 5px
-				box-sizing: border-box
-				padding: 0 8px
-		.el-tabs__content
-			display: flex
-			align-items: center
-			height: 80px
-		.select-contract
-			.el-select:first-child .el-input__inner
-				background-color: #F5F7FA
-				color: #909399
-				border-right: none
-				border-top-right-radius: 0
-				border-bottom-right-radius: 0
-				&:focus
-					border-color: #DCDFE6
-			.el-select:last-child .el-input__inner
-				border-top-left-radius: 0
-				border-bottom-left-radius: 0
-				padding-left: 10px
-				text-align: left
-			.el-select.tender-select
-				width: 240px
-				.el-input__inner
-					padding-left: 8px
-					padding-right: 10px
-					text-align: left
-				.el-input__suffix
-					right: 0
-					margin-right: -3px
-					transform: scale(0.7)
+			.filter-item
+				margin: 2px 5px
+				.select-contract
+					.el-select:first-child .el-input__inner
+						background-color: #F5F7FA
+						color: #909399
+						border-right: none
+						border-top-right-radius: 0
+						border-bottom-right-radius: 0
+						&:focus
+							border-color: #DCDFE6
+					.el-select:last-child .el-input__inner
+						border-top-left-radius: 0
+						border-bottom-left-radius: 0
+						padding-left: 10px
+						text-align: left
+					.el-select.tender-select
+						width: 240px
+						.el-input__inner
+							padding-left: 8px
+							padding-right: 10px
+							text-align: left
+						.el-input__suffix
+							right: 0
+							margin-right: -3px
+							transform: scale(0.7)
 	.touch-div 
 		position: absolute
 		top: 0

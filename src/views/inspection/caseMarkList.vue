@@ -8,16 +8,33 @@
 			2. 已匯入過的缺失無法編輯。
 		</aside>
 		<div class="filter-container">
-			<div class="filter-item">
-				<el-input v-model="listQuery.filterId" placeholder="請輸入">
-					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-						<el-option label="路線Id" :value="1"></el-option>
-						<el-option label="缺失Id" :value="2"></el-option>
-						<el-option label="追蹤Id" :value="3"></el-option>
-						<el-option label="標記人員" :value="4"></el-option>
+			<span class="filter-item">
+				<div v-if="listQuery.filterType == 5" class="select-contract">
+					<el-select v-model="listQuery.filterType" popper-class="type-select">
+						<el-option label="路線Id" :value="1" />
+						<el-option label="缺失Id" :value="2" />
+						<el-option label="追蹤Id" :value="3" />
+						<el-option label="標記人員" :value="4" />
+						<el-option label="合約" :value="5" />
 					</el-select>
-				</el-input>
-			</div>
+					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
+						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
+							<div :style="`color: #${Math.floor(val.tenderId*16777215).toString(16).substr(0, 8)}`">{{ val.name }}</div>
+						</el-option>
+					</el-select>
+				</div>
+				<div v-else class="filter-item">
+					<el-input v-model="listQuery.filterId" placeholder="請輸入">
+						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
+							<el-option label="路線Id" :value="1" />
+							<el-option label="缺失Id" :value="2" />
+							<el-option label="追蹤Id" :value="3" />
+							<el-option label="標記人員" :value="4" />
+							<el-option label="合約" :value="5" />
+						</el-select>
+					</el-input>
+				</div>
+			</span>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button
 				class="filter-item"
@@ -32,6 +49,7 @@
 				size="mini"
 				@click="filterClear"
 				>清空過濾條件</el-button>
+			<el-checkbox v-if="listQuery.filterType == 5" v-model="listQuery.checkRoadName" style="margin-left: 20px">地址錯誤</el-checkbox>
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 		</div>
 
@@ -51,9 +69,8 @@
 			:data="list"
 			border
 			fit
-			highlight-current-row
+			:row-class-name="tableRowClassName"
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
-			stripe
 			style="width: 100%"
 		>
 			<el-table-column
@@ -161,6 +178,7 @@
 <script>
 import moment from "moment";
 import { getInspectionCaseList, setInspectionCaseList, getImportCase } from "@/api/inspection";
+import { getTenderRound } from "@/api/type";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -188,10 +206,11 @@ export default {
 			// ],
 			listQuery: {
 				filter: false,
+				checkRoadName: false,
 				filterId: "",
 				filterType: 1,
 				caseInspectId: "",
-				tenderRound: 91,
+				tenderRound: null,
 				caseType: [],
 				pageCurrent: 1,
 				pageSize: 50,
@@ -273,6 +292,21 @@ export default {
 			headersCheckVal: [],
 			allHeaders: true,
 			options: {
+				tenderRoundMap: {},
+				districtList: {
+					100: "中正區",
+					103: "大同區",
+					104: "中山區",
+					105: "松山區",
+					106: "大安區",
+					108: "萬華區",
+					110: "信義區",
+					111: "士林區",
+					112: "北投區",
+					114: "內湖區",
+					115: "南港區",
+					116: "文山區"
+				},
 				DistressType: {
 					15: "坑洞",
 					29: "縱向及橫向裂縫",
@@ -368,17 +402,53 @@ export default {
 	created() {
 		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
 		else this.headersCheckVal = [];
+
+		getTenderRound().then(response => {
+			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
+				if(cur.tenderId <= 1001) return acc;
+
+				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
+				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+
+				let name = `${cur.tenderName}`;
+				if(cur.title.length != 0) name += `_${cur.title}`;
+
+				acc[roundId] = { 
+					id: cur.id,
+					name, 
+					tenderId: cur.tenderId, 
+					isMain: cur.zipCodeSpec == 0,
+					zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
+					roundStart: cur.roundStart, 
+					roundEnd: cur.roundEnd
+				};
+				return acc;
+			}, {});
+
+			if(Object.keys(this.options.tenderRoundMap).length == 0) {
+				this.options.tenderRoundMap = { "-1": { id: -1 }};
+				this.listQuery.tenderRound = -1;
+			}
+
+			if (this.$route.query.caseInspectId) {
+				this.listQuery.filterType = 1;
+				this.listQuery.filterId = this.$route.query.caseInspectId;
+				this.getList();
+			}
+		});
 	},
 	mounted() {
 		this.dialogMapVisible = false;
-
-		if (this.$route.query.caseInspectId) {
-			this.listQuery.filterType = 1;
-			this.listQuery.filterId = this.$route.query.caseInspectId;
-			this.getList();
-		}
 	},
 	methods: {
+		tableRowClassName({row, rowIndex}) {
+			const tenderFilter = Object.values(this.options.tenderRoundMap).filter(val => val.id == row.SurveyId);
+			const tenderRound = tenderFilter.length > 0 ? tenderFilter[0] : { zipCode: 0 };
+			const checkRoadName = this.options.districtList[tenderRound.zipCode];
+
+			if (checkRoadName && !row.Place.includes(checkRoadName)) return 'danger-row';
+			else return '';
+		},
 		showImg(row, prop) {
 			const otherProp = ['ImgZoomIn', 'ImgZoomOut'].filter(imgType => imgType != prop)[0];
 			this.imgUrls = [ row[prop], row[otherProp] ];
@@ -431,7 +501,7 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		getList() {
-			if(this.listQuery.filterId.length == 0) {
+			if(this.listQuery.filterId.length == 0 && !(this.listQuery.filterType == 5 && this.listQuery.tenderRound != null)) {
 				this.$message({
 					message: "請輸入查詢內容",
 					type: "error",
@@ -447,6 +517,8 @@ export default {
 				let caseId = null;
 				let trackingId = null;
 				let dutyWith = null;
+				let surveyId = null;
+				let checkRoadName = null;
 
 				switch (this.listQuery.filterType) {
 					case 1: // 路線Id
@@ -461,14 +533,24 @@ export default {
 					case 4: // 標記人員
 						dutyWith = this.listQuery.filterId;
 						break;
+					case 5: // 標記人員
+						const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+						surveyId = tenderRound.id;
+
+						if(this.listQuery.checkRoadName) {
+							checkRoadName = this.options.districtList[tenderRound.zipCode];
+						}
+						break;
 				}
 
 				getInspectionCaseList({
 					filter: this.listQuery.filter,
-					inspectId: inspectId,
-					caseId: caseId,
-					trackingId: trackingId,
-					dutyWith: dutyWith,
+					surveyId,
+					checkRoadName,
+					inspectId,
+					caseId,
+					trackingId,
+					dutyWith,
 					caseType: JSON.stringify(this.listQuery.caseType),
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
@@ -600,6 +682,30 @@ export default {
 					right: 0
 					margin-right: -3px
 					transform: scale(0.7)
+			.select-contract
+				.el-select:first-child .el-input__inner
+					background-color: #F5F7FA
+					color: #909399
+					border-right: none
+					border-top-right-radius: 0
+					border-bottom-right-radius: 0
+					&:focus
+						border-color: #DCDFE6
+				.el-select:last-child .el-input__inner
+					border-top-left-radius: 0
+					border-bottom-left-radius: 0
+					padding-left: 10px
+					text-align: left
+				.el-select.tender-select
+					width: 240px
+					.el-input__inner
+						padding-left: 8px
+						padding-right: 10px
+						text-align: left
+					.el-input__suffix
+						right: 0
+						margin-right: -3px
+						transform: scale(0.7)
 	.road-dir, .el-date-editor
 		width: 110px
 		.el-input-group__prepend .el-select
@@ -611,19 +717,24 @@ export default {
 	.road-dir .el-input__inner
 		width: 40px
 		padding: 5px 5px 5px 0
-	.btn-action
-		margin-left: 5px
-		padding: 5px
+	.el-table
+		.btn-action
+			margin-left: 5px
+			padding: 5px
+		.el-icon-success
+			margin-right: -10px
+		.el-icon-error
+			color: #F56C6C
+		.danger-row
+			background: #F9EBEB
+			&.hover-row > td
+				background-color: initial !important
 	.img-preview
 		width: 100%
 		.el-image-viewer__mask
 			opacity: 0.7
 		.el-icon-circle-close
 			color:  #FFF
-	.el-icon-success
-		margin-right: -10px
-	.el-icon-error
-		color: #F56C6C
 	.dialog-filter
 		.el-select
 			width: 55px
