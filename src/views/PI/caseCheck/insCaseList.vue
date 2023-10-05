@@ -561,14 +561,10 @@ export default {
 			return moment(time).format("YYYY/MM/DD");
 		},
 		handleDownload() {
-			this.loading = true;
-			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 
 			getInsCaseList({
-				tenderId: this.listQuery.zipCode,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				surveyId: tenderRound.id,
 				pageCurrent: 1,
 				pageSize: this.total
 			}).then(response => {
