@@ -49,7 +49,7 @@
 				size="mini"
 				@click="filterClear"
 				>清空過濾條件</el-button>
-			<el-checkbox v-if="listQuery.filterType == 5" v-model="listQuery.checkRoadName" style="margin-left: 20px">地址錯誤</el-checkbox>
+			<el-checkbox v-if="[1,5].includes(listQuery.filterType)" v-model="listQuery.checkRoadName" style="margin-left: 20px">地址錯誤</el-checkbox>
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 		</div>
 
@@ -518,7 +518,6 @@ export default {
 				let trackingId = null;
 				let dutyWith = null;
 				let surveyId = null;
-				let checkRoadName = null;
 
 				switch (this.listQuery.filterType) {
 					case 1: // 路線Id
@@ -536,18 +535,14 @@ export default {
 					case 5: // 標記人員
 						const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 						surveyId = tenderRound.id;
-
-						if(this.listQuery.checkRoadName) {
-							checkRoadName = this.options.districtList[tenderRound.zipCode];
-						}
 						break;
 				}
 
 				getInspectionCaseList({
 					filter: this.listQuery.filter,
 					surveyId,
-					checkRoadName,
 					inspectId,
+					checkRoadName: this.listQuery.checkRoadName,
 					caseId,
 					trackingId,
 					dutyWith,
