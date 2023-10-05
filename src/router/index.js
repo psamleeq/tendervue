@@ -24,6 +24,7 @@ import PIReportRouter from './modules/PIReport';
 import otherRouter from './modules/other';
 import carRouter from './modules/car';
 import appRouter from './modules/app';
+import personInfo from './modules/personInfo'
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -98,7 +99,8 @@ export const constantRoutes = [
       }
     ],
 		hidden: true
-  }
+  },
+	personInfo
 ]
 
 /**
