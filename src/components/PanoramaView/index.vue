@@ -701,8 +701,6 @@ export default {
 					isPrev
 				},
 				clickHandlerFunc: (evt, clickHandlerArgs) => {
-					this.resetCaseHotSpot();
-
 					this.caseInfo = Object.assign({}, this.caseInfo, {
 						trackingId: clickHandlerArgs.prop.TrackingId || prop.Id,
 						distressType: Number(clickHandlerArgs.prop.DistressType),

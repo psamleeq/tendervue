@@ -684,7 +684,6 @@ export default {
 						localStorage.tenderRoundNow = this.tenderRoundNow;
 						localStorage.removeItem("sceneIdNow");
 					}
-					this.$refs.panoramaView.resetCaseHotSpot();	
 					this.loading = false;
 				});
 			}).catch(err => this.loading = false);
