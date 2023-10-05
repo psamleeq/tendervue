@@ -358,7 +358,7 @@ export default {
 			pickerOptions: {
 				firstDayOfWeek: 1,
 			},
-			startDate: moment().startOf("d").subtract(1, "d"),
+			startDate: moment().startOf("d"),
 			birthDate: moment().startOf("d").subtract(1, "d"),
 			academicTermStart: moment().startOf("d").subtract(1, "d"),
 			academicTermEnd: moment().startOf("d").subtract(1, "d"),
