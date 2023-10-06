@@ -373,7 +373,7 @@ export default {
 			pageTurn: [-1, -1],
 			template: {},
 			inputForm: {
-				department: '',
+				department: '資訊部',
 				position: '',
 				name: '',
 				sex: '',
