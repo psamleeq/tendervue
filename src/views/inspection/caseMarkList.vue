@@ -35,6 +35,7 @@
 					</el-input>
 				</div>
 			</span>
+			<time-picker class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button
 				class="filter-item"
@@ -62,7 +63,8 @@
 			</el-checkbox-group>
 		</div>
 
-		<h5 v-if="list.length != 0">總案件：{{ total }}</h5>
+		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+		<h5 v-if="list.length != 0">案件數：{{ total }}</h5>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -179,13 +181,14 @@
 import moment from "moment";
 import { getInspectionCaseList, setInspectionCaseList, getImportCase } from "@/api/inspection";
 import { getTenderRound } from "@/api/type";
+import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
 	name: "caseMarkerList",
-	components: { Pagination, ElImageViewer, MapViewer },
+	components: { TimePicker, Pagination, ElImageViewer, MapViewer },
 	data() {
 		return {
 			loading: false,
@@ -193,6 +196,7 @@ export default {
 			showImgViewer: false,
 			dialogMapVisible: true,
 			dialogFilterVisible: false,
+			timeTabId: 1,
 			filterNow: false,
 			scrollTop: 0,
 			map: {},
@@ -200,10 +204,8 @@ export default {
 			// timeTabId: moment().year(),
 			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
-			// dateRange: [
-			// 	moment().year(2022).month(5).startOf("month").toDate(),
-			// 	moment().endOf("year").toDate(),
-			// ],
+			dateRange: [ moment().startOf("day").toDate(), moment().endOf("day").toDate()],
+			searchRange: "",
 			listQuery: {
 				filter: false,
 				checkRoadName: false,
@@ -508,6 +510,9 @@ export default {
 				});
 			} else {
 				this.loading = true;
+				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+				this.searchRange = startDate + " - " + endDate;
 				this.list = [];
 				this.caseInfo = {};
 				// this.$router.push({ query: { caseInspectId: this.listQuery.caseInspectId }});
@@ -547,6 +552,8 @@ export default {
 					trackingId,
 					dutyWith,
 					caseType: JSON.stringify(this.listQuery.caseType),
+					timeStart: startDate,
+					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
@@ -649,6 +656,9 @@ export default {
 			else if (["roadDir"].includes(column.property)) return `${this.options.roadDir[row.Direction]}-${row.Lane}`;
 			else if (!["id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
 			else return row[column.property] || "-";
+		},
+		formatDate(date) {
+			return date ? moment(date).format("YYYY/MM/DD") : "";
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD hh:MM:ss");
