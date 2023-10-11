@@ -711,7 +711,7 @@ export default {
 						right: 0
 						margin-right: -3px
 						transform: scale(0.7)
-	.road-dir, .el-date-editor
+	.road-dir, .el-date-editor.el-date-editor--date
 		width: 110px
 		.el-input-group__prepend .el-select
 			width: 40px
