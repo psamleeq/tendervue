@@ -502,7 +502,7 @@ export default {
 	},
 	methods: {
 		async getList() {
-			return new Promise(resolve => {
+			return new Promise((resolve, reject) => {
 				this.loading = true;
 
 				let date = moment(this.searchDate).format("YYYY-MM-DD");
@@ -536,8 +536,8 @@ export default {
 					// }
 					resolve();
 					// if(this.csvFileList.length > 0) this.checkCsv();
-					this.loading = false;
-				}).catch(err => { this.loading = false;  resolve();});
+					// this.loading = false;
+				}).catch(err => { console.log(err); reject(err);});
 			});
 		},
 		caseFilterList(list) {
@@ -623,22 +623,29 @@ export default {
 				});
 				this.handleRemove(); 
 			} else {
-				await this.getList();
-				let reader = new FileReader();
-				// reader.readAsText(file.raw, "UTF-8");
-				reader.readAsArrayBuffer(file.raw);
-				reader.onload = (evt) => {
-					// 讀取CSV內容
-					// const fileString = evt.target.result;
-					const buffer = Buffer.from(evt.target.result);
-					const type = jschardet.detect(buffer);
-					// console.log(type);
-					const fileString = iconv.decode(buffer, type.encoding);
+				this.getList().then(() => {
+					let reader = new FileReader();
+					// reader.readAsText(file.raw, "UTF-8");
+					reader.readAsArrayBuffer(file.raw);
+					reader.onload = (evt) => {
+						// 讀取CSV內容
+						// const fileString = evt.target.result;
+						const buffer = Buffer.from(evt.target.result);
+						const type = jschardet.detect(buffer);
+						// console.log(type);
+						const fileString = iconv.decode(buffer, type.encoding);
 
-					//轉成array
-					this.csvData = this.csvToArray(fileString);
-					this.checkCsv();
-				}
+						//轉成array
+						this.csvData = this.csvToArray(fileString);
+						this.checkCsv();
+					}
+				}).catch(err => {
+					this.$message({
+						type: "warning",
+						message: "取得列表錯誤，請稍後再試"
+					});
+					this.handleRemove();
+				});
 			}
 		},
 		checkCsv() {
@@ -750,8 +757,8 @@ export default {
 			if(fileList == undefined) this.csvFileList = [];
 			else this.csvFileList = JSON.parse(JSON.stringify(fileList));
 			this.$refs.uploadFile.clearFiles();
-			this.loading = false;
 			this.clearAll();
+			this.loading = false;
 			// this.getList();
 		},
 		clearAll() {
