@@ -67,7 +67,7 @@
 					</el-form-item>
 					<el-form-item prop="roadDir" label="車道">
 						<span v-if="isReview">{{ options.roadDir[caseInfo.direction] }} - {{ caseInfo.lane }}</span>
-						<el-input v-else class="road-dir" v-model="caseInfo.lane" size="mini">
+						<el-input v-else class="road-dir" type="number" v-model="caseInfo.lane" size="mini" :min="1" :max="5" @blur="changeValue(caseInfo)">
 							<el-select slot="prepend" v-model="caseInfo.direction" popper-class="type-select" size="mini">
 								<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
 							</el-select>
@@ -316,6 +316,11 @@ export default {
 		});
 	},
 	methods: {
+		changeValue(caseInfo) {
+			if(caseInfo.lane) caseInfo.lane = caseInfo.lane.replace(/[^\d]/g,''); 
+			if(caseInfo.lane <= 1) caseInfo.lane = 1; 
+			if(caseInfo.lane >=5) caseInfo.lane = 5; 
+		},
 		setHeading() {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
 		},
