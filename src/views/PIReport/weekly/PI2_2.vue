@@ -321,7 +321,6 @@ export default {
 				timeStart,
 				timeEnd
 			}).then(response => {
-
 				getPerfContent({
 					reportId: this.listQuery.reportId,
 					perfItem: 202,
@@ -332,7 +331,7 @@ export default {
 					let examNum = 0;
 					if(content.inputs && content.inputs.listOther) {
 						examNum = content.inputs.listOther.reduce((acc, cur) => {
-							if(cur.distressSrc.includes("抽查")) acc += (Number(cur.AC_total) + Number(cur.facility_total));
+							if(!response.data.result.caseTotal_informSrc.includes(cur.distressSrc)) acc += (Number(cur.AC_total) + Number(cur.facility_total));
 							return acc
 						}, 0);
 					}
