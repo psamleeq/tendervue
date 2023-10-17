@@ -35,7 +35,7 @@
 					</el-input>
 				</div>
 			</span>
-			<time-picker class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+			<time-picker v-if="listQuery.filterType == 4" class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button
 				class="filter-item"
@@ -537,7 +537,7 @@ export default {
 					case 4: // 標記人員
 						dutyWith = this.listQuery.filterId;
 						break;
-					case 5: // 標記人員
+					case 5: // 合約
 						const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 						surveyId = tenderRound.id;
 						break;

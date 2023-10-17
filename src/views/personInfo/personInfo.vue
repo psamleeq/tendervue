@@ -10,7 +10,6 @@
 							<el-button type="primary" plain icon="el-icon-document" size="small" @click="handleDownload()">輸出</el-button>
 						</div>
 						
-						<!--- 捲起捲起來 --->
 						<el-collapse v-model="activeNames">
 							<el-collapse-item title="資料表格" name="1">
 								<el-form-item label="部門" :label-width="labelWidth1">
@@ -530,7 +529,6 @@ export default {
 				this.inputs[data] = this.inputForm[data];
 			}
 			
-			//檢查日期 沒有做資料轉換
 			const startDate = moment(this.startDate)
 			const birthDate = moment(this.birthDate)
 			const academicTermStart = moment(this.academicTermStart)
