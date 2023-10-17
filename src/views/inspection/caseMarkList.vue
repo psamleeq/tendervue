@@ -35,17 +35,7 @@
 					</el-input>
 				</div>
 			</span>
-				<div v-if="listQuery.filterType == 4" class="filter-item">
-					<el-select v-model="listQuery.filterType" popper-class="type-select">
-						<el-option label="路線Id" :value="1" />
-						<el-option label="缺失Id" :value="2" />
-						<el-option label="追蹤Id" :value="3" />
-						<el-option label="標記人員" :value="4" />
-						<el-option label="合約" :value="5" />
-					</el-select>
-					<time-picker class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
-				</div>
-			
+			<time-picker v-if="listQuery.filterType == 4" class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button
 				class="filter-item"
