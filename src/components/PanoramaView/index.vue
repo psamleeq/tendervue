@@ -19,11 +19,11 @@
 			<el-card v-if="hotSpotIdList.dot.length > 1 || isReview || caseInfo.isPrev" class="info-box right">
 				<el-form :model="caseInfo" label-width="70px" size="small">
 					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
-						<span v-if="isReview">{{ caseInfo.trackingId }}</span>
-						<el-input v-else v-model="caseInfo.trackingId" size="mini" style="width: 130px" @change="trackingCase()" />
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.trackingId }}</span>
+						<el-input v-else v-model="caseInfo.trackingId" :class="{'track-highlight': Number(caseInfo.trackingId) != 0}" size="mini" style="width: 130px" @change="trackingCase()" />
 					</el-form-item>
-					<el-form-item prop="dateReport" label="通報時間">
-						<span v-if="isReview">{{ formatTime(caseInfo.dateReport) }}</span>
+					<el-form-item prop="dateReport" label="通報時間" style="margin-bottom: 0">
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ formatTime(caseInfo.dateReport) }}</span>
 						<el-date-picker
 							v-else
 							v-model="caseInfo.dateReport"
@@ -33,40 +33,43 @@
 							size="mini"
 						/>
 					</el-form-item>
-					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 5px">
-						<span v-if="isReview">{{ options.caseTypeMap[caseInfo.distressType] }}</span>
+					<el-form-item v-if="caseInfo.dateRepair_At" prop="dateRepair_At" label="標記修復">
+						<span>{{ formatTime(caseInfo.dateRepair_At) }}</span>
+					</el-form-item>
+					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 0">
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.caseTypeMap[caseInfo.distressType] }}</span>
 						<el-select v-else v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
 							<el-option v-for="key in options.caseTypeMapOrder" :key="key" :label="options.caseTypeMap[key]" :value="Number(key)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="level" label="缺失程度">
-						<span v-if="isReview">{{ options.caseLevelMap[caseInfo.distressLevel] }}</span>
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.caseLevelMap[caseInfo.distressLevel] }}</span>
 						<el-select v-else v-model="caseInfo.distressLevel" size="mini">
 							<el-option v-for="(name, level) in options.caseLevelMap" :key="level" :label="name" :value="Number(level)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="millingLength" label="預估長" style="margin-bottom: 0">
-						<span v-if="isReview">{{ caseInfo.millingLength }}</span>
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.millingLength }}</span>
 						<el-input v-else v-model="caseInfo.millingLength" size="mini" style="width: 130px" @change="calArea()" />
 					</el-form-item>
 					<el-form-item prop="millingWidth" label="預估寬" style="margin-bottom: 0">
-						<span v-if="isReview">{{ caseInfo.millingWidth }}</span>
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.millingWidth }}</span>
 						<el-input v-else v-model="caseInfo.millingWidth" size="mini" style="width: 130px" @change="calArea()" />
 					</el-form-item>
 					<el-form-item prop="millingArea" label="預估面積">
-						<span v-if="isReview">{{ caseInfo.millingArea }}</span>
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.millingArea }}</span>
 						<el-input v-else v-model="caseInfo.millingArea" size="mini" style="width: 130px" />
 					</el-form-item>
-					<el-form-item prop="address" label="地址" style="margin-bottom: 5px">
-						<span v-if="isReview">{{ caseInfo.place }}</span>
+					<el-form-item prop="address" label="地址" style="margin-bottom: 0">
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.place }}</span>
 						<el-input v-else v-model="caseInfo.place" type="textarea" :rows="2" />
-						<div v-if="!isReview" slot="label">
+						<div v-if="!(isReview || caseInfo.dateRepair_At)" slot="label">
 							<div style="height: 24px; line-height: 24px; margin: -3px 2px -5px 0">地址</div>
 							<el-button type="success" size="mini" style="padding: 5px" :loading="isGetAddress" @click="getAddress()">填入</el-button>
 						</div>
 					</el-form-item>
-					<el-form-item prop="roadDir" label="車道">
-						<span v-if="isReview">{{ options.roadDir[caseInfo.direction] }} - {{ caseInfo.lane }}</span>
+					<el-form-item prop="roadDir" label="車道" style="margin-bottom: 0">
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.roadDir[caseInfo.direction] }} - {{ caseInfo.lane }}</span>
 						<el-input v-else class="road-dir" type="number" v-model="caseInfo.lane" size="mini" :min="1" :max="5" @blur="changeValue(caseInfo)">
 							<el-select slot="prepend" v-model="caseInfo.direction" popper-class="type-select" size="mini">
 								<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
@@ -81,7 +84,7 @@
 									<el-image slot="reference" style="width: 100px; height: 100px" :src="caseInfo[imgType]" fit="contain" @click="$emit('setCaseImgViewer', { imgUrls: [ caseInfo[imgType] ], isOpen: true })" />
 								</el-popover>
 							</el-col>
-							<el-col v-if="!isReview" class="btn-img-action" :span="8">
+							<el-col v-if="!(isReview || caseInfo.dateRepair_At)" class="btn-img-action" :span="8">
 								<el-button type="success" size="mini" @click="screenshot(imgType)">截圖</el-button>
 								<el-button v-if="caseInfo[imgType].length > 0" type="danger" size="mini" @click="caseInfo[imgType] = ''">刪除</el-button>
 							</el-col>
@@ -89,8 +92,9 @@
 					</el-form-item>
 				</el-form>
 				<el-button-group class="btn-action-group">
-					<el-button v-if="!isReview" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase()" :loading="isUpload">{{ caseInfo.isPrev || caseInfo.trackingId != 0 ? '追蹤' : '新增' }}</el-button>
-					<el-button type="danger" @click="clearAll(); resetCaseHotSpot();" :disabled="isUpload">{{ isReview ? '關閉' : '清除' }}</el-button>
+					<el-button v-if="!(isReview || caseInfo.dateRepair_At)" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase()" :loading="isUpload">{{ caseInfo.isPrev || caseInfo.trackingId != 0 ? '追蹤' : '新增' }}</el-button>
+					<el-button v-if="!(isReview || caseInfo.dateRepair_At) && (caseInfo.isPrev || caseInfo.trackingId != 0)" type="warning" @click="markCase()" :loading="isUpload">標記修復</el-button>
+					<el-button type="danger" @click="clearAll(); resetCaseHotSpot();" :disabled="isUpload">{{ (isReview || caseInfo.dateRepair_At) ? '關閉' : '清除' }}</el-button>
 				</el-button-group>
 			</el-card>
 
@@ -442,7 +446,7 @@ export default {
 		trackingCase() {
 			this.caseInfo.trackingId = Number(this.caseInfo.trackingId);
 			if(Number(this.caseInfo.trackingId) == 0) return;
-			
+
 			const caseFilter = this.caseGeoJson.casePrev.features.filter(caseSpec => caseSpec.properties.Id == Number(this.caseInfo.trackingId));
 
 			if(caseFilter.length > 0) {
@@ -453,7 +457,9 @@ export default {
 					place: caseSpec.Place,
 					direction: caseSpec.Direction,
 					lane: caseSpec.Lane,
-					isPrev: caseSpec.isPrev
+					isPrev: caseSpec.isPrev,
+					dateRepair_At: caseSpec.DateRepair_At,
+					dateRepair_With: caseSpec.DateRepair_With
 				});
 			} else {
 				this.$message({
@@ -477,6 +483,14 @@ export default {
 				// console.log(this.caseInfo);
 
 				this.$emit("uploadCase", this.caseInfo);
+			}).catch(err => console.log(err));
+		},
+		markCase(isActive = false) {
+			this.$confirm(`確定標記修復?`, "確認", { showClose: false }).then(() => {
+				this.$emit('update:loading', true);
+				this.$emit('update:isUpload', true);
+
+				this.$emit("markCase", { id: this.caseInfo.trackingId, isActive });
 			}).catch(err => console.log(err));
 		},
 		// 估算長度 & 面積
@@ -694,7 +708,7 @@ export default {
 				pitch,
 				yaw,
 				// text: hoverText,
-				cssClass: `hotSpotIcon alert ${isPrev ? "prev" : ""} caseId_${prop.Id}`,
+				cssClass: `hotSpotIcon alert ${isPrev && prop.DateRepair_At ? "repair" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
 				createTooltipArgs: {
 					prop
 				},
@@ -711,6 +725,7 @@ export default {
 				},
 				clickHandlerFunc: (evt, clickHandlerArgs) => {
 					this.caseInfo = Object.assign({}, this.caseInfo, {
+						dateReport: clickHandlerArgs.prop.DateRepair_At ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
 						trackingId: clickHandlerArgs.prop.TrackingId || prop.Id,
 						distressType: Number(clickHandlerArgs.prop.DistressType),
 						distressLevel: Number(clickHandlerArgs.prop.DistressLevel),
@@ -721,8 +736,10 @@ export default {
 						direction: clickHandlerArgs.prop.Direction,
 						lane: clickHandlerArgs.prop.Lane,
 						isPrev: clickHandlerArgs.isPrev,
-						imgZoomIn: clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomIn ? "" : clickHandlerArgs.prop.ImgZoomIn,
-						imgZoomOut: clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomOut ? "" : clickHandlerArgs.prop.ImgZoomOut
+						dateRepair_At: clickHandlerArgs.prop.DateRepair_At,
+						dateRepair_With: clickHandlerArgs.prop.DateRepair_With,
+						imgZoomIn: !clickHandlerArgs.prop.DateRepair_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomIn) ? "" : clickHandlerArgs.prop.ImgZoomIn,
+						imgZoomOut: !clickHandlerArgs.prop.DateRepair_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomOut) ? "" : clickHandlerArgs.prop.ImgZoomOut
 					});
 
 					// if(clickHandlerArgs.isPrev) {
@@ -734,7 +751,7 @@ export default {
 					// } 
 
 					this.isReview = this.isEdit ? !clickHandlerArgs.isPrev : true;
-					this.isSticky = !this.isSticky; 
+					this.isSticky = true; 
 				}
 			};
 
@@ -940,6 +957,9 @@ export default {
 				background-size: 100% 
 				filter: drop-shadow(0px 0px 3px red)
 				z-index: 10
+				&.repair
+					background-image: url('../../../public/assets/icon/icon-alert-circle.png')
+					filter: drop-shadow(0px 0px 2px lightcoral)
 				&.prev
 					background-image: url('../../../public/assets/icon/icon_alert_plus.png')
 					filter: drop-shadow(0px 0px 2px tomato)
@@ -999,6 +1019,9 @@ export default {
 							padding: 5px 0
 						.el-input__inner
 							text-align: center
+					.el-input.track-highlight .el-input__inner
+						border: 1px solid #67C23A
+						background-color: rgba(#67C23A, 1)
 					.btn-img-action
 						display: flex
 						flex-direction: column

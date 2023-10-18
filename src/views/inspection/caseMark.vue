@@ -101,7 +101,7 @@
 					<span />
 					<span />
 				</div>
-				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @setCaseImgViewer="setCaseImgViewer" @uploadCase="uploadCase" />
+				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @setCaseImgViewer="setCaseImgViewer" @uploadCase="uploadCase" @markCase="markCase" />
 			</el-col>
 		</el-row> 
 
@@ -117,7 +117,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
-import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase, getInspectionRoute } from "@/api/inspection";
+import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase, markInspectionCase, getInspectionRoute } from "@/api/inspection";
 import { getTenderRound } from "@/api/type";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
@@ -560,14 +560,14 @@ export default {
 					};
 				} else if(feature.getProperty("isLine")) {
 					return { 
-						strokeColor: isPrev ? '#556B2F' : color,
+						strokeColor: feature.getProperty("DateRepair_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
 						strokeWeight: 3,
 						strokeOpacity: isPrev ? 0.4 : 0.8,
 						fillOpacity: 0
 					};
 				} else {
 					return { 
-						strokeColor: isPrev ? '#556B2F' : color,
+						strokeColor: feature.getProperty("DateRepair_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
 						strokeWeight: 1,
 						strokeOpacity: 1,
 						fillColor: color,
@@ -787,6 +787,22 @@ export default {
 				console.log(err);
 				this.loading = false;
 				this.isUpload = false;
+			})
+		},
+		markCase({id, isActive}) {
+			this.loading = true;
+
+			markInspectionCase(id, { isActive }).then(response => {
+				if (response.statusCode == 20000) {
+					this.$message({
+						message: isActive ? "解除成功" : "標記成功",
+						type: "success",
+					});
+					this.getList();
+				}
+			}).catch(err => {
+				console.log(err);
+				this.getList();
 			})
 		},
 		openPanorama(force = false, isReset = false) {
