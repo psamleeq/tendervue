@@ -466,6 +466,18 @@ export default {
 					this.map.overlayMapTypes.push(labelsMapType);
 				}
 
+				// 載入區域GeoJson
+				this.dataLayer.district = new google.maps.Data({ map: this.map });
+				this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
+				this.dataLayer.district.setStyle({
+					strokeColor: "#F08080",
+					strokeWeight: 3,
+					strokeOpacity: 0.3,
+					fillColor: "#000000",
+					fillOpacity: 0,
+					zIndex: 0
+				})
+
 				// 缺失
 				this.dataLayer.caseNow = new google.maps.Data({ map: this.map });
 				this.setDataLayer(this.dataLayer.caseNow);
@@ -722,6 +734,19 @@ export default {
 						geoJSON.features.push(feature);
 					}
 					this.dataLayer.route.addGeoJson(geoJSON);
+
+					this.dataLayer.district.forEach(feature => {
+						// console.log(feature);
+						const condition = this.options.districtList[this.listQuery.inspectRoundZipCode].name.includes(feature.getProperty("TOWNNAME"));
+						this.dataLayer.district.overrideStyle(feature, {
+							strokeColor: "#F08080",
+							strokeWeight: 3,
+							strokeOpacity: condition ? 0.9 : 0.2,
+							fillColor: "#000000",
+							fillOpacity: condition ? 0 : 0.4,
+							zIndex: 0
+						})
+					});
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
