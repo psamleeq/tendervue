@@ -1,7 +1,7 @@
 <template>
 	<div class="case-mark" v-loading="loading"> 
 		<div class="header-bar">
-			<h2 class="route-title">缺失標記</h2>
+			<h2 class="route-title">標記缺失</h2>
 			<div class="filter-container">
 				<span class="filter-item" style="display: inline-flex">
 					<el-button :type="showLayerAttach ? 'primary' : 'info'" @click="showLayerAttach = !showLayerAttach">路線圖層</el-button>
