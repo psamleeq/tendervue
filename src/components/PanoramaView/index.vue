@@ -16,7 +16,7 @@
 				<div>{{ panoramaTestInfo.position }}</div>
 			</div>
 
-			<el-card v-if="hotSpotIdList.dot.length > 1 || isReview" class="info-box right">
+			<el-card v-if="hotSpotIdList.dot.length > 1 || isReview || caseInfo.isPrev" class="info-box right">
 				<el-form :model="caseInfo" label-width="70px" size="small">
 					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
 						<span v-if="isReview">{{ caseInfo.trackingId }}</span>
@@ -89,7 +89,7 @@
 					</el-form-item>
 				</el-form>
 				<el-button-group class="btn-action-group">
-					<el-button v-if="!isReview" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase()" :loading="isUpload">{{ caseInfo.isPrev ? '追蹤' : '新增' }}</el-button>
+					<el-button v-if="!isReview" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase()" :loading="isUpload">{{ caseInfo.isPrev || caseInfo.trackingId != 0 ? '追蹤' : '新增' }}</el-button>
 					<el-button type="danger" @click="clearAll(); resetCaseHotSpot();" :disabled="isUpload">{{ isReview ? '關閉' : '清除' }}</el-button>
 				</el-button-group>
 			</el-card>
@@ -416,6 +416,7 @@ export default {
 		},
 		showPanoramaLayer(sceneId) {
 			// console.log("showPanoramaLayer");
+			this.clearHotSpot();
 			this.$emit("showPanoramaLayer", sceneId);
 		},
 		forwardPanorama() {
@@ -439,6 +440,9 @@ export default {
 			} else this.panorama.stopAutoRotate();
 		},
 		trackingCase() {
+			this.caseInfo.trackingId = Number(this.caseInfo.trackingId);
+			if(Number(this.caseInfo.trackingId) == 0) return;
+			
 			const caseFilter = this.caseGeoJson.casePrev.features.filter(caseSpec => caseSpec.properties.Id == Number(this.caseInfo.trackingId));
 
 			if(caseFilter.length > 0) {
@@ -721,13 +725,13 @@ export default {
 						imgZoomOut: clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomOut ? "" : clickHandlerArgs.prop.ImgZoomOut
 					});
 
-					if(clickHandlerArgs.isPrev) {
-						for(const point of clickHandlerArgs.prop.Coordinates) {
-							const coordinates = { lat: point[1], lng: point[0] };
-							const hotSpot = this.addDotHotSpot(this.getCoords(coordinates), 1);
-							hotSpot.coordinates = coordinates;
-						}
-					} 
+					// if(clickHandlerArgs.isPrev) {
+					// 	for(const point of clickHandlerArgs.prop.Coordinates) {
+					// 		const coordinates = { lat: point[1], lng: point[0] };
+					// 		const hotSpot = this.addDotHotSpot(this.getCoords(coordinates), 1);
+					// 		hotSpot.coordinates = coordinates;
+					// 	}
+					// } 
 
 					this.isReview = this.isEdit ? !clickHandlerArgs.isPrev : true;
 					this.isSticky = !this.isSticky; 
