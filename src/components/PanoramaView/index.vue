@@ -33,7 +33,7 @@
 							size="mini"
 						/>
 					</el-form-item>
-					<el-form-item v-if="caseInfo.dateRepair_At" prop="dateRepair_At" label="標記修復">
+					<el-form-item v-if="caseInfo.dateRepair_At" prop="dateRepair_At" label="標記完工">
 						<span>{{ formatTime(caseInfo.dateRepair_At) }}</span>
 					</el-form-item>
 					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 0">
@@ -92,8 +92,8 @@
 					</el-form-item>
 				</el-form>
 				<el-button-group class="btn-action-group">
-					<el-button v-if="!(isReview || caseInfo.dateRepair_At)" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase()" :loading="isUpload">{{ caseInfo.isPrev || caseInfo.trackingId != 0 ? '追蹤' : '新增' }}</el-button>
-					<el-button v-if="!(isReview || caseInfo.dateRepair_At) && (caseInfo.isPrev || caseInfo.trackingId != 0)" type="warning" @click="markCase()" :loading="isUpload">標記修復</el-button>
+					<el-button v-if="!(isReview || caseInfo.dateRepair_At)" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase(1)" :loading="isUpload">{{ caseInfo.isPrev || caseInfo.trackingId != 0 ? '追蹤' : '新增' }}</el-button>
+					<el-button v-if="!(isReview || caseInfo.dateRepair_At) && (caseInfo.isPrev || caseInfo.trackingId != 0)" type="warning" @click="uploadCase(2)" :loading="isUpload">標記完工</el-button>
 					<el-button type="danger" @click="clearAll(); resetCaseHotSpot();" :disabled="isUpload">{{ (isReview || caseInfo.dateRepair_At) ? '關閉' : '清除' }}</el-button>
 				</el-button-group>
 			</el-card>
@@ -457,9 +457,9 @@ export default {
 					place: caseSpec.Place,
 					direction: caseSpec.Direction,
 					lane: caseSpec.Lane,
+					coordinates: caseSpec.Coordinates,
 					isPrev: caseSpec.isPrev,
-					dateRepair_At: caseSpec.DateRepair_At,
-					dateRepair_With: caseSpec.DateRepair_With
+					dateRepair_At: caseSpec.DateRepair_At
 				});
 			} else {
 				this.$message({
@@ -468,13 +468,14 @@ export default {
 				});
 			}
 		},
-		uploadCase() {
-			this.$confirm(`確定上傳缺失?`, "確認", { showClose: false }).then(() => {
+		uploadCase(uploadType = 1) {
+			this.$confirm(`確定${uploadType == 1 ? '上傳缺失' : '標記完工'}?`, "確認", { showClose: false }).then(() => {
 				this.$emit('update:loading', true);
 				this.$emit('update:isUpload', true);
+				this.caseInfo.uploadType = uploadType;
 
-				let coordinates = this.hotSpotIdList.dot.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat]));
-				if(this.caseInfo.distressType != 29) coordinates.push(coordinates[0]);
+				let coordinates = uploadType == 1 ? this.hotSpotIdList.dot.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat])) : this.caseInfo.coordinates;
+				if(uploadType == 1 && this.caseInfo.distressType != 29) coordinates.push(coordinates[0]);
 				// console.log(coordinates);
 				this.caseInfo.geoJson = {
 					"type": this.caseInfo.distressType == 29 ? "MultiLineString" : 'MultiPolygon',
@@ -483,14 +484,6 @@ export default {
 				// console.log(this.caseInfo);
 
 				this.$emit("uploadCase", this.caseInfo);
-			}).catch(err => console.log(err));
-		},
-		markCase(isActive = false) {
-			this.$confirm(`確定標記修復?`, "確認", { showClose: false }).then(() => {
-				this.$emit('update:loading', true);
-				this.$emit('update:isUpload', true);
-
-				this.$emit("markCase", { id: this.caseInfo.trackingId, isActive });
 			}).catch(err => console.log(err));
 		},
 		// 估算長度 & 面積
@@ -708,7 +701,7 @@ export default {
 				pitch,
 				yaw,
 				// text: hoverText,
-				cssClass: `hotSpotIcon alert ${isPrev && prop.DateRepair_At ? "repair" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
+				cssClass: `hotSpotIcon alert ${prop.DateRepair_At ? "repair" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
 				createTooltipArgs: {
 					prop
 				},
@@ -737,9 +730,9 @@ export default {
 						lane: clickHandlerArgs.prop.Lane,
 						isPrev: clickHandlerArgs.isPrev,
 						dateRepair_At: clickHandlerArgs.prop.DateRepair_At,
-						dateRepair_With: clickHandlerArgs.prop.DateRepair_With,
 						imgZoomIn: !clickHandlerArgs.prop.DateRepair_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomIn) ? "" : clickHandlerArgs.prop.ImgZoomIn,
-						imgZoomOut: !clickHandlerArgs.prop.DateRepair_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomOut) ? "" : clickHandlerArgs.prop.ImgZoomOut
+						imgZoomOut: !clickHandlerArgs.prop.DateRepair_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomOut) ? "" : clickHandlerArgs.prop.ImgZoomOut,
+						coordinates: clickHandlerArgs.prop.Coordinates
 					});
 
 					// if(clickHandlerArgs.isPrev) {

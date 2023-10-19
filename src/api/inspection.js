@@ -59,14 +59,6 @@ export function uploadInspectionCase(data) {
 	})
 }
 
-export function markInspectionCase(id, data) {
-	return request({
-		url: `/inspection/caseMark/${id}`,
-		method: 'put',
-		data
-	})
-}
-
 // 標記列表
 export function getInspectionCaseList(query) {
 	return request({

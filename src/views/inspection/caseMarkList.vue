@@ -50,8 +50,11 @@
 				size="mini"
 				@click="filterClear"
 				>清空過濾條件</el-button>
-			<el-checkbox v-if="[1,5].includes(listQuery.filterType)" v-model="listQuery.checkRoadName" style="margin-left: 20px">地址錯誤</el-checkbox>
-			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
+			<el-checkbox v-if="[1,5].includes(listQuery.filterType)" v-model="listQuery.checkRoadName" class="filter-item" style="margin-left: 20px">地址錯誤</el-checkbox>
+			<el-checkbox-group v-model="listQuery.filter" class="filter-item" :max="1" style="margin-left: 20px">
+				<el-checkbox :label="1">已刪除</el-checkbox>
+				<el-checkbox :label="2">已完工</el-checkbox>
+			</el-checkbox-group>
 		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
@@ -92,7 +95,11 @@
 							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
 						</el-popover>
 					</span>
-					<span v-else-if="row.isEdit && column.property != 'id'">
+					<span v-else-if="column.property == 'TrackingId'">
+						<span>{{ row.TrackingId }}</span>
+						<div v-if="row.DateRepair" style="color: #F56C6C;">(已完工)</div>
+					</span>
+					<span v-else-if="row.isEdit && !['id', 'TrackingId', 'InspectId'].includes(column.property)">
 						<el-input v-if="['roadDir'].includes(column.property)" class="road-dir" v-model="row.Lane" size="mini">
 							<el-select slot="prepend" v-model="row.Direction" popper-class="type-select" size="mini">
 								<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
@@ -126,7 +133,7 @@
 					<el-button-group v-if="!row.isEdit">
 						<!-- NOTE:先解除上傳不可編緝的限制 -->
 						<!-- <template v-if="!Object.values(importCaseObj).flat().includes(row.id)" > -->
-							<el-button v-if="row.IsActive" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
+							<el-button v-if="row.IsActive && !row.DateRepair" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
 							<el-button v-if="row.IsActive" class="btn-action" type="danger" plain size="mini" round @click="setCaseState(row, 0)">刪除</el-button>
 							<el-button v-else-if="!row.IsActive" class="btn-action" type="success" plain size="mini" round @click="setCaseState(row, 1)">復原</el-button>
 						<!-- </template> -->
@@ -207,7 +214,7 @@ export default {
 			dateRange: [ moment().startOf("day").toDate(), moment().endOf("day").toDate()],
 			searchRange: "",
 			listQuery: {
-				filter: false,
+				filter: [],
 				checkRoadName: false,
 				filterId: "",
 				filterType: 1,
@@ -448,7 +455,8 @@ export default {
 			const tenderRound = tenderFilter.length > 0 ? tenderFilter[0] : { zipCode: 0 };
 			const checkRoadName = this.options.districtList[tenderRound.zipCode];
 
-			if (checkRoadName && !row.Place.includes(checkRoadName)) return 'danger-row';
+			if (row.DateRepair) return 'warning-row';
+			else if (checkRoadName && !row.Place.includes(checkRoadName)) return 'danger-row';
 			else return '';
 		},
 		showImg(row, prop) {
@@ -544,7 +552,7 @@ export default {
 				}
 
 				getInspectionCaseList({
-					filter: this.listQuery.filter,
+					filter: this.listQuery.filter[0] || 0,
 					surveyId,
 					inspectId,
 					checkRoadName: this.listQuery.checkRoadName,
@@ -654,7 +662,7 @@ export default {
 			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
 			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
 			else if (["roadDir"].includes(column.property)) return `${this.options.roadDir[row.Direction]}-${row.Lane}`;
-			else if (!["id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
+			else if (!["id", "Id", "TrackingId"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
 			else return row[column.property] || "-";
 		},
 		formatDate(date) {
@@ -732,6 +740,10 @@ export default {
 			color: #F56C6C
 		.danger-row
 			background: #F9EBEB
+			&.hover-row > td
+				background-color: initial !important
+		.warning-row
+			background: #FCF3E6
 			&.hover-row > td
 				background-color: initial !important
 	.img-preview

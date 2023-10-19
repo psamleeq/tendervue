@@ -101,7 +101,7 @@
 					<span />
 					<span />
 				</div>
-				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @setCaseImgViewer="setCaseImgViewer" @uploadCase="uploadCase" @markCase="markCase" />
+				<panorama-view ref="panoramaView" :loading.sync="loading" :isUpload.sync="isUpload" :panoramaInfo.sync="panoramaInfo" :options="options" :caseGeoJson="caseGeoJson" @showPanoramaLayer="showPanoramaLayer" @setMarkerPosition="setMarkerPosition" @setHeading="setHeading" @addMarker="addMarker" @clearMarker="clearMarker" @hightLight="hightLight" @setCaseImgViewer="setCaseImgViewer" @uploadCase="uploadCase" />
 			</el-col>
 		</el-row> 
 
@@ -117,7 +117,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
-import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase, markInspectionCase, getInspectionRoute } from "@/api/inspection";
+import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase, getInspectionRoute } from "@/api/inspection";
 import { getTenderRound } from "@/api/type";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
@@ -757,6 +757,7 @@ export default {
 		},
 		uploadCase(caseInfo) {
 			let uploadForm = new FormData();
+			uploadForm.append('uploadType', Number(caseInfo.uploadType));
 			uploadForm.append('inspectId', localStorage.inspectIdNow || this.inspectIdNow);
 			uploadForm.append('trackingId', Number(caseInfo.trackingId));
 			uploadForm.append('dateReport', this.formatTime(caseInfo.dateReport));
@@ -783,25 +784,6 @@ export default {
 				this.getCaseList();
 				this.loading = false;
 				this.isUpload = false;
-			}).catch(err => {
-				console.log(err);
-				this.loading = false;
-				this.isUpload = false;
-			})
-		},
-		markCase({id, isActive}) {
-			this.loading = true;
-
-			markInspectionCase(id, { isActive }).then(response => {
-				if (response.statusCode == 20000) {
-					this.$message({
-						message: isActive ? "解除成功" : "標記成功",
-						type: "success",
-					});
-					this.getCaseList();
-					this.loading = false;
-					this.isUpload = false;
-				}
 			}).catch(err => {
 				console.log(err);
 				this.loading = false;
