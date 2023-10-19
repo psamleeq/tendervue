@@ -34,58 +34,58 @@
 					</el-card>
 				</span>
 				<br>
-				<span class="filter-item">
-					<div v-if="listQuery.filterType == 2" class="select-contract">
-						<el-select v-model="listQuery.filterType" popper-class="type-select">
-							<el-option label="路線" :value="1" />
-							<el-option label="合約" :value="2" />
-						</el-select>
-						<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
-							<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
-								<div :style="`color: #${Math.floor(val.tenderId*16777215).toString(16).substr(0, 8)}`">{{ val.name }}</div>
-							</el-option>
-						</el-select>
+				<span class="filter-item" style="display: inline-flex">
+					<el-button class="filter-item" :type="showSearch ? 'primary' : 'info'" icon="el-icon-search" :circle="!showSearch" size="mini" @click="showSearch = !showSearch" />
+					<span v-if="showSearch" class="filter-item">
+						<div v-if="listQuery.filterType == 2" class="select-contract">
+							<el-select v-model="listQuery.filterType" popper-class="type-select">
+								<el-option label="路線" :value="1" />
+								<el-option label="合約" :value="2" />
+							</el-select>
+							<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
+								<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
+									<div :style="`color: #${Math.floor(val.tenderId * 16777215).toString(16).substr(0, 8)}`">{{ val.name }}</div>
+								</el-option>
+							</el-select>
+							<br>
+							<el-button-group v-if="inspectIdList.length > 0" class="filter-item">
+								<el-button type="success" size="small" :plain="listQuery.inspectId != 0" @click="changeInspect(0)">全部</el-button>
+								<el-button v-for="inspectId in inspectIdList" :key="inspectId" type="primary" size="small" :plain="listQuery.inspectId != inspectId" @click="changeInspect(inspectId)">{{ inspectId }}</el-button>
+							</el-button-group>
+						</div>
+						<el-input v-else v-model="listQuery.inspectId" placeholder="請輸入" size="medium" style="width: 254px;">
+							<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
+								<el-option label="路線" :value="1" />
+								<el-option label="合約" :value="2" />
+							</el-select>
+						</el-input>
+				
 						<br>
-						<el-button-group v-if="inspectIdList.length > 0" class="filter-item">
-							<el-button type="success" size="small" :plain="listQuery.inspectId != 0" @click="changeInspect(0)">全部</el-button>
-							<el-button v-for="inspectId in inspectIdList" :key="inspectId" type="primary" size="small" :plain="listQuery.inspectId != inspectId" @click="changeInspect(inspectId)">{{ inspectId }}</el-button>
-						</el-button-group>
-					</div>
-					<el-input v-else v-model="listQuery.inspectId" placeholder="請輸入" size="medium" style="width: 254px;">
-						<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
-							<el-option label="路線" :value="1" />
-							<el-option label="合約" :value="2" />
-						</el-select>
-					</el-input>
-				</span>
-				<br>
-				<span class="filter-item">
-					<div v-if="listQuery.filterTypeCase == 2" class="select-contract">
-						<el-select v-model="listQuery.filterTypeCase" popper-class="type-select">
-							<el-option label="前次路線" :value="1"></el-option>
-							<el-option label="前次合約" :value="2"></el-option>
-						</el-select>
-						<el-select v-model.number="listQuery.caseTenderRound" class="tender-select" popper-class="type-select tender">
-							<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
-								<div :style="`color: #${Math.floor(val.tenderId*16777215).toString(16).substr(0, 8)}`">{{ val.name }}</div>
-							</el-option>
-						</el-select>
-					</div>
-					<el-input v-else v-model="listQuery.caseInspectId" placeholder="請輸入" size="medium" style="width: 254px;">
-						<el-select slot="prepend" v-model="listQuery.filterTypeCase" popper-class="type-select">
-							<el-option label="前次路線" :value="1"></el-option>
-							<el-option label="前次合約" :value="2"></el-option>
-						</el-select>
-					</el-input>
-				</span>
-				<el-button class="filter-item" type="success" icon="el-icon-download" size="small" @click="getList()">載入</el-button>
-				<br>
-				<span class="filter-item">
-					<el-input v-model="listQuery.caseId" placeholder="請輸入" size="medium" style="width: 254px;" :disabled="Object.keys(caseGeoJson.caseNow).length == 0">
-						<span slot="prepend">缺失Id</span>
-					</el-input>
-				</span>
-				<el-button class="filter-item" type="primary" icon="el-icon-search" size="small" :disabled="Object.keys(caseGeoJson.caseNow).length == 0" @click="search()">搜尋</el-button>
+						<div v-if="listQuery.filterTypeCase == 2" class="select-contract">
+							<el-select v-model="listQuery.filterTypeCase" popper-class="type-select">
+								<el-option label="前次路線" :value="1"></el-option>
+								<el-option label="前次合約" :value="2"></el-option>
+							</el-select>
+							<el-select v-model.number="listQuery.caseTenderRound" class="tender-select" popper-class="type-select tender">
+								<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
+									<div :style="`color: #${Math.floor(val.tenderId * 16777215).toString(16).substr(0, 8)}`">{{ val.name }}</div>
+								</el-option>
+							</el-select>
+						</div>
+						<el-input v-else v-model="listQuery.caseInspectId" placeholder="請輸入" size="medium" style="width: 254px;">
+							<el-select slot="prepend" v-model="listQuery.filterTypeCase" popper-class="type-select">
+								<el-option label="前次路線" :value="1"></el-option>
+								<el-option label="前次合約" :value="2"></el-option>
+							</el-select>
+						</el-input>
+						<el-button class="filter-item" type="success" icon="el-icon-download" size="small" @click="getList()">載入</el-button>
+						<br>
+						<el-input v-model="listQuery.caseId" placeholder="請輸入" size="medium" style="width: 254px;" :disabled="Object.keys(caseGeoJson.caseNow).length == 0">
+							<span slot="prepend">缺失Id</span>
+						</el-input>
+						<el-button class="filter-item" type="primary" icon="el-icon-search" size="small" :disabled="Object.keys(caseGeoJson.caseNow).length == 0" @click="search()">搜尋</el-button>
+					</span>
+				</span>	
 			</div>
 		</div>
 		<el-row>
@@ -145,6 +145,7 @@ export default {
 			init: true,
 			isUpload: false,
 			showLayerAttach: false,
+			showSearch: true,
 			showImgViewer: false,
 			imgUrls: [],
 			// map: null,
@@ -562,7 +563,7 @@ export default {
 					return { 
 						strokeColor: feature.getProperty("DateRepair_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
 						strokeWeight: 3,
-						strokeOpacity: isPrev ? 0.4 : 0.8,
+						strokeOpacity: feature.getProperty("DateRepair_At") ? 0.2 : isPrev ? 0.4 : 0.8,
 						fillOpacity: 0
 					};
 				} else {
@@ -571,7 +572,7 @@ export default {
 						strokeWeight: 1,
 						strokeOpacity: 1,
 						fillColor: color,
-						fillOpacity: isPrev ? 0.3 : 0.7
+						fillOpacity: feature.getProperty("DateRepair_At") ? 0.1 : isPrev ? 0.3 : 0.7
 					};
 				}
 			});

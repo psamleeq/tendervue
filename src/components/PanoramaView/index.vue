@@ -22,7 +22,7 @@
 						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.trackingId }}</span>
 						<el-input v-else v-model="caseInfo.trackingId" :class="{'track-highlight': Number(caseInfo.trackingId) != 0}" size="mini" style="width: 130px" @change="trackingCase()" />
 					</el-form-item>
-					<el-form-item prop="dateReport" label="通報時間" style="margin-bottom: 0">
+					<el-form-item prop="dateReport" :label="caseInfo.dateRepair_At ? '標記完工' : '通報時間'" style="margin-bottom: 0">
 						<span v-if="isReview || caseInfo.dateRepair_At">{{ formatTime(caseInfo.dateReport) }}</span>
 						<el-date-picker
 							v-else
@@ -32,9 +32,6 @@
 							:clearable="false"
 							size="mini"
 						/>
-					</el-form-item>
-					<el-form-item v-if="caseInfo.dateRepair_At" prop="dateRepair_At" label="標記完工">
-						<span>{{ formatTime(caseInfo.dateRepair_At) }}</span>
 					</el-form-item>
 					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 0">
 						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.caseTypeMap[caseInfo.distressType] }}</span>
