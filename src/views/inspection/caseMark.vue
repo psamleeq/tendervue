@@ -798,11 +798,14 @@ export default {
 						message: isActive ? "解除成功" : "標記成功",
 						type: "success",
 					});
-					this.getList();
+					this.getCaseList();
+					this.loading = false;
+					this.isUpload = false;
 				}
 			}).catch(err => {
 				console.log(err);
-				this.getList();
+				this.loading = false;
+				this.isUpload = false;
 			})
 		},
 		openPanorama(force = false, isReset = false) {
