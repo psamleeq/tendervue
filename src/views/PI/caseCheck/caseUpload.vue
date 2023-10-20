@@ -861,7 +861,6 @@ export default {
 	.el-table .cell
 		white-space: pre-line
 		.date-picker
-			font-size: 5px
 			.el-input__inner
 				width: 120px
 				padding: 0 0 0 28px
