@@ -359,7 +359,7 @@ export default {
 						if(clickHandlerArgs) {
 							this.clearHotSpot(clickHandlerArgs.sceneIdNow);
 							this.$emit('setMarkerPosition', clickHandlerArgs.sceneIdNow);
-							localStorage.inspectIdNow = clickHandlerArgs.inspectIdNow;
+							sessionStorage.inspectIdNow = clickHandlerArgs.inspectIdNow;
 							localStorage.sceneIdNow = clickHandlerArgs.sceneIdNow;
 						}
 					};

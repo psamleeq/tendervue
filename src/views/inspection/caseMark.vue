@@ -687,13 +687,13 @@ export default {
 				} 
 
 				this.$nextTick(() => {
-					if((localStorage.inspectIdNow == this.inspectIdNow || localStorage.tenderRoundNow == this.tenderRoundNow) && localStorage.sceneIdNow) {
+					if((sessionStorage.inspectIdNow == this.inspectIdNow || localStorage.tenderRoundNow == this.tenderRoundNow) && localStorage.sceneIdNow) {
 						this.$confirm(`是否跳至前次操作街景位址?`).then(() => {
 							this.init = false;
 							this.showPanoramaLayer(localStorage.sceneIdNow);
 						})
 					} else {
-						localStorage.inspectIdNow = this.inspectIdNow;
+						sessionStorage.inspectIdNow = this.inspectIdNow;
 						localStorage.tenderRoundNow = this.tenderRoundNow;
 						localStorage.removeItem("sceneIdNow");
 					}
@@ -759,7 +759,7 @@ export default {
 		uploadCase(caseInfo) {
 			let uploadForm = new FormData();
 			uploadForm.append('uploadType', Number(caseInfo.uploadType));
-			uploadForm.append('inspectId', localStorage.inspectIdNow || this.inspectIdNow);
+			uploadForm.append('inspectId', sessionStorage.inspectIdNow || this.inspectIdNow);
 			uploadForm.append('trackingId', Number(caseInfo.trackingId));
 			uploadForm.append('dateReport', this.formatTime(caseInfo.dateReport));
 			uploadForm.append('distressType', caseInfo.distressType);
@@ -828,7 +828,7 @@ export default {
 				this.polyLine[inspectId][index].addListener("click", (event) => {
 					this.init = false;
 					this.pointCurr.setMap(this.map);
-					localStorage.inspectIdNow = inspectId;
+					sessionStorage.inspectIdNow = inspectId;
 					const pointPos = event.latLng.toJSON();
 					const posList = this.panoramaInfo.data.flat(2).map(info => ({ ...info.position, sceneId: info.fileName }));
 					const minDistObj = posList.reduce((minDistObj, curr) => {
