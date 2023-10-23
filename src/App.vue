@@ -22,14 +22,6 @@ export default {
 </script>
 
 <style lang="sass">
-html, body
-	position: relative
-	// font-family: 'Noto Sans TC', '微軟正黑體', 'Microsoft JhengHei', sans-serif
-	height: 100vh
-	height: calc(var(--vh, 1vh) * 100)
-	width: 100vw
-	padding: 0
-	margin: 0
 .type-select 
 	.el-select-dropdown__item
 		padding: 0 5px

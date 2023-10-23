@@ -18,7 +18,10 @@
 
 			<el-card v-if="hotSpotIdList.dot.length > 1 || isReview || caseInfo.isPrev" class="info-box right">
 				<el-form :model="caseInfo" label-width="70px" size="small">
-					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
+					<el-form-item v-if="isReview || caseInfo.dateRepair_At" prop="id" label="缺失Id" style="margin-bottom: 0">
+						<span>{{ caseInfo.id }}</span>
+					</el-form-item>
+					<el-form-item v-if="caseInfo.trackingId != caseInfo.id" prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
 						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.trackingId }}</span>
 						<el-input v-else v-model="caseInfo.trackingId" :class="{'track-highlight': Number(caseInfo.trackingId) != 0}" size="mini" style="width: 130px" @change="trackingCase()" />
 					</el-form-item>
@@ -449,6 +452,7 @@ export default {
 			if(caseFilter.length > 0) {
 				const caseSpec = caseFilter[0].properties;
 				this.caseInfo = Object.assign({}, this.caseInfo, {
+					id: Number(caseSpec.Id),
 					distressType: Number(caseSpec.DistressType),
 					distressLevel: Number(caseSpec.DistressLevel),
 					place: caseSpec.Place,
@@ -698,7 +702,7 @@ export default {
 				pitch,
 				yaw,
 				// text: hoverText,
-				cssClass: `hotSpotIcon alert ${prop.DateRepair_At ? "repair" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
+				cssClass: `hotSpotIcon alert ${prop.DateRepair_At ? "repair" : prop.TrackingId ? "track" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
 				createTooltipArgs: {
 					prop
 				},
@@ -715,8 +719,9 @@ export default {
 				},
 				clickHandlerFunc: (evt, clickHandlerArgs) => {
 					this.caseInfo = Object.assign({}, this.caseInfo, {
+						id: clickHandlerArgs.prop.Id,
 						dateReport: clickHandlerArgs.prop.DateRepair_At ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
-						trackingId: clickHandlerArgs.prop.TrackingId || prop.Id,
+						trackingId: clickHandlerArgs.prop.TrackingId || clickHandlerArgs.prop.Id,
 						distressType: Number(clickHandlerArgs.prop.DistressType),
 						distressLevel: Number(clickHandlerArgs.prop.DistressLevel),
 						millingLength: Math.round(clickHandlerArgs.prop.MillingLength * 100) / 100 ,
@@ -796,6 +801,7 @@ export default {
 			this.isReview = false;
 			this.isSticky = false;
 			this.caseInfo = {
+				Id: 0,
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
 				distressType: "",
@@ -949,10 +955,13 @@ export default {
 				z-index: 10
 				&.repair
 					background-image: url('../../../public/assets/icon/icon-alert-circle.png')
-					filter: drop-shadow(0px 0px 2px lightcoral)
+					filter: drop-shadow(0px 0px 2px LightCoral)
 				&.prev
 					background-image: url('../../../public/assets/icon/icon_alert_plus.png')
-					filter: drop-shadow(0px 0px 2px tomato)
+					filter: drop-shadow(0px 0px 2px Tomato)
+				&.track
+					background-image: url('../../../public/assets/icon/icon_alert_orange.png')
+					filter: drop-shadow(0px 0px 2px Tomato)
 				&.highlight
 					transform: scale(1.5)
 					border: 1px solid #fff
