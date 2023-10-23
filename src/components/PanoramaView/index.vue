@@ -21,7 +21,7 @@
 					<el-form-item v-if="isReview || caseInfo.dateRepair_At" prop="id" label="缺失Id" style="margin-bottom: 0">
 						<span>{{ caseInfo.id }}</span>
 					</el-form-item>
-					<el-form-item v-if="caseInfo.trackingId != caseInfo.id" prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
+					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
 						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.trackingId }}</span>
 						<el-input v-else v-model="caseInfo.trackingId" :class="{'track-highlight': Number(caseInfo.trackingId) != 0}" size="mini" style="width: 130px" @change="trackingCase()" />
 					</el-form-item>
@@ -455,6 +455,9 @@ export default {
 					id: Number(caseSpec.Id),
 					distressType: Number(caseSpec.DistressType),
 					distressLevel: Number(caseSpec.DistressLevel),
+					millingLength: Math.round(caseSpec.MillingLength * 100) / 100,
+					millingWidth: Math.round(caseSpec.MillingWidth * 100) / 100,
+					millingArea: Math.round(caseSpec.MillingArea * 100) / 100,
 					place: caseSpec.Place,
 					direction: caseSpec.Direction,
 					lane: caseSpec.Lane,
