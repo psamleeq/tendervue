@@ -274,6 +274,12 @@ export default {
 					default: true,
 					width: 80
 				},
+				// SerialNo: {
+				// 	name: "查報案號",
+				// 	sortable: true,
+				// 	default: true,
+				// 	width: 80
+				// },
 				TrackingId: {
 					name: "追蹤Id",
 					sortable: false,

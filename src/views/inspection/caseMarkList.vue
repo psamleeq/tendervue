@@ -732,7 +732,7 @@ export default {
 		padding: 5px 5px 5px 0
 	.el-table
 		.btn-action
-			margin-left: 5px
+			// margin-left: 5px
 			padding: 5px
 		.el-icon-success
 			margin-right: -10px

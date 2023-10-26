@@ -468,7 +468,7 @@ export default {
 			} else {
 				this.$message({
 					message: "查無此追蹤Id",
-					type: "error",
+					type: "error"
 				});
 			}
 		},
@@ -479,6 +479,11 @@ export default {
 				this.caseInfo.uploadType = uploadType;
 
 				let coordinates = uploadType == 1 ? this.hotSpotIdList.dot.map(hotSpot => ([hotSpot.coordinates.lng, hotSpot.coordinates.lat])) : this.caseInfo.coordinates;
+				if(coordinates.length == 0) {
+					this.$message({ message: "請標記案件位置", type: "error" });
+					return;
+				}
+
 				if(uploadType == 1 && this.caseInfo.distressType != 29) coordinates.push(coordinates[0]);
 				// console.log(coordinates);
 				this.caseInfo.geoJson = {
