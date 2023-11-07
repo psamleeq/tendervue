@@ -48,7 +48,7 @@
 						</span>
 					</span>
 					<span v-else-if="['Create_At','Update_At'].includes(column.property)">
-							<span>{{ formatTime(row[column.property]) }}</span>
+						<span>{{ formatTime(row[column.property]) }}</span>
 					</span>
 					<span v-else-if="['changePassword'].includes(column.property)">
 						<el-button @click="showUpdate(row)" size="small" type="danger" plain>修改密碼</el-button>

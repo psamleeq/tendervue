@@ -447,12 +447,13 @@ export default {
 			this.caseInfo.trackingId = Number(this.caseInfo.trackingId);
 			if(Number(this.caseInfo.trackingId) == 0) return;
 
-			const caseFilter = this.caseGeoJson.casePrev.features.filter(caseSpec => caseSpec.properties.Id == Number(this.caseInfo.trackingId));
+			const caseFilter = this.caseGeoJson.casePrev.features.filter(caseSpec => caseSpec.properties.Id == Number(this.caseInfo.trackingId) || caseSpec.properties.TrackingId == Number(this.caseInfo.trackingId));
 
 			if(caseFilter.length > 0) {
 				const caseSpec = caseFilter[0].properties;
 				this.caseInfo = Object.assign({}, this.caseInfo, {
 					id: Number(caseSpec.Id),
+					trackingId: Number(caseSpec.TrackingId),
 					distressType: Number(caseSpec.DistressType),
 					distressLevel: Number(caseSpec.DistressLevel),
 					millingLength: Math.round(caseSpec.MillingLength * 100) / 100,
@@ -710,7 +711,7 @@ export default {
 				pitch,
 				yaw,
 				// text: hoverText,
-				cssClass: `hotSpotIcon alert ${prop.DateRepair_At ? "repair" : prop.TrackingId ? "track" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
+				cssClass: `hotSpotIcon alert ${prop.DateRepair_At ? "repair" : !isPrev && prop.TrackingId ? "track" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
 				createTooltipArgs: {
 					prop
 				},

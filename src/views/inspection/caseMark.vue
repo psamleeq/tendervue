@@ -897,7 +897,9 @@ export default {
 			}
 		},
 		showCaseContent(feature, position) {
-			const caseTypeStr = `${feature.getProperty("Id")} - ${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
+			let caseTypeStr = `${feature.getProperty("Id")}`;
+			if(feature.getProperty("TrackingId") != 0) caseTypeStr += `(${feature.getProperty("TrackingId")})`;
+			caseTypeStr += ` - ${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
 			this.setCaseImgViewer({ imgUrls: [ `${feature.getProperty("ImgZoomOut")}` ] });
 			let contentText = `<div style="width: 200px;">`;
 			contentText += `<div> ${caseTypeStr} </div>`;
