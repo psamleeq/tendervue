@@ -453,7 +453,7 @@ export default {
 				const caseSpec = caseFilter[0].properties;
 				this.caseInfo = Object.assign({}, this.caseInfo, {
 					id: Number(caseSpec.Id),
-					trackingId: Number(caseSpec.TrackingId),
+					trackingId: Number(this.caseInfo.trackingId) || Number(caseSpec.TrackingId),
 					distressType: Number(caseSpec.DistressType),
 					distressLevel: Number(caseSpec.DistressLevel),
 					millingLength: Math.round(caseSpec.MillingLength * 100) / 100,
