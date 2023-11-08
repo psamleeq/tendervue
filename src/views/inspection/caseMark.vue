@@ -773,6 +773,8 @@ export default {
 			uploadForm.append('geoJson', JSON.stringify(caseInfo.geoJson));
 			uploadForm.append('imgZoomIn', data2blob(caseInfo.imgZoomIn, 'image/jpeg'), 'imgZoomIn.jpg');
 			uploadForm.append('imgZoomOut', data2blob(caseInfo.imgZoomOut, 'image/jpeg'), 'imgZoomOut.jpg');
+			uploadForm.append('imgZoomIn_unMark', data2blob(caseInfo.imgZoomIn_unMark, 'image/jpeg'), 'imgZoomIn_unMark.jpg');
+			uploadForm.append('pt_unMark', JSON.stringify(caseInfo.pt_unMark));
 			// console.log(uploadForm);
 
 			uploadInspectionCase(uploadForm).then(response => {

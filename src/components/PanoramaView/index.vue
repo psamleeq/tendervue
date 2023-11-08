@@ -197,7 +197,8 @@ export default {
 				direction: 1,
 				lane: 1,
 				imgZoomIn: "",
-				imgZoomOut: ""
+				imgZoomOut: "",
+				pt_unMark: []
 			}
 		}
 	},
@@ -564,6 +565,8 @@ export default {
 			});
 		},
 		screenshot(imgType="imgZoomIn", hfov) {
+			if(imgType.includes('unMark')) this.caseInfo.pt_unMark = [];
+
 			hfov = (hfov != undefined) ? hfov : this.panorama.getHfov();
 			this.panorama.setHfov(hfov, 100, () => {
 
@@ -616,17 +619,20 @@ export default {
 						const { x: x_el, y: y_el, width: width_el, height: height_el } = dom.getBoundingClientRect();
 						const [ x, y ] = [ (x_el - x_bg + width_el/2) * ratio_width, (y_el - y_bg + height_el/2) * ratio_height ];
 						// console.log(x, y);
+						if(imgType.includes('unMark')) this.caseInfo.pt_unMark.push({ x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 });
+
 						if(index == 0) canvasContext.moveTo(x, y);
 						else canvasContext.lineTo(x, y);
 					}
 					if(this.caseInfo.distressType != 29) canvasContext.closePath();
-					canvasContext.stroke();
+					if(!imgType.includes('unMark')) canvasContext.stroke();
 					
 					// 產出jpg
 					html2canvas(containerDom, { canvas, backgroundColor: 'rgba(0, 0, 0, 0)', width: canvas.width, height: canvas.height, scale  }).then(canvas => {
 						this.caseInfo[imgType] = canvas.toDataURL("image/jpeg", 0.8);
 
-						if(imgType == "imgZoomIn" && this.caseInfo.imgZoomOut.length == 0) this.screenshot("imgZoomOut", this.panorama.getHfov()+30);
+						if(imgType == "imgZoomIn") this.screenshot("imgZoomIn_unMark");
+						if(imgType == "imgZoomIn_unMark" && this.caseInfo.imgZoomOut.length == 0) this.screenshot("imgZoomOut", this.panorama.getHfov()+30);
 						// NOTE: test download
 						// const link = document.createElement('a');
 						// link.href = canvas.toDataURL("image/jpeg");
