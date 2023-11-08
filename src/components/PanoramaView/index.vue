@@ -197,8 +197,7 @@ export default {
 				direction: 1,
 				lane: 1,
 				imgZoomIn: "",
-				imgZoomOut: "",
-				pt_unMark: []
+				imgZoomOut: ""
 			}
 		}
 	},
@@ -565,7 +564,7 @@ export default {
 			});
 		},
 		screenshot(imgType="imgZoomIn", hfov) {
-			if(imgType.includes('unMark')) this.caseInfo.pt_unMark = [];
+			if(imgType.includes('unMark')) this.caseInfo.pt_unMark = { type: this.caseInfo.distressType, level: this.caseInfo.distressLevel, point: [] };
 
 			hfov = (hfov != undefined) ? hfov : this.panorama.getHfov();
 			this.panorama.setHfov(hfov, 100, () => {
@@ -619,7 +618,7 @@ export default {
 						const { x: x_el, y: y_el, width: width_el, height: height_el } = dom.getBoundingClientRect();
 						const [ x, y ] = [ (x_el - x_bg + width_el/2) * ratio_width, (y_el - y_bg + height_el/2) * ratio_height ];
 						// console.log(x, y);
-						if(imgType.includes('unMark')) this.caseInfo.pt_unMark.push({ x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 });
+						if(imgType.includes('unMark')) this.caseInfo.pt_unMark.point.push({ x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 });
 
 						if(index == 0) canvasContext.moveTo(x, y);
 						else canvasContext.lineTo(x, y);
