@@ -290,8 +290,8 @@ export default {
 						UploadCaseNo: caseSpec.UploadCaseNo,
 						DeviceType: caseSpec.DeviceType, 
 						DistressTypeR: caseSpec.DistressTypeR,
-						preconstruction_Img: caseSpec.PerfContent.preconstruction_Img,
-						completeFixed_Img: caseSpec.PerfContent.completeFixed_Img
+						preconstruction_Img: caseSpec.PerfContent?.preconstruction_Img,
+						completeFixed_Img: caseSpec.PerfContent?.completeFixed_Img
 					})).reduce((acc, cur) =>{
 						// if(acc.length != 0) console.log(acc[acc.length-1], cur);
 						if(acc.length == 0 || cur.DeviceType != acc[acc.length -1][0].DeviceType || cur.DistressTypeR != acc[acc.length -1][0].DistressTypeR) acc.push([cur]);
@@ -478,7 +478,7 @@ export default {
 					resolve();
 					// await new Promise(r => setTimeout(r, 1000));
 					this.loading = false;
-				})
+				});
 			})
 			
 		},
