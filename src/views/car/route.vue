@@ -272,6 +272,9 @@ export default {
 					116: {
 						name: "文山區"
 					},
+					1003: {
+						name: "台北市(8-30)"
+					}
 				},
 				inspectRound: {
 					0: "全部",
@@ -290,6 +293,7 @@ export default {
 					4: "車輛巡查(AI)"
 				},
 				contractId: {
+					0: "超鉞",
 					1: "一標",
 					2: "二標",
 					3: "三標",
@@ -298,6 +302,9 @@ export default {
 					// 6: "六標"
 				},
 				carId: {
+					0: {
+						1: "TST-0000"
+					},
 					1: {
 						// 1: "ATE-5102",
 						1: "RDX-6883",

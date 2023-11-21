@@ -483,7 +483,7 @@ export default {
 
 			for(const caseNo in this.csvRepeatObj) {
 				for(const uploadCaseNo of this.csvRepeatObj[caseNo]) {
-					const caseFilter = this.csvData.filter(d =>  d["案件編號"] == uploadCaseNo)[0];
+					const caseFilter = this.csvData.filter(d => d["案件編號"] == uploadCaseNo)[0];
 					let caseItem = {};
 					Object.keys(this.headers).forEach(key => caseItem[key] = caseFilter[this.headers[key].name]);
 					caseErrList.push({ ...caseItem, note: `重複案件(csv): ${caseNo}`, edit: false });
@@ -516,24 +516,18 @@ export default {
 					timeStart: date,
 					timeEnd: moment(date).add(1, "d").format("YYYY-MM-DD"),
 				}).then(response => {
-					// if (response.data.list.length == 0) {
-					// 	this.$message({
-					// 		message: "查無資料",
-					// 		type: "error",
-					// 	});
-					// } else {
-						this.list = response.data.list;
-						this.uploadedIdList = response.data.uploadedIdList;
-						this.list.forEach(l => {
-							if(l.ReportDate == undefined) l.ReportDate = l.CaseDate;
-							l.DeviceType = Number(l.DeviceType);
-							if(l.rDeviceType == undefined) l.rDeviceType = l.DeviceType;
-							l.BType = Number(l.BType);
-							l.BrokeType = Number(l.BrokeType);
-							l.lat = Number(l.lat);
-							l.lng = Number(l.lng);
-						})
-					// }
+					this.list = response.data.list;
+					this.uploadedIdList = response.data.uploadedIdList;
+					this.list.forEach(l => {
+						if(l.ReportDate == undefined) l.ReportDate = l.CaseDate;
+						l.DeviceType = Number(l.DeviceType);
+						if(l.rDeviceType == undefined) l.rDeviceType = l.DeviceType;
+						if(l.DistressSrc == '道路巡查') l.DistressSrc = '廠商';
+						l.BType = Number(l.BType);
+						l.BrokeType = Number(l.BrokeType);
+						l.lat = Number(l.lat);
+						l.lng = Number(l.lng);
+					})
 					resolve();
 					// if(this.csvFileList.length > 0) this.checkCsv();
 					// this.loading = false;
