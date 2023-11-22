@@ -382,7 +382,7 @@ export default {
 					if ( response.statusCode == 20000 ) {
 						const result = response.result;
 						this.$message({
-							message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件 / 重複 ${result.duplicate}件`,
+							message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件 / 重複 ${result.duplicate}件 / 地址錯誤 ${result.addrFail}件`,
 							type: "success",
 						});
 					} 
