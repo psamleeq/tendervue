@@ -82,7 +82,7 @@
 						@click="dateTimePickerVisible = !dateTimePickerVisible"
 					>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
 					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getCarList()">搜尋</el-button>
-					<el-switch v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
+					<el-switch v-show="timeTabId == 0 && activeVodName == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
 				</span>
 			</div>
 		</div>
@@ -275,9 +275,9 @@ export default {
 					116: {
 						name: "文山區"
 					},
-					1003: {
-						name: "台北市(8-30)"
-					}
+					// 1003: {
+					// 	name: "台北市(8-30)"
+					// }
 				},
 				inspectRound: {
 					0: "全部",
@@ -296,7 +296,7 @@ export default {
 					4: "車輛巡查(AI)"
 				},
 				contractId: {
-					0: "超鉞",
+					// 0: "超鉞",
 					1: "一標",
 					2: "二標",
 					3: "三標",
@@ -348,6 +348,10 @@ export default {
 	},
 	created() {
 		this.dataLayer = { route: {} };
+		if(['howard', 'ryan', 'lancelin'].includes(localStorage.username)) {
+			this.options.contractId[0] = "超鉞";
+			this.options.districtList[1003] = { name: "台北市(8-30)" };
+		}
 
 		// Google Map錯誤處理
 		window.gm_authFailure = () => { 
