@@ -82,6 +82,7 @@
 						@click="dateTimePickerVisible = !dateTimePickerVisible"
 					>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
 					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getCarList()">搜尋</el-button>
+					<el-switch v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
 				</span>
 			</div>
 		</div>
@@ -180,6 +181,8 @@ export default {
 			mediaAPIUrl: process.env.VUE_APP_MEDIA_API,
 			mediaGCSUrl: process.env.VUE_APP_MEDIA_URL,
 			showLayerAttach: false,
+			autoRefresh: false,
+			timer: null,
 			map: null,
 			polyLine: null,
 			markers: {
@@ -360,6 +363,12 @@ export default {
 	},
 	mounted() {
 		this.getCarList();
+	},
+	watch: {
+		autoRefresh(newValue) {
+			if(newValue) this.timer = setInterval(() => { this.getCarTrack(false) }, 30000);
+			else clearInterval(this.timer);
+		}
 	},
 	methods: {
 		// init google map
@@ -557,10 +566,10 @@ export default {
 					// this.loading = false;
 				}).catch(err => { this.loading = false; });
 		},
-		getCarTrack() {
+		getCarTrack(isFocusAll = true) {
 			// if(this.polyLine != undefined) this.polyLine.setMap(null);
 			// for(const marker of Object.values(this.markers)) marker.setMap(null);
-			this.dataLayer.route.revertStyle();
+			if (isFocusAll) this.dataLayer.route.revertStyle();
 
 			getSpecInspectionTracks(this.listQuery.inspectionId).then(response => {
 				if (response.data.list.length == 0) {
@@ -583,13 +592,17 @@ export default {
 						map: this.map
 					})
 
-					const bounds = new google.maps.LatLngBounds();
-					paths.forEach(position => bounds.extend(position));
-					this.map.fitBounds(bounds);
+					if(isFocusAll) {
+						const bounds = new google.maps.LatLngBounds();
+						paths.forEach(position => bounds.extend(position));
+						this.map.fitBounds(bounds);
+					} this.map.panTo(paths[0]);
 
 					this.markers.start.setPosition(paths[paths.length-1]);
 					this.markers.end.setPosition(paths[0]);
 					for(const marker of Object.values(this.markers)) marker.setMap(this.map);
+
+					if (this.showLayerAttach) this.intersectRoute();
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
