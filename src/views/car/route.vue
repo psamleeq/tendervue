@@ -82,7 +82,7 @@
 						@click="dateTimePickerVisible = !dateTimePickerVisible"
 					>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
 					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getCarList()">搜尋</el-button>
-					<el-switch v-show="timeTabId == 0 && activeVodName == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
+					<el-switch v-show="admAuth && timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
 				</span>
 			</div>
 		</div>
@@ -177,6 +177,7 @@ export default {
 	directives: { elDragDialog },
 	data() {
 		return {
+			admAuth: false,
 			loading: false,
 			mediaAPIUrl: process.env.VUE_APP_MEDIA_API,
 			mediaGCSUrl: process.env.VUE_APP_MEDIA_URL,
@@ -348,7 +349,8 @@ export default {
 	},
 	created() {
 		this.dataLayer = { route: {} };
-		if(['howard', 'ryan', 'lancelin'].includes(localStorage.username)) {
+		this.admAuth = ['howard', 'ryan', 'lancelin'].includes(localStorage.username);
+		if(admAuth) {
 			this.options.contractId[0] = "超鉞";
 			this.options.districtList[1003] = { name: "台北市(8-30)" };
 		}
@@ -370,7 +372,11 @@ export default {
 	},
 	watch: {
 		autoRefresh(newValue) {
-			if(newValue) this.timer = setInterval(() => { this.getCarTrack(false) }, 30000);
+			console.log(newValue);
+			if(newValue) this.timer = setInterval(() => { 
+				if(this.timeTabId == 0 && this.listQuery.inspectionId) this.getCarTrack(false);
+				else this.autoRefresh = false;
+			}, 30000);
 			else clearInterval(this.timer);
 		}
 	},
