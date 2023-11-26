@@ -350,7 +350,7 @@ export default {
 	created() {
 		this.dataLayer = { route: {} };
 		this.admAuth = ['howard', 'ryan', 'lancelin'].includes(localStorage.username);
-		if(admAuth) {
+		if(this.admAuth) {
 			this.options.contractId[0] = "超鉞";
 			this.options.districtList[1003] = { name: "台北市(8-30)" };
 		}
