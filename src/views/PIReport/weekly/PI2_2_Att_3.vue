@@ -56,7 +56,7 @@ import { jsPDF } from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable';
 applyPlugin(jsPDF);
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
-import { getCaseList, getPerfContent, setPerfContent } from "@/api/PI";
+import { getCaseList, getInsCaseList, getPerfContent, setPerfContent } from "@/api/PI";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
@@ -296,26 +296,53 @@ export default {
 					zipCode: this.inputs.zipCode,
 					timeStart,
 					timeEnd
-				}).then(async (response) => {
-					if (response.data.list.length != 0) {
+				}).then((response1) => {
+					if (response1.data.resultList.length != 0) this.inputs.listNonAccepted = response1.data.resultList;
+					this.inputs.listNonAccepted.forEach(caseSpec => {
+						caseSpec.CaseDate = moment(caseSpec.CaseDate).format('MM/DD');
+						caseSpec.CaseNo = caseSpec.UploadCaseNo;
 
-						this.inputs.listNonAccepted = response.data.resultList;
-						this.inputs.listNonAccepted.forEach(caseSpec => {
-							caseSpec.CaseDate = moment(caseSpec.CaseDate).format('MM/DD');
-							if(caseSpec.State & 32) {
-								caseSpec.UploadCaseNoSV = caseSpec.UploadCaseNo;
-								caseSpec.StateNotesSV = caseSpec.StateNotes.SV;
-							}
+						if (caseSpec.State & 32) {
+							caseSpec.UploadCaseNoSV = caseSpec.UploadCaseNo;
+							caseSpec.StateNotesSV = caseSpec.StateNotes.SV;
+						}
 
-							if(caseSpec.State & 64) {
-								caseSpec.UploadCaseNoOrgan = caseSpec.UploadCaseNo;
-								caseSpec.StateNotesOrgan = caseSpec.StateNotes.Organ;
-							}
-						})
-					}
-					await this.previewPdf()
-					resolve();
-					this.loading = false;
+						if (caseSpec.State & 64) {
+							caseSpec.UploadCaseNoOrgan = caseSpec.UploadCaseNo;
+							caseSpec.StateNotesOrgan = caseSpec.StateNotes.Organ;
+						}
+					})
+
+					getInsCaseList({
+						zipCode: this.inputs.zipCode,
+						timeStart,
+						timeEnd
+					}).then(async (response2) => { 
+						if (response2.data.resultList.length != 0) {
+							const resultList = response2.data.resultList;
+							resultList.forEach(caseSpec => {
+								caseSpec.CaseDate = moment(caseSpec.DateUpload).format('MM/DD');
+								caseSpec.State = caseSpec.PIState;
+
+								if (caseSpec.PIState & 32) {
+									caseSpec.UploadCaseNoSV = caseSpec.CaseNo;
+									caseSpec.StateNotesSV = JSON.parse(caseSpec.PIStateNotes).SV;
+								}
+
+								if (caseSpec.PIState & 64) {
+									caseSpec.UploadCaseNoOrgan = caseSpec.CaseNo;
+									caseSpec.StateNotesOrgan = JSON.parse(caseSpec.PIStateNotes).Organ;
+								}
+							})
+
+							this.inputs.listNonAccepted.push(...resultList);
+							this.inputs.listNonAccepted.sort((a, b) => a.CaseNo - b.CaseNo);
+						}
+
+						await this.previewPdf()
+						resolve();
+						this.loading = false;
+					})
 				}).catch(err => { this.loading = false; });
 			})
 		},

@@ -172,29 +172,6 @@
 			style="width: 100%"
 		>
 			<el-table-column label="序號" type="index" width="55" align="center" />
-			<!-- <el-table-column label="案件編號" prop="UploadCaseNo" :sortable="true" align="center">
-				<template slot-scope="{ row }">
-					<template v-if="row.edit">
-						<el-input
-							v-model="row.UploadCaseNo"
-							size="mini"
-							style="width: 100px"
-						/>
-						<el-button type="text" @click="editCase(row)">
-							<i class="el-icon-success" />
-						</el-button>
-						<el-button type="text" @click="row.edit = false; getList()">
-							<i class="el-icon-error" />
-						</el-button>
-					</template>
-					<template v-else>
-						<span>{{ row.UploadCaseNo || "-" }}</span>
-						<el-link v-if="!row.UploadCaseNo" @click="row.edit = true" style="margin-left: 5px">
-							<i class="el-icon-edit" />
-						</el-link>
-					</template>
-				</template>
-			</el-table-column> -->
 			<el-table-column
 				v-for="(value, key) in headers"
 				:key="key"

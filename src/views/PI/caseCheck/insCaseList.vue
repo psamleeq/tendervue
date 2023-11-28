@@ -291,7 +291,7 @@ export default {
 					name: "案件編號",
 					sortable: true
 				},
-				DateCreate: {
+				DateUpload: {
 					name: "成案日期",
 					sortable: false,
 				},
