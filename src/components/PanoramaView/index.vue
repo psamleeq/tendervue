@@ -16,7 +16,7 @@
 				<div>{{ panoramaTestInfo.position }}</div>
 			</div>
 
-			<el-card v-if="hotSpotIdList.dot.length > 1 || isReview || caseInfo.isPrev" class="info-box right">
+			<el-card v-if="hotSpotIdList.dot.length >= 1 || isReview || caseInfo.isPrev" class="info-box right">
 				<el-form :model="caseInfo" label-width="70px" size="small">
 					<el-form-item v-if="isReview || caseInfo.dateRepair_At" prop="id" label="缺失Id" style="margin-bottom: 0">
 						<span>{{ caseInfo.id }}</span>
@@ -485,11 +485,11 @@ export default {
 					return;
 				}
 
-				if(uploadType == 1 && this.caseInfo.distressType != 29) coordinates.push(coordinates[0]);
+				if(uploadType == 1 && ![29, 70, 101].includes(this.caseInfo.distressType)) coordinates.push(coordinates[0]);
 				// console.log(coordinates);
 				this.caseInfo.geoJson = {
-					"type": this.caseInfo.distressType == 29 ? "MultiLineString" : 'MultiPolygon',
-					"coordinates": this.caseInfo.distressType == 29 ? [ coordinates ] : [[ coordinates ]]
+					"type": [70, 101].includes(this.caseInfo.distressType) ? 'MultiPoint' : this.caseInfo.distressType == 29 ? "MultiLineString" : 'MultiPolygon',
+					"coordinates": [70, 101].includes(this.caseInfo.distressType) ? coordinates :  this.caseInfo.distressType == 29 ? [ coordinates ] : [[ coordinates ]]
 				};
 				// console.log(this.caseInfo);
 
@@ -498,14 +498,16 @@ export default {
 		},
 		// 估算長度 & 面積
 		calcCaseInfo() {
-			if(this.caseInfo.distressType == 29 && this.hotSpotIdList.dot.length >= 2) {
+			if ([70, 101].includes(this.caseInfo.distressType)) {
+				this.caseInfo.millingLength = 0;
+				this.caseInfo.millingWidth = 0;
+			} else if(this.caseInfo.distressType == 29 && this.hotSpotIdList.dot.length >= 2) {
 				this.caseInfo.millingLength =  this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
 					if(array[index + 1] == undefined) return Math.round(acc * 100) / 100;
 					return acc += calcDistance(cur.coordinates, array[index + 1].coordinates);
 				}, 0)
 				this.caseInfo.millingWidth = 0;
-			}
-			if(this.caseInfo.distressType != 29 && this.hotSpotIdList.dot.length >= 4) {
+			} else {
 				const distanceList = this.hotSpotIdList.dot.reduce((acc, cur, index, array) => {
 					const nextIndex = (index + 1) % array.length;
 					const distance = calcDistance(cur.coordinates, array[nextIndex].coordinates);
@@ -620,10 +622,11 @@ export default {
 						// console.log(x, y);
 						if(imgType.includes('unMark')) this.caseInfo.pt_unMark.point.push({ x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 });
 
-						if(index == 0) canvasContext.moveTo(x, y);
+						if(hotSpotIdOrder.length == 1) canvasContext.arc(x, y, 2, 0, 2 * Math.PI, true);
+						else if(index == 0) canvasContext.moveTo(x, y);
 						else canvasContext.lineTo(x, y);
 					}
-					if(this.caseInfo.distressType != 29) canvasContext.closePath();
+					if(![29, 70, 101].includes(this.caseInfo.distressType)) canvasContext.closePath();
 					if(!imgType.includes('unMark')) canvasContext.stroke();
 					
 					// 產出jpg
