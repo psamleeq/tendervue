@@ -566,7 +566,7 @@ export default {
 				} else if(feature.getProperty("isLine")) {
 					return { 
 						strokeColor: feature.getProperty("DateRepair_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
-						strokeWeight: 3,
+						strokeWeight: 6,
 						strokeOpacity: feature.getProperty("DateRepair_At") ? 0.2 : isPrev ? 0.4 : 0.8,
 						fillOpacity: 0
 					};
@@ -574,7 +574,7 @@ export default {
 					return { 
 						strokeColor: feature.getProperty("DateRepair_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
 						strokeWeight: 1,
-						strokeOpacity: 1,
+						strokeOpacity: 0.5,
 						fillColor: color,
 						fillOpacity: feature.getProperty("DateRepair_At") ? 0.1 : isPrev ? 0.3 : 0.7
 					};
@@ -824,8 +824,8 @@ export default {
 						path,
 						geodesic: true,
 						strokeColor: '#409EFF',
-						strokeOpacity: 1,
-						strokeWeight: 3,
+						strokeOpacity: 0.5,
+						strokeWeight: 6,
 						map: this.map,
 						zIndex: 10
 					})
