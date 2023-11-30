@@ -121,7 +121,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderRound } from "@/api/type";
+import { getTenderRound, getDTypeMap } from "@/api/type";
 import { getCaseTrackingStatic } from "@/api/inspection";
 
 export default {
@@ -164,29 +164,7 @@ export default {
 			list: [],
 			options: {
 				tenderRoundMap: {},
-				DistressType: {
-					15: "坑洞",
-					29: "縱向及橫向裂縫",
-					16: "龜裂",
-					32: "車轍",
-					18: "隆起與凹陷",
-					34: "人手孔缺失",
-					51: "薄層剝離",
-					21: "其他",
-					50: "塊狀裂縫",
-					53: "推擠",
-					65: "補綻及管線回填",
-					54: "冒油",
-					55: "波浪狀鋪面",
-					56: "車道與路肩分離",
-					49: "滑溜裂縫",
-					66: "骨材剝落",
-					58: "人孔高差",
-					70: "雜草",
-					101: "隔音牆破損",
-					102: "伸縮縫破損",
-					103: "橋溝蓋破損"
-				},
+				DistressTypeFlat: {},
 				DistressLevel: {
 					1: "輕",
 					2: "中",
@@ -235,6 +213,13 @@ export default {
 				this.listQuery.tenderRound = -1;
 			}
 		});
+
+		getDTypeMap().then(response => {
+			this.options.DistressTypeFlat = Object.values(response.data.distressTypeMap).reduce((acc, cur) => {
+				for (const key in cur) acc[key] = cur[key];
+				return acc;
+			}, {});
+		})
 	},
 	mounted() { },
 	methods: {
@@ -253,7 +238,7 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		formatter(row, column) {
-			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
+			if (["DistressType"].includes(column.property)) return this.options.DistressTypeFlat[row.DistressType];
 			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
 			else if (["FlowState"].includes(column.property)) return this.options.FlowStateMap[row.FlowState];
 			else return row[column.property] || "-";

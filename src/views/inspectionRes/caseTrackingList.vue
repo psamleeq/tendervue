@@ -100,14 +100,14 @@
 			class="dialog-filter"
 			:visible.sync="dialogFilterVisible"
 			title="過濾條件"
-			width="1100px"
+			width="1200px"
 			:show-close="false"
 			center
 		>
 			<el-row :gutter="15">
-				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId" style="display: flex; justify-content: space-between">
+				<el-col :span="6" v-for="(_, distressId) in options.DistressTypeFlat" :key="distressId" style="display: flex; justify-content: space-between">
 					<el-checkbox v-model="checked" :label="distressId">
-						{{ options.DistressType[distressId] }} ({{ caseInfo[distressId] || 0 }})
+						{{ options.DistressTypeFlat[distressId] }} ({{ caseInfo[distressId] || 0 }})
 					</el-checkbox>
 					<el-select v-model="typeLevel[distressId]" placeholder="請選擇" size="mini" popper-class="type-select" multiple :disabled="!checked.includes(distressId)" @change="changeTypeLevel">
 						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="order == 0 ? '全部' : options.DistressLevel[order]" />
@@ -175,7 +175,7 @@
 				<el-form-item label="損壞類別" prop="DistressType">
 					<div style="display: flex; width: 220px; gap: 5px;">
 						<el-select class="edit-select" v-model.number="rowActive.DistressType" size="mini" popper-class="type-select" style="flex: 2">
-							<el-option v-for="(name, type) in options.DistressType" :key="`DistressType_${type}`" :label="name" :value="Number(type)" />
+							<el-option v-for="(name, type) in options.DistressTypeFlat" :key="`DistressType_${type}`" :label="name" :value="Number(type)" />
 						</el-select>
 						<el-select class="edit-select" v-model.number="rowActive.DistressLevel" size="mini" popper-class="type-select" style="flex: 1">
 							<el-option v-for="(name, type) in options.DistressLevel" :key="`DistressLevel_${type}`" :label="name" :value="Number(type)" />
@@ -239,7 +239,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderRound } from "@/api/type";
+import { getTenderRound, getDTypeMap } from "@/api/type";
 import { getCaseTrackingList, setCaseTrackingSpec } from "@/api/inspection";
 import { setInsCaseList } from "@/api/PI";
 import { setInspectFlowList } from "@/api/app";
@@ -393,30 +393,8 @@ export default {
 					// 	name: "標線",
 					// }
 				},
-				DistressType: {
-					15: "坑洞",
-					29: "縱向及橫向裂縫",
-					16: "龜裂",
-					32: "車轍",
-					18: "隆起與凹陷",
-					34: "人手孔缺失",
-					51: "薄層剝離",
-					21: "其他",
-					50: "塊狀裂縫",
-					53: "推擠",
-					65: "補綻及管線回填",
-					54: "冒油",
-					55: "波浪狀鋪面",
-					56: "車道與路肩分離",
-					49: "滑溜裂縫",
-					66: "骨材剝落",
-					58: "人孔高差",
-					70: "雜草",
-					101: "隔音牆破損",
-					102: "伸縮縫破損",
-					103: "橋溝蓋破損"
-				},
-				distressTypeOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58, 70, 101, 102, 103 ],
+				DistressType: {},
+				DistressTypeFlat: {},
 				DistressLevel: {
 					1: "輕",
 					2: "中",
@@ -517,6 +495,14 @@ export default {
 				this.listQuery.tenderRound = -1;
 			}
 		});
+
+		getDTypeMap().then(response => {
+			this.options.DistressType = response.data.distressTypeMap;
+			this.options.DistressTypeFlat = Object.values(this.options.DistressType).reduce((acc, cur) => {
+				for (const key in cur) acc[key] = cur[key];
+				return acc;
+			}, {});
+		})
 	},
 	mounted() {
 		this.dialogMapVisible = false;
@@ -755,7 +741,7 @@ export default {
 			} else row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
 		},
 		formatter(row, column) {
-			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
+			if (["DistressType"].includes(column.property)) return this.options.DistressTypeFlat[row.DistressType];
 			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
 			else if (["roadDir"].includes(column.property)) return `${this.options.roadDir[row.Direction]}-${row.Lane}`;
 			else if (!["SerialNo", "id", "Id"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();

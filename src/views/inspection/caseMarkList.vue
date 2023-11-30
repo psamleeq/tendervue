@@ -106,9 +106,12 @@
 							</el-select>
 						</el-input>
 						<el-input v-else-if="['TrackingId', 'MillingLength', 'MillingWidth', 'MillingArea' ].includes(column.property)" v-model="row[column.property]" size="mini" @change="calArea(row)" />
-						<el-select v-else-if="['DistressType', 'DistressLevel'].includes(column.property)" class="edit-select" v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]" size="mini" popper-class="type-select">
-							<el-option v-for="(name, type) in options[column.property]" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+						<el-select v-else-if="['DistressType'].includes(column.property)" class="edit-select" v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]" size="mini" popper-class="type-select">
+							<el-option v-for="(name, type) in options.DistressTypeFlat" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 						</el-select>
+						<el-select v-else-if="['DistressLevel'].includes(column.property)" class="edit-select" v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]" size="mini" popper-class="type-select">
+								<el-option v-for="(name, type) in options.DistressLevel" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+							</el-select>
 						<el-date-picker
 							v-else-if="['DateReport'].includes(column.property)"
 							v-model="row.DateReport"
@@ -157,14 +160,14 @@
 			class="dialog-filter"
 			:visible.sync="dialogFilterVisible"
 			title="過濾條件"
-			width="900px"
+			width="1000px"
 			:show-close="false"
 			center
 		>
-			<el-row>
-				<el-col :span="6" v-for="distressId in options.distressTypeOrder" :key="distressId" style="display: flex; justify-content: space-between; width: 200px; margin-right: 10px">
+			<el-row :gutter="20">
+				<el-col :span="6" v-for="(_, distressId) in options.DistressTypeFlat" :key="distressId" style="display: flex; justify-content: space-between; width: 300px; margin-right: 10px">
 					<el-checkbox v-model="checked" :label="distressId">
-						{{ options.DistressType[distressId] }} ({{ caseInfo[distressId] || 0 }})
+						{{ options.DistressTypeFlat[distressId] }} ({{ caseInfo[distressId] || 0 }})
 					</el-checkbox>
 					<el-select v-model="typeLevel[distressId]" placeholder="請選擇" size="mini" popper-class="type-select" :disabled="!checked.includes(distressId)">
 						<el-option v-for="order in [0, 3, 2, 1]" :key="order" :value="order" :label="order == 0 ? '全部' : options.DistressLevel[order]" />
@@ -187,7 +190,7 @@
 <script>
 import moment from "moment";
 import { getInspectionCaseList, setInspectionCaseList, getImportCase } from "@/api/inspection";
-import { getTenderRound } from "@/api/type";
+import { getTenderRound, getDTypeMap } from "@/api/type";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
@@ -316,49 +319,8 @@ export default {
 					115: "南港區",
 					116: "文山區"
 				},
-				DistressType: {
-					15: "坑洞",
-					29: "縱向及橫向裂縫",
-					16: "龜裂",
-					32: "車轍",
-					18: "隆起與凹陷",
-					34: "人手孔缺失",
-					51: "薄層剝離",
-					21: "其他",
-					50: "塊狀裂縫",
-					53: "推擠",
-					65: "補綻及管線回填",
-					54: "冒油",
-					55: "波浪狀鋪面",
-					56: "車道與路肩分離",
-					49: "滑溜裂縫",
-					66: "骨材剝落",
-					58: "人孔高差",
-					70: "雜草",
-					101: "隔音牆破損",
-					102: "伸縮縫破損",
-					103: "橋溝蓋破損"
-				},
-				distressTypeOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58, 70, 101, 102, 103 ],
-				// pciCaseTypeMap: {
-				// 	15: "坑洞",
-				// 	29: "縱橫裂縫",
-				// 	16: "龜裂",
-				// 	32: "車轍",
-				// 	18: "隆起與凹陷",
-				// 	// 34: "人手孔缺失",
-				// 	51: "薄層剝離",
-				// 	// 21: "其他",
-				// 	50: "塊狀裂縫",
-				// 	53: "推擠",
-				// 	65: "補綻及管線回填",
-				// 	54: "冒油",
-				// 	55: "波浪狀鋪面",
-				// 	56: "車道與路肩分離",
-				// 	49: "滑溜裂縫",
-				// 	66: "骨材剝落",
-				// 	58: "人孔高差"
-				// },
+				DistressType: {},
+				DistressTypeFlat: {},
 				DistressLevel: {
 					// 0: "全部",
 					1: "輕",
@@ -449,6 +411,14 @@ export default {
 				this.getList();
 			}
 		});
+
+		getDTypeMap().then(response => {
+			this.options.DistressType = response.data.distressTypeMap;
+			this.options.DistressTypeFlat = Object.values(this.options.DistressType).reduce((acc, cur) => {
+				for (const key in cur) acc[key] = cur[key];
+				return acc;
+			}, {});
+		})
 	},
 	mounted() {
 		this.dialogMapVisible = false;
@@ -663,7 +633,7 @@ export default {
 			row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
 		},
 		formatter(row, column) {
-			if (["DistressType"].includes(column.property)) return this.options.DistressType[row.DistressType];
+			if (["DistressType"].includes(column.property)) return this.options.DistressTypeFlat[row.DistressType];
 			else if (["DistressLevel"].includes(column.property)) return this.options.DistressLevel[row.DistressLevel];
 			else if (["roadDir"].includes(column.property)) return `${this.options.roadDir[row.Direction]}-${row.Lane}`;
 			else if (!["id", "Id", "TrackingId"].includes(column.property) && Number(row[column.property])) return (Math.round(row[column.property] * 100)/100).toLocaleString();
@@ -758,7 +728,7 @@ export default {
 			color:  #FFF
 	.dialog-filter
 		.el-select
-			width: 55px
+			width: 60px
 			margin-top: -5px
 			margin-bottom: 10px
 			.el-input__inner

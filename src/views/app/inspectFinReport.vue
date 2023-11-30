@@ -53,7 +53,7 @@
 							</el-row>
 							<el-row :gutter="3">
 								<el-col :span="4" class="case-title">類型: </el-col>
-								<el-col :span="10">{{ options.DistressType[caseSpec.DistressType] }}</el-col>
+								<el-col :span="10">{{ options.DistressTypeFlat[caseSpec.DistressType] }}</el-col>
 								<el-col :span="4" class="case-title">程度: </el-col>
 								<el-col :span="6">{{ options.DistressLevel[caseSpec.DistressLevel] }}</el-col>
 							</el-row>
@@ -110,7 +110,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderRound } from "@/api/type";
+import { getTenderRound, getDTypeMap } from "@/api/type";
 import { getInspectFlowList, setInspectFlowList, trackingImgUpload } from "@/api/app";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
@@ -145,25 +145,7 @@ export default {
 			map: {},
 			options: {
 				tenderRoundMap: {},
-				DistressType: {
-					15: "坑洞",
-					29: "縱向及橫向裂縫",
-					16: "龜裂",
-					32: "車轍",
-					18: "隆起與凹陷",
-					34: "人手孔缺失",
-					51: "薄層剝離",
-					21: "其他",
-					50: "塊狀裂縫",
-					53: "推擠",
-					65: "補綻及管線回填",
-					54: "冒油",
-					55: "波浪狀鋪面",
-					56: "車道與路肩分離",
-					49: "滑溜裂縫",
-					66: "骨材剝落",
-					58: "人孔高差"
-				},
+				DistressTypeFlat: {},
 				DistressLevel: {
 					1: "輕",
 					2: "中",
@@ -205,6 +187,13 @@ export default {
 				this.listQuery.tenderRound = -1;
 			}
 		});
+
+		getDTypeMap().then(response => {
+			this.options.DistressTypeFlat = Object.values(response.data.distressTypeMap).reduce((acc, cur) => {
+				for (const key in cur) acc[key] = cur[key];
+				return acc;
+			}, {});
+		})
 	},
 	mounted() {
 		this.dialogMapVisible = false;

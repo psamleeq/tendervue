@@ -118,7 +118,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
 import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase, getInspectionRoute } from "@/api/inspection";
-import { getTenderRound } from "@/api/type";
+import { getTenderRound, getDTypeMap } from "@/api/type";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -266,30 +266,16 @@ export default {
 						color: "#607D8B"
 					}
 				],
-				caseTypeMap: {
-					15: "坑洞",
-					29: "縱向及橫向裂縫",
-					16: "龜裂",
-					32: "車轍",
-					18: "隆起與凹陷",
-					34: "人手孔缺失(不列入PCI)",
-					51: "薄層剝離",
-					21: "其他(不列入PCI)",
-					50: "塊狀裂縫",
-					53: "推擠",
-					65: "補綻及管線回填",
-					54: "冒油",
-					55: "波浪狀鋪面",
-					56: "車道與路肩分離",
-					49: "滑溜裂縫",
-					66: "骨材剝落",
-					58: "人孔高差(只列入PCI)",
-					70: "雜草",
-					101: "隔音牆破損",
-					102: "伸縮縫破損",
-					103: "橋溝蓋破損"
+				deviceTypeMap: {
+					1: "AC路面",
+					2: "人行道",
+					7: "橋樑"
 				},
-				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58, 70, 101, 102, 103 ],
+				caseTypeMap: {},
+				caseTypeMapFlat: {},
+				caseTypeMapOrder: {
+					1: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58 ]
+				},
 				caseLevelMap: {
 					1: "輕",
 					2: "中",
@@ -375,6 +361,17 @@ export default {
 					this.getList();
 				}
 			});
+
+			getDTypeMap().then(response => {
+				this.options.caseTypeMap = response.data.distressTypeMap;
+				this.options.caseTypeMapFlat = Object.values(this.options.caseTypeMap).reduce((acc, cur) => {
+					for (const key in cur) acc[key] = cur[key];
+					return acc;
+				}, {});
+				for(const id in this.options.caseTypeMap) {
+					if(this.options.caseTypeMapOrder[id] == undefined) this.options.caseTypeMapOrder[id] = Object.keys(this.options.caseTypeMap[id]);
+				}
+			})
 		}).catch(err => console.log("err: ", err));
 	},
 	mounted() { 
@@ -539,7 +536,7 @@ export default {
 				if(feature.getProperty("DistressType")) {
 					const colorFilter = this.options.caseColorMap.filter(color => {
 						let caseFlag = false;
-						const distressType = this.options.caseTypeMap[feature.getProperty("DistressType")];
+						const distressType = this.options.caseTypeMapFlat[feature.getProperty("DistressType")];
 						for(const name of color.name) {
 							caseFlag = (distressType.indexOf(name) != -1);
 							// console.log(name, caseFlag);

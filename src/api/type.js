@@ -95,6 +95,14 @@ export function getTypeMap(query) {
 	})
 }
 
+export function getDTypeMap(query) {
+	return request({
+		url: '/type/distressTypeMap',
+		method: 'get',
+		params: query
+	})
+}
+
 // 套組Map
 // TODO: rm100
 export function getKitItemMapV0(query) {

@@ -261,7 +261,7 @@
 
 <script>
 import moment from "moment";
-import { getTypeMap, getTenderRound } from "@/api/type";
+import { getTypeMap, getTenderRound, getDTypeMap } from "@/api/type";
 import { getInsCaseList, setInsCaseList, getInsCaseCount } from "@/api/PI";
 import checkPermission from '@/utils/permission';
 import Pagination from "@/components/Pagination";
@@ -357,7 +357,7 @@ export default {
 			options: {
 				tenderRoundMap: {},
 				DeviceType: {},
-				DistressType: {},
+				DistressTypeFlat: {},
 				DistressLevel: {
 					1: "輕",
 					2: "中",
@@ -400,7 +400,13 @@ export default {
 	created() {
 		getTypeMap().then(response => {
 			this.options.DeviceType = response.data.DeviceTypeMap;
-			this.options.DistressType = response.data.BTypeMap;
+			// this.options.DistressType = response.data.BTypeMap;
+		})
+		getDTypeMap().then(response => {
+			this.options.DistressTypeFlat = Object.values(response.data.distressTypeMap).reduce((acc, cur) => {
+				for (const key in cur) acc[key] = cur[key];
+				return acc;
+			}, {});
 		})
 		getTenderRound().then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
@@ -550,7 +556,7 @@ export default {
 		formatter(row, column) {
 			if([ 'organAssign' ].includes(column.property)) return row[column.property] == 1 ? '是' : '-';
 			else if(['DeviceType', 'rDeviceType'].includes(column.property)) return this.options.DeviceType[row[column.property]];
-			else if(column.property == 'DistressType') return this.options.DistressType[row[column.property]];
+			else if(column.property == 'DistressType') return this.options.DistressTypeFlat[row[column.property]];
 			else if(column.property == 'DistressLevel') return this.options.DistressLevel[row[column.property]];
 			// else if(column.property == 'BrokeStatus') return this.options.BrokeStatus[row.DistressLevel];
 			else if(column.property.indexOf('Date') != -1) return row[column.property] ? this.formatTime(row[column.property]) : "-";
@@ -578,7 +584,7 @@ export default {
 					l.DateCreate = this.formatTime(l.DateCreate);
 					l.DeviceType = this.options.DeviceType[l.DeviceType];
 					l.organAssign =  l.organAssign == 1 ? "是" : "";
-					l.DistressType = this.options.DistressType[l.DistressType];
+					l.DistressType = this.options.DistressTypeFlat[l.DistressType];
 					l.DistressLevel = this.options.DistressLevel[l.DistressLevel];
 					// l.BrokeStatus = this.options.BrokeStatus[l.DistressLevel];
 					l.PCIValue = l.PCIValue == 0 ? "" : l.PCIValue;

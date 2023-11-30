@@ -36,10 +36,15 @@
 							size="mini"
 						/>
 					</el-form-item>
+					<el-form-item v-if="!isReview && !caseInfo.dateRepair_At" prop="type" label="設施類型" style="margin-bottom: 0">
+						<el-select  v-model="caseInfo.deviceType" size="mini" @change="caseInfo.distressType = ''">
+							<el-option v-for="(val, key) in options.deviceTypeMap" :key="key" :label="options.deviceTypeMap[key]" :value="Number(key)" />
+						</el-select>
+					</el-form-item>
 					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.caseTypeMap[caseInfo.distressType] }}</span>
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.caseTypeMapFlat[caseInfo.distressType] }}</span>
 						<el-select v-else v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
-							<el-option v-for="key in options.caseTypeMapOrder" :key="key" :label="options.caseTypeMap[key]" :value="Number(key)" />
+							<el-option v-for="key in options.caseTypeMapOrder[caseInfo.deviceType]" :key="key" :label="options.caseTypeMapFlat[key]" :value="Number(key)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="level" label="缺失程度">
@@ -188,6 +193,7 @@ export default {
 			caseInfo: {
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
+				deviceType: 1,
 				distressType: "",
 				distressLevel: "",
 				millingLength: 0,
@@ -821,6 +827,7 @@ export default {
 				Id: 0,
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
+				deviceType: 1,
 				distressType: "",
 				distressLevel: "",
 				millingLength: 0,

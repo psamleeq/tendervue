@@ -150,7 +150,7 @@
 						</el-row>
 						<el-row :gutter="3">
 							<el-col :span="4" class="case-title">類型: </el-col>
-							<el-col :span="10">{{ options.caseTypeMap[caseSpecInfo.DistressType] }}</el-col>
+							<el-col :span="10">{{ options.caseTypeMapFlat[caseSpecInfo.DistressType] }}</el-col>
 							<el-col :span="4" class="case-title">程度: </el-col>
 							<el-col :span="6">{{ options.caseLevelMap[caseSpecInfo.DistressLevel] }}</el-col>
 						</el-row>
@@ -186,7 +186,7 @@ import echarts from "echarts/lib/echarts";
 require("echarts/theme/macarons");
 require("echarts/lib/chart/bar");
 import { getPanoramaJson, getInspectionCaseGeoJson, getInspectionRoute } from "@/api/inspection";
-import { getTenderRound, getDistMap } from "@/api/type";
+import { getTenderRound, getDistMap, getDTypeMap } from "@/api/type";
 import PanoramaView from '@/components/PanoramaView';
 import PieChart from "@/components/Charts/PieChart";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -297,30 +297,7 @@ export default {
 						color: "#607D8B"
 					}
 				],
-				caseTypeMap: {
-					15: "坑洞",
-					29: "縱向及橫向裂縫",
-					16: "龜裂",
-					32: "車轍",
-					18: "隆起與凹陷",
-					34: "人手孔缺失(不列入PCI)",
-					51: "薄層剝離",
-					21: "其他(不列入PCI)",
-					50: "塊狀裂縫",
-					53: "推擠",
-					65: "補綻及管線回填",
-					54: "冒油",
-					55: "波浪狀鋪面",
-					56: "車道與路肩分離",
-					49: "滑溜裂縫",
-					66: "骨材剝落",
-					58: "人孔高差(只列入PCI)",
-					70: "雜草",
-					101: "隔音牆破損",
-					102: "伸縮縫破損",
-					103: "橋溝蓋破損"
-				},
-				caseTypeMapOrder: [ 15, 29, 16, 32, 18, 34, 51, 21, 50, 53, 65, 54, 55, 56, 49, 66, 58, 70, 101, 102, 103 ],
+				caseTypeMapFlat: {},
 				caseLevelMap: {
 					1: "輕",
 					2: "中",
@@ -399,6 +376,13 @@ export default {
 				this.listQuery.tenderRound = -1;
 			}
 		});
+
+		getDTypeMap().then(response => {
+			this.options.caseTypeMapFlat = Object.values(response.data.distressTypeMap).reduce((acc, cur) => {
+				for (const key in cur) acc[key] = cur[key];
+				return acc;
+			}, {});
+		})
 	},
 	async mounted() {
 		// this.loading = true;
@@ -600,7 +584,7 @@ export default {
 				if(feature.getProperty("DistressType")) {
 					const colorFilter = this.options.caseColorMap.filter(color => {
 						let caseFlag = false;
-						const distressType = this.options.caseTypeMap[feature.getProperty("DistressType")];
+						const distressType = this.options.caseTypeMapFlat[feature.getProperty("DistressType")];
 						for(const name of color.name) {
 							caseFlag = (distressType.indexOf(name) != -1);
 							// console.log(name, caseFlag);
@@ -627,7 +611,7 @@ export default {
 				} else if(feature.getProperty("isLine")) {
 					return { 
 						strokeColor: isPrev ? '#556B2F' : color,
-						strokeWeight: 3,
+						strokeWeight: 6,
 						strokeOpacity: isPrev ? 0.4 : 0.8,
 						fillOpacity: 0,
 						zIndex: 10
@@ -636,7 +620,7 @@ export default {
 					return { 
 						strokeColor: isPrev ? '#556B2F' : color,
 						strokeWeight: 1,
-						strokeOpacity: 1,
+						strokeOpacity: 0.5,
 						fillColor: color,
 						fillOpacity: isPrev ? 0.3 : 0.7,
 						zIndex: 10
@@ -736,7 +720,7 @@ export default {
 			let caseTotal = 0;
 			this.caseInfo = featureList.reduce((acc, cur) => {
 				if(acc.length == 0 || acc[acc.length-1].DistressType != cur.properties.DistressType) {
-					const caseName = this.options.caseTypeMap[cur.properties.DistressType];
+					const caseName = this.options.caseTypeMapFlat[cur.properties.DistressType];
 
 					acc.push({ 
 						DistressType: cur.properties.DistressType, 
@@ -767,7 +751,7 @@ export default {
 		createCaseList(featureList = this.caseGeoJson[this.listQuery.inspectId].features) {
 			this.caseList = featureList.map(feature => ({
 				caseId: feature.properties.Id,
-				caseName: this.options.caseTypeMap[feature.properties.DistressType],
+				caseName: this.options.caseTypeMapFlat[feature.properties.DistressType],
 				caseLevel: this.options.caseLevelMap[feature.properties.DistressLevel],
 				place: feature.properties.Place,
 				millingLength: Math.round(feature.properties.MillingLength * 100) / 100,
@@ -996,8 +980,8 @@ export default {
 						path,
 						geodesic: true,
 						strokeColor: '#409EFF',
-						strokeOpacity: 1,
-						strokeWeight: 3,
+						strokeOpacity: 0.5,
+						strokeWeight: 6,
 						map: this.map,
 						zIndex: 10
 					})
@@ -1101,7 +1085,7 @@ export default {
 			this.barChart.setOption(options);
 		},
 		showCaseContent(feature, position) {
-			const caseTypeStr = `${feature.getProperty("Id")} - ${this.options.caseTypeMap[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
+			const caseTypeStr = `${feature.getProperty("Id")} - ${this.options.caseTypeMapFlat[feature.getProperty("DistressType")]} (${this.options.caseLevelMap[feature.getProperty("DistressLevel")]})`;
 			this.setCaseImgViewer({ imgUrls: [ `${feature.getProperty("ImgZoomOut")}` ] });
 			let contentText = `<div style="width: 200px;">`;
 			contentText += `<div> ${caseTypeStr} </div>`;
