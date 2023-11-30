@@ -40,9 +40,9 @@
 					<el-popover placement="right" :disabled="screenWidth >= 992">
 						<el-button-group>
 							<el-button type="info" size="mini" @click="showMapViewer(caseSpec, false)">地圖</el-button>
-							<el-button v-if="caseSpec.finState == 0" type="primary" size="mini" @click="setResult(caseSpec, 1)">完工</el-button>
+							<el-button v-if="caseSpec.FlowState == 0" type="primary" size="mini" @click="setResult(caseSpec, 1)">完工</el-button>
 							<el-button v-else size="mini" @click="setResult(caseSpec, 0)">撤銷</el-button>
-							<el-button v-if="caseSpec.finState == 0" :type="caseSpec.Image.length == 0 ? 'success' : ''" size="mini" @click="openImgUpload(caseSpec)">照片</el-button> 
+							<el-button v-if="caseSpec.FlowState == 0" :type="caseSpec.Image.length == 0 ? 'success' : ''" size="mini" @click="openImgUpload(caseSpec)">照片</el-button> 
 						</el-button-group>
 						<span slot="reference">
 							<el-row :gutter="3">
@@ -67,10 +67,10 @@
 				<el-col :md="4" class="hidden-sm-and-down" style="display: flex; flex-direction: column; justify-content: space-evenly;">
 					<el-button type="info" @click="showMapViewer(caseSpec, false)">地圖</el-button>
 					<!-- <br> -->
-					<el-button v-if="caseSpec.finState == 0" type="primary" @click="setResult(caseSpec, 1)">完工</el-button>
+					<el-button v-if="caseSpec.FlowState == 0" type="primary" @click="setResult(caseSpec, 2)">完工</el-button>
 					<el-button v-else size="mini" @click="setResult(caseSpec, 0)">撤銷</el-button>
 					<!-- <br> -->
-					<el-button v-if="caseSpec.finState == 0" :type="caseSpec.Image.length == 0 ? 'success' : ''" @click="openImgUpload(caseSpec)">照片</el-button> 
+					<el-button v-if="caseSpec.FlowState == 0" :type="caseSpec.Image.length == 0 ? 'success' : ''" @click="openImgUpload(caseSpec)">照片</el-button> 
 				</el-col>
 				</el-row>
 			<el-divider />
@@ -111,7 +111,7 @@
 <script>
 import moment from "moment";
 import { getTenderRound } from "@/api/type";
-import { getInspectFinList, setInspectFinList, trackingImgUpload } from "@/api/app";
+import { getInspectFlowList, setInspectFlowList, trackingImgUpload } from "@/api/app";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -221,7 +221,7 @@ export default {
 				this.list = [];
 				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 
-				getInspectFinList({
+				getInspectFlowList({
 					filter: this.listQuery.filter,
 					surveyId: tenderRound.id,
 					roadName: (this.listQuery.filterType == 1 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
@@ -253,14 +253,14 @@ export default {
 				}).catch(err => this.loading = false);
 			}
 		},
-		setResult(row, finState) {
-			this.$confirm(`確定${ finState ? '標記' : '撤銷'} 缺失ID ${row.id} 完工？`, "確認", {
+		setResult(row, flowState) {
+			this.$confirm(`確定${ flowState ? '標記' : '撤銷'} 缺失ID ${row.id} 完工？`, "確認", {
 				showClose: false,
 			}).then(() => {
 				this.loading = true;
 
-				setInspectFinList( row.SerialNo, {
-					finState
+				setInspectFlowList( row.SerialNo, {
+					flowState
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						this.$message({

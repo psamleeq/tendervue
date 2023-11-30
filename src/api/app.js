@@ -1,16 +1,16 @@
 import request from '@/utils/request'
 
-export function getInspectFinList(query) {
+export function getInspectFlowList(query) {
 	return request({
-		url: '/app/inspectFinList',
+		url: '/app/inspectFlowList',
 		method: 'get',
 		params: query
 	})
 }
 
-export function setInspectFinList(id, data) {
+export function setInspectFlowList(id, data) {
 	return request({
-		url: `/app/inspectFinList/${id}`,
+		url: `/app/inspectFlowList/${id}`,
 		method: 'put',
 		data
 	})

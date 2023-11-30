@@ -73,13 +73,20 @@
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
+			<el-table-column label="狀態" align="center">
+					<template slot-scope="{ row }">
+						<el-button-group>
+							<el-button v-for="(name, id) in options.flowStateMap" :key="id" type="primary" size="mini" :plain="row.FlowState != id" @click="setFlowState(row, id)">{{ name }}</el-button>
+						</el-button-group>
+					</template>
+				</el-table-column>
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
-						<el-button v-if="!(row.PIState & 16) && row.PIState & 1" size="mini" plain round @click="setResult(row, -1)">撤銷</el-button>
-						<el-button v-else-if="!(row.PIState & 16)" type="success" size="mini" @click="setResult(row, 1)">抽查</el-button>
-						<el-button v-if="(row.PIState & 16)" size="mini" plain round @click="setResult(row, -16)">撤銷</el-button>
+						<el-button v-if="!(row.PIState & 16) && row.PIState & 1" size="mini" plain round @click="setPIState(row, -1)">撤銷</el-button>
+						<el-button v-else-if="!(row.PIState & 16)" type="success" size="mini" @click="setPIState(row, 1)">標記</el-button>
+						<el-button v-if="(row.PIState & 16)" size="mini" plain round @click="setPIState(row, -16)">撤銷</el-button>
 						<el-button v-if="!(row.PIState & 16)" class="btn-action" type="primary" plain size="mini" round @click="rowActive= row; dialogEditVisible = true">編輯</el-button>
 					</el-button-group>
 				</template>
@@ -210,7 +217,7 @@
 			</el-form>
 
 			<span slot="footer" class="dialog-footer">
-				<el-button type="danger" @click="setResult(rowActive, 16)">刪除</el-button>
+				<el-button type="danger" @click="setPIState(rowActive, 16)">刪除</el-button>
 				<el-button type="primary" @click="editCase()">確定</el-button>
 				<el-button @click="dialogEditVisible = false">取消</el-button>
 			</span>
@@ -235,6 +242,7 @@ import moment from "moment";
 import { getTenderRound } from "@/api/type";
 import { getCaseTrackingList, setCaseTrackingSpec } from "@/api/inspection";
 import { setInsCaseList } from "@/api/PI";
+import { setInspectFlowList } from "@/api/app";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -341,7 +349,7 @@ export default {
 				ImgZoomOut: {
 					name: "遠照",
 					sortable: false,
-					default: true
+					default: false
 				}
 			},
 			total: 0,
@@ -418,6 +426,11 @@ export default {
 					// 0: "無",
 					1: "順",
 					2: "逆"
+				},
+				flowStateMap: {
+					1: '派工中',
+					2: '完工',
+					3: '不需施作'
 				}
 			}
 		};
@@ -652,7 +665,7 @@ export default {
 				}
 			});
 		},
-		setResult(row, result) {
+		setPIState(row, result) {
 			this.$confirm(`確定提交?`, "確認", { showClose: false }).then(() => {
 				this.loading = true;
 				row.PIState += result;
@@ -675,6 +688,29 @@ export default {
 					this.getList();
 				})
 			}).catch(err => console.log(err));
+		},
+		setFlowState(row, flowState) {
+			if(row.FlowState == flowState) return;
+			this.$confirm(`確定標記 缺失ID ${row.id} 為 ${this.options.flowStateMap[flowState]}？`, "確認", {
+				showClose: false,
+			}).then(() => {
+				this.loading = true;
+
+				setInspectFlowList(row.SerialNo, {
+					flowState
+				}).then(response => {
+					if (response.statusCode == 20000) {
+						this.$message({
+							message: "提交成功",
+							type: "success",
+						});
+						this.getList();
+					}
+				}).catch(err => {
+					console.log(err);
+					this.getList();
+				})
+			}).catch((err) => this.getList())
 		},
 		filterDialogOpen() {
 			this.dialogFilterVisible = true;
