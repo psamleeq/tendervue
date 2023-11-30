@@ -691,25 +691,37 @@ export default {
 		},
 		setFlowState(row, flowState) {
 			if(row.FlowState == flowState) return;
-			this.$confirm(`確定標記 缺失ID ${row.id} 為 ${this.options.flowStateMap[flowState]}？`, "確認", {
+			const msgBox = flowState == 3 ? '$prompt' : '$confirm';
+			
+			this[msgBox](`確定標記 缺失ID ${row.id} 為 ${this.options.flowStateMap[flowState]}？`, "確認", {
 				showClose: false,
-			}).then(() => {
-				this.loading = true;
+				inputPlaceholder: '原因'
+			}).then(({ value }) => {
+				console.log(value);
 
-				setInspectFlowList(row.SerialNo, {
-					flowState
-				}).then(response => {
-					if (response.statusCode == 20000) {
-						this.$message({
-							message: "提交成功",
-							type: "success",
-						});
+				if(flowState == 3 && (!value || value.length == 0)) {
+					this.$message({
+						message: "請輸入原因",
+						type: "error",
+					});
+				} else {
+					this.loading = true;
+					setInspectFlowList(row.SerialNo, {
+						flowState,
+						flowDesc: value
+					}).then(response => {
+						if (response.statusCode == 20000) {
+							this.$message({
+								message: "提交成功",
+								type: "success",
+							});
+							this.getList();
+						}
+					}).catch(err => {
+						console.log(err);
 						this.getList();
-					}
-				}).catch(err => {
-					console.log(err);
-					this.getList();
-				})
+					})
+				}
 			}).catch((err) => this.getList())
 		},
 		filterDialogOpen() {

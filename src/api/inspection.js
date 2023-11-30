@@ -116,3 +116,12 @@ export function setCaseTrackingSpec(id, data) {
 		data
 	})
 }
+
+// 回報分析
+export function getCaseTrackingStatic(query) {
+	return request({
+		url: '/inspection/caseTrackingStatic',
+		method: 'get',
+		params: query
+	})
+}

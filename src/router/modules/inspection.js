@@ -69,6 +69,16 @@ const inspectionRouter = {
 				roles: ['inspection.editor'],
 				isNew: true
 			}
+		},
+		{
+			path: 'caseTrackingStatic',
+			component: () => import('@/views/inspection/caseTrackingStatic'),
+			name: 'caseTrackingStatic',
+			meta: {
+				title: '回報分析',
+				roles: ['inspection.viewer'],
+				isNew: true
+			}
 		}
 	]
 }
