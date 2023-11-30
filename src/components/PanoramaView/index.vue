@@ -36,6 +36,12 @@
 							size="mini"
 						/>
 					</el-form-item>
+					<el-form-item prop="type" label="權責單位" style="margin-bottom: 0">
+						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.competentTypeMap[caseInfo.competentId] }}</span>
+						<el-select v-else v-model="caseInfo.competentId" size="mini" @change="caseInfo.distressType = ''">
+							<el-option v-for="(val, key) in options.competentTypeMap" :key="key" :label="options.competentTypeMap[key]" :value="Number(key)" />
+						</el-select>
+					</el-form-item>
 					<el-form-item v-if="!isReview && !caseInfo.dateRepair_At" prop="type" label="設施類型" style="margin-bottom: 0">
 						<el-select  v-model="caseInfo.deviceType" size="mini" @change="caseInfo.distressType = ''">
 							<el-option v-for="(val, key) in options.deviceTypeMap" :key="key" :label="options.deviceTypeMap[key]" :value="Number(key)" />
@@ -193,6 +199,7 @@ export default {
 			caseInfo: {
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
+				competentId: 1,
 				deviceType: 1,
 				distressType: "",
 				distressLevel: "",
@@ -827,6 +834,7 @@ export default {
 				Id: 0,
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
+				competentId: 1,
 				deviceType: 1,
 				distressType: "",
 				distressLevel: "",
@@ -1024,7 +1032,7 @@ export default {
 			background-color: rgba(white, 0.6)
 			z-index: 11
 			&.right
-				top: 60px
+				top: 42px
 				right: 15px
 			.el-card__body
 				position: relative

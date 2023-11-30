@@ -103,6 +103,14 @@ export function getDTypeMap(query) {
 	})
 }
 
+export function getCompetentTypeMap(query) {
+	return request({
+		url: '/type/competentTypeMap',
+		method: 'get',
+		params: query
+	})
+}
+
 // 套組Map
 // TODO: rm100
 export function getKitItemMapV0(query) {

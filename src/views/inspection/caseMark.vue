@@ -118,7 +118,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
 import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase, getInspectionRoute } from "@/api/inspection";
-import { getTenderRound, getDTypeMap } from "@/api/type";
+import { getTenderRound, getDTypeMap, getCompetentTypeMap } from "@/api/type";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -225,6 +225,7 @@ export default {
 					6: "週期六",
 					7: "週期七"
 				},
+				competentTypeMap: {},
 				imgTypeMap: {
 					"imgZoomIn": "近照",
 					"imgZoomOut": "遠照"
@@ -371,6 +372,10 @@ export default {
 				for(const id in this.options.caseTypeMap) {
 					if(this.options.caseTypeMapOrder[id] == undefined) this.options.caseTypeMapOrder[id] = Object.keys(this.options.caseTypeMap[id]);
 				}
+			})
+
+			getCompetentTypeMap().then(response => {
+				this.options.competentTypeMap = response.data.competentTypeMap;
 			})
 		}).catch(err => console.log("err: ", err));
 	},
@@ -763,6 +768,7 @@ export default {
 			uploadForm.append('inspectId', sessionStorage.inspectIdNow || this.inspectIdNow);
 			uploadForm.append('trackingId', Number(caseInfo.trackingId));
 			uploadForm.append('dateReport', this.formatTime(caseInfo.dateReport));
+			uploadForm.append('competentId', Number(caseInfo.competentId));
 			uploadForm.append('distressType', caseInfo.distressType);
 			uploadForm.append('distressLevel', caseInfo.distressLevel);
 			uploadForm.append('millingLength', Number(caseInfo.millingLength));
