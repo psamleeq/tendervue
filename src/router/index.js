@@ -10,6 +10,7 @@ import Layout from '@/layout';
 import accountList from './modules/account';
 import unitRouter from './modules/unit';
 import inspectionRouter from './modules/inspection';
+import inspectionReaRouter from './modules/inspectionRes';
 import caseV1Router from './modules/caseV1';
 import caseRouter from './modules/case';
 import pciManageRouter from './modules/PCIManage';
@@ -111,6 +112,7 @@ export const asyncRoutes = [
 	accountList,
 	unitRouter,
 	inspectionRouter,
+	inspectionReaRouter,
 	caseV1Router,
 	caseRouter,
 	pciManageRouter,

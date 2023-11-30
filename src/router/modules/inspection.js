@@ -50,35 +50,6 @@ const inspectionRouter = {
 				title: '標記列表',
 				roles: ['inspection.marker']
 			}
-		},
-		{
-			path: 'caseInspectionMap',
-			component: () => import('@/views/inspection/caseInspectionMap'),
-			name: 'caseInspectionMap',
-			meta: {
-				title: '案件地圖',
-				roles: ['inspection.viewer'],
-			}
-		},
-		{
-			path: 'caseTrackingList',
-			component: () => import('@/views/inspection/caseTrackingList'),
-			name: 'caseTrackingList',
-			meta: {
-				title: '案件列表',
-				roles: ['inspection.editor'],
-				isNew: true
-			}
-		},
-		{
-			path: 'caseTrackingStatic',
-			component: () => import('@/views/inspection/caseTrackingStatic'),
-			name: 'caseTrackingStatic',
-			meta: {
-				title: '回報分析',
-				roles: ['inspection.viewer'],
-				isNew: true
-			}
 		}
 	]
 }
