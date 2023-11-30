@@ -10,8 +10,7 @@ const carRouter = {
 	meta: {
 		title: '車輛管理',
 		icon: 'el-icon-truck',
-		roles: ['car'],
-		isNew: true 
+		roles: ['car']
 	},
 	children: [
 		{
@@ -20,8 +19,7 @@ const carRouter = {
 			name: 'carMonitor',
 			meta: {
 				title: '即時影像',
-				roles: ['car.viewer'],
-				isNew: true 
+				roles: ['car.viewer']
 			}
 		},
 		{

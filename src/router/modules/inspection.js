@@ -39,6 +39,7 @@ const inspectionRouter = {
 			meta: {
 				title: '標記缺失',
 				roles: ['inspection.marker'],
+				isNew: true
 			}
 		},
 		{
@@ -57,7 +58,6 @@ const inspectionRouter = {
 			meta: {
 				title: '案件地圖',
 				roles: ['inspection.viewer'],
-				isNew: true
 			}
 		},
 		{
