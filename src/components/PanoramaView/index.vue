@@ -43,7 +43,7 @@
 						</el-select>
 					</el-form-item>
 					<el-form-item v-if="!isReview && !caseInfo.dateRepair_At" prop="type" label="設施類型" style="margin-bottom: 0">
-						<el-select  v-model="caseInfo.deviceType" size="mini" @change="caseInfo.distressType = ''">
+						<el-select v-model="caseInfo.deviceType" size="mini" @change="changeDeviceType()">
 							<el-option v-for="(val, key) in options.deviceTypeMap" :key="key" :label="options.deviceTypeMap[key]" :value="Number(key)" />
 						</el-select>
 					</el-form-item>
@@ -200,7 +200,7 @@ export default {
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
 				competentId: 1,
-				deviceType: 1,
+				deviceType: Number(sessionStorage.deviceType) || 1,
 				distressType: "",
 				distressLevel: "",
 				millingLength: 0,
@@ -337,6 +337,10 @@ export default {
 			if(caseInfo.lane) caseInfo.lane = caseInfo.lane.replace(/[^\d]/g,''); 
 			if(caseInfo.lane <= 1) caseInfo.lane = 1; 
 			if(caseInfo.lane >=5) caseInfo.lane = 5; 
+		},
+		changeDeviceType() {
+			this.caseInfo.distressType = ''; 
+			sessionStorage.deviceType = this.caseInfo.deviceType
 		},
 		setHeading() {
 			this.$emit('setHeading', this.panorama.getNorthOffset()+this.panorama.getYaw());
@@ -835,7 +839,7 @@ export default {
 				dateReport: moment().startOf("d"),
 				trackingId: 0,
 				competentId: 1,
-				deviceType: 1,
+				deviceType: Number(sessionStorage.deviceType) || 1,
 				distressType: "",
 				distressLevel: "",
 				millingLength: 0,
