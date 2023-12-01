@@ -186,7 +186,7 @@ import echarts from "echarts/lib/echarts";
 require("echarts/theme/macarons");
 require("echarts/lib/chart/bar");
 import { getPanoramaJson, getInspectionCaseGeoJson, getInspectionRoute } from "@/api/inspection";
-import { getTenderRound, getDistMap, getDTypeMap } from "@/api/type";
+import { getTenderRound, getDistMap, getDTypeMap, getCompetentTypeMap } from "@/api/type";
 import PanoramaView from '@/components/PanoramaView';
 import PieChart from "@/components/Charts/PieChart";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -254,8 +254,9 @@ export default {
 				ratio: "佔比"
 			},
 			options: { 
-				tenderRoundMap: { },
-				districtMap: { },
+				tenderRoundMap: {},
+				districtMap: {},
+				competentTypeMap: {},
 				imgTypeMap: {
 					"imgZoomIn": "近照",
 					"imgZoomOut": "遠照"
@@ -382,6 +383,10 @@ export default {
 				for (const key in cur) acc[key] = cur[key];
 				return acc;
 			}, {});
+		})
+
+		getCompetentTypeMap().then(response => {
+			this.options.competentTypeMap = response.data.competentTypeMap;
 		})
 	},
 	async mounted() {
