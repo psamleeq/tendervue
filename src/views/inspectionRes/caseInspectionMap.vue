@@ -1281,7 +1281,7 @@ export default {
 	.info-box
 		position: absolute
 		width: 280px
-		max-height: 70%
+		// max-height: 70%
 		background-color: rgba(white, 0.7)
 		z-index: 1
 		&.right

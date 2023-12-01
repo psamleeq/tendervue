@@ -939,7 +939,7 @@ export default {
 			position: absolute
 			right: 10px
 			top: 50px
-			z-index: 10
+			z-index: 11
 		.btn-forward, .btn-backward
 			position: absolute
 			right: 18px
