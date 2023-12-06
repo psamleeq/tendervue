@@ -592,7 +592,8 @@ export default {
 					l.SVCheck = (l.PIState & 2) ? "V" : (l.PIState & 32) ? "X" : "";
 					l.OrganCheck = (l.PIState & 4) ? "V" : (l.PIState & 64) ? "X" : "";
 
-					l.Note = (l.PIState & 32) ? l.PIStateNotes.SV : (l.PIState & 64) ? l.PIStateNotes.Organ : "";
+					const PIStateNotes = JSON.parse(l.PIStateNotes);
+					l.Note = (l.PIState & 32) ? PIStateNotes.SV : (l.PIState & 64) ? PIStateNotes.Organ : "";
 					return l
 				}) 
 				const data = this.formatJson(filterVal, dataList);
