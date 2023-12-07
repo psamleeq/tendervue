@@ -301,6 +301,7 @@ export default {
 					this.inputs.listNonAccepted.forEach(caseSpec => {
 						caseSpec.CaseDate = moment(caseSpec.CaseDate).format('MM/DD');
 						caseSpec.CaseNo = caseSpec.UploadCaseNo;
+						caseSpec.type = 1;
 
 						if (caseSpec.State & 32) {
 							caseSpec.UploadCaseNoSV = caseSpec.UploadCaseNo;
@@ -323,6 +324,7 @@ export default {
 							resultList.forEach(caseSpec => {
 								caseSpec.CaseDate = moment(caseSpec.DateUpload).format('MM/DD');
 								caseSpec.State = caseSpec.PIState;
+								caseSpec.type = 2;
 
 								if (caseSpec.PIState & 32) {
 									caseSpec.UploadCaseNoSV = caseSpec.CaseNo;
@@ -381,9 +383,12 @@ export default {
 		},
 		async createPdf() {
 			return new Promise(async (resolve, reject) => {
-				const total = this.inputs.listNonAccepted.length;
-				const totalSV = this.inputs.listNonAccepted.filter(l => l.State & 32).length;
-				const totalOrgan = this.inputs.listNonAccepted.filter(l => l.State & 64).length;
+				const total = this.inputs.listNonAccepted.filter(l => l.type == 1).length;
+				const totalSV = this.inputs.listNonAccepted.filter(l => l.type == 1 && l.State & 32).length;
+				const totalOrgan = this.inputs.listNonAccepted.filter(l => l.type == 1 && l.State & 64).length;
+				const totalP = this.inputs.listNonAccepted.filter(l => l.type == 2).length;
+				const totalSVP = this.inputs.listNonAccepted.filter(l => l.type == 2 && l.State & 32).length;
+				const totalOrganP = this.inputs.listNonAccepted.filter(l => l.type == 2 && l.State & 64).length;
 
 				const splitTable = this.inputs.listNonAccepted.reduce((acc, cur) => {
 					const rowLimit = acc.length == 1 ? 22 : 25;
@@ -415,7 +420,7 @@ export default {
 					this.pdfDoc.autoTable({
 						theme: 'plain',
 						styles: { font: "edukai", fontSize: 12, lineWidth: 0.1, lineColor: 10 },
-						head: [[`機關或專案管理/監造抽查檢核後發現錯誤的案件數資訊: ${total} 件 (監造 ${totalSV}件 + 機關 ${totalOrgan}件)`]],
+						head: [[`機關或專案管理/監造抽查檢核後發現錯誤的案件數資訊:\n      自巡: ${total} 件 (監造 ${totalSV}件 + 機關 ${totalOrgan}件) ， 環景: ${totalP} 件 (監造 ${totalSVP}件 + 機關 ${totalOrganP}件)`]],
 						startY: this.pdfDoc.lastAutoTable.finalY,
 					})
 					this.pdfDoc.autoTable({
