@@ -391,7 +391,7 @@ export default {
 				const totalOrganP = this.inputs.listNonAccepted.filter(l => l.type == 2 && l.State & 64).length;
 
 				const splitTable = this.inputs.listNonAccepted.reduce((acc, cur) => {
-					const rowLimit = acc.length == 1 ? 22 : 25;
+					const rowLimit = acc.length == 1 ? 21 : 24;
 					if(acc[acc.length-1].length <= rowLimit) acc[acc.length-1].push(cur);
 					else acc.push([cur]);
 					return acc;
