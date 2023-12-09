@@ -615,6 +615,7 @@ export default {
 		},
 		setCaseState(row, isActive) {
 			this.loading = true;
+			this.scrollTop = document.documentElement.scrollTop;
 
 			setInspectionCaseList(row.id, { isActive }).then(response => {
 				if ( response.statusCode == 20000 ) {

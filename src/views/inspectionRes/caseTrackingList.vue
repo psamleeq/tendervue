@@ -654,6 +654,7 @@ export default {
 		setPIState(row, result) {
 			this.$confirm(`確定提交?`, "確認", { showClose: false }).then(() => {
 				this.loading = true;
+				this.scrollTop = document.documentElement.scrollTop;
 				row.PIState += result;
 
 				setInsCaseList( row.SerialNo, {
@@ -692,6 +693,8 @@ export default {
 					});
 				} else {
 					this.loading = true;
+					this.scrollTop = document.documentElement.scrollTop;
+					
 					setInspectFlowList(row.SerialNo, {
 						flowState,
 						flowDesc: value
