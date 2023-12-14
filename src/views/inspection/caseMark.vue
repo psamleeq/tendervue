@@ -12,7 +12,7 @@
 									<span>行政區</span>
 								</div>
 								<el-select class="district-select" v-model="listQuery.inspectRoundZipCode">
-									<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
+									<el-option v-for="zip in options.districtOrder.filter(zip => zip != 1001)" :key="zip" :label="options.districtMap[zip].district" :value="Number(zip)" />
 								</el-select>
 							</div>
 						</div>
@@ -118,7 +118,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
 import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase, getInspectionRoute } from "@/api/inspection";
-import { getTenderRound, getDTypeMap, getCompetentTypeMap } from "@/api/type";
+import { getTenderRound, getDistMap, getDTypeMap, getCompetentTypeMap } from "@/api/type";
 import data2blob from '@/utils/data2blob.js';
 import PanoramaView from '@/components/PanoramaView';
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -177,44 +177,8 @@ export default {
 			},
 			options: {
 				tenderRoundMap: {},
-				districtList: {
-					100: {
-						name: "中正區"
-					},
-					103: {
-						name: "大同區"
-					},
-					104: {
-						name: "中山區"
-					},
-					105: {
-						name: "松山區"
-					},
-					106: {
-						name: "大安區"
-					},
-					108: {
-						name: "萬華區"
-					},
-					110: {
-						name: "信義區"
-					},
-					111: {
-						name: "士林區"
-					},
-					112: {
-						name: "北投區"
-					},
-					114: {
-						name: "內湖區"
-					},
-					115: {
-						name: "南港區"
-					},
-					116: {
-						name: "文山區"
-					},
-				},
+				districtMap: {},
+				districtOrder: [],
 				inspectRound: {
 					0: "全部",
 					1: "週期一",
@@ -361,6 +325,13 @@ export default {
 					this.listQuery.tenderRound = Number(this.$route.query.tenderRound);
 					this.getList();
 				}
+			});
+
+			getDistMap().then(response => {
+				Object.keys(response.data.districtMap).filter(key => key < 1000).forEach(key => {
+					this.$set(this.options.districtMap, key, response.data.districtMap[key]);
+					this.options.districtOrder.push(key);
+				});
 			});
 
 			getDTypeMap().then(response => {

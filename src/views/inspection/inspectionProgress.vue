@@ -9,7 +9,7 @@
 					<el-option label="合約" :value="2" />
 				</el-select>
 				<el-select v-if="listQuery.filterType == 1" v-model.number="listQuery.ZipCode" placeholder="請選擇" popper-class="type-select" style="width: 100px">
-					<el-option v-for="(name, id) in area" :key="id" :value="Number(id)" :label="name" />
+					<el-option v-for="zip in options.districtOrder.filter(zip => zip != 1001)" :key="zip" :label="options.districtMap[zip].district" :value="Number(zip)" />
 				</el-select>
 				<el-select v-if="listQuery.filterType == 2" v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
 					<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
@@ -111,7 +111,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderRound } from "@/api/type";
+import { getTenderRound, getDistMap } from "@/api/type";
 import { getInspectionList, setInspectionList } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 import TimePicker from '@/components/TimePicker';
@@ -146,6 +146,7 @@ export default {
 			114: '內湖區',
 			115: '南港區',
 			116: '文山區',
+			999: '橋涵區'
 		},
 		list:[],
 		rowActive: {},
@@ -178,7 +179,9 @@ export default {
 		dialogVisible: false,
 		InputNotes:'',
 		options: {
-			tenderRoundMap: {}
+			tenderRoundMap: {},
+			districtMap: {},
+			districtOrder: [],
 		}
 	};
 	},
@@ -214,6 +217,16 @@ export default {
 				this.options.tenderRoundMap = { "-1": { id: -1 }};
 				this.listQuery.tenderRound = -1;
 			}
+		});
+
+		getDistMap().then(response => {
+			this.$set(this.options.districtMap, '0', { district: '全部'	});
+			this.options.districtOrder.push('0');
+
+			Object.keys(response.data.districtMap).filter(key => key < 1000).forEach(key => {
+				this.$set(this.options.districtMap, key, response.data.districtMap[key]);
+				this.options.districtOrder.push(key);
+			});
 		});
 	},
 	mounted() {},
