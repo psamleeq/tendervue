@@ -463,14 +463,15 @@ export default {
 		trackingCase() {
 			this.caseInfo.trackingId = Number(this.caseInfo.trackingId);
 			if(Number(this.caseInfo.trackingId) == 0) return;
-
 			const caseFilter = this.caseGeoJson.casePrev.features.filter(caseSpec => caseSpec.properties.Id == Number(this.caseInfo.trackingId) || caseSpec.properties.TrackingId == Number(this.caseInfo.trackingId));
-
 			if(caseFilter.length > 0) {
 				const caseSpec = caseFilter[0].properties;
+				const deviceType = Object.keys(this.options.caseTypeMap).filter(key => Object.keys(this.options.caseTypeMap[key]).map(key => Number(key)).includes(caseSpec.DistressType))[0];
 				this.caseInfo = Object.assign({}, this.caseInfo, {
 					id: Number(caseSpec.Id),
 					trackingId: Number(this.caseInfo.trackingId) || Number(caseSpec.TrackingId),
+					competentId: Number(caseSpec.competentId),
+					deviceType: Number(deviceType),
 					distressType: Number(caseSpec.DistressType),
 					distressLevel: Number(caseSpec.DistressLevel),
 					millingLength: Math.round(caseSpec.MillingLength * 100) / 100,
@@ -752,10 +753,13 @@ export default {
 					isPrev
 				},
 				clickHandlerFunc: (evt, clickHandlerArgs) => {
+					const deviceType = Object.keys(this.options.caseTypeMap).filter(key => Object.keys(this.options.caseTypeMap[key]).map(key => Number(key)).includes(clickHandlerArgs.prop.DistressType))[0];
 					this.caseInfo = Object.assign({}, this.caseInfo, {
 						id: clickHandlerArgs.prop.Id,
 						dateReport: clickHandlerArgs.prop.DateRepair_At ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
 						trackingId: clickHandlerArgs.prop.TrackingId || clickHandlerArgs.prop.Id,
+						competentId: Number(clickHandlerArgs.prop.CompetentId),
+						deviceType: Number(deviceType),
 						distressType: Number(clickHandlerArgs.prop.DistressType),
 						distressLevel: Number(clickHandlerArgs.prop.DistressLevel),
 						millingLength: Math.round(clickHandlerArgs.prop.MillingLength * 100) / 100 ,
