@@ -102,7 +102,8 @@
 					</span>
 					<span v-else>
 						<div>{{ row.PIUsername }}</div>
-						<span>({{ formatTime(row.PICreateAt) }})</span>
+						<div>({{ formatTime(row.PICreateAt) }})</div>
+						<el-button v-if="!(row.PIState & 16) && row.PIState & 1 && row.FlowState == 0" size="mini" plain round @click="setPIState(row, -1)">撤銷</el-button>
 					</span>
 					<!-- <el-button-group>
 						<el-button v-if="!(row.PIState & 16) && row.PIState & 1" size="mini" plain round @click="setPIState(row, -1)">撤銷</el-button>
