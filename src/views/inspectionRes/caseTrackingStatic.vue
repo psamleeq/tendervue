@@ -51,6 +51,17 @@
 			<el-row :gutter="40" type="flex" align="center">
 				<el-col :span="6" class="card-panel-col">
 					<div class="card-panel">
+						<div class="card-panel-icon-wrapper icon-right">
+							<i class="el-icon-caret-right" />
+						</div>
+						<div class="card-panel-description">
+							<div class="card-panel-text">派工中</div>
+							<div class="card-panel-num">{{ Number(static.workCount || 0).toLocaleString() }}</div>
+						</div>
+					</div>
+					</el-col>
+				<el-col :span="6" class="card-panel-col">
+					<div class="card-panel">
 						<div class="card-panel-icon-wrapper icon-succuss">
 							<i class="el-icon-success" />
 						</div>
@@ -62,22 +73,11 @@
 				</el-col>
 				<el-col :span="6" class="card-panel-col">
 					<div class="card-panel">
-						<div class="card-panel-icon-wrapper icon-right">
-							<i class="el-icon-caret-right" />
-						</div>
-						<div class="card-panel-description">
-							<div class="card-panel-text">派工中</div>
-							<div class="card-panel-num">{{ Number(static.workCount || 0).toLocaleString() }}</div>
-						</div>
-					</div>
-				</el-col>
-				<el-col :span="6" class="card-panel-col">
-					<div class="card-panel">
 						<div class="card-panel-icon-wrapper icon-error">
 							<i class="el-icon-error" />
 						</div>
 						<div class="card-panel-description">
-							<div class="card-panel-text">暫不施作</div>
+							<div class="card-panel-text">不需施作</div>
 							<div class="card-panel-num">{{ Number(static.rejectCount || 0).toLocaleString() }}</div>
 						</div>
 					</div>
@@ -88,7 +88,7 @@
 							<i class="el-icon-warning" />
 						</div>
 						<div class="card-panel-description">
-							<div class="card-panel-text">尚未回報</div>
+							<div class="card-panel-text">未審核</div>
 							<div class="card-panel-num">{{ Number(static.unReportCount || 0).toLocaleString() }}</div>
 						</div>
 					</div>
@@ -98,7 +98,7 @@
 		<br>
 
 		<!-- 暫不施作案件 -->
-		<h4>暫不施作案件</h4>
+		<h4>不需施作(含改判)案件</h4>
 		<el-table
 			empty-text="目前沒有資料"
 			:data="list"
@@ -176,7 +176,8 @@ export default {
 				FlowStateMap: {
 					1: '派工中',
 					2: '完工',
-					3: '不需施作'
+					3: '不需施作',
+					4: '改判'
 				}
 			}
 		};
