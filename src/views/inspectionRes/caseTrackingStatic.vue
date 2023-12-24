@@ -77,7 +77,7 @@
 							<i class="el-icon-error" />
 						</div>
 						<div class="card-panel-description">
-							<div class="card-panel-text">不需施作</div>
+							<div class="card-panel-text">不需施作(含改判)</div>
 							<div class="card-panel-num">{{ Number(static.rejectCount || 0).toLocaleString() }}</div>
 						</div>
 					</div>
