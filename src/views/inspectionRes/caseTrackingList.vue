@@ -58,7 +58,7 @@
 				:key="key"
 				:prop="key"
 				:label="value.name"
-				:width="value.width"
+				:min-width="value.width"
 				align="center"
 				:formatter="formatter"
 				:sortable="value.sortable"
@@ -70,25 +70,46 @@
 							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
 						</el-popover>
 					</span>
+					<span v-else-if="column.property == 'Place'">
+						<div>{{ row.Place }}</div>
+						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
+					</span>
 					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="狀態" align="center">
-					<template slot-scope="{ row }">
-						<el-button-group>
-							<el-button v-for="(name, id) in options.flowStateMap" :key="id" type="primary" size="mini" :plain="row.FlowState != id" @click="setFlowState(row, id)">{{ name }}</el-button>
-						</el-button-group>
-					</template>
-				</el-table-column>
+			<el-table-column label="狀態" min-width="40" align="center">
+				<template slot-scope="{ row }">
+					<div v-if="row.PIState == 1 && row.FlowState == 0">待派工</div>
+					<div v-else>{{ options.flowStateMap[row.FlowState] }}</div>
+					<span v-if="[1, 2].includes(row.FlowState)">({{ formatTime(row.FlowCreateAt) }})</span>
+					<span v-else-if="[3, 4].includes(row.FlowState) && row.FlowDesc">({{ row.FlowDesc }})</span>
+				</template>
+			</el-table-column>
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
-					<el-button-group>
-						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
+					<span v-if="row.PIState == 0 && row.FlowState == 0">
+						<el-radio-group v-model="row.state" style="display: flex; flex-direction: column; align-items: flex-start;" >
+							<el-radio :label="1">派工</el-radio>
+							<el-radio :label="3">不需派工
+								<el-input v-model="row.reasonNoNeed" style="width: 200px" />
+							</el-radio>
+							<el-radio :label="4">缺失改判
+								<el-input v-model="row.reasonChange" style="width: 200px"/>
+							</el-radio>
+						</el-radio-group>
+						<br>
+						<el-button type="success" size="mini" @click="setState(row)">送出</el-button>
+					</span>
+					<span v-else>
+						<div>{{ row.PIUsername }}</div>
+						<span>({{ formatTime(row.PICreateAt) }})</span>
+					</span>
+					<!-- <el-button-group>
 						<el-button v-if="!(row.PIState & 16) && row.PIState & 1" size="mini" plain round @click="setPIState(row, -1)">撤銷</el-button>
-						<el-button v-else-if="!(row.PIState & 16)" type="success" size="mini" @click="setPIState(row, 1)">標記</el-button>
+						<el-button v-else-if="!(row.PIState & 16)" type="success" size="mini" @click="setPIState(row, 1)">派工</el-button>
 						<el-button v-if="(row.PIState & 16)" size="mini" plain round @click="setPIState(row, -16)">撤銷</el-button>
 						<el-button v-if="!(row.PIState & 16)" class="btn-action" type="primary" plain size="mini" round @click="rowActive= row; dialogEditVisible = true">編輯</el-button>
-					</el-button-group>
+					</el-button-group> -->
 				</template>
 			</el-table-column>
 		</el-table>
@@ -280,7 +301,7 @@ export default {
 					name: "缺失Id",
 					sortable: true,
 					default: true,
-					width: 80
+					width: 30
 				},
 				// SerialNo: {
 				// 	name: "查報案號",
@@ -292,54 +313,55 @@ export default {
 					name: "追蹤Id",
 					sortable: false,
 					default: false,
-					width: 80
+					width: 30
 				},
 				DistressType: {
 					name: "缺失類型",
 					sortable: true,
 					default: true,
-					width: 160
+					width: 40
 				},
 				DistressLevel: {
 					name: "損壞程度",
 					sortable: true,
 					default: true,
-					width: 80
+					width: 40
 				},
 				DateCreate: {
 					name: "通報時間",
 					sortable: true,
 					default: false,
-					width: 150
+					width: 40
 				},
 				Place: {
 					name: "地址",
 					sortable: true,
-					default: true
+					default: true,
+					width: 80
 				},
 				roadDir: {
 					name: "車道",
 					sortable: false,
 					default: false,
-					width: 110
+					width: 30
 				},
 				MillingLength: {
 					name: "長度(m)",
 					sortable: true,
 					default: false,
-					width: 80
+					width: 30
 				},
 				MillingWidth: {
 					name: "寬度(m)",
 					sortable: true,
 					default: false,
-					width: 80
+					width: 30
 				},
 				MillingArea: {
 					name: "面積(㎡)",
 					sortable: true,
 					default: false,
-					width: 80
+					width: 30
 				},
 				ImgZoomIn: {
 					name: "近照",
@@ -406,9 +428,11 @@ export default {
 					2: "逆"
 				},
 				flowStateMap: {
+					0: '未審查',
 					1: '派工中',
 					2: '完工',
-					3: '不需施作'
+					3: '不需施作',
+					4: '改判'
 				}
 			}
 		};
@@ -596,6 +620,9 @@ export default {
 						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
 						this.$set(l, "editFormula", l.MillingFormula != '0');
+						this.$set(l, "status", 0);
+						this.$set(l, "reasonNoNeed", "");
+						this.$set(l, "reasonChange", "");
 					})
 
 					this.$nextTick(() => document.documentElement.scrollTop = this.scrollTop);
@@ -651,6 +678,59 @@ export default {
 				}
 			});
 		},
+		setState(row) {
+			this.$confirm(`確定提交?`, "確認", { showClose: false }).then(() => {
+				this.scrollTop = document.documentElement.scrollTop;
+				if(row.state == 1) {
+					this.loading = true;
+					setInsCaseList(row.SerialNo, {
+						PCIValue: row.PCIValue,
+						PIState: row.PIState += row.state,
+						PIStateNotes: row.PIStateNotes
+					}).then(response => {
+						if (response.statusCode == 20000) {
+							this.$message({
+								message: "提交成功",
+								type: "success",
+							});
+							this.getList();
+							this.dialogEditVisible = false;
+						}
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					})
+				} else {
+					if (
+						(row.state == 3 && (!row.reasonNoNeed || row.reasonNoNeed.length == 0))
+						||
+						(row.state == 4 && (!row.reasonChange || row.reasonChange.length == 0))
+					) {
+						this.$message({
+							message: "請輸入原因",
+							type: "error",
+						});
+					} else {
+						this.loading = true;
+						setInspectFlowList(row.SerialNo, {
+							flowState: row.state,
+							flowDesc: (row.state == 3) ? row.reasonNoNeed : row.reasonChange
+						}).then(response => {
+							if (response.statusCode == 20000) {
+								this.$message({
+									message: "提交成功",
+									type: "success",
+								});
+								this.getList();
+							}
+						}).catch(err => {
+							console.log(err);
+							this.getList();
+						})
+					}
+				}
+			}).catch(err => console.log(err));
+		},
 		setPIState(row, result) {
 			this.$confirm(`確定提交?`, "確認", { showClose: false }).then(() => {
 				this.loading = true;
@@ -675,43 +755,6 @@ export default {
 					this.getList();
 				})
 			}).catch(err => console.log(err));
-		},
-		setFlowState(row, flowState) {
-			if(row.FlowState == flowState) return;
-			const msgBox = flowState == 3 ? '$prompt' : '$confirm';
-			
-			this[msgBox](`確定標記 缺失ID ${row.id} 為 ${this.options.flowStateMap[flowState]}？`, "確認", {
-				showClose: false,
-				inputPlaceholder: '原因'
-			}).then(({ value }) => {
-				console.log(value);
-
-				if(flowState == 3 && (!value || value.length == 0)) {
-					this.$message({
-						message: "請輸入原因",
-						type: "error",
-					});
-				} else {
-					this.loading = true;
-					this.scrollTop = document.documentElement.scrollTop;
-					
-					setInspectFlowList(row.SerialNo, {
-						flowState,
-						flowDesc: value
-					}).then(response => {
-						if (response.statusCode == 20000) {
-							this.$message({
-								message: "提交成功",
-								type: "success",
-							});
-							this.getList();
-						}
-					}).catch(err => {
-						console.log(err);
-						this.getList();
-					})
-				}
-			}).catch((err) => this.getList())
 		},
 		filterDialogOpen() {
 			this.dialogFilterVisible = true;
