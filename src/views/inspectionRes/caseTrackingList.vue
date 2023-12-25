@@ -87,7 +87,7 @@
 			</el-table-column>
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.PIState == 0 && row.FlowState == 0">
+					<span v-if="!(row.PIState & 1 || row.PIState & 16) && row.FlowState == 0">
 						<el-radio-group v-model="row.state" style="display: flex; flex-direction: column; align-items: flex-start;" >
 							<el-radio :label="1">派工</el-radio>
 							<el-radio :label="3">不需派工
@@ -101,8 +101,8 @@
 						<el-button type="success" size="mini" @click="setState(row)">送出</el-button>
 					</span>
 					<span v-else>
-						<div>{{ row.PIUsername }}</div>
-						<div>({{ formatTime(row.PICreateAt) }})</div>
+						<div>{{ row.PIUsername || '-' }}</div>
+						<div v-if="row.PICreateAt">({{ formatTime(row.PICreateAt) }})</div>
 						<el-button v-if="!(row.PIState & 16) && row.PIState & 1 && row.FlowState == 0" size="mini" plain round @click="setPIState(row, -1)">撤銷</el-button>
 					</span>
 					<!-- <el-button-group>
