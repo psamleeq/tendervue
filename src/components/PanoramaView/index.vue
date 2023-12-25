@@ -470,7 +470,7 @@ export default {
 				this.caseInfo = Object.assign({}, this.caseInfo, {
 					id: Number(caseSpec.Id),
 					trackingId: Number(this.caseInfo.trackingId) || Number(caseSpec.TrackingId),
-					competentId: Number(caseSpec.competentId),
+					competentId: Number(caseSpec.competentId) || 1,
 					deviceType: Number(deviceType),
 					distressType: Number(caseSpec.DistressType),
 					distressLevel: Number(caseSpec.DistressLevel),
@@ -758,7 +758,7 @@ export default {
 						id: clickHandlerArgs.prop.Id,
 						dateReport: clickHandlerArgs.prop.DateRepair_At ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
 						trackingId: clickHandlerArgs.prop.TrackingId || clickHandlerArgs.prop.Id,
-						competentId: Number(clickHandlerArgs.prop.CompetentId),
+						competentId: Number(clickHandlerArgs.prop.CompetentId) || 1,
 						deviceType: Number(deviceType),
 						distressType: Number(clickHandlerArgs.prop.DistressType),
 						distressLevel: Number(clickHandlerArgs.prop.DistressLevel),
