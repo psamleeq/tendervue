@@ -267,8 +267,8 @@ export default {
 				getInspectionList({
 					zipCode: this.listQuery.filterType == 1 ? this.listQuery.ZipCode : null,
 					surveyId: this.listQuery.filterType == 2 ? tenderRound.id : null,
-					timeStart: startDate,
-					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+					timeStart: this.listQuery.filterType != 2 ? startDate : null,
+					timeEnd: this.listQuery.filterType != 2 ? moment(endDate).add(1, "d").format("YYYY-MM-DD") : null
 				}).then(response => {
 					if (response.data.list.length == 0) {
 						this.$message({
