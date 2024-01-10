@@ -10,8 +10,79 @@
 					</el-input>
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
+
+				<el-dropdown class="filter-item" style="margin-left: 80px;">
+					<el-button type="info" size="small" plain round>
+						位於<i class="el-icon-arrow-down el-icon--right" />
+					</el-button>
+					<el-dropdown-menu slot="dropdown">
+						<el-dropdown-item>車道</el-dropdown-item>
+						<el-dropdown-item>人行道</el-dropdown-item>
+						<el-dropdown-item>後巷</el-dropdown-item>
+					</el-dropdown-menu>
+				</el-dropdown>
+
+				<el-dropdown class="filter-item">
+					<el-button type="info" size="small" plain round>
+						花紋<i class="el-icon-arrow-down el-icon--right" />
+					</el-button>
+					<el-dropdown-menu slot="dropdown">
+						<el-dropdown-item>魚與樹</el-dropdown-item>
+						<el-dropdown-item>菱形</el-dropdown-item>
+						<el-dropdown-item>其他</el-dropdown-item>
+					</el-dropdown-menu>
+				</el-dropdown>
+
+				<el-dropdown class="filter-item">
+					<el-button type="info" size="small" plain round>
+						框座<i class="el-icon-arrow-down el-icon--right" />
+					</el-button>
+					<el-dropdown-menu slot="dropdown">
+						<el-dropdown-item>良好</el-dropdown-item>
+						<el-dropdown-item>破損</el-dropdown-item>
+					</el-dropdown-menu>
+				</el-dropdown>
 			</div>
 		</div>
+
+		<transition name="el-zoom-in-center">
+			<el-card v-if="Object.keys(holeSpecInfo).length > 0" class="info-box bottom">
+				<el-button type="text" style="float: right;" @click="holeSpecInfo = {}"><i class="el-icon-close" style="font-size: 20px;" /></el-button>
+				<el-row :gutter="24" type="flex" align="center" justify="center" style="height: 100%; padding: 5px 2px;">
+					<el-col :span="10">
+						<el-image :src="holeSpecInfo.imgUrl" fit="cover" @click="showImgViewer = true">
+							<template #error>
+								<el-image src="/assets/icon/icon_manhole.png" fit="cover" />
+							</template>
+						</el-image>
+					</el-col>
+					<el-col :span="14" class="hole-info">
+						<el-row v-for="(name, key) in headers.holeInfo" :gutter="3">
+							<template v-if="holeSpecInfo[key] && holeSpecInfo[key].length != 0">
+								<el-col :span="6" class="hole-title">{{ name }}: </el-col>
+								<el-col :span="18">{{ holeSpecInfo[key] }}</el-col>
+							</template>
+						</el-row>
+						<el-row :gutter="20">
+							<el-col :span="8" class="icon-info">
+								<div>花紋</div>
+								<el-tag type="success">{{ holeSpecInfo.pattern || "其他" }}</el-tag>
+							</el-col>
+							<el-col :span="8" class="icon-info">
+								<div>框座</div>
+								<el-tag>{{ holeSpecInfo.frame || "良好" }}</el-tag>
+							</el-col>
+							<el-col :span="8" class="icon-info">
+								<div>歷程</div>
+								<el-link href="https://element.eleme.io" target="_blank"  :underline="false">
+									<el-tag type="warning"><i class="el-icon-document" /></el-tag>
+								</el-link>
+							</el-col>
+						</el-row>
+					</el-col>
+				</el-row>
+			</el-card>
+		</transition>
 
 		<el-image-viewer
 			v-if="showImgViewer"
@@ -55,13 +126,14 @@ export default {
 			},
 			imgUrls: [],
 			infoWindow: null,
+			holeSpecInfo: {},
 			geoJSONFilter: {},
 			headers: {
 				holeInfo: {
 					strId: "孔蓋編號",
-					zip: "行政區",
-					type: "種類",
-					dep: "深度"
+					dist: "行政區",
+					address: "地址",
+					location: "位於"
 				}
 			}
 		};
@@ -215,45 +287,47 @@ export default {
 				}
 
 				this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
-				this.infoWindow.addListener('domready', () => {
-					const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
-					if(infoScrnFullBtn) {
-						const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
-							this.showImgViewer = true;
-							infoScrnFullBtn.removeEventListener("click", clickHandle);
-						});
-					}
-				});
+				// this.infoWindow.addListener('domready', () => {
+				// 	const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
+				// 	if(infoScrnFullBtn) {
+				// 		const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
+				// 			this.showImgViewer = true;
+				// 			infoScrnFullBtn.removeEventListener("click", clickHandle);
+				// 		});
+				// 	}
+				// });
 
 				// 載入區域GeoJson
-				this.dataLayer.mask = new google.maps.Data({ map: this.map });
-				this.dataLayer.mask.loadGeoJson(`/assets/json/Taiwan.geojson?t=${Date.now()}`);
-				this.dataLayer.mask.setStyle({
-					strokeColor: "#000000",
-					strokeWeight: 0,
-					strokeOpacity: 1,
-					fillColor: "#000000",
-					fillOpacity: 0.7,
-					zIndex: 0
-				});
+				// this.dataLayer.mask = new google.maps.Data({ map: this.map });
+				// this.dataLayer.mask.loadGeoJson(`/assets/json/Taiwan.geojson?t=${Date.now()}`);
+				// this.dataLayer.mask.setStyle({
+				// 	strokeColor: "#000000",
+				// 	strokeWeight: 0,
+				// 	strokeOpacity: 1,
+				// 	fillColor: "#000000",
+				// 	fillOpacity: 0.7,
+				// 	zIndex: 0
+				// });
 
 				// this.dataLayer.district = new google.maps.Data({ map: this.map });
 				// this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
 
-				// this.map.data.setStyle(feature => { 
-				// 	return { 
-				// 		icon: { 
-				// 			url: `/assets/icon/icon_case_${caseLevelMap[feature.getProperty("caseLevel")]}.png`,
-				// 			anchor: new google.maps.Point(5, 5),
-				// 			scaledSize: new google.maps.Size(25, 25),
-				// 		},
-				// 		zIndex: 
-				// 	};
-				// });
+				this.map.data.setStyle({
+					icon: { 
+						url: "/assets/icon/icon_manhole.png",
+						anchor: new google.maps.Point(5, 5),
+						scaledSize: new google.maps.Size(40, 40),
+					},
+				});
 
-				this.map.data.addListener('click', (event) => {
-					console.log("click: ", event);
+				this.map.data.addListener('mouseover', (event) => {
 					this.showHoleContent(event.feature, event.latLng);
+				});
+				this.map.data.addListener('mouseout', (event) => {
+					this.infoWindow.close();
+				});
+				this.map.data.addListener('click', (event) => {
+					this.showHoleDetail(event.feature);
 				});
 
 				resolve();
@@ -394,8 +468,7 @@ export default {
 		showHoleContent(props, position) {
 			const isFeature = google.maps.Data.Feature.prototype.isPrototypeOf(props);
 			this.currId = isFeature ? props.getProperty("id") : props.id;
-
-			console.log(props, isFeature)
+			// console.log(props, isFeature)
 
 			// this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${this.currId}.jpg` ];
 			let contentText = `<div style="width: 400px;">`;
@@ -419,9 +492,32 @@ export default {
 
 			this.infoWindow.open(this.map);
 		},
-		clearAll(clearBlock = true) {
+		clearAll() {
 			this.infoWindow.close();
 			// this.map.data.forEach(feature => this.map.data.remove(feature));
+		},
+		showHoleDetail(feature) {
+			this.caseSpecInfo = {};
+			// this.setHoleImgViewer({ imgUrls: [feature.getProperty("ImgZoomOut"), feature.getProperty("ImgZoomIn")] });
+
+			this.$nextTick(() => {
+				this.holeSpecInfo = {
+					id: feature.getProperty("id"),
+					pattern: feature.getProperty("pattern"),
+					frame: feature.getProperty("frame"),
+					imgUrl: feature.getProperty("imgUrl")
+				};
+				for (const key in this.headers.holeInfo) {
+					// console.log(feature);
+					if (feature.getProperty(key)) {
+						this.holeSpecInfo[key] = feature.getProperty(key);
+					}
+				}
+			})
+		},
+		setHoleImgViewer({ imgUrls, isOpen = false }) {
+			if (imgUrls != null) this.imgUrls = imgUrls;
+			this.showImgViewer = isOpen;
 		},
 		formatter(row, column) {
 			if (Number(row[column.property])) return row[column.property].toLocaleString();
@@ -466,6 +562,53 @@ export default {
 			opacity: 0.7
 		.el-icon-circle-close
 			color:  #FFF
+	.info-box
+		position: absolute
+		width: 280px
+		background-color: rgba(white, 0.7)
+		z-index: 1
+		&.bottom
+			width: 40%
+			min-width: 600px
+			max-width: 640px
+			height: 20%
+			min-height: 200px
+			max-height: 240px
+			bottom: 15px
+			left: 50%
+			transform: translateX(-50%)
+			border-radius: 10px
+			background-color: rgba(white, 0.95)
+			.el-card__body
+				overflow: hidden
+				padding: 2px
+				height: 100%
+				// margin-left: -5px
+				.el-image
+					height: 101%
+					cursor: pointer
+				.hole-info
+					margin: auto
+					& > *
+						font-size: 14px
+					.hole-title
+						color: #444
+						margin-bottom: 2px
+					.icon-info
+						display: flex
+						flex-direction: column
+						align-items: center
+						color: #909399
+						font-size: 12px
+						.el-link--inner
+							width: 100%
+						.el-tag
+							width: 100%
+							height: 40px
+							text-align: center
+							font-size: 20px
+							padding: 4px 0px
+							margin-top: 2px
 	#map
 		overflow: hidden
 		background: none !important
