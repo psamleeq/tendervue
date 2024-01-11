@@ -11,35 +11,47 @@
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
 
-				<el-dropdown class="filter-item" style="margin-left: 80px;">
+				<el-dropdown class="filter-item" style="margin-left: 60px;" @command="(command) => handleCommand(command, 'location')">
 					<el-button type="info" size="small" plain round>
-						位於<i class="el-icon-arrow-down el-icon--right" />
+						<span v-if="command.location == 'none'">位於</span>
+						<span v-else>{{ command.location }}</span>
+						<i class="el-icon-arrow-down el-icon--right" />
 					</el-button>
 					<el-dropdown-menu slot="dropdown">
-						<el-dropdown-item>車道</el-dropdown-item>
-						<el-dropdown-item>人行道</el-dropdown-item>
-						<el-dropdown-item>後巷</el-dropdown-item>
+						<el-dropdown-item command="none">無</el-dropdown-item>
+						<el-dropdown-item command="車道">車道</el-dropdown-item>
+						<el-dropdown-item command="人行道">人行道</el-dropdown-item>
+						<el-dropdown-item command="後巷">後巷</el-dropdown-item>
 					</el-dropdown-menu>
 				</el-dropdown>
 
-				<el-dropdown class="filter-item">
+				<el-dropdown class="filter-item" @command="(command) => handleCommand(command, 'pattern')">
 					<el-button type="info" size="small" plain round>
-						花紋<i class="el-icon-arrow-down el-icon--right" />
+						<span v-if="command.pattern == 'none'">花紋</span>
+						<span v-else>{{ command.pattern }}</span>
+						<i class="el-icon-arrow-down el-icon--right" />
 					</el-button>
 					<el-dropdown-menu slot="dropdown">
-						<el-dropdown-item>魚與樹</el-dropdown-item>
-						<el-dropdown-item>菱形</el-dropdown-item>
-						<el-dropdown-item>其他</el-dropdown-item>
+						<el-dropdown-item command="none">無</el-dropdown-item>
+						<el-dropdown-item command="正常">正常</el-dropdown-item>
+						<el-dropdown-item command="行動值">行動值</el-dropdown-item>
+						<el-dropdown-item command="警戒值">警戒值</el-dropdown-item>
+						<!-- <el-dropdown-item command="魚與樹">魚與樹</el-dropdown-item>
+						<el-dropdown-item command="菱形">菱形</el-dropdown-item>
+						<el-dropdown-item command="其他">其他</el-dropdown-item> -->
 					</el-dropdown-menu>
 				</el-dropdown>
 
-				<el-dropdown class="filter-item">
+				<el-dropdown class="filter-item" @command="(command) => handleCommand(command, 'frame')">
 					<el-button type="info" size="small" plain round>
-						框座<i class="el-icon-arrow-down el-icon--right" />
+						<span v-if="command.frame == 'none'">框座</span>
+						<span v-else>{{ command.frame }}</span>
+						<i class="el-icon-arrow-down el-icon--right" />
 					</el-button>
 					<el-dropdown-menu slot="dropdown">
-						<el-dropdown-item>良好</el-dropdown-item>
-						<el-dropdown-item>破損</el-dropdown-item>
+						<el-dropdown-item command="none">無</el-dropdown-item>
+						<el-dropdown-item command="良好">良好</el-dropdown-item>
+						<el-dropdown-item command="破損">破損</el-dropdown-item>
 					</el-dropdown-menu>
 				</el-dropdown>
 			</div>
@@ -50,9 +62,9 @@
 				<el-button type="text" style="float: right;" @click="holeSpecInfo = {}"><i class="el-icon-close" style="font-size: 20px;" /></el-button>
 				<el-row :gutter="24" type="flex" align="center" justify="center" style="height: 100%; padding: 5px 2px;">
 					<el-col :span="10">
-						<el-image :src="holeSpecInfo.imgUrl" fit="cover" @click="showImgViewer = true">
+						<el-image :src="`https://storage.googleapis.com/adm_hole/holeImg/${holeSpecInfo.strId}.jpg`" fit="cover" @click="showImgViewer = true">
 							<template #error>
-								<el-image src="/assets/icon/icon_manhole.png" fit="cover" />
+								<el-image src="/assets/icon/icon_manhole.png" fit="cover" @click="showImgViewer = true" />
 							</template>
 						</el-image>
 					</el-col>
@@ -66,7 +78,7 @@
 						<el-row :gutter="20">
 							<el-col :span="8" class="icon-info">
 								<div>花紋</div>
-								<el-tag type="success">{{ holeSpecInfo.pattern || "其他" }}</el-tag>
+								<el-tag type="success">{{ holeSpecInfo.pattern || "正常" }}</el-tag>
 							</el-col>
 							<el-col :span="8" class="icon-info">
 								<div>框座</div>
@@ -74,7 +86,7 @@
 							</el-col>
 							<el-col :span="8" class="icon-info">
 								<div>歷程</div>
-								<el-link href="https://element.eleme.io" target="_blank"  :underline="false">
+								<el-link :href="`https://ssowebmis.sew.gov.taipei/websew/HP/hHis.aspx?hid=${holeSpecInfo.strId}`" target="_blank"  :underline="false">
 									<el-tag type="warning"><i class="el-icon-document" /></el-tag>
 								</el-link>
 							</el-col>
@@ -128,6 +140,11 @@ export default {
 			infoWindow: null,
 			holeSpecInfo: {},
 			geoJSONFilter: {},
+			command: {
+				location: "none",
+				pattern: "none",
+				frame: "none"
+			},
 			headers: {
 				holeInfo: {
 					strId: "孔蓋編號",
@@ -298,16 +315,16 @@ export default {
 				// });
 
 				// 載入區域GeoJson
-				// this.dataLayer.mask = new google.maps.Data({ map: this.map });
-				// this.dataLayer.mask.loadGeoJson(`/assets/json/Taiwan.geojson?t=${Date.now()}`);
-				// this.dataLayer.mask.setStyle({
-				// 	strokeColor: "#000000",
-				// 	strokeWeight: 0,
-				// 	strokeOpacity: 1,
-				// 	fillColor: "#000000",
-				// 	fillOpacity: 0.7,
-				// 	zIndex: 0
-				// });
+				this.dataLayer.mask = new google.maps.Data({ map: this.map });
+				this.dataLayer.mask.loadGeoJson(`/assets/json/Taiwan.geojson?t=${Date.now()}`);
+				this.dataLayer.mask.setStyle({
+					strokeColor: "#000000",
+					strokeWeight: 0,
+					strokeOpacity: 1,
+					fillColor: "#000000",
+					fillOpacity: 0.7,
+					zIndex: 0
+				});
 
 				// this.dataLayer.district = new google.maps.Data({ map: this.map });
 				// this.dataLayer.district.loadGeoJson(`/assets/json/district.geojson?t=${Date.now()}`);
@@ -335,21 +352,19 @@ export default {
 		},
 		getGeoJSONFilter() {
 			this.geoJSONFilter = { features: [] };
-			if(this.geoJSON.case != undefined && Object.keys(this.geoJSON.case).length > 0) {
-				this.geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON.case));
-				const selectCaseList = Object.keys(this.selectCase).filter(caseName => this.selectCase[caseName].switch);
-				const selectCaseLvMap = selectCaseList.reduce((acc, cur) => { 
-					acc[cur] = this.selectCase[cur].level == 0 ? this.selectCase[cur].level : this.options.levelMap[this.selectCase[cur].level];
-					return acc
-				}, {});
+			if(this.geoJSON != undefined) {
+				this.geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON));
 
-				this.geoJSONFilter.features = this.geoJSONFilter.features.filter(feature => {
-					const caseName = feature.properties.caseName;
-					const caseLevel = feature.properties.caseLevel;
-					const levelFilter= selectCaseLvMap[feature.properties.caseName];
+				let features = [];
+				let count = 0;
+				console.log(this.command);
+				for(const key in this.command) {
+					if(this.command[key] == 'none') count++;
+					features.push(...this.geoJSONFilter.features.filter(feature => feature.properties[key] == this.command[key]))
+				}
 
-					return (selectCaseList.includes(caseName)) && (levelFilter == 0 || caseLevel == levelFilter);
-				});
+				console.log(count, this.command.length);
+				if(count != Object.keys(this.command).length) this.geoJSONFilter.features = features;
 			}
 		},
 		async getList() {
@@ -367,11 +382,19 @@ export default {
 					this.geoJSON = JSON.parse(response.data.geoJSON);
 					// console.log(this.geoJSON.case);
 					// this.getGeoJSONFilter();
-					this.map.data.addGeoJson(this.geoJSON);
+					this.getGeoJSONFilter();
+					this.map.data.addGeoJson(this.geoJSONFilter);
 				}
 				
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		handleCommand(command, key) {
+			// console.log(command, key);
+			this.command[key] = command;
+			this.clearAll();
+			this.getGeoJSONFilter(key);
+			this.map.data.addGeoJson(this.geoJSONFilter);
 		},
 		async search() {
 			this.loading = true;
@@ -381,96 +404,40 @@ export default {
 		async focusMap() {
 			return new Promise(resolve => {
 				// console.log("focusMap");
-				for(const block of Object.values(this.dataLayer.PCIBlock)) block.revertStyle();
+				// this.map.data.revertStyle();
 
 				if(!this.listQuery.filterId || this.listQuery.filterId.length == 0) resolve();
-				else if(this.listQuery.filterId.length != 0 && !Number(this.listQuery.filterId)) {
-					this.$message({
-						message: "請輸入正確編號",
-						type: "error",
-					});
-					resolve();
-				} else if(this.listQuery.filterType == 1) {
-					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, caseId: this.listQuery.filterId }});
-					const caseSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.caseId == this.listQuery.filterId))[0];
-					if(caseSpec == undefined ) {
+				else {
+					const holeSpec = this.geoJSONFilter.features.filter(feature => (feature.properties.strId == this.listQuery.filterId))[0];
+					if(holeSpec == undefined ) {
 						this.$message({
 							message: "查無資料",
 							type: "error",
 						});
 						resolve();
-					} else if(caseSpec.properties.isPoint) {
-						this.map.setCenter({ lat: caseSpec.geometry.coordinates[1], lng: caseSpec.geometry.coordinates[0] });
+					} else {
+						// this.map.data.forEach(features => { 
+						// 	if(features.getProperty("strId") == this.listQuery.filterId) {
+						// 		this.map.data.overrideStyle(features, {
+						// 			label: "Here"
+						// 		});
+						// 	}
+						// })
+
+						this.map.setCenter({ lat: holeSpec.geometry.coordinates[1], lng: holeSpec.geometry.coordinates[0] });
 						const zoom = this.map.getZoom();
 						this.map.setZoom(zoom < 21 ? 21 : zoom);
-						this.showHoleContent(caseSpec.properties, { lat: caseSpec.geometry.coordinates[1], lng: caseSpec.geometry.coordinates[0] });
+						this.showHoleContent(holeSpec.properties, { lat: holeSpec.geometry.coordinates[1], lng: holeSpec.geometry.coordinates[0] });
 						resolve();
-					} else {
-						const depth = caseSpec.properties.isLine ? 1 : 2;
-						// console.log(caseSpec.properties.isLine, depth);
-						const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
-						// console.log(paths);
-
-						const bounds = new google.maps.LatLngBounds();
-						paths.forEach(position => bounds.extend(position));
-						this.map.fitBounds(bounds);
-						this.showHoleContent(caseSpec.properties, paths[Math.floor(paths.length / 2)]);
-						resolve();
-					}
-				} else if(this.listQuery.filterType == 2) {
-					this.$router.push({ query: { tenderRound: this.listQuery.tenderRound, blockId: this.listQuery.filterId }});
-
-					let blockSpec;
-					for(const[ key, block ] of Object.entries(this.dataLayer.PCIBlock)) {
-						// console.log(key, block);
-						block.forEach(features =>{ 
-							// let blockType = (key == 'bell') ? 'pci_id' : 'fcl_id' ;
-							if(features.getProperty("blockId") == this.listQuery.filterId) blockSpec = features;
-						});
-						
-						if(blockSpec != undefined ) {
-							if(key == 'bell') this.listQuery.blockType = [ 1 ];
-							else if(key == 'nco') this.listQuery.blockType = [ 2 ];
-							this.switchBlockType();
-
-							block.overrideStyle(blockSpec, { strokeColor: "#FF6F00", zIndex: 3 });
-							break;
-						}
-					}
-
-					// for(const block of ['block_nco', 'block_104']) {
-					// 	blockSpec = this.geoJSON[block].features.filter(feature => (feature.properties.blockId == this.listQuery.filterId))[0];
-					// 	if(blockSpec != undefined ) break;
-					// }
-					// console.log(blockSpec);
-					if(blockSpec == undefined ) {
-						this.$message({
-							message: "查無資料",
-							type: "error",
-						});
-
-						resolve();
-					} else {
-						// const paths = blockSpec.geometry.coordinates.flat(2).map(point => ({ lat: point[1], lng: point[0] }));
-						const paths = blockSpec.getGeometry();
-						// console.log(paths);
-
-						const bounds = new google.maps.LatLngBounds();
-						// paths.forEach(position => bounds.extend(position));
-						paths.forEachLatLng(position => bounds.extend(position));
-						this.map.fitBounds(bounds);
-
-						resolve();
-					}
-				}
+					} 
+			}
 			})
 		},
 		showHoleContent(props, position) {
 			const isFeature = google.maps.Data.Feature.prototype.isPrototypeOf(props);
-			this.currId = isFeature ? props.getProperty("id") : props.id;
-			// console.log(props, isFeature)
+			this.currId = isFeature ? props.getProperty("strId") : props.strId;
+			// console.log(props, isFeature
 
-			// this.imgUrls = [ `https://img.bellsgis.com/images/online_pic/${this.currId}.jpg` ];
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.holeInfo) {
 				if(props[key] || (isFeature && props.getProperty(key))) {
@@ -481,9 +448,7 @@ export default {
 					contentText += `</div>`;
 				}
 			}
-			// TODO: 缺失圖片需替換
-			// contentText += `<img src="https://img.bellsgis.com/images/online_pic/${this.currId}.jpg" class="img" onerror="this.className='img hide-img'">`;
-			// contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
+
 			contentText += `</div>`;
 			// console.log(contentText);
 			this.infoWindow.setContent(contentText);
@@ -494,7 +459,7 @@ export default {
 		},
 		clearAll() {
 			this.infoWindow.close();
-			// this.map.data.forEach(feature => this.map.data.remove(feature));
+			this.map.data.forEach(feature => this.map.data.remove(feature));
 		},
 		showHoleDetail(feature) {
 			this.caseSpecInfo = {};
@@ -502,11 +467,14 @@ export default {
 
 			this.$nextTick(() => {
 				this.holeSpecInfo = {
-					id: feature.getProperty("id"),
+					strId: feature.getProperty("strId"),
 					pattern: feature.getProperty("pattern"),
 					frame: feature.getProperty("frame"),
 					imgUrl: feature.getProperty("imgUrl")
 				};
+
+				this.imgUrls = [`https://storage.googleapis.com/adm_hole/holeImg/${this.holeSpecInfo.strId}.jpg`];
+
 				for (const key in this.headers.holeInfo) {
 					// console.log(feature);
 					if (feature.getProperty(key)) {
@@ -600,7 +568,7 @@ export default {
 						align-items: center
 						color: #909399
 						font-size: 12px
-						.el-link--inner
+						.el-link, .el-link--inner
 							width: 100%
 						.el-tag
 							width: 100%
