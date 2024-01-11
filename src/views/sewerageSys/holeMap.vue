@@ -355,16 +355,11 @@ export default {
 			if(this.geoJSON != undefined) {
 				this.geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON));
 
-				let features = [];
-				let count = 0;
-				console.log(this.command);
-				for(const key in this.command) {
-					if(this.command[key] == 'none') count++;
-					features.push(...this.geoJSONFilter.features.filter(feature => feature.properties[key] == this.command[key]))
-				}
-
-				console.log(count, this.command.length);
-				if(count != Object.keys(this.command).length) this.geoJSONFilter.features = features;
+				this.geoJSONFilter.features = this.geoJSONFilter.features.filter(feature => {
+					return Object.keys(this.command).reduce((acc, cur) => {
+						return acc && (this.command[cur] == 'none' || feature.properties[cur] == this.command[cur]);
+					}, true);
+				});
 			}
 		},
 		async getList() {
