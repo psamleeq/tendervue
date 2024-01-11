@@ -50,8 +50,8 @@
 					</el-button>
 					<el-dropdown-menu slot="dropdown">
 						<el-dropdown-item command="none">無</el-dropdown-item>
-						<el-dropdown-item command="良好">良好</el-dropdown-item>
-						<el-dropdown-item command="破損">破損</el-dropdown-item>
+						<el-dropdown-item command="正常">正常</el-dropdown-item>
+						<el-dropdown-item command="不正常">不正常</el-dropdown-item>
 					</el-dropdown-menu>
 				</el-dropdown>
 			</div>
