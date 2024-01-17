@@ -466,7 +466,7 @@ export default {
 			const caseFilter = this.caseGeoJson.casePrev.features.filter(caseSpec => caseSpec.properties.Id == Number(this.caseInfo.trackingId) || caseSpec.properties.TrackingId == Number(this.caseInfo.trackingId));
 			if(caseFilter.length > 0) {
 				const caseSpec = caseFilter[0].properties;
-				const deviceType = Object.keys(this.options.caseTypeMap).filter(key => Object.keys(this.options.caseTypeMap[key]).map(key => Number(key)).includes(caseSpec.DistressType))[0];
+				const deviceType = Object.keys(this.options.caseTypeMapFlat).filter(key => Object.keys(this.options.caseTypeMapFlat[key]).map(key => Number(key)).includes(caseSpec.DistressType))[0];
 				this.caseInfo = Object.assign({}, this.caseInfo, {
 					id: Number(caseSpec.Id),
 					trackingId: Number(this.caseInfo.trackingId) || Number(caseSpec.TrackingId),
@@ -753,7 +753,8 @@ export default {
 					isPrev
 				},
 				clickHandlerFunc: (evt, clickHandlerArgs) => {
-					const deviceType = Object.keys(this.options.caseTypeMap).filter(key => Object.keys(this.options.caseTypeMap[key]).map(key => Number(key)).includes(clickHandlerArgs.prop.DistressType))[0];
+					console.log(this.options.caseTypeMapFlat);
+					const deviceType = Object.keys(this.options.caseTypeMapFlat).filter(key => Object.keys(this.options.caseTypeMapFlat[key]).map(key => Number(key)).includes(clickHandlerArgs.prop.DistressType))[0];
 					this.caseInfo = Object.assign({}, this.caseInfo, {
 						id: clickHandlerArgs.prop.Id,
 						dateReport: clickHandlerArgs.prop.DateRepair_At ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
