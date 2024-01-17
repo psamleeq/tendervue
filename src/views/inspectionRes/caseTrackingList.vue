@@ -35,7 +35,7 @@
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已刪除</el-checkbox>
 		</div>
 
-		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
+		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1260px; min-width: 500px">
 			<div class="el-input-group__prepend">
 				<el-checkbox v-model="allHeaders" :indeterminate="partHeaders">欄位</el-checkbox>
 			</div>
@@ -44,7 +44,10 @@
 			</el-checkbox-group>
 		</div>
 
+		<el-button v-if="selection.length > 0" type="warning" style="float: right" @click="batch()">批次處理</el-button>
+
 		<el-table
+			ref="dataTable"
 			empty-text="目前沒有資料"
 			:data="list"
 			border
@@ -52,6 +55,7 @@
 			:row-class-name="tableRowClassName"
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
 			style="width: 100%"
+			@selection-change="handleSelectionChange"
 		>
 			<el-table-column
 				v-for="(value, key) in headersFilter"
@@ -88,13 +92,13 @@
 			<el-table-column label="操作" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="!(row.PIState & 1 || row.PIState & 16) && row.FlowState == 0">
-						<el-radio-group v-model="row.state" style="display: flex; flex-direction: column; align-items: flex-start;" >
+						<el-radio-group v-model="row.state" style="display: flex; flex-direction: column; align-items: flex-start;" @change="handleChange(row)" >
 							<el-radio :label="1">派工</el-radio>
 							<el-radio :label="3">不需派工
-								<el-input v-model="row.reasonNoNeed" style="width: 200px" />
+								<el-input v-model="row.reasonNoNeed" style="width: 200px" @change="handleChange(row)" />
 							</el-radio>
 							<el-radio :label="4">缺失改判
-								<el-input v-model="row.reasonChange" style="width: 200px"/>
+								<el-input v-model="row.reasonChange" style="width: 200px" @change="handleChange(row)"/>
 							</el-radio>
 						</el-radio-group>
 						<br>
@@ -113,6 +117,7 @@
 					</el-button-group> -->
 				</template>
 			</el-table-column>
+			<el-table-column type="selection" align="center" width="55" />
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
@@ -378,6 +383,7 @@ export default {
 			total: 0,
 			list: [],
 			rowActive: {},
+			selection: [],
 			headersCheckVal: [],
 			typeLevel: {},
 			caseInfo: {},
@@ -594,6 +600,7 @@ export default {
 			this.loading = true;
 			this.list = [];
 			this.caseInfo = {};
+			this.selection = [];
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 			this.listQuery.caseType.forEach(typeArr => typeArr[1] = this.typeLevel[typeArr[0]]);
 
@@ -695,7 +702,6 @@ export default {
 								type: "success",
 							});
 							this.getList();
-							this.dialogEditVisible = false;
 						}
 					}).catch(err => {
 						console.log(err);
@@ -749,12 +755,44 @@ export default {
 							type: "success",
 						});
 						this.getList();
-						this.dialogEditVisible = false;
 					} 
 				}).catch(err => {
 					console.log(err);
 					this.getList();
 				})
+			}).catch(err => console.log(err));
+		},
+		async batch() {
+			this.$confirm(`確定提交?`, "確認", { showClose: false }).then(async () => {
+				this.loading = true;
+				this.scrollTop = document.documentElement.scrollTop;
+				for(const [index, row] of this.selection.entries()) {
+					if (row.state == 1) {
+						await setInsCaseList(row.SerialNo, {
+							PCIValue: row.PCIValue,
+							PIState: row.PIState += row.state,
+							PIStateNotes: row.PIStateNotes
+						})
+					} else {
+						if (
+							(row.state == 3 && (!row.reasonNoNeed || row.reasonNoNeed.length == 0))
+							||
+							(row.state == 4 && (!row.reasonChange || row.reasonChange.length == 0))
+						) {
+							this.$message({
+								message: `缺失Id${row.id}未輸入原因`,
+								type: "error",
+							});
+						} else {
+							await setInspectFlowList(row.SerialNo, {
+								flowState: row.state,
+								flowDesc: (row.state == 3) ? row.reasonNoNeed : row.reasonChange
+							})
+						}
+					}
+
+					if(index == this.selection.length -1) this.getList();
+				}
 			}).catch(err => console.log(err));
 		},
 		filterDialogOpen() {
@@ -786,6 +824,14 @@ export default {
 				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
 				row.MillingArea = regex.test(row.MillingFormula) ? Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100 : 0;
 			} else row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
+		},
+		handleSelectionChange(val) {
+			this.selection = val;
+		},
+		handleChange(row) {
+			this.$refs.dataTable.toggleRowSelection(row, true);
+			this.selection = this.selection.filter(rowSpec => rowSpec.id != row.id);
+			this.selection.push(row);
 		},
 		formatter(row, column) {
 			if (["DistressType"].includes(column.property)) return this.options.DistressTypeFlat[row.DistressType];
