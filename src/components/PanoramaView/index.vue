@@ -493,6 +493,11 @@ export default {
 		},
 		uploadCase(uploadType = 1) {
 			this.$confirm(`確定${uploadType == 1 ? '上傳缺失' : '標記完工'}?`, "確認", { showClose: false }).then(() => {
+				if (this.caseInfo.place.length == 0) {
+					this.$message({ message: "請填入地址", type: "error" });
+					return;
+				}
+				
 				this.$emit('update:loading', true);
 				this.$emit('update:isUpload', true);
 				this.caseInfo.uploadType = uploadType;
