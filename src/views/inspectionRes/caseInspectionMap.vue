@@ -298,6 +298,7 @@ export default {
 						color: "#607D8B"
 					}
 				],
+				caseTypeMap: {},
 				caseTypeMapFlat: {},
 				caseLevelMap: {
 					1: "輕",
@@ -379,6 +380,7 @@ export default {
 		});
 
 		getDTypeMap().then(response => {
+			this.options.caseTypeMap = response.data.distressTypeMap;
 			this.options.caseTypeMapFlat = Object.values(response.data.distressTypeMap).reduce((acc, cur) => {
 				for (const key in cur) acc[key] = cur[key];
 				return acc;
