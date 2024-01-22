@@ -758,10 +758,12 @@ export default {
 					isPrev
 				},
 				clickHandlerFunc: (evt, clickHandlerArgs) => {
+					this.isReview = this.isEdit ? !clickHandlerArgs.isPrev : true;
+
 					const deviceType = Object.keys(this.options.caseTypeMap).filter(key => Object.keys(this.options.caseTypeMap[key]).map(key => Number(key)).includes(clickHandlerArgs.prop.DistressType))[0];
 					this.caseInfo = Object.assign({}, this.caseInfo, {
 						id: clickHandlerArgs.prop.Id,
-						dateReport: clickHandlerArgs.prop.DateRepair_At ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
+						dateReport: (this.isReview || clickHandlerArgs.prop.DateRepair_At) ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
 						trackingId: clickHandlerArgs.prop.TrackingId || clickHandlerArgs.prop.Id,
 						competentId: Number(clickHandlerArgs.prop.CompetentId) || 1,
 						deviceType: Number(deviceType),
@@ -787,8 +789,6 @@ export default {
 					// 		hotSpot.coordinates = coordinates;
 					// 	}
 					// } 
-
-					this.isReview = this.isEdit ? !clickHandlerArgs.isPrev : true;
 					this.isSticky = true; 
 				}
 			};
