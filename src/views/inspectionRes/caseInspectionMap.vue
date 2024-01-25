@@ -346,7 +346,9 @@ export default {
 		this.polyLine = {};
 		this.panoramaInfo = { data: [], sceneSetting: [], streetViewList: {} };
 
-		getTenderRound().then(response => {
+		getTenderRound({
+			excludeShadow: true
+		}).then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
 				if(cur.tenderId <= 1001) return acc;
 
