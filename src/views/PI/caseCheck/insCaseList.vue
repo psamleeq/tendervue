@@ -528,9 +528,9 @@ export default {
 		setResult() {
 			this.loading = true;
 			this.showResultConfirm = false;
-			if(this.rowActive.PIState & 32) this.rowActive.PIStateNotes.SV = this.options.reasonType[this.rowActive.ReasonType];
+			if(this.rowActive.PIState & 32) this.rowActive.PIStateNotes.SV = this.options.reasonType[this.rowActive.ReasonType] || this.rowActive.PIStateNotes.SV;
 			else this.rowActive.PIStateNotes.SV = "";
-			if(this.rowActive.PIState & 64) this.rowActive.PIStateNotes.Organ = this.options.reasonType[this.rowActive.ReasonType];
+			if(this.rowActive.PIState & 64) this.rowActive.PIStateNotes.Organ = this.options.reasonType[this.rowActive.ReasonType] || this.rowActive.PIStateNotes.Organ;
 			else this.rowActive.PIStateNotes.Organ = "";
 
 			setInsCaseList( this.rowActive.SerialNo, {
