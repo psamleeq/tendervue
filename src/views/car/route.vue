@@ -624,6 +624,7 @@ export default {
 			getInspectionRoute({
 				zipCode: this.listQuery.inspectRoundZipCode,
 				inspectRound: this.listQuery.inspectRound,
+				isCar: true
 			}).then(response => {
 				if (response.data.blockList.length == 0 && response.data.routeList.length == 0) {
 					this.$message({
