@@ -246,7 +246,7 @@ export default {
 				this.listQuery.filterId = this.$route.query.blockId;
 			}
 			await getDistMap().then(response => this.options.districtMap = response.data.districtMap);
-			await getTenderRound({ isMap: true }).then(response => {
+			await getTenderRound({ isMap: true, excludeShadow: true }).then(response => {
 				this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
 					let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
 					if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
