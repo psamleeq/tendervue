@@ -445,7 +445,7 @@ export default {
 			this.blockList = [];
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const condition = this.listQuery.zipCode == 1001 || this.options.districtMap[this.listQuery.zipCode].district.includes(feature.getProperty("TOWNNAME"));
+				const condition = [1001, 999].includes(this.listQuery.zipCode) || this.options.districtMap[this.listQuery.zipCode].district.includes(feature.getProperty("TOWNNAME"));
 
 				return {
 					strokeColor: "#827717",
@@ -499,7 +499,7 @@ export default {
 
 			return new Promise((resolve, reject) => {
 				let query = {
-					zipCode: this.listQuery.zipCode == 1001 ? 0 : this.listQuery.zipCode
+					zipCode: [1001, 999].includes(this.listQuery.zipCode) ? 0 : this.listQuery.zipCode
 				};
 
 				if (this.listQuery.widthType == 1) query.width = this.listQuery.width;

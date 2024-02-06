@@ -668,7 +668,7 @@ export default {
 				} else {
 					this.dataLayer.district.forEach(feature => {
 						// console.log(feature);
-						const condition = tenderRound.zipCode == 1001 || this.options.districtMap[tenderRound.zipCode].district.includes(feature.getProperty("TOWNNAME"));
+						const condition = [1001, 999].includes(tenderRound.zipCode) || this.options.districtMap[tenderRound.zipCode].district.includes(feature.getProperty("TOWNNAME"));
 						this.dataLayer.district.overrideStyle(feature, {
 							strokeColor: "#827717",
 							strokeWeight: 3,
