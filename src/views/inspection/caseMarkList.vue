@@ -294,6 +294,10 @@ export default {
 				ImgZoomOut: {
 					name: "遠照",
 					sortable: false
+				},
+				StatusDesc: {
+					name: "刪除原因",
+					sortable: false
 				}
 			},
 			total: 0,
