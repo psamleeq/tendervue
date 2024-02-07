@@ -614,20 +614,34 @@ export default {
 			})
 		},
 		setCaseState(row, isActive) {
-			this.loading = true;
-			this.scrollTop = document.documentElement.scrollTop;
-
-			setInspectionCaseList(row.id, { isActive }).then(response => {
-				if ( response.statusCode == 20000 ) {
+			const confirmText = isActive ? '確認復原？' : '請輸入原因';
+			const msgBox = isActive ? '$confirm' : '$prompt';
+			this[msgBox](confirmText, '確認', { confirmButtonText: '確定', cancelButtonText: '取消' }).then(({ value }) => {
+				if(isActive == 0 && (value == undefined || value.length == 0)) {
 					this.$message({
-						message: isActive ? "復原成功" : "刪除成功",
-						type: "success",
+						message: "請輸入原因",
+						type: "warning",
 					});
-					this.getList();
-				} 
-			}).catch(err => {
-				console.log(err);
-				this.getList();
+				} else {
+					this.loading = true;
+					this.scrollTop = document.documentElement.scrollTop;
+
+					setInspectionCaseList(row.id, {
+						statusDesc: value || '',
+						isActive
+					}).then(response => {
+						if (response.statusCode == 20000) {
+							this.$message({
+								message: isActive ? "復原成功" : "刪除成功",
+								type: "success",
+							});
+							this.getList();
+						}
+					}).catch(err => {
+						console.log(err);
+						this.getList();
+					})
+				}
 			})
 		},
 		calArea(row) {
