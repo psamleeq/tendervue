@@ -2,7 +2,7 @@
 	<div class="app-container case-tracking-Static" v-loading="loading">
 		<h2>回報分析</h2>
 		<aside style="white-space: pre-line">
-			僅列出「坑洞(全)、龜裂(重)」的案件。
+			僅列出「坑洞(全)」的案件。
 		</aside>
 		<div class="filter-container">
 			<div v-if="listQuery.tenderRound > 0" class="filter-item">
@@ -185,7 +185,9 @@ export default {
 	computed: { },
 	watch: { },
 	created() {
-		getTenderRound().then(response => {
+		getTenderRound({
+			excludeShadow: true
+		}).then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
 				if(cur.tenderId <= 1001) return acc;
 

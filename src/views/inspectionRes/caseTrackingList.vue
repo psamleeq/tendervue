@@ -2,7 +2,7 @@
 	<div class="app-container case-tracking-list" v-loading="loading">
 		<h2>案件列表</h2>
 		<aside style="white-space: pre-line">
-			預設列出「中度」以上的案件。
+			預設列出「坑洞(全)」的案件。
 		</aside>
 		<div class="filter-container">
 			<div v-if="listQuery.tenderRound > 0" class="filter-item">
@@ -494,7 +494,9 @@ export default {
 		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers).filter(key => this.headers[key].default);
 		else this.headersCheckVal = [];
 
-		getTenderRound().then(response => {
+		getTenderRound({
+			excludeShadow: true
+		}).then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
 				if(cur.tenderId <= 1001) return acc;
 
