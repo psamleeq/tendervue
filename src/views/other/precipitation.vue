@@ -218,7 +218,7 @@ export default {
 
 			// 抓取降雨天數
 			if(this.timeTabId == moment().year()) {
-				fetch("https://opendata.cwb.gov.tw/api/v1/rest/datastore/C-B0025-001?Authorization=rdec-key-123-45678-011121314&StationID=466920").then(res => res.json()).then(json => {
+				fetch("https://opendata.cwa.gov.tw/api/v1/rest/datastore/C-B0025-001?Authorization=rdec-key-123-45678-011121314&StationID=466920").then(res => res.json()).then(json => {
 					const record = json.records.location.filter(loc => loc.station.StationID == "466920")[0];
 					const precipitation = record.stationObsTimes.stationObsTime;
 					const lastIndex = precipitation.length - 1;
