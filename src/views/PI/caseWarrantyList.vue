@@ -413,7 +413,9 @@ export default {
 			if(time == "Invalid date"){
 				return
 			}else{
-				return moment(time).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
+				const formatTime = moment(time).format("YYYY/MM/DD").split("/");
+				formatTime[0] = Number(formatTime[0]) - 1911;
+				return formatTime.join("/");
 			}
 		},
 		readCSV(file, fileList) {
