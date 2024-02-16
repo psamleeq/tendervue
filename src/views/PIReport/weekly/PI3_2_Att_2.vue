@@ -620,15 +620,17 @@ export default {
 		async setPDFinputs() {
 			return new Promise(async resolve=> {
 				//工程名稱
-				const reportDate = moment(this.reportDate).subtract(1911, 'year');
+				const reportDate = moment(this.reportDate).format("YYYY/MM/DD").split("/");
+				reportDate[0] = Number(reportDate[0]) - 1911;
 				this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 				//紀錄編號
-				this.inputs.serialNumber1 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
-				this.inputs.serialNumber2 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0') + "-1";	
-				this.inputs.serialNumber3 = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage+1).padStart(2, '0');	
+				this.inputs.serialNumber1 = reportDate.join("") + "02" + String(this.initPage).padStart(2, '0');	
+				this.inputs.serialNumber2 = reportDate.join("") + "02" + String(this.initPage).padStart(2, '0') + "-1";	
+				this.inputs.serialNumber3 = reportDate.join("") + "02" + String(this.initPage+1).padStart(2, '0');	
 				//檢查日期
-				const checkDate = moment(this.checkDate).subtract(1911, 'year');
-				this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
+				const checkDate = moment(this.checkDate).format("YYYY/MM/DD").split("/");
+				checkDate[0] = Number(checkDate[0]) - 1911;
+				this.inputs.date = `${checkDate[0]}年${checkDate[1]}月${checkDate[2]}日`;
 				//查報來源
 				this.inputs.distressSrc_Text = (this.inputs.distressSrc == '1') ? '自主' : (this.inputs.distressSrc == '2') ? '隊部' : '';
 
@@ -638,9 +640,11 @@ export default {
 
 				for(const key of ['checkReportDate',  'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT']) {
 					const dateTime = moment(this.inputForm[key]);
-					this.inputs[key] = dateTime.isValid() 
-						? dateTime.subtract(1911, 'year').format("YYYY/MM/DD HH:mm").slice(1)
-						: '';
+					if(dateTime.isValid()) {
+						const dateTimeArr = dateTime.format("YYYY/MM/DD HH:mm").split("/");
+						dateTimeArr[0] = Number(dateTimeArr[0]) - 1911;
+						this.inputs[key] = dateTimeArr.join("/");
+					} else this.inputs[key] = '';
 				}
 
 				const aspectRatioImgList = [];

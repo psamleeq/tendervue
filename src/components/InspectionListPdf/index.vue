@@ -144,10 +144,20 @@ export default {
 					this.pdfDoc.text(`修 復　項 目:`, width - 100, height-246, { align: 'left' });
 					this.pdfDoc.text(`${caseSpec.DName}`, width - 65, height-246, { align: 'left' });
 					this.pdfDoc.text(`申請日期:`, width - 195, height-232, { align: 'left' });
-					const dateCreateStr = moment(caseSpec.DateCreate).isValid() ? moment(caseSpec.DateCreate).subtract(1911, 'year').format("YYYY年MM月DD日").slice(1) : "-";
+					let dateCreateStr = '-';
+					if(moment(caseSpec.DateCreate).isValid()) {
+						const dateCreateArr = moment(caseSpec.DateCreate).format("YYYY/MM/DD").split("/");
+						dateCreateArr[0] = Number(dateCreateArr[0]) - 1911;
+						dateCreateStr = `${dateCreateArr[0]}年${dateCreateArr[1]}月${dateCreateArr[2]}日`;
+					}
 					this.pdfDoc.text(dateCreateStr, width - 170, height-232, { align: 'left' });
 					this.pdfDoc.text(`預定施工日期:`, width - 100, height-237, { align: 'left' });
-					const dateDeadStr = moment(caseSpec.DateDeadline).isValid() ? moment(caseSpec.DateDeadline).subtract(1911, 'year').format("YYYY年MM月DD日").slice(1) : "-";
+					let dateDeadStr = '-';
+					if (moment(caseSpec.DateDeadline).isValid()) {
+						const dateDeadArr = moment(caseSpec.DateDeadline).format("YYYY/MM/DD").split("/");
+						dateDeadArr[0] = Number(dateDeadArr[0]) - 1911;
+						dateDeadStr = `${dateDeadArr[0]}年${dateDeadArr[1]}月${dateDeadArr[2]}日`;
+					}
 					this.pdfDoc.text(dateDeadStr, width - 65, height-237, { align: 'left' });
 					this.pdfDoc.text(`預 定　數 量:`, width - 100, height-227, { align: 'left' });
 					const formulaStr = caseSpec.MillingFormula != '0' ? `${caseSpec.MillingFormula} = ${caseSpec.MillingArea}` : `${caseSpec.MillingLength} * ${caseSpec.MillingWidth} = ${caseSpec.MillingArea}`;

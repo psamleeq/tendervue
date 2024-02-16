@@ -259,14 +259,16 @@ export default {
 		},
 		setPDFinputs() {
 			//工程名稱
-			const reportDate = moment(this.reportDate).subtract(1911, 'year');
+			const reportDate = moment(this.reportDate).format("YYYY/MM/DD").split("/");
+			reportDate[0] = Number(reportDate[0]) - 1911;
 			this.inputs.district = this.districtList[this.inputs.zipCode].name;
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
-			this.inputs.serialNumber_31 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
+			this.inputs.serialNumber_31 = reportDate.join("") + "01" + String(this.initPage).padStart(2, '0');
 			//檢查日期
-			const checkDate = moment(this.checkDate).subtract(1911, 'year');
-			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
+			const checkDate = moment(this.checkDate).format("YYYY/MM/DD").split("/");
+			checkDate[0] = Number(checkDate[0]) - 1911;
+			this.inputs.date = `${checkDate[0]}年${checkDate[1]}月${checkDate[2]}日`;
 			//查核人次數
 			for(const key of [ 'dailyReport_Num31', 'unqualifiedSafety_Num31']) this.inputs[key] = String(this.inputForm[key]);
 			//計算當日工作執行日報填寫人次數(A) = 滿足安全性巡查人數(B) = 廠商自主檢查人次數

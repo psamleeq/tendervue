@@ -277,13 +277,15 @@ export default {
 		},
 		setPDFinputs() {
 			//工程名稱
-			const reportDate = moment(this.reportDate).subtract(1911, 'year');
+			const reportDate = moment(this.reportDate).format("YYYY/MM/DD").split("/");
+			reportDate[0] = Number(reportDate[0]) - 1911;
 			this.inputs.contractName = this.districtList[this.inputs.zipCode].tenderName;
 			//紀錄編號
-			this.inputs.serialNumber = reportDate.format("YYYYMMDD02").slice(1) + String(this.initPage).padStart(2, '0');	
+			this.inputs.serialNumber = reportDate.join("") + "02" +  String(this.initPage).padStart(2, '0');	
 			//檢查日期
-			const checkDate = moment(this.checkDate).subtract(1911, 'year');
-			this.inputs.date = checkDate.format("YYYY年MM月DD日").slice(1);
+			const checkDate = moment(this.checkDate).format("YYYY/MM/DD").split("/");
+			checkDate[0] = Number(checkDate[0]) - 1911;
+			this.inputs.date = `${checkDate[0]}年${checkDate[1]}月${checkDate[2]}日`;
 			//查核人次數
 			for(const key of [ 'informed_Num22', 'companyInform_Num22', 'unreasonable_Num22', 'correct_Num22', 'incorrect_Num22', 'companyCheck_Num22']) this.inputs[key] = String(this.inputForm[key]);
 			//廠商自主檢查件數 = 廠商通報數(C)

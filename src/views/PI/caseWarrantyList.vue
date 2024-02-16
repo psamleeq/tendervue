@@ -535,9 +535,9 @@ export default {
 		},
 		//案件上傳之日期選擇器相關方法
 		formattedDate(row){
-			const formattedDate = moment(row.DateCompleted).subtract(1911, 'year').format("YYYY/MM/DD").replace(/^0/g, "");
-			// console.log(formattedDate)
-			return formattedDate
+			const formatTime = moment(row.DateCompleted).format("YYYY/MM/DD").split("/");
+			formatTime[0] = Number(formatTime[0]) - 1911;
+			return formatTime.join("/");
 		},
 		computedWarranty(row){
 			if(['坑洞', '人孔高差'].includes(row.DistressType)) row.DateWarranty = moment(row.DateCompleted).add(13, 'day').format("YYYY/MM/DD");

@@ -175,7 +175,6 @@ export default {
 			inputs: {
 				companyName: '聖東營造股份有限公司',
 				formatDate:'',
-				dateYear:'',
 				zipCode: 104,
 				district: '中山區',
 				serialNumber1: '',
@@ -510,15 +509,16 @@ export default {
 		},
 		formatFormData(){
 			//日期格式
-			const checkDate = moment(this.checkDate).subtract(1911, 'year');
-			this.inputs.formatDate = checkDate.format("YYYY年MM月DD日").slice(1);
+			const checkDate = moment(this.checkDate).format("YYYY/MM/DD").split("/");
+			checkDate[0] = Number(checkDate[0]) - 1911;
+			this.inputs.formatDate = `${checkDate[0]}年${checkDate[1]}月${checkDate[2]}日`;
 			
-			const reportDate = moment(this.reportDate).subtract(1911, 'year');
-			//民國年份
-			this.inputs.dateYear = reportDate.year()
+			const reportDate = moment(this.reportDate).format("YYYY/MM/DD").split("/");
+			reportDate[0] = Number(reportDate[0]) - 1911;
+
 			//紀錄編號
-			this.inputs.serialNumber1 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage).padStart(2, '0');
-			this.inputs.serialNumber2 = reportDate.format("YYYYMMDD01").slice(1) + String(this.initPage+1).padStart(2, '0');		
+			this.inputs.serialNumber1 = reportDate.join("") + "01" + String(this.initPage).padStart(2, '0');
+			this.inputs.serialNumber2 = reportDate.join("") + "01" + String(this.initPage+1).padStart(2, '0');		
 			//行政區
 			this.inputs.district = this.districtList[this.inputs.zipCode].name		
 		},
