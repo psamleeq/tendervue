@@ -469,7 +469,7 @@ export default {
 				const deviceType = Object.keys(this.options.caseTypeMap).filter(key => Object.keys(this.options.caseTypeMap[key]).map(key => Number(key)).includes(caseSpec.DistressType))[0];
 				this.caseInfo = Object.assign({}, this.caseInfo, {
 					id: Number(caseSpec.Id),
-					trackingId: Number(this.caseInfo.trackingId) || Number(caseSpec.TrackingId),
+					trackingId: Number(caseSpec.TrackingId) || Number(this.caseInfo.trackingId),
 					competentId: Number(caseSpec.competentId) || 1,
 					deviceType: Number(deviceType),
 					distressType: Number(caseSpec.DistressType),
