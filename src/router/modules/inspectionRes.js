@@ -29,8 +29,7 @@ const inspectionRouter = {
 			name: 'caseTrackingList',
 			meta: {
 				title: '案件列表',
-				roles: ['inspection.editor'],
-				isNew: true
+				roles: ['inspection.editor']
 			}
 		},
 		{
@@ -39,6 +38,15 @@ const inspectionRouter = {
 			name: 'caseTrackingStatic',
 			meta: {
 				title: '回報分析',
+				roles: ['inspection.viewer']
+			}
+		},
+		{
+			path: 'caseTrackingStaticA',
+			component: () => import('@/views/inspectionRes/caseTrackingStaticA'),
+			name: 'caseTrackingStaticA',
+			meta: {
+				title: '回報分析(全)',
 				roles: ['inspection.viewer'],
 				isNew: true
 			}
