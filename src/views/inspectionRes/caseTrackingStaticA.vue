@@ -177,6 +177,7 @@ export default {
 		border: 1px solid #C0C4CC
 		border-radius: 8px
 		margin-bottom: 10px
+		overflow: hidden
 		.panel-dist
 			display: inline-block
 			position: relative
@@ -194,7 +195,8 @@ export default {
 				width: 100%
 				.el-input__inner
 					padding-left: 10px
-					text-align: left
+					text-align: center
+					border-radius: 0
 		.card-panel 
 			height: 86px
 			font-size: 12px
