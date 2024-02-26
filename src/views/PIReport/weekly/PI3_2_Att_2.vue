@@ -688,9 +688,9 @@ export default {
 					if(isReplace) {
 						const caseSpec = this.caseList[this.listQuery.perfPages-1];
 						this.inputForm.caseNumber = caseSpec.UploadCaseNo;
-						this.inputForm.checkReportDate = moment(caseSpec.CaseDate).utc().format("YYYY-MM-DD HH:mm:ss");
-						this.inputForm.expectedCompleteT = moment(caseSpec.DateDeadline).utc().format("YYYY-MM-DD HH:mm:ss");
-						this.inputForm.actualCompleteT = moment(caseSpec.DateCompleted).utc().format("YYYY-MM-DD HH:mm:ss");
+						this.inputForm.checkReportDate = moment(caseSpec.CaseDate).format("YYYY-MM-DD HH:mm:ss");
+						this.inputForm.expectedCompleteT = moment(caseSpec.DateDeadline).format("YYYY-MM-DD HH:mm:ss");
+						this.inputForm.actualCompleteT = moment(caseSpec.DateCompleted).format("YYYY-MM-DD HH:mm:ss");
 						this.inputs.distressSrc = caseSpec.DistressSrc.includes("1999") ? '3' : caseSpec.DistressSrc.includes("隊部") ? '2' : '1';
 						this.inputs.inspection = (caseSpec.State & 2) ? '1' : '0';
 					}
