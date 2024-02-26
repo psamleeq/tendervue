@@ -304,8 +304,7 @@ export default {
 			else return row[column.property];
 		},
 		formatTime(time) {
-			const m = moment(time).utc();
-			return m.isValid ? m.format("YYYY/MM/DD") : '-' ;
+			return moment(time).isValid ? moment(time).format("YYYY/MM/DD") : '-' ;
 		},
 		handleDownload() {
 			let tHeader = Object.values(this.headersFilter).map(header => header.name);

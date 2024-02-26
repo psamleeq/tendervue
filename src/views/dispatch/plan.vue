@@ -844,8 +844,7 @@ export default {
 			this.$refs.caseDetail.getDetail(row);
 		},
 		formatTime(time) {
-			const m = moment(time);
-			return m.isValid() ? m.format("YYYY/MM/DD") : "" ;
+			return moment(time).isValid() ? moment(time).format("YYYY/MM/DD") : "" ;
 		}
 	},
 };

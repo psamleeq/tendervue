@@ -282,7 +282,7 @@ export default {
 			this.getList();
 		},
 		formatTime(time) {
-			return moment(time).utc().format("YYYY-MM-DD");
+			return moment(time).format("YYYY-MM-DD");
 		},
 		formatContent(row, column) {
 			const num = row[column.property];

@@ -347,7 +347,7 @@ export default {
 			else return row[column.property] || "-";
 		},
 		formatTime(time) {
-			return moment(time).isValid() ? moment(time).utc().format("YYYY-MM-DD") : "-";
+			return moment(time).isValid() ? moment(time).format("YYYY-MM-DD") : "-";
 		}
 	},
 };

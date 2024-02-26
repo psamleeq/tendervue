@@ -492,12 +492,10 @@ export default {
 			}
 		},
 		formatDate(date) {
-			const momentDate = moment(date);
-			return momentDate.isValid() ? momentDate.utc().format('YYYY-MM-DD') : "-";
+			return moment(date).isValid() ? moment(date).format('YYYY-MM-DD') : "-";
 		},
 		formatTime(time) {
-			const momentTime = moment(time);
-			return momentTime.isValid() ? momentTime.utc().format('YYYY-MM-DD HH:mm') : "-";
+			return moment(time).isValid() ? moment(time).format('YYYY-MM-DD HH:mm') : "-";
 		}
 	}
 }
