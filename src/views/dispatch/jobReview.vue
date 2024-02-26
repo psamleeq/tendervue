@@ -30,7 +30,7 @@
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
 					<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.tenderId = null">
-						<el-option v-for="(name, id) in options.tenderMap" :key="id" :value="id" :label="name" />
+						<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="id" :label="obj.tenderName" />
 					</el-select>
 				</div>
 				

@@ -1093,7 +1093,7 @@ export default {
 		getTaskDetail(row) {
 			return new Promise(resolve => {
 				row.Content = [];
-				getTaskReal({ taskRealGroup: row.TaskRealGroup, taskRealGroup_Plan: row.TaskRealGroup_Plan }).then(response => {
+				getTaskReal({ taskRealGroup: row.TaskRealGroup || 0, taskRealGroup_Plan: row.TaskRealGroup_Plan }).then(response => {
 					row.Content = response.data.list.filter(l => l.GroupId == row.TaskRealGroup);
 					row.Content_Plan = response.data.list.filter(l => l.GroupId == row.TaskRealGroup_Plan);
 					resolve();
