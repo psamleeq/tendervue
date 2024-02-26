@@ -92,7 +92,11 @@
 					<span v-if="column.property.includes('Img')">
 						<el-popover popper-class="imgHover" placement="top" trigger="hover" :close-delay="0">
 							<el-image style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" />
-							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
+							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)">
+								<template #error>
+									<div>查無照片</div>
+								</template>
+							</el-image>
 						</el-popover>
 					</span>
 					<span v-else-if="column.property == 'TrackingId'">
@@ -110,8 +114,8 @@
 							<el-option v-for="(name, type) in options.DistressTypeFlat" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
 						</el-select>
 						<el-select v-else-if="['DistressLevel'].includes(column.property)" class="edit-select" v-model.number="row[column.property == 'BrokeStatus' ? 'BrokeType' : column.property]" size="mini" popper-class="type-select">
-								<el-option v-for="(name, type) in options.DistressLevel" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
-							</el-select>
+							<el-option v-for="(name, type) in options.DistressLevel" :key="`${column.property}_${type}`" :label="name" :value="Number(type)" />
+						</el-select>
 						<el-date-picker
 							v-else-if="['DateReport'].includes(column.property)"
 							v-model="row.DateReport"
@@ -231,73 +235,93 @@ export default {
 				id: {
 					name: "缺失Id",
 					sortable: true,
-					width: 80
+					width: 80,
+					default: true
 				},
 				InspectId: {
 					name: "路線Id",
 					sortable: false,
-					width: 70
+					width: 70,
+					default: true
 				},
 				TrackingId: {
 					name: "追蹤Id",
 					sortable: false,
-					width: 70
+					width: 70,
+					default: true
 				},
 				DistressType: {
 					name: "缺失類型",
 					sortable: true,
-					width: 160
+					width: 160,
+					default: true
 				},
 				DistressLevel: {
 					name: "損壞程度",
 					sortable: true,
-					width: 80
+					width: 80,
+					default: true
 				},
 				DateReport: {
 					name: "通報時間",
 					sortable: true,
-					width: 160
+					width: 160,
+					default: true
 				},
 				Duty_With_Name: {
 					name: "標記人員",
 					sortable: false,
-					width: 80
+					width: 80,
+					default: true
 				},
 				Place: {
 					name: "地址",
-					sortable: true
+					sortable: true,
+					default: true
 				},
 				roadDir: {
 					name: "車道",
 					sortable: false,
-					width: 110
+					width: 110,
+					default: true
 				},
 				MillingLength: {
 					name: "長度(m)",
 					sortable: true,
-					width: 80
+					width: 80,
+					default: true
 				},
 				MillingWidth: {
 					name: "寬度(m)",
 					sortable: true,
-					width: 80
+					width: 80,
+					default: true
 				},
 				MillingArea: {
 					name: "面積(㎡)",
 					sortable: true,
-					width: 80
+					width: 80,
+					default: true
 				},
 				ImgZoomIn: {
 					name: "近照",
-					sortable: false
+					sortable: false,
+					default: true
 				},
 				ImgZoomOut: {
 					name: "遠照",
-					sortable: false
+					sortable: false,
+					default: true
+				},
+				ImgZoomInUnMark: {
+					name: "近照(無框)",
+					sortable: false,
+					default: false
 				},
 				StatusDesc: {
 					name: "刪除原因",
-					sortable: false
+					sortable: false,
+					default: true
 				}
 			},
 			total: 0,
@@ -306,7 +330,7 @@ export default {
 			typeLevel: {},
 			caseInfo: {},
 			headersCheckVal: [],
-			allHeaders: true,
+			allHeaders: false,
 			options: {
 				tenderRoundMap: {},
 				districtList: {
@@ -380,7 +404,7 @@ export default {
 	},
 	created() {
 		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
-		else this.headersCheckVal = [];
+		else this.headersCheckVal = Object.keys(this.headers).filter(key => this.headers[key].default);
 
 		getTenderRound().then(response => {
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
@@ -559,6 +583,7 @@ export default {
 							l.MillingLength = Math.round(l.MillingLength * 100) / 100;
 							l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 							l.MillingArea = Math.round(l.MillingArea * 100) / 100;
+							l.ImgZoomInUnMark = l.ImgZoomIn.replace("caseDetection", "caseDetection_unMark").replace("ImgZoomIn", "ImageZoomIn_unMark");
 
 							this.$set(l, "isEdit", false);
 						})

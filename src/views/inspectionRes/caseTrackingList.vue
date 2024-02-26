@@ -71,7 +71,11 @@
 					<span v-if="column.property.includes('Img')">
 						<el-popover popper-class="imgHover" placement="top" trigger="hover" :close-delay="0">
 							<el-image style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" />
-							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)"/>
+							<el-image slot="reference" style="width: 100%; height: 100%" :src="row[column.property]" fit="scale-down" @click="showImg(row, column.property)">
+								<template #error>
+									<div>查無照片</div>
+								</template>
+							</el-image>
 						</el-popover>
 					</span>
 					<span v-else-if="column.property == 'Place'">
@@ -378,6 +382,11 @@ export default {
 					name: "遠照",
 					sortable: false,
 					default: false
+				},
+				ImgZoomInUnMark: {
+					name: "近照(無框)",
+					sortable: false,
+					default: false
 				}
 			},
 			total: 0,
@@ -387,7 +396,7 @@ export default {
 			headersCheckVal: [],
 			typeLevel: {},
 			caseInfo: {},
-			allHeaders: true,
+			allHeaders: false,
 			rules: {
 				Place: [
 					{ required: true, message: '必填', trigger: 'blur' }
@@ -491,8 +500,8 @@ export default {
 		}
 	},
 	created() {
-		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers).filter(key => this.headers[key].default);
-		else this.headersCheckVal = [];
+		if (this.allHeaders) this.headersCheckVal = Object.keys(this.headers);
+		else this.headersCheckVal = Object.keys(this.headers).filter(key => this.headers[key].default);
 
 		getTenderRound({
 			excludeShadow: true
@@ -630,6 +639,7 @@ export default {
 						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
 						this.$set(l, "editFormula", l.MillingFormula != '0');
+						l.ImgZoomInUnMark = l.ImgZoomIn.replace("caseDetection", "caseDetection_unMark").replace("ImgZoomIn", "ImageZoomIn_unMark");
 						this.$set(l, "status", 0);
 						this.$set(l, "reasonNoNeed", "");
 						this.$set(l, "reasonChange", "");
