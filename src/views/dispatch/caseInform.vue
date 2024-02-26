@@ -305,7 +305,9 @@ export default {
 				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				deviceType: this.listQuery.deviceType,
 				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
+				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: this.listQuery.pageSize
 			}).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
@@ -315,6 +317,7 @@ export default {
 					this.total = 0;
 				} else {
 					this.list = response.data.list;
+					this.total = response.data.total;
 					this.checkList = Array.from({ length: this.list.length }, () => false);
 					this.deviceTypeNow = this.listQuery.deviceType;
 					this.filterNow = this.listQuery.filter;
