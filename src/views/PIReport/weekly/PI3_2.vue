@@ -430,7 +430,7 @@ export default {
 			}
 		},
 		formatDate(date){
-			return moment(date).isValid() ? mmoment(date).format('YYYY-MM-DD') : "-";
+			return moment(date).isValid() ? moment(date).format('YYYY-MM-DD') : "-";
 		}
 	},
 };
