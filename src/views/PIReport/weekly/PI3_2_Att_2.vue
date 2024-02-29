@@ -505,10 +505,10 @@ export default {
 			return new Promise(async resolve=> {
 				if(['caseNumber', 'completeFixed_Text', 'construction_Text'].includes(arg.key)) this.inputForm[arg.key] = arg.value;
 				if(['checkReportDate', 'receivedDate', 'actualCompleteS1', 'expectedCompleteT', 'actualCompleteT', ].includes(arg.key)) {
-					const dateTime = moment(arg.value);
-					this.inputForm[arg.key] = dateTime.isValid() 
-						? dateTime.add(1911, 'year').format("YYYY/MM/DD HH:mm:ss")
-						: '';
+					if(moment(arg.value).isValid()) {
+						const dateArr = arg.value.split("/");
+						this.inputForm[arg.key] = `${Number(dateArr[0]) + 1911}/${dateArr[1]}/${dateArr[2]}`;
+					} else this.inputForm[arg.key] = '';
 				}
 
 				const aspectRatioImgList = [];

@@ -661,8 +661,10 @@ export default {
 				});
 
 				return headers.reduce((object, header, index) => {
-					if(header == "查報日期") object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD");
-					else object[header] = values[index];
+					if(header == "查報日期") {
+						const dateArr = values[index].split("/");
+						object[header] = `${Number(dateArr[0]) + 1911}/${dateArr[1]}/${dateArr[2]}`;
+					} else object[header] = values[index];
 					return object;
 				}, {});
 			});	

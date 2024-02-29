@@ -514,7 +514,10 @@ export default {
 				return headers.reduce((object, header, index) => {
 					if([ "查報日期", "預計完工日期", "實際完工時間" ].includes(header)){
 						if(values[index]=="") object[header] = ""
-						else object[header] = moment(values[index]).add(1911, 'year').format("YYYY/MM/DD HH:mm:ss");
+						else {
+							const dateArr = values[index].split("/");
+							object[header] = `${Number(dateArr[0])+1911}/${dateArr[1]}/${dateArr[2]}`;
+						}
 					} 
 					else{
 						object[header] = values[index]; 
