@@ -308,7 +308,7 @@ export default {
 				}).then(response => {
 					if (response.data.list.length != 0) {
 						const list = response.data.list;
-						this.inputs.listNo1999 = list.filter(l => l.DistressSrc !== "1999交辦案件");
+						this.inputs.listNo1999 = list.filter(l => !l.DistressSrc.includes("1999"));
 						this.inputs.listUnreason = list.filter(l => (l.State & 16) && l.StateNotes.Firm !== '優於民眾查報');
 					}
 

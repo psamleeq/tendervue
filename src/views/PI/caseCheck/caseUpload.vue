@@ -663,7 +663,7 @@ export default {
 				return headers.reduce((object, header, index) => {
 					if(header == "查報日期") {
 						const dateArr = values[index].split("/");
-						object[header] = `${Number(dateArr[0]) + 1911}/${dateArr[1]}/${dateArr[2]}`;
+						object[header] = moment(`${Number(dateArr[0]) + 1911}/${dateArr[1]}/${dateArr[2]}`).format("YYYY/MM/DD");;
 					} else object[header] = values[index];
 					return object;
 				}, {});
@@ -702,6 +702,7 @@ export default {
 				this.list.forEach(l => {
 					l.CaseType = l.BTName;
 					this.csvData.forEach((data, index) => {
+						console.log(data["查報日期"], l.CaseDate)
 						if(csvRepeat[index]) return;
 						else if(!moment(data["查報日期"]).isSame(moment(l.CaseDate))) {
 							const outOfDateIndex = this.caseMinus.csv.indexOf(data["來源編號"]) != -1 ? this.caseMinus.csv.indexOf(data["來源編號"]) : this.caseMinus.csv.indexOf(data["案件編號"]);
@@ -715,6 +716,7 @@ export default {
 							}
 							l.UploadCaseNo = data["案件編號"];
 							l.DistressSrc = data["查報來源"];
+							console.log(l.DistressSrc);
 							l.CaseName = data["查報地點"];
 							l.CaseType = data["損壞情形"];
 							csvRepeat[index] = true;
