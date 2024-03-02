@@ -10,7 +10,7 @@ const inspectionRouter = {
 	meta: {
 		title: '環巡成果',
 		icon: 'el-icon-s-marketing',
-		roles: ['inspection'],
+		roles: ['inspection.viewer', 'inspection.editor'],
 		isNew: true 
 	},
 	children: [
