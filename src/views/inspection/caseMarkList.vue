@@ -583,7 +583,7 @@ export default {
 							l.MillingLength = Math.round(l.MillingLength * 100) / 100;
 							l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 							l.MillingArea = Math.round(l.MillingArea * 100) / 100;
-							l.ImgZoomInUnMark = l.ImgZoomIn.replace("caseDetection", "caseDetection_unMark").replace("ImgZoomIn", "ImageZoomIn_unMark");
+							l.ImgZoomInUnMark = l.ImgZoomIn ? l.ImgZoomIn.replace("caseDetection", "caseDetection_unMark").replace("ImgZoomIn", "ImageZoomIn_unMark") : null;
 
 							this.$set(l, "isEdit", false);
 						})

@@ -639,7 +639,7 @@ export default {
 						l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 						l.MillingArea = Math.round(l.MillingArea * 100) / 100;
 						this.$set(l, "editFormula", l.MillingFormula != '0');
-						l.ImgZoomInUnMark = l.ImgZoomIn.replace("caseDetection", "caseDetection_unMark").replace("ImgZoomIn", "ImageZoomIn_unMark");
+						l.ImgZoomInUnMark = l.ImgZoomIn ? l.ImgZoomIn.replace("caseDetection", "caseDetection_unMark").replace("ImgZoomIn", "ImageZoomIn_unMark") : null;
 						this.$set(l, "status", 0);
 						this.$set(l, "reasonNoNeed", "");
 						this.$set(l, "reasonChange", "");
