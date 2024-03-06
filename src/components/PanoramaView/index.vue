@@ -18,15 +18,15 @@
 
 			<el-card v-if="hotSpotIdList.dot.length >= 1 || isReview || caseInfo.isPrev" class="info-box right">
 				<el-form :model="caseInfo" label-width="70px" size="small">
-					<el-form-item v-if="isReview || caseInfo.dateRepair_At" prop="id" label="缺失Id" style="margin-bottom: 0">
+					<el-form-item v-if="isReview || caseInfo.dateMark_At" prop="id" label="缺失Id" style="margin-bottom: 0">
 						<span>{{ caseInfo.id }}</span>
 					</el-form-item>
 					<el-form-item prop="trackingId" label="追蹤Id" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.trackingId }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ caseInfo.trackingId }}</span>
 						<el-input v-else v-model="caseInfo.trackingId" :class="{'track-highlight': Number(caseInfo.trackingId) != 0}" size="mini" style="width: 130px" @change="trackingCase()" />
 					</el-form-item>
-					<el-form-item prop="dateReport" :label="caseInfo.dateRepair_At ? '標記完工' : '通報時間'" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ formatTime(caseInfo.dateReport) }}</span>
+					<el-form-item prop="dateReport" :label="caseInfo.dateMark_At && caseInfo.markType == 2 ? '標記完工' : caseInfo.dateMark_At && caseInfo.markType == 0 ? '標記誤判' : '通報時間'" style="margin-bottom: 0">
+						<span v-if="isReview || caseInfo.dateMark_At">{{ formatTime(caseInfo.dateReport) }}</span>
 						<el-date-picker
 							v-else
 							v-model="caseInfo.dateReport"
@@ -37,50 +37,50 @@
 						/>
 					</el-form-item>
 					<el-form-item prop="type" label="權責單位" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.competentTypeMap[caseInfo.competentId] }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ options.competentTypeMap[caseInfo.competentId] }}</span>
 						<el-select v-else v-model="caseInfo.competentId" size="mini" @change="caseInfo.distressType = ''">
 							<el-option v-for="(val, key) in options.competentTypeMap" :key="key" :label="options.competentTypeMap[key]" :value="Number(key)" />
 						</el-select>
 					</el-form-item>
-					<el-form-item v-if="!isReview && !caseInfo.dateRepair_At" prop="type" label="設施類型" style="margin-bottom: 0">
+					<el-form-item v-if="!isReview && !caseInfo.dateMark_At" prop="type" label="設施類型" style="margin-bottom: 0">
 						<el-select v-model="caseInfo.deviceType" size="mini" @change="changeDeviceType()">
 							<el-option v-for="(val, key) in options.deviceTypeMap" :key="key" :label="options.deviceTypeMap[key]" :value="Number(key)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.caseTypeMapFlat[caseInfo.distressType] }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ options.caseTypeMapFlat[caseInfo.distressType] }}</span>
 						<el-select v-else v-model="caseInfo.distressType" size="mini" @change="calcCaseInfo">
 							<el-option v-for="key in options.caseTypeMapOrder[caseInfo.deviceType]" :key="key" :label="options.caseTypeMapFlat[key]" :value="Number(key)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="level" label="缺失程度">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.caseLevelMap[caseInfo.distressLevel] }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ options.caseLevelMap[caseInfo.distressLevel] }}</span>
 						<el-select v-else v-model="caseInfo.distressLevel" size="mini">
 							<el-option v-for="(name, level) in options.caseLevelMap" :key="level" :label="name" :value="Number(level)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="millingLength" label="預估長" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.millingLength }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ caseInfo.millingLength }}</span>
 						<el-input v-else v-model="caseInfo.millingLength" size="mini" style="width: 130px" @change="calArea()" />
 					</el-form-item>
 					<el-form-item prop="millingWidth" label="預估寬" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.millingWidth }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ caseInfo.millingWidth }}</span>
 						<el-input v-else v-model="caseInfo.millingWidth" size="mini" style="width: 130px" @change="calArea()" />
 					</el-form-item>
 					<el-form-item prop="millingArea" label="預估面積">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.millingArea }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ caseInfo.millingArea }}</span>
 						<el-input v-else v-model="caseInfo.millingArea" size="mini" style="width: 130px" />
 					</el-form-item>
 					<el-form-item prop="address" label="地址" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ caseInfo.place }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ caseInfo.place }}</span>
 						<el-input v-else v-model="caseInfo.place" type="textarea" :rows="2" />
-						<div v-if="!(isReview || caseInfo.dateRepair_At)" slot="label">
+						<div v-if="!(isReview || caseInfo.dateMark_At)" slot="label">
 							<div style="height: 24px; line-height: 24px; margin: -3px 2px -5px 0">地址</div>
 							<el-button type="success" size="mini" style="padding: 5px" :loading="isGetAddress" @click="getAddress()">填入</el-button>
 						</div>
 					</el-form-item>
 					<el-form-item prop="roadDir" label="車道" style="margin-bottom: 0">
-						<span v-if="isReview || caseInfo.dateRepair_At">{{ options.roadDir[caseInfo.direction] }} - {{ caseInfo.lane }}</span>
+						<span v-if="isReview || caseInfo.dateMark_At">{{ options.roadDir[caseInfo.direction] }} - {{ caseInfo.lane }}</span>
 						<el-input v-else class="road-dir" type="number" v-model="caseInfo.lane" size="mini" :min="1" :max="5" @blur="changeValue(caseInfo)">
 							<el-select slot="prepend" v-model="caseInfo.direction" popper-class="type-select" size="mini">
 								<el-option v-for="(name, id) in options.roadDir" :key="id" :label="name" :value="Number(id)" />
@@ -95,7 +95,7 @@
 									<el-image slot="reference" style="width: 100px; height: 100px" :src="caseInfo[imgType]" fit="contain" @click="$emit('setCaseImgViewer', { imgUrls: [ caseInfo[imgType] ], isOpen: true })" />
 								</el-popover>
 							</el-col>
-							<el-col v-if="!(isReview || caseInfo.dateRepair_At)" class="btn-img-action" :span="8">
+							<el-col v-if="!(isReview || caseInfo.dateMark_At)" class="btn-img-action" :span="8">
 								<el-button type="success" size="mini" @click="screenshot(imgType)">截圖</el-button>
 								<el-button v-if="caseInfo[imgType].length > 0" type="danger" size="mini" @click="caseInfo[imgType] = ''">刪除</el-button>
 							</el-col>
@@ -103,9 +103,10 @@
 					</el-form-item>
 				</el-form>
 				<el-button-group class="btn-action-group">
-					<el-button v-if="!(isReview || caseInfo.dateRepair_At)" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase(1)" :loading="isUpload">{{ caseInfo.isPrev || caseInfo.trackingId != 0 ? '追蹤' : '新增' }}</el-button>
-					<el-button v-if="!(isReview || caseInfo.dateRepair_At) && (caseInfo.isPrev || caseInfo.trackingId != 0)" type="warning" @click="uploadCase(2)" :loading="isUpload">標記完工</el-button>
-					<el-button type="danger" @click="clearAll(); resetCaseHotSpot();" :disabled="isUpload">{{ (isReview || caseInfo.dateRepair_At) ? '關閉' : '清除' }}</el-button>
+					<el-button v-if="!(isReview || caseInfo.dateMark_At)" :type="caseInfo.isPrev ? 'primary' : 'success'" @click="uploadCase(1)" :loading="isUpload">{{ caseInfo.isPrev || caseInfo.trackingId != 0 ? '追蹤' : '新增' }}</el-button>
+					<el-button v-if="!(isReview || caseInfo.dateMark_At) && (caseInfo.isPrev || caseInfo.trackingId != 0)" type="warning" @click="uploadCase(2)" :loading="isUpload">完工</el-button>
+					<el-button v-if="!(isReview || caseInfo.dateMark_At) && (caseInfo.isPrev || caseInfo.trackingId != 0)" type="info" @click="uploadCase(0)" :loading="isUpload">誤判</el-button>
+					<el-button type="danger" @click="clearAll(); resetCaseHotSpot();" :disabled="isUpload">{{ (isReview || caseInfo.dateMark_At) ? '關閉' : '清除' }}</el-button>
 				</el-button-group>
 			</el-card>
 
@@ -482,7 +483,8 @@ export default {
 					lane: caseSpec.Lane,
 					coordinates: caseSpec.Coordinates,
 					isPrev: caseSpec.isPrev,
-					dateRepair_At: caseSpec.DateRepair_At
+					markType: caseSpec.MarkType,
+					dateMark_At: caseSpec.DateMark_At
 				});
 			} else {
 				this.$message({
@@ -492,7 +494,7 @@ export default {
 			}
 		},
 		uploadCase(uploadType = 1) {
-			this.$confirm(`確定${uploadType == 1 ? '上傳缺失' : '標記完工'}?`, "確認", { showClose: false }).then(() => {
+			this.$confirm(`確定${uploadType == 1 ? '上傳缺失' : uploadType == 2 ? '標記完工' : '標記誤判'}?`, "確認", { showClose: false }).then(() => {
 				if (this.caseInfo.place.length == 0) {
 					this.$message({ message: "請填入地址", type: "error" });
 					return;
@@ -742,7 +744,7 @@ export default {
 				pitch,
 				yaw,
 				// text: hoverText,
-				cssClass: `hotSpotIcon alert ${prop.DateRepair_At ? "repair" : !isPrev && prop.TrackingId ? "track" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
+				cssClass: `hotSpotIcon alert ${prop.DateMark_At && prop.MarkType == 2 ? "repair" : prop.DateMark_At && prop.MarkType == 0 ? "delete" : !isPrev && prop.TrackingId ? "track" : isPrev ? "prev" : ""} caseId_${prop.Id}`,
 				createTooltipArgs: {
 					prop
 				},
@@ -763,7 +765,7 @@ export default {
 					const deviceType = Object.keys(this.options.caseTypeMap).filter(key => Object.keys(this.options.caseTypeMap[key]).map(key => Number(key)).includes(clickHandlerArgs.prop.DistressType))[0];
 					this.caseInfo = Object.assign({}, this.caseInfo, {
 						id: clickHandlerArgs.prop.Id,
-						dateReport: (this.isReview || clickHandlerArgs.prop.DateRepair_At) ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
+						dateReport: (this.isReview || clickHandlerArgs.prop.DateMark_At) ? clickHandlerArgs.prop.DateReport : moment().startOf("d"),
 						trackingId: clickHandlerArgs.prop.TrackingId || clickHandlerArgs.prop.Id,
 						competentId: Number(clickHandlerArgs.prop.CompetentId) || 1,
 						deviceType: Number(deviceType),
@@ -776,9 +778,10 @@ export default {
 						direction: clickHandlerArgs.prop.Direction,
 						lane: clickHandlerArgs.prop.Lane,
 						isPrev: clickHandlerArgs.isPrev,
-						dateRepair_At: clickHandlerArgs.prop.DateRepair_At,
-						imgZoomIn: !clickHandlerArgs.prop.DateRepair_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomIn) ? "" : clickHandlerArgs.prop.ImgZoomIn,
-						imgZoomOut: !clickHandlerArgs.prop.DateRepair_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomOut) ? "" : clickHandlerArgs.prop.ImgZoomOut,
+						markType: clickHandlerArgs.prop.MarkType,
+						dateMark_At: clickHandlerArgs.prop.DateMark_At,
+						imgZoomIn: !clickHandlerArgs.prop.DateMark_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomIn) ? "" : clickHandlerArgs.prop.ImgZoomIn,
+						imgZoomOut: !clickHandlerArgs.prop.DateMark_At && (clickHandlerArgs.isPrev || !clickHandlerArgs.prop.ImgZoomOut) ? "" : clickHandlerArgs.prop.ImgZoomOut,
 						coordinates: clickHandlerArgs.prop.Coordinates
 					});
 
@@ -1000,6 +1003,9 @@ export default {
 				z-index: 10
 				&.repair
 					background-image: url('../../../public/assets/icon/icon-alert-circle.png')
+					filter: drop-shadow(0px 0px 2px LightCoral)
+				&.delete
+					background-image: url('../../../public/assets/icon/close-circle-custom.png')
 					filter: drop-shadow(0px 0px 2px LightCoral)
 				&.prev
 					background-image: url('../../../public/assets/icon/icon_alert_plus.png')

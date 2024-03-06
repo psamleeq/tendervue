@@ -54,6 +54,7 @@
 			<el-checkbox-group v-model="listQuery.filter" class="filter-item" :max="1" style="margin-left: 20px">
 				<el-checkbox :label="1">已刪除</el-checkbox>
 				<el-checkbox :label="2">已完工</el-checkbox>
+				<el-checkbox :label="0">誤判</el-checkbox>
 			</el-checkbox-group>
 		</div>
 
@@ -101,7 +102,10 @@
 					</span>
 					<span v-else-if="column.property == 'TrackingId'">
 						<span>{{ row.TrackingId }}</span>
-						<div v-if="row.DateRepair" style="color: #F56C6C;">(已完工)</div>
+						<div v-if="row.DateMark" style="color: #F56C6C;">
+							<span v-if="row.MarkType == 0">(誤判)</span>
+							<span v-if="row.MarkType == 2">(已完工)</span>
+						</div>
 					</span>
 					<span v-else-if="row.isEdit && !['id', 'TrackingId', 'InspectId'].includes(column.property)">
 						<el-input v-if="['roadDir'].includes(column.property)" class="road-dir" v-model="row.Lane" size="mini">
@@ -140,7 +144,7 @@
 					<el-button-group v-if="!row.isEdit">
 						<!-- NOTE:先解除上傳不可編緝的限制 -->
 						<!-- <template v-if="!Object.values(importCaseObj).flat().includes(row.id)" > -->
-							<el-button v-if="row.IsActive && !row.DateRepair" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
+							<el-button v-if="row.IsActive && !row.DateMark" class="btn-action" type="primary" plain size="mini" round @click="row.isEdit = true">編輯</el-button>
 							<el-button v-if="row.IsActive" class="btn-action" type="danger" plain size="mini" round @click="setCaseState(row, 0)">刪除</el-button>
 							<el-button v-else-if="!row.IsActive" class="btn-action" type="success" plain size="mini" round @click="setCaseState(row, 1)">復原</el-button>
 						<!-- </template> -->
@@ -457,7 +461,7 @@ export default {
 			const tenderRound = tenderFilter.length > 0 ? tenderFilter[0] : { zipCode: 0 };
 			const checkRoadName = this.options.districtList[tenderRound.zipCode];
 
-			if (row.DateRepair) return 'warning-row';
+			if (row.DateMark) return 'warning-row';
 			else if (checkRoadName && !row.Place.includes(checkRoadName)) return 'danger-row';
 			else return '';
 		},
@@ -554,7 +558,7 @@ export default {
 				}
 
 				getInspectionCaseList({
-					filter: this.listQuery.filter[0] || 0,
+					filter: this.listQuery.filter[0] != undefined ? this.listQuery.filter[0] : -1,
 					surveyId,
 					inspectId,
 					checkRoadName: this.listQuery.checkRoadName,

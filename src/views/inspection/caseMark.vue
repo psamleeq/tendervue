@@ -538,18 +538,18 @@ export default {
 					};
 				} else if(feature.getProperty("isLine")) {
 					return { 
-						strokeColor: feature.getProperty("DateRepair_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
+						strokeColor: feature.getProperty("DateMark_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
 						strokeWeight: 6,
-						strokeOpacity: feature.getProperty("DateRepair_At") ? 0.2 : isPrev ? 0.4 : 0.8,
+						strokeOpacity: feature.getProperty("DateMark_At") ? 0.2 : isPrev ? 0.4 : 0.8,
 						fillOpacity: 0
 					};
 				} else {
 					return { 
-						strokeColor: feature.getProperty("DateRepair_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
+						strokeColor: feature.getProperty("DateMark_At") ? '#E6A23C' : isPrev ? '#556B2F' : color,
 						strokeWeight: 1,
 						strokeOpacity: 0.5,
 						fillColor: color,
-						fillOpacity: feature.getProperty("DateRepair_At") ? 0.1 : isPrev ? 0.3 : 0.7
+						fillOpacity: feature.getProperty("DateMark_At") ? 0.1 : isPrev ? 0.3 : 0.7
 					};
 				}
 			});
