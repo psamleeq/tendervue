@@ -69,7 +69,7 @@
 				</template>
 			</el-table-column>
 			<el-table-column label="PCI計算" align="center" >
-				<el-table-column v-if="checkPermission(['rAdm'])" label="即時運算" align="center" width='120'>
+				<el-table-column v-if="checkPermission(['PCIManage.master'])" label="即時運算" align="center" width='120'>
 					<template slot-scope="{ row }">
 						<el-button-group v-if="!row.archiveTime">
 							<el-button class="btn-action" type="primary" plain @click="calPCI(row.id, 0)">重算</el-button>
