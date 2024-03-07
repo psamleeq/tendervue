@@ -35,7 +35,7 @@
 					</el-input>
 				</div>
 			</span>
-			<time-picker v-if="listQuery.filterType == 4" class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+			<time-picker v-if="[4, 5].includes(listQuery.filterType)" class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button
 				class="filter-item"
@@ -67,7 +67,7 @@
 			</el-checkbox-group>
 		</div>
 
-		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
+		<h5 v-if="[4, 5].includes(listQuery.filterType) && list.length != 0">查詢期間：{{ searchRange }}</h5>
 		<h5 v-if="list.length != 0">案件數：{{ total }}</h5>
 
 		<el-table
@@ -219,8 +219,6 @@ export default {
 			scrollTop: 0,
 			map: {},
 			imgUrls: "",
-			// timeTabId: moment().year(),
-			// dateTimePickerVisible: false,
 			screenWidth: window.innerWidth,
 			dateRange: [ moment().startOf("day").toDate(), moment().endOf("day").toDate()],
 			searchRange: "",
@@ -566,8 +564,8 @@ export default {
 					trackingId,
 					dutyWith,
 					caseType: JSON.stringify(this.listQuery.caseType),
-					timeStart: startDate,
-					timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+					timeStart: [4, 5].includes(this.listQuery.filterType) ? startDate : '',
+					timeEnd: [4, 5].includes(this.listQuery.filterType) ? moment(endDate).add(1, "d").format("YYYY-MM-DD") : '',
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
