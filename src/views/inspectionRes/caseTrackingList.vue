@@ -2,7 +2,7 @@
 	<div class="app-container case-tracking-list" v-loading="loading">
 		<h2>案件列表</h2>
 		<aside style="white-space: pre-line">
-			預設列出「坑洞(全)」的案件。
+			預設列出「坑洞(全)、龜裂(重)」的案件。
 		</aside>
 		<div class="filter-container">
 			<div v-if="listQuery.tenderRound > 0" class="filter-item">
@@ -87,7 +87,7 @@
 			</el-table-column>
 			<el-table-column label="狀態" min-width="40" align="center">
 				<template slot-scope="{ row }">
-					<div v-if="row.PIState == 1 && row.FlowState == 0">待派工</div>
+					<div v-if="row.PIState & 1 && row.FlowState == 0">待派工</div>
 					<div v-else>{{ options.flowStateMap[row.FlowState] }}</div>
 					<span v-if="[1, 2].includes(row.FlowState)">({{ formatTime(row.FlowCreateAt) }})</span>
 					<span v-else-if="[3, 4].includes(row.FlowState) && row.FlowDesc">({{ row.FlowDesc }})</span>
