@@ -78,7 +78,7 @@
 								<el-option label="前次合約" :value="2"></el-option>
 							</el-select>
 						</el-input>
-						<el-button class="filter-item" type="success" icon="el-icon-download" size="small" @click="getList()">載入</el-button>
+						<el-button class="filter-item" type="success" icon="el-icon-download" size="small" @click="listQuery.trackingId = 0; getList()">載入</el-button>
 						<br>
 						<el-input v-model="listQuery.caseId" placeholder="請輸入" size="medium" style="width: 254px;" :disabled="Object.keys(caseGeoJson.caseNow).length == 0">
 							<span slot="prepend">缺失Id</span>
@@ -168,7 +168,8 @@ export default {
 				caseTenderRound: null,
 				inspectId: "",
 				caseInspectId: "",
-				caseId: ""
+				caseId: "",
+				trackingId: 0
 			},
 			panoramaInfo: {
 				data: [],
@@ -306,6 +307,8 @@ export default {
 					this.options.tenderRoundMap = { "-1": { id: -1 }};
 					this.listQuery.tenderRound = -1;
 				}
+
+				this.listQuery.trackingId = this.$route.query.trackingId || 0;
 
 				if(this.$route.query.caseInspectId) {
 					this.listQuery.filterTypeCase = 1;
@@ -589,6 +592,8 @@ export default {
 
 				if(this.listQuery.filterTypeCase == 1) routerQuery.query.caseInspectId = this.listQuery.caseInspectId || 0;
 				else routerQuery.query.caseTenderRound = this.listQuery.caseTenderRound || 0;
+
+				if(this.listQuery.trackingId != 0) routerQuery.query.trackingId = this.listQuery.trackingId;
 				this.$router.push(routerQuery);
 
 				getPanoramaJson(query).then(async response => {
@@ -621,11 +626,13 @@ export default {
 						}
 						this.getCaseList();
 
-						const bounds = new google.maps.LatLngBounds();
-						path.forEach(position => {
-							if(position.lat >= 22 && position.lat <= 26 && position.lng >= 120 && position.lng <= 122) bounds.extend(position);
-						});
-						this.map.fitBounds(bounds);
+						if(this.listQuery.trackingId == 0) {
+							const bounds = new google.maps.LatLngBounds();
+							path.forEach(position => {
+								if(position.lat >= 22 && position.lat <= 26 && position.lng >= 120 && position.lng <= 122) bounds.extend(position);
+							});
+							this.map.fitBounds(bounds);
+						}
 					}
 				}).catch(err => this.loading = false);
 			}
@@ -643,6 +650,8 @@ export default {
 				const caseTenderRound = this.options.tenderRoundMap[this.listQuery.caseTenderRound];
 				query.caseSurveyId = caseTenderRound.id;
 			}
+			query.trackingId = Number(this.listQuery.trackingId);
+
 			getInspectionCaseGeoJson(query).then(response => {
 				this.caseGeoJson = Object.assign({}, this.caseGeoJson, response.data.caseGeoJson);
 				this.dataLayer.caseNow.addGeoJson(this.caseGeoJson.caseNow);
@@ -662,6 +671,16 @@ export default {
 					// this.dataLayer.caseNow.addGeoJson(this.caseGeoJson[0]);
 					this.listQuery.inspectId = 0;
 				} 
+				
+				if(this.listQuery.trackingId != 0) {
+					const bounds = new google.maps.LatLngBounds();
+					[...this.caseGeoJson.caseNow.features, ...this.caseGeoJson.casePrev.features].forEach(caseSpec => {
+						console.log(caseSpec);
+						const position = caseSpec.properties.CenterPt;
+						if(position.lat >= 22 && position.lat <= 26 && position.lng >= 120 && position.lng <= 122) bounds.extend(position);
+					});
+					this.map.fitBounds(bounds);
+				}
 
 				this.$nextTick(() => {
 					if((sessionStorage.inspectIdNow == this.inspectIdNow || localStorage.tenderRoundNow == this.tenderRoundNow) && localStorage.sceneIdNow) {
@@ -788,7 +807,6 @@ export default {
 			this.map.setHeading(azimuth);
 		},
 		async createPolyLine(inspectId, lineInfo) {
-
 			// 掛載 polyline Layer(street view)
 			lineInfo.forEach((polyInfo, index) => {
 				const path = polyInfo.map((info) => info.position);
