@@ -107,6 +107,7 @@
 						</el-radio-group>
 						<br>
 						<el-button type="success" size="mini" @click="setState(row)">送出</el-button>
+						<el-button class="btn-action" type="primary" plain size="mini" @click="rowActive= row; dialogEditVisible = true">編輯</el-button>
 					</span>
 					<span v-else>
 						<div>{{ row.PIUsername || '-' }}</div>
@@ -248,7 +249,7 @@
 			</el-form>
 
 			<span slot="footer" class="dialog-footer">
-				<el-button type="danger" @click="setPIState(rowActive, 16)">刪除</el-button>
+				<!-- <el-button type="danger" @click="setPIState(rowActive, 16)">刪除</el-button> -->
 				<el-button type="primary" @click="editCase()">確定</el-button>
 				<el-button @click="dialogEditVisible = false">取消</el-button>
 			</span>

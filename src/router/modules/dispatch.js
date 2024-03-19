@@ -15,26 +15,6 @@ const dispatchRouter = {
 	},
 	children: [
 		{
-			path: 'caseInform',
-			component: () => import('@/views/dispatch/caseInform'),
-			name: 'caseInform',
-			meta: {
-				title: '製作通報單',
-				roles: ['restored.assign'],
-				vTag: 'alpha'
-			}
-		},
-		// {
-		// 	path: 'caseEdit',
-		// 	component: () => import('@/views/dispatch/caseEdit'),
-		// 	name: 'caseEdit',
-		// 	meta: {
-		// 		title: '缺失編輯',
-		// 		roles: ['restored.assign'],
-		// 		vTag: 'alpha'
-		// 	}
-		// },
-		{
 			path: 'kit',
 			component: () => import('@/views/dispatch/kit'),
 			name: 'kit',
@@ -42,6 +22,16 @@ const dispatchRouter = {
 				title: '計價套組',
 				roles: ['restored.assign'],
 				isNew: true
+			}
+		},
+		{
+			path: 'caseInform',
+			component: () => import('@/views/dispatch/caseInform'),
+			name: 'caseInform',
+			meta: {
+				title: '製作申請單',
+				roles: ['restored.assign'],
+				vTag: 'alpha'
 			}
 		},
 		{
