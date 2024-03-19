@@ -702,25 +702,23 @@ export default {
 				this.list.forEach(l => {
 					l.CaseType = l.BTName;
 					this.csvData.forEach((data, index) => {
-						console.log(data["查報日期"], l.CaseDate)
 						if(csvRepeat[index]) return;
 						else if(!moment(data["查報日期"]).isSame(moment(l.CaseDate))) {
 							const outOfDateIndex = this.caseMinus.csv.indexOf(data["來源編號"]) != -1 ? this.caseMinus.csv.indexOf(data["來源編號"]) : this.caseMinus.csv.indexOf(data["案件編號"]);
 							if(outOfDateIndex != -1) this.caseMinus.csv.splice(outOfDateIndex, 1);
 							csvRepeat[index] = true;
 						// } else if(( data["案件編號"] == l.CaseNo || data["來源編號"] == l.CaseNo) && !Object.keys(this.csvRepeatObj).includes(data["來源編號"])) {
-						} else if((data["案件編號"] == l.CaseNo || data["來源編號"] == l.CaseNo)) {
+						} else if(data["案件編號"] == l.CaseNo || data["來源編號"] == l.CaseNo) {
 							if(data["案件編號"] == l.CaseNo && (data["來源編號"].length == 0 || data["來源編號"] == l.CaseNo)) {
 								const otherSrcIndex = this.caseMinus.list.indexOf(data["案件編號"]);
 								if(otherSrcIndex != -1) this.caseMinus.list.splice(otherSrcIndex, 1);
 							}
 							l.UploadCaseNo = data["案件編號"];
 							l.DistressSrc = data["查報來源"];
-							console.log(l.DistressSrc);
 							l.CaseName = data["查報地點"];
 							l.CaseType = data["損壞情形"];
-							csvRepeat[index] = true;
 							if(data["案件狀態"]) l.IsObserve = Number(data["案件狀態"] == '觀察');
+							csvRepeat[index] = true;
 						}
 					})
 				})
