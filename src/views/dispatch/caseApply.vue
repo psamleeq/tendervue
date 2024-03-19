@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container case-inform" v-loading="loading">
-		<h2>製作通報單</h2>
+	<div class="app-container case-apply" v-loading="loading">
+		<h2>製作申請單</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -13,13 +13,16 @@
 				</div>
 			</div>
 
-			<span class="filter-item">
+			<span v-if="!listQuery.filter" class="filter-item">
 				<div style="font-size: 12px; color: #909399">成案日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span>
 			<br />
 
-			<div class="filter-item">
+			<el-input v-if="listQuery.filter" v-model="listQuery.filterStr" style="width: 300px;">
+				<template slot="prepend">申請單號</template>
+			</el-input>
+			<div v-else class="filter-item">
 				<div v-if="listQuery.filterType == 1" class="select-contract">
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
@@ -62,6 +65,7 @@
 					<span>{{ $index + 1 }}</span>
 				</template>
 			</el-table-column>
+			<el-table-column v-if="filterNow" prop="CaseSN" label="申請單號" width="130" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -123,14 +127,14 @@
 <script>
 import moment from "moment";
 import { getTenderMap } from "@/api/type";
-import { getInform, confirmInform } from "@/api/dispatch";
+import { getApply, confirmApply } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 import CaseDetail from "@/components/CaseDetail";
 import InspectionListPdf from "@/components/InspectionListPdf";
 
 export default {
-	name: "caseInform",
+	name: "caseApply",
 	components: { TimePicker, Pagination, CaseDetail, InspectionListPdf },
 	data() {
 		return {
@@ -261,13 +265,13 @@ export default {
 		},
 		downloadPdf(callback) {
 			this.$confirm(`確認列印？`, "確認", { showClose: false }).then(() => {
-				confirmInform({
+				confirmApply({
 					caseList: this.caseFilterList(this.tableSelect)
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						const caseSN = response.data.caseSN;
 						this.$message({
-							message: `製作成功(通報單號 ${caseSN})`,
+							message: `製作成功(申請單號 ${caseSN})`,
 							type: "success",
 						});
 						callback(caseSN);
@@ -298,11 +302,12 @@ export default {
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
-			getInform({
+			getApply({
 				filter: this.listQuery.filter,
-				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
-				caseNo: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				caseSN: (this.listQuery.filter && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				tenderId: !this.listQuery.filter && this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
+				caseNo: (!this.listQuery.filter && this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				keywords: (!this.listQuery.filter && this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				deviceType: this.listQuery.deviceType,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
@@ -360,7 +365,7 @@ export default {
 .imgHover
 	max-width: 800px
 	// height: 400px
-.case-inform
+.case-apply
 	.filter-container
 		.filter-item
 			margin-right: 5px

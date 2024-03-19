@@ -25,9 +25,9 @@ const dispatchRouter = {
 			}
 		},
 		{
-			path: 'caseInform',
-			component: () => import('@/views/dispatch/caseInform'),
-			name: 'caseInform',
+			path: 'caseApply',
+			component: () => import('@/views/dispatch/caseApply'),
+			name: 'caseApply',
 			meta: {
 				title: '製作申請單',
 				roles: ['restored.assign'],

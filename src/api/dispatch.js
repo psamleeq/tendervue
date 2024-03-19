@@ -62,18 +62,18 @@ export function getTaskReal(query) {
 }
 
 //---------------------------------------
-// 案件通報
-export function getInform(query) {
+// 案件修復申請
+export function getApply(query) {
 	return request({
-		url: '/dispatch/inform',
+		url: '/dispatch/apply',
 		method: 'get',
 		params: query
 	})
 }
 
-export function confirmInform(data) {
+export function confirmApply(data) {
 	return request({
-		url: '/dispatch/inform',
+		url: '/dispatch/apply',
 		method: 'post',
 		data
 	})
