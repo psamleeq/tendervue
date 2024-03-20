@@ -40,7 +40,8 @@
 			</div>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
-			<inspection-list-pdf ref="inspectionListPdf" style="display: inline; margin-left: 10xp" :loading.sync="loading"  :tableSelect.sync="tableSelect"  @downloadPdf="downloadPdf" />
+			<apply-ticket-pdf v-show="!filterNow" ref="applyTicketPdf" style="display: inline; margin-left: 10xp" :loading.sync="loading" :tableSelect.sync="tableSelect"  @downloadPdf="downloadPdf" />
+			<el-button v-show="filterNow" class="filter-item" type="success" icon="el-icon-download" :disabled="!listQuery.filterStr || list.length == 0" @click="reissuePDF();">補印</el-button>
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已列印</el-checkbox>
 		</div>
 
@@ -131,11 +132,11 @@ import { getApply, confirmApply } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 import CaseDetail from "@/components/CaseDetail";
-import InspectionListPdf from "@/components/InspectionListPdf";
+import ApplyTicketPdf from "@/components/ApplyTicketPdf";
 
 export default {
 	name: "caseApply",
-	components: { TimePicker, Pagination, CaseDetail, InspectionListPdf },
+	components: { TimePicker, Pagination, CaseDetail, ApplyTicketPdf },
 	data() {
 		return {
 			loading: false,
@@ -263,32 +264,6 @@ export default {
 
 			return caseFilterList;
 		},
-		downloadPdf(callback) {
-			this.$confirm(`確認列印？`, "確認", { showClose: false }).then(() => {
-				confirmApply({
-					caseList: this.caseFilterList(this.tableSelect)
-				}).then(response => {
-					if ( response.statusCode == 20000 ) {
-						const caseSN = response.data.caseSN;
-						this.$message({
-							message: `製作成功(申請單號 ${caseSN})`,
-							type: "success",
-						});
-						callback(caseSN);
-					} else {
-						this.$message({
-							message: "製作失敗",
-							type: "error",
-						});
-					}
-					this.getList(false);
-				})
-			}).catch(err => {
-				console.log(err);
-				this.$refs.inspectionListPdf.showJobTicket = false;
-				this.loading = false;
-			});
-		},
 		showDetail(row) {
 			this.loading = true;
 			this.$refs.caseDetail.getDetail(row);
@@ -339,10 +314,41 @@ export default {
 							if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
 					})
 
-					this.$refs.inspectionListPdf.imgPreload(this.list);
+					this.$refs.applyTicketPdf.imgPreload(this.list);
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		downloadPdf(callback) {
+			this.$confirm(`確認列印？`, "確認", { showClose: false }).then(() => {
+				confirmApply({
+					caseList: this.caseFilterList(this.tableSelect)
+				}).then(response => {
+					if ( response.statusCode == 20000 ) {
+						const caseSN = response.data.caseSN;
+						this.$message({
+							message: `製作成功(申請單號 ${caseSN})`,
+							type: "success",
+						});
+						callback(caseSN);
+					} else {
+						this.$message({
+							message: "製作失敗",
+							type: "error",
+						});
+					}
+					this.getList();
+				})
+			}).catch(err => {
+				console.log(err);
+				this.$refs.applyTicketPdf.showApplyTicket = false;
+				this.loading = false;
+			});
+		},
+		reissuePDF() {
+			this.tableSelect.splice(0, this.tableSelect.length, ...this.list);
+			this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
+			this.$refs.applyTicketPdf.createPdf(this.listQuery.filterStr).then(() => { this.$refs.applyTicketPdf.pdfDoc.save(`修復申請單_${this.listQuery.filterStr}.pdf`) });
 		},
 		indexMethod(index) {
 			return (index + 1 + (this.listQuery.pageCurrent - 1) * this.listQuery.pageSize);

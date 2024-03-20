@@ -1,15 +1,15 @@
 <template>
-	<div class="job-ticket-pdf">
+	<div class="apply-ticket-pdf">
 		<el-button-group>
 			<!-- <el-button type="info" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽</el-button> -->
-			<el-button type="success" icon="el-icon-download" :disabled="tableSelect.length == 0" @click="previewPdf(true)">建立</el-button>
+			<el-button type="success" icon="el-icon-download" :disabled="tableSelect.length == 0" @click="previewPdf()">建立</el-button>
 		</el-button-group>
 
 		<!-- Dialog: PDF預覽 -->
-		<el-dialog width="800px" title="預覽" :visible.sync="showJobTicket">
+		<el-dialog width="800px" title="預覽" :visible.sync="showApplyTicket">
 			<div ref="pdfViewer" />
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="showJobTicket = false">取消</el-button>
+				<el-button @click="showApplyTicket = false">取消</el-button>
 				<el-button type="primary" @click="downloadPdf()">確定列印</el-button>
 			</div>
 		</el-dialog>
@@ -25,7 +25,7 @@ import { generate } from '@pdfme/generator';
 import { Viewer, BLANK_PDF } from '@pdfme/ui';
 
 export default {
-	name: "inspectionListPdf",
+	name: "applyTicketPdf",
 	components: { },
 	props: {
 		loading: {
@@ -39,7 +39,7 @@ export default {
 	},
 	data() {
 		return {
-			showJobTicket: true,
+			showApplyTicket: true,
 			pdfSetting: {
 				format: 'a4',
 				fontSize: 12,
@@ -98,23 +98,19 @@ export default {
 			});
 	},
 	mounted() { 
-		this.showJobTicket = false;
+		this.showApplyTicket = false;
 	},
 	methods: {
 		imgPreload(data) {
 			//img preload
 			this.imgDOMObj = {};
 			data.forEach(l => { 
-				this.imgDOMObj[l.id] = {};
-				for(const key of ['ImgZoomIn', 'ImgZoomOut']) {
-					let image = new Image();
-					image.src = l[key];
-					this.imgDOMObj[l.id][key] = image;
-				} 
+				let image = new Image();
+				image.src = l.ImgZoomOut;
+				this.imgDOMObj[l.SerialNo] = image;
 			});
-			
 		},
-		async createPdf() {
+		async createPdf(CaseSN = "          ") {
 			return new Promise((resolve, reject) => {
 				for(const [ pageIndex, caseSpec ] of this.tableSelect.entries()) {
 					this.pdfDoc.addPage(this.pdfSetting.format,this.pdfSetting.orientation)
@@ -130,7 +126,7 @@ export default {
 					//內容
 					this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
 					this.pdfDoc.setCharSpace(0);
-					this.pdfDoc.text(`編　　號:`, width - 195, height-267, { align: 'left' });
+					this.pdfDoc.text(`編　　號:   ${CaseSN}`, width - 195, height-267, { align: 'left' });
 					// this.pdfDoc.text(`${caseSpec.CaseSN}`, width - 170, height-267, { align: 'left' });
 					this.pdfDoc.text(`道管系統案號:`, width - 100, height-267, { align: 'left' });
 					this.pdfDoc.text(`${caseSpec.CaseNo}`, width - 65, height-267, { align: 'left' });
@@ -167,7 +163,7 @@ export default {
 					this.pdfDoc.autoTable({ 
 						head: [['修復地點相片']],
 						// body: [ imgTable.map(l => l.ImgZoomOut) ],
-						body: [[caseSpec.id]],
+						body: [[caseSpec.SerialNo]],
 						theme: 'plain',
 						styles: { font: "edukai", lineWidth: 0.5, lineColor: 10},
 						headStyles: { halign: 'center',fontSize:14 },
@@ -175,7 +171,7 @@ export default {
 						didDrawCell: (data) => {
 							if(data.cell.section === 'body') {
 								// console.log(data);
-								this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw].ImgZoomIn, 'JPEG', data.cell.x, data.cell.y, 130, 75);
+								this.pdfDoc.addImage(this.imgDOMObj[data.cell.raw], 'JPEG', data.cell.x, data.cell.y, 130, 75);
 							}
 						},
 						margin: 40,
@@ -240,14 +236,14 @@ export default {
 					this.viewer.setInputs([{ "CaseSN": "(預覽列印)" }]);
 
 					this.$emit('update:loading', false);
-					this.showJobTicket = true;	
+					this.showApplyTicket = true;	
 				}
 			})
 		},
 		downloadPdf() {
 			this.$emit("downloadPdf", (caseSN) => {
 				this.viewer.setInputs([{ "CaseSN":  String(caseSN) }]);
-				this.showJobTicket = false;
+				this.showApplyTicket = false;
 				this.handleDownload(`修復申請單_${caseSN}.pdf`);
 			});
 		},
