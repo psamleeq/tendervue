@@ -13,7 +13,7 @@
 				</div>
 			</div>
 
-			<span v-if="!listQuery.filter" class="filter-item">
+			<span class="filter-item">
 				<div style="font-size: 12px; color: #909399">成案日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			</span>
@@ -272,10 +272,11 @@ export default {
 			this.loading = true;
 			this.list = [];
 			this.tableSelect = [];
+			this.searchRange = '';
 
 			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-			this.searchRange = startDate + " - " + endDate;
+			if(!(this.listQuery.filter && this.listQuery.filterStr)) this.searchRange = startDate + " - " + endDate;
 
 			getApply({
 				filter: this.listQuery.filter,
@@ -284,8 +285,8 @@ export default {
 				caseNo: (!this.listQuery.filter && this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				keywords: (!this.listQuery.filter && this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				deviceType: this.listQuery.deviceType,
-				timeStart: startDate,
-				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				timeStart: (this.listQuery.filter && this.listQuery.filterStr) ? '' : startDate,
+				timeEnd: (this.listQuery.filter && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize
 			}).then(response => {

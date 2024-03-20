@@ -37,7 +37,6 @@
 			</div>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
-			<!-- <el-button class="filter-item" type="info" icon="el-icon-document" :circle="screenWidth < 567" @click="handleDownload">輸出列表</el-button> --> 
 			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已分派</el-checkbox>
 		</div>
 
