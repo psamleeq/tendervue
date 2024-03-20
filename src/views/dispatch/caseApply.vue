@@ -628,7 +628,7 @@ export default {
 				Object.assign(rowActive, { TaskName: "", TaskUnit: "", TaskPrice: "" });
 
 				getKitItemMap({
-					tenderId: String(this.rowActive.DTeam),
+					tenderId: String(this.rowActive.SurveyId),
 					UnitSN: rowActive.UnitSN
 				}).then((response) => {
 					if (response.data.item == undefined) {
@@ -724,7 +724,7 @@ export default {
 		downloadPdf(callback) {
 			this.$confirm(`確認列印？`, "確認", { showClose: false }).then(() => {
 				confirmApply({
-					caseList: this.tableSelect.map(l => l.SerialNo)
+					serialNoArr: this.tableSelect.map(l => l.SerialNo)
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						const caseSN = response.data.caseSN;
