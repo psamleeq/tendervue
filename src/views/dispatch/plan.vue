@@ -162,7 +162,7 @@
 			<el-table-column v-if="deviceTypeNow == 3" label="設計數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="!filterNow" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<!-- <el-button v-if="!filterNow" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button> -->
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
 				</template>
@@ -179,9 +179,7 @@
 			<el-table-column label="動作" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<!-- <el-button v-if="deviceTypeNow == 3 && !filterNow" :type=" row.Content.length == 0 ? 'success' : 'info'" :plain="row.Content.length > 0" size="mini" @click="beforeEdit(row)">設計</el-button> -->
-						<el-button v-if="deviceTypeNow != 4 && !filterNow" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
-						<!-- <el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button> -->
+						<!-- <el-button v-if="deviceTypeNow != 4 && !filterNow" type="primary" size="mini" @click="row.edit = true">編輯</el-button> -->
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 					<el-button-group v-else>
@@ -475,7 +473,8 @@ export default {
 				filterType: {
 					1: "合約",
 					2: "通報單號",
-					3: "地點(關鍵字)"
+					3: "地點(關鍵字)",
+					4: "申請單號"
 				},
 				kitArr: []
 			}
@@ -563,6 +562,7 @@ export default {
 				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
 				reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				caseSN: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				deviceType: this.listQuery.deviceType,
 				timeStart: startDate,
 				timeEnd: moment(endDate).add(1, "d").format("YYYY-MM-DD")
