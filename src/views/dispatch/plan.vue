@@ -591,7 +591,7 @@ export default {
 						l.DateDeadline = this.formatTime(l.DateDeadline);
 						for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
 							if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
-						this.$set(l, "detailTime", false);
+						// this.$set(l, "detailTime", false);
 						this.$set(l, "editFormula", l.MillingFormula != '0');
 						this.$set(l, "notesSync", true);
 						this.$set(l, "edit", false);

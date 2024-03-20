@@ -227,9 +227,9 @@
 				<el-form-item v-if="rowActive.RoadType == 1" label="預估銑刨深度" prop="MillingDepth">
 					<el-radio-group v-model="rowActive.MillingDepth">
 						<el-radio :label="0">0cm</el-radio>
-						<el-radio v-if="rowActive.DeviceTypePlus == 11" :label="4">4cm</el-radio>
-						<el-radio v-if="rowActive.DeviceTypePlus != 11" :label="5">5cm</el-radio>
-						<el-radio v-if="rowActive.DeviceTypePlus != 11" :label="10">10cm</el-radio>
+						<el-radio v-if="rowActive.DeviceTypePlus == 12" :label="4">4cm</el-radio>
+						<el-radio v-if="rowActive.DeviceTypePlus != 12" :label="5">5cm</el-radio>
+						<el-radio v-if="rowActive.DeviceTypePlus != 12" :label="10">10cm</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item label="預估銑鋪面積" prop="desc">
@@ -412,11 +412,11 @@ export default {
 			options: {
 				tenderRoundMap: {},
 				DeviceType: {
-					10: {
+					11: {
 						name: "AC路面",
 						roadType: 1
 					},
-					11: {
+					12: {
 						name: "熱再生",
 						roadType: 1
 					},
