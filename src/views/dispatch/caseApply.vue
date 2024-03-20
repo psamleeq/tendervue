@@ -19,10 +19,7 @@
 			</span>
 			<br />
 
-			<el-input v-if="listQuery.filter" v-model="listQuery.filterStr" style="width: 300px;">
-				<template slot="prepend">申請單號</template>
-			</el-input>
-			<div v-else class="filter-item">
+			<div class="filter-item">
 				<div v-if="listQuery.filterType == 1" class="select-contract">
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
@@ -40,9 +37,8 @@
 			</div>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
-			<apply-ticket-pdf v-show="!filterNow" ref="applyTicketPdf" style="display: inline; margin-left: 10xp" :loading.sync="loading" :tableSelect.sync="tableSelect"  @downloadPdf="downloadPdf" />
-			<el-button v-show="filterNow" class="filter-item" type="success" icon="el-icon-download" :disabled="!listQuery.filterStr || list.length == 0" @click="reissuePDF();">補印</el-button>
-			<el-checkbox v-model="listQuery.filter" style="margin-left: 20px">已列印</el-checkbox>
+			<apply-ticket-pdf v-show="listQuery.filterType != 4" ref="applyTicketPdf" style="display: inline; margin-left: 10xp" :loading.sync="loading" :tableSelect.sync="tableSelect" @downloadPdf="downloadPdf" />
+			<el-button v-if="listQuery.filterType == 4" class="filter-item" type="success" icon="el-icon-download" :disabled="(listQuery.filterType == 4 && !listQuery.filterStr) || list.length == 0" @click="reissuePDF();">補印</el-button>
 		</div>
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -60,13 +56,13 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column v-if="!filterNow" :key="filterNow" type="selection" width="60" align="center" fixed>
+			<el-table-column type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
 					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="filterNow" prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -83,20 +79,12 @@
 				align="center"
 				:formatter="formatter"
 				:sortable="value.sortable"
-			>
-				<template slot-scope="{ row, column }">
-					<span v-if="column.property == 'State'">
-						<span v-if="row.State == 3" style="color: #67C23A">已列印</span>
-						<span v-else-if="row.State == 1" style="color: #F56C6C">未列印</span>
-					</span>
-					<span v-else>{{ formatter(row, column) }}</span>
-				</template>
-			</el-table-column>
+			/>
 
 			<!-- 道路、熱再生 -->
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="!filterNow && row.edit">
+					<span v-if="row.edit">
 						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
 							<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
 							<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
@@ -123,35 +111,23 @@
 			<!-- 設施 -->
 			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
 				<template slot-scope="{ row }">
-					<el-input v-if="!filterNow && row.edit" v-model="row.Notes" />
+					<el-input v-if="row.edit" v-model="row.Notes" />
 					<span v-else>{{ row.Notes || " - " }}</span>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="deviceTypeNow == 3" label="設計數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="!filterNow" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<el-button :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
-				</template>
-			</el-table-column>
-
-			<el-table-column label="列印狀態" prop="State" width="140" align="center">
-				<template slot-scope="{ row, column }">
-					<span v-if="column.property == 'State'">
-						<span v-if="row.State == 3" style="color: #67C23A">已列印</span>
-						<span v-else-if="row.State == 1" style="color: #F56C6C">未列印</span>
-					</span>
-					<span v-else>{{ formatter(row, column) }}</span>
 				</template>
 			</el-table-column>
 
 			<el-table-column label="動作" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<!-- <el-button v-if="deviceTypeNow == 3 && !filterNow" :type=" row.Content.length == 0 ? 'success' : 'info'" :plain="row.Content.length > 0" size="mini" @click="beforeEdit(row)">設計</el-button> -->
-						<el-button v-if="deviceTypeNow != 4 && !filterNow" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
-						<!-- <el-button v-if="deviceTypeNow == 3" size="mini" @click="toggleExpand(row)">詳情</el-button> -->
+						<el-button v-if="deviceTypeNow != 4" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 					<el-button-group v-else>
@@ -329,7 +305,6 @@ export default {
 			],
 			searchRange: "",
 			deviceTypeNow: 1,
-			filterNow: false,
 			listQuery: {
 				filter: false,
 				filterType: 1,
@@ -403,7 +378,8 @@ export default {
 				filterType: {
 					1: "合約",
 					2: "道管編號",
-					3: "地點(關鍵字)"
+					3: "地點(關鍵字)",
+					4: "申請單號"
 				},
 				deviceType: {
 					1: "道路",
@@ -496,17 +472,16 @@ export default {
 
 			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-			if(!(this.listQuery.filter && this.listQuery.filterStr)) this.searchRange = startDate + " - " + endDate;
+			if(!this.listQuery.filterStr) this.searchRange = startDate + " - " + endDate;
 
 			getApply({
-				filter: this.listQuery.filter,
-				caseSN: (this.listQuery.filter && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				tenderId: !this.listQuery.filter && this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
-				caseNo: (!this.listQuery.filter && this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				keywords: (!this.listQuery.filter && this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
+				caseNo: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+				caseSN: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 				deviceType: this.listQuery.deviceType,
-				timeStart: (this.listQuery.filter && this.listQuery.filterStr) ? '' : startDate,
-				timeEnd: (this.listQuery.filter && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+				timeStart: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' : startDate,
+				timeEnd: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize
 			}).then(response => {
@@ -521,7 +496,6 @@ export default {
 					this.total = response.data.total;
 					this.checkList = Array.from({ length: this.list.length }, () => false);
 					this.deviceTypeNow = this.listQuery.deviceType;
-					this.filterNow = this.listQuery.filter;
 
 					this.list.forEach(l => {
 						l.DateCreate = this.formatTime(l.DateCreate);
