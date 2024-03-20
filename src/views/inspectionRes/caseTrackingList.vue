@@ -107,7 +107,7 @@
 						</el-radio-group>
 						<br>
 						<el-button type="success" size="mini" @click="setState(row)">送出</el-button>
-						<el-button class="btn-action" type="primary" plain size="mini" @click="rowActive= row; dialogEditVisible = true">編輯</el-button>
+						<!-- <el-button class="btn-action" type="primary" plain size="mini" @click="rowActive= row; dialogEditVisible = true">編輯</el-button> -->
 					</span>
 					<span v-else>
 						<div>{{ row.PIUsername || '-' }}</div>
