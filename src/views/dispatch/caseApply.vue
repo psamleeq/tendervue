@@ -37,8 +37,8 @@
 			</div>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
-			<apply-ticket-pdf v-show="listQuery.filterType != 4" ref="applyTicketPdf" style="display: inline; margin-left: 10xp" :loading.sync="loading" :tableSelect.sync="tableSelect" @downloadPdf="downloadPdf" />
-			<el-button v-if="listQuery.filterType == 4" class="filter-item" type="success" icon="el-icon-download" :disabled="(listQuery.filterType == 4 && !listQuery.filterStr) || list.length == 0" @click="reissuePDF();">補印</el-button>
+			<apply-ticket-pdf v-show="filterTypeNow != 4" ref="applyTicketPdf" style="display: inline; margin-left: 10xp" :loading.sync="loading" :tableSelect.sync="tableSelect" @downloadPdf="downloadPdf" />
+			<el-button v-if="filterTypeNow == 4" class="filter-item" type="success" icon="el-icon-download" :disabled="(filterTypeNow == 4 && !listQuery.filterStr) || list.length == 0" @click="reissuePDF();">補印</el-button>
 		</div>
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -47,7 +47,7 @@
 			ref="caseTable"
 			empty-text="目前沒有資料"
 			:data="list"
-			:key="deviceTypeNow"
+			:key="`${deviceTypeNow}_${filterTypeNow}`"
 			border
 			fit
 			highlight-current-row
@@ -56,13 +56,13 @@
 			style="width: 100%"
 			@selection-change="handleCheckedChange"
 		>
-			<el-table-column type="selection" width="60" align="center" fixed>
+			<el-table-column v-if="filterTypeNow != 4" type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
 					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column v-else-if="filterTypeNow == 4" prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -305,6 +305,7 @@ export default {
 			],
 			searchRange: "",
 			deviceTypeNow: 1,
+			filterTypeNow: 1,
 			listQuery: {
 				filter: false,
 				filterType: 1,
@@ -472,7 +473,7 @@ export default {
 
 			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-			if(!this.listQuery.filterStr) this.searchRange = startDate + " - " + endDate;
+			if(this.listQuery.filterType != 4) this.searchRange = startDate + " - " + endDate;
 
 			getApply({
 				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
@@ -496,6 +497,7 @@ export default {
 					this.total = response.data.total;
 					this.checkList = Array.from({ length: this.list.length }, () => false);
 					this.deviceTypeNow = this.listQuery.deviceType;
+					this.filterTypeNow = this.listQuery.filterType;
 
 					this.list.forEach(l => {
 						l.DateCreate = this.formatTime(l.DateCreate);
