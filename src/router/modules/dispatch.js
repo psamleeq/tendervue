@@ -35,6 +35,16 @@ const dispatchRouter = {
 			}
 		},
 		{
+			path: 'caseApplyManage',
+			component: () => import('@/views/dispatch/caseApplyManage'),
+			name: 'caseApplyManage',
+			meta: {
+				title: '申請單管理',
+				roles: ['restored.assign'],
+				vTag: 'alpha'
+			}
+		},
+		{
 			path: 'plan',
 			component: () => import('@/views/dispatch/plan'),
 			name: 'plan',

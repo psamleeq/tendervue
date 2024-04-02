@@ -79,6 +79,15 @@ export function confirmApply(data) {
 	})
 }
 
+// 申請單列表
+export function getApplyTicketList(query) {
+	return request({
+		url: '/dispatch/applyTicketList',
+		method: 'get',
+		params: query
+	})
+}
+
 //---------------------------------------
 // 主任分派
 export function getDispatch(query) {
