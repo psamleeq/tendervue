@@ -132,7 +132,9 @@ export default {
 			this.pdfSetting.lineHeight = (this.pdfSetting.fontSize + 2) * 0.35;
 		}
 	},
-	created() {  },
+	created() { 
+		this.getList();
+	},
 	mounted() { },
 	methods: {
 		checkPermission,
