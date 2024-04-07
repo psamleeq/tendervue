@@ -7,7 +7,8 @@
 					<div class="el-input-group__prepend">
 						<span>類型</span>
 					</div>
-					<el-select v-model.number="listQuery.deviceType" placeholder="請選擇" popper-class="type-select" style="width: 100px">
+					<el-select v-model.number="listQuery.deviceType" placeholder="請選擇" popper-class="type-select"
+						style="width: 100px">
 						<el-option v-for="(name, id) in options.deviceType" :key="id" :value="Number(id)" :label="name" />
 					</el-select>
 				</div>
@@ -15,7 +16,7 @@
 
 			<span class="filter-item">
 				<div style="font-size: 12px; color: #909399">成案日期</div>
-				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
+				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList" />
 			</span>
 			<br />
 
@@ -24,11 +25,12 @@
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
-					<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.tenderId = null">
+					<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇"
+						popper-class="type-select tender" clearable @clear="listQuery.tenderId = null">
 						<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="id" :label="obj.tenderName" />
 					</el-select>
 				</div>
-				
+
 				<el-input v-else v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
 					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
@@ -36,33 +38,37 @@
 				</el-input>
 			</div>
 
-			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
-			<apply-ticket-pdf v-show="filterTypeNow != 4" ref="applyTicketPdf" style="display: inline; margin-left: 10xp" :loading.sync="loading" :tableSelect.sync="tableSelect" @downloadPdf="downloadPdf" />
-			<el-button v-if="filterTypeNow == 4" class="filter-item" type="success" icon="el-icon-download" :disabled="(filterTypeNow == 4 && !listQuery.filterStr) || list.length == 0" @click="reissueApplyTicket();">補印</el-button>
+			<el-button class="filter-item" type="primary" icon="el-icon-search"
+				@click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
+			<el-button v-if="filterTypeNow == 4" class="filter-item" type="success" icon="el-icon-download"
+				:disabled="(filterTypeNow == 4 && !listQuery.filterStr) || list.length == 0"
+				@click="reissueApplyTicket();">補印</el-button>
+			<br>
+			<span v-if="filterTypeNow != 4" class="filter-item">
+				<el-input v-model="listQuery.caseSN">
+					<span slot="prepend">申請單號</span>
+				</el-input>
+			</span>
+			<el-tooltip class="filter-item" effect="dark" content="請選擇案件" placement="bottom"
+				:disabled="tableSelect.length != 0">
+				<apply-ticket-pdf v-show="filterTypeNow != 4" ref="applyTicketPdf" :loading.sync="loading"
+					:tableSelect.sync="tableSelect" @downloadPdf="downloadPdf" />
+			</el-tooltip>
 		</div>
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
-		<el-table
-			ref="caseTable"
-			empty-text="目前沒有資料"
-			:data="list"
-			:key="`${deviceTypeNow}_${filterTypeNow}`"
-			border
-			fit
-			highlight-current-row
-			:header-cell-style="{ 'background-color': '#F2F6FC' }"
-			stripe
-			style="width: 100%"
-			@selection-change="handleCheckedChange"
-		>
+		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" :key="`${deviceTypeNow}_${filterTypeNow}`" border fit
+			highlight-current-row :header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%"
+			@selection-change="handleCheckedChange">
 			<el-table-column v-if="filterTypeNow != 4" type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
 					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-else-if="filterTypeNow == 4" prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column v-else-if="filterTypeNow == 4" prop="CaseSN" label="申請單號" width="125" align="center" fixed
+				sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -71,26 +77,21 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column
-				v-for="(value, key) in headers"
-				:key="key"
-				:prop="key"
-				:label="value.name"
-				align="center"
-				:formatter="formatter"
-				:sortable="value.sortable"
-			/>
+			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" align="center"
+				:formatter="formatter" :sortable="value.sortable" />
 
 			<!-- 道路、熱再生 -->
 			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
-							<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
+							<el-col :span="4"><el-tag class="btn-tag" type="success"
+									@click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
 							<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
 						</el-row>
 						<el-row v-else :gutter="5" type="flex" align="middle">
-							<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
+							<el-col :span="4"><el-tag class="btn-tag"
+									@click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
 							<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
 							<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
 							<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
@@ -118,7 +119,8 @@
 			<el-table-column v-if="deviceTypeNow == 3" label="設計數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<el-button :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini"
+							@click="beforeEdit(row)">設計</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
 				</template>
@@ -141,29 +143,13 @@
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<span v-else>
-						<el-table
-							class="expandTable"
-							empty-text="目前沒有資料"
-							:data="row.Content"
-							border
-							fit
-							highlight-current-row
-							:header-cell-style="{ 'background-color': '#F2F6FC' }"
-							stripe
-							show-summary
-							:summary-method="(param) => getSummaries(param, row.Content)"
-							style="width: 100%"
-						>
-							<el-table-column type="index" label="序號" width="50" align="center" /> 
-							<el-table-column
-								v-for="(value, key) in detailHeaders"
-								:key="key"
-								:prop="key"
+						<el-table class="expandTable" empty-text="目前沒有資料" :data="row.Content" border fit highlight-current-row
+							:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe show-summary
+							:summary-method="(param) => getSummaries(param, row.Content)" style="width: 100%">
+							<el-table-column type="index" label="序號" width="50" align="center" />
+							<el-table-column v-for="(value, key) in detailHeaders" :key="key" :prop="key"
 								:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
-								:label="value.name"
-								align="center"
-								:sortable="value.sortable"
-							/>
+								:label="value.name" align="center" :sortable="value.sortable" />
 						</el-table>
 						<div class="expand-note">
 							<!-- <div>金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div> -->
@@ -176,41 +162,31 @@
 			</el-table-column>
 		</el-table>
 
-		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
+		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
+			@pagination="getList" />
 
 		<!-- Dialog: 計價套組-->
-		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
+		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false"
+			:close-on-press-escape="false" :before-close="() => cleanDetail()">
 			<div class="filter-container">
-				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇" popper-class="type-select" style="width: 500px">
-					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)" :label="kit.GroupName" />
+				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇"
+					popper-class="type-select" style="width: 500px">
+					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)"
+						:label="kit.GroupName" />
 				</el-select>
 				<el-button class="filter-item" type="success" size="mini" @click="importKit()">匯入套組</el-button>
 			</div>
-			<el-table
-				v-loading="loading"
-				empty-text="目前沒有資料"
-				:data="detailPlus"
-				border
-				fit
-				highlight-current-row
-				:header-cell-style="{ 'background-color': '#F2F6FC' }"
-				stripe
-				style="width: 100%"
-			>
-				<el-table-column
-					v-for="(value, key) in detailHeaders"
-					:key="key"
-					:prop="key"
+			<el-table v-loading="loading" empty-text="目前沒有資料" :data="detailPlus" border fit highlight-current-row
+				:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%">
+				<el-table-column v-for="(value, key) in detailHeaders" :key="key" :prop="key"
 					:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30"
-					:label="value.name"
-					align="center"
-					:sortable="value.sortable"
-				>
+					:label="value.name" align="center" :sortable="value.sortable">
 					<template slot-scope="{ row, column }">
 						<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
 							<span v-if="row.isAdd || row.isEdit">
-								<el-input v-model="row[column.property]" size="mini" style="width: 55px"/>
-								<el-button v-if="row.isEdit" class="btn-dialog" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
+								<el-input v-model="row[column.property]" size="mini" style="width: 55px" />
+								<el-button v-if="row.isEdit" class="btn-dialog" type="info" size="mini"
+									@click="row.isEdit = false;">取消</el-button>
 							</span>
 							<span v-else>
 								<span>{{ row[column.property] }}</span>
@@ -222,7 +198,8 @@
 						<span v-else-if="['UnitSN'].includes(column.property) && row.isAdd">
 							<span v-if="row.isAdd || row.isEdit">
 								<el-input v-model="row[column.property]" size="mini">
-									<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" slot="suffix" effect="dark" placement="bottom" content="點選代入">
+									<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" slot="suffix"
+										effect="dark" placement="bottom" content="點選代入">
 										<el-button type="text" style="padding: 5px 0" @click="getKitItem(row)">
 											<i class="el-icon-check" style="color: #67C23A" />
 										</el-button>
@@ -268,7 +245,8 @@
 
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
-			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" :deviceTypeNow="deviceTypeNow" />
+			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog"
+				:deviceTypeNow="deviceTypeNow" />
 			<div slot="footer" class="dialog-footer">
 				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
 				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
@@ -313,6 +291,7 @@ export default {
 				filterStr: null,
 				tenderId: null,
 				deviceType: 1,
+				caseSN: null,
 				pageCurrent: 1,
 				pageSize: 50,
 			},
@@ -506,8 +485,8 @@ export default {
 					this.filterTypeNow = this.listQuery.filterType;
 
 					this.list.forEach(l => {
-						l.DateCreate = this.formatTime(l.DateCreate);
-						l.DateDeadline = this.formatTime(l.DateDeadline);
+						l.DateCreate = this.formatDate(l.DateCreate);
+						l.DateDeadline = this.formatDate(l.DateDeadline);
 						for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
 							if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
 						this.$set(l, "editFormula", l.MillingFormula != '0');
@@ -706,22 +685,44 @@ export default {
 		downloadPdf(callback) {
 			this.$confirm(`確認列印？`, "確認", { showClose: false }).then(() => {
 				confirmApply({
+					caseSN: this.listQuery.caseSN,
 					serialNoArr: this.tableSelect.map(l => l.SerialNo)
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						const caseSN = response.data.caseSN;
-						this.$message({
-							message: `製作成功(申請單號 ${caseSN})`,
-							type: "success",
-						});
-						callback(caseSN);
+						getApply({
+							caseSN: caseSN,
+							pageCurrent: 1,
+							pageSize: 99999
+						}).then(response => {
+							const list = response.data.list;
+							list.forEach(l => {
+								l.DateCreate = this.formatDate(l.DateCreate);
+								l.DateDeadline = this.formatDate(l.DateDeadline);
+								for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea'])
+									if (Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
+							})
+
+							this.tableSelect.splice(0, this.tableSelect.length, ...list);
+							this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
+							this.$refs.applyTicketPdf.createPdf(caseSN).then(() => {
+								this.$refs.applyTicketPdf.pdfDoc.save(`修復申請單_${caseSN}.pdf`);
+								// this.loading = false;
+								this.getList(false);
+							});
+
+							this.$message({
+								message: `製作成功(申請單號 ${caseSN})`,
+								type: "success",
+							});
+						}).catch(err => { console.log(err); this.loading = false; });
 					} else {
 						this.$message({
 							message: "製作失敗",
 							type: "error",
 						});
+						this.getList(false);
 					}
-					this.getList(false);
 				})
 			}).catch(err => {
 				console.log(err);
@@ -746,7 +747,7 @@ export default {
 			if (column.property.indexOf("id") == -1 && column.property.indexOf("Id") == -1 && Number(row[column.property])) return row[column.property].toLocaleString();
 			else return row[column.property] || "-";
 		},
-		formatTime(time) {
+		formatDate(time) {
 			return moment(time).isValid() ? moment(time).format("YYYY-MM-DD") : "-";
 		}
 	},

@@ -2,7 +2,8 @@
 	<div class="apply-ticket-pdf">
 		<el-button-group>
 			<!-- <el-button type="info" icon="el-icon-s-claim" :disabled="tableSelect.length == 0" @click="previewPdf()">預覽</el-button> -->
-			<el-button type="success" icon="el-icon-download" :disabled="tableSelect.length == 0" @click="previewPdf(true)">建立</el-button>
+			<!-- <el-button type="success" icon="el-icon-download" :disabled="tableSelect.length == 0" @click="previewPdf(true)">建立</el-button> -->
+			<el-button type="success" icon="el-icon-download" :disabled="tableSelect.length == 0" @click="$emit('downloadPdf')">建立</el-button>
 		</el-button-group>
 
 		<!-- Dialog: PDF預覽 -->

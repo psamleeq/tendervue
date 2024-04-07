@@ -57,7 +57,7 @@
 
 			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="success" plain @click="editJobTicket(row)">檢視</el-button>
+					<el-button class="btn-action" type="success" plain @click="applyTicketDetail(row)">檢視</el-button>
 					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">補印申請單</el-button>
 				</template>
 			</el-table-column>
@@ -157,7 +157,7 @@ export default {
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
-		editJobTicket(row) {
+		applyTicketDetail(row) {
 			this.$router.push({
 				name: "caseApply",
 				query: { caseSN: row.CaseSN },
@@ -169,7 +169,6 @@ export default {
 
 			getApply({
 				caseSN: row.CaseSN,
-				deviceType: this.listQuery.deviceType,
 				pageCurrent: 1,
 				pageSize: 99999
 			}).then(response => {
