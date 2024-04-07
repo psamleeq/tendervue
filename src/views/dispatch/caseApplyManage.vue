@@ -55,17 +55,15 @@
 				</template>
 			</el-table-column>
 
-			<!-- <el-table-column label="動作" align="center">
+			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="success" plain size="mini"
-						@click="editJobTicket(row)">編輯</el-button>
-					<el-button class="btn-action" type="info" size="mini"
-						@click="reissueJobTicket(row)">補印申請單</el-button>
+					<el-button class="btn-action" type="success" plain @click="editJobTicket(row)">檢視</el-button>
+					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">補印申請單</el-button>
 				</template>
-			</el-table-column> -->
+			</el-table-column>
 		</el-table>
 
-		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading" :tableSelect.sync="caseSpec" />
+		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading" :tableSelect.sync="tableSelect" />
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
 			@pagination="getList" />
@@ -75,13 +73,13 @@
 <script>
 import moment from "moment";
 import checkPermission from '@/utils/permission';
-import { getApplyTicketList, getJobTicketSpec } from "@/api/dispatch";
+import { getApply, getApplyTicketList } from "@/api/dispatch";
 import Pagination from "@/components/Pagination";
 import ApplyTicketPdf from "@/components/ApplyTicketPdf";
 
 export default {
 	name: "caseApplyManage",
-	components: { ApplyTicketPdf },
+	components: { ApplyTicketPdf, Pagination },
 	data() {
 		return {
 			loading: false,
@@ -123,7 +121,7 @@ export default {
 			total: 0,
 			list: [],
 			// detail: [],
-			caseSpec: {}
+			tableSelect: []
 		};
 	},
 	computed: { },
@@ -159,51 +157,40 @@ export default {
 				this.loading = false;
 			}).catch(err => this.loading = false);
 		},
-		formatDate(time) {
-			return time ? moment(time).format("YYYY-MM-DD"): "";
-		},
 		editJobTicket(row) {
 			this.$router.push({
-				name: "jobTicketEdit",
-				params: { orderSN: row.OrderSN },
+				name: "caseApply",
+				query: { caseSN: row.CaseSN },
 			});
 		},
-		reissueJobTicket(row) {
+		reissueApplyTicket(row) {
 			// console.log(row);
-			getJobTicketSpec({
-				dispatchSN: row.OrderSN,
-				deviceType: this.listQuery.deviceType
-			}).then(async(response) => {
-				this.caseSpec.splice(0, this.caseSpec.length, ...response.data.list);
+			this.loading = true;
 
-				this.caseSpec.forEach((l, i) => {
-					for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
-						if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
+			getApply({
+				caseSN: row.CaseSN,
+				deviceType: this.listQuery.deviceType,
+				pageCurrent: 1,
+				pageSize: 99999
+			}).then(response => {
+				const list = response.data.list;
+				list.forEach(l => {
+					l.DateCreate = this.formatDate(l.DateCreate);
+					l.DateDeadline = this.formatDate(l.DateDeadline);
+					for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea'])
+						if (Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
+				})
+
+				this.tableSelect.splice(0, this.tableSelect.length, ...list);
+				this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
+				this.$refs.applyTicketPdf.createPdf(row.CaseSN).then(() => { 
+					this.$refs.applyTicketPdf.pdfDoc.save(`修復申請單_${row.CaseSN}.pdf`); 
+					this.loading = false;
 				});
-				this.$refs.applyTicketPdf.imgPreload(this.caseSpec);
-
-				switch(this.deviceTypeNow) {
-					case 1:
-						this.caseSpec.forEach((l, i) => {
-							l.tonne = Math.round(l.MillingArea*l.MillingDepth*0.01*2.25*10) / 10;
-						});
-						this.$refs.applyTicketPdf.createPdf_AC(row.OrderSN).then(() => { this.$refs.applyTicketPdf.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });
-						break;
-					case 2:
-						this.$refs.applyTicketPdf.createPdf_HR(row.OrderSN).then(() => { this.$refs.applyTicketPdf.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	
-						break;
-					case 3:
-						this.caseSpec.forEach((l, i) => {
-							l.DatePlan = this.formatDate(l.DatePlan);
-							l.DateDeadline = (l.DateDeadline == null) ? "" : this.formatDate(l.DateDeadline);
-						});
-						this.$refs.applyTicketPdf.createPdf_FA(row.OrderSN).then(() => { this.$refs.applyTicketPdf.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	
-						break;
-					case 4:
-						this.$refs.applyTicketPdf.createPdf_MK(row.OrderSN).then(() => { this.$refs.applyTicketPdf.pdfDoc.save(`維修派工單_${row.OrderSN}.pdf`) });	
-						break;
-				}
 			}).catch(err => this.loading = false);
+		},
+		formatDate(time) {
+			return time ? moment(time).format("YYYY-MM-DD") : "";
 		},
 	},
 };

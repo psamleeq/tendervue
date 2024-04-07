@@ -38,7 +38,7 @@
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<apply-ticket-pdf v-show="filterTypeNow != 4" ref="applyTicketPdf" style="display: inline; margin-left: 10xp" :loading.sync="loading" :tableSelect.sync="tableSelect" @downloadPdf="downloadPdf" />
-			<el-button v-if="filterTypeNow == 4" class="filter-item" type="success" icon="el-icon-download" :disabled="(filterTypeNow == 4 && !listQuery.filterStr) || list.length == 0" @click="reissuePDF();">補印</el-button>
+			<el-button v-if="filterTypeNow == 4" class="filter-item" type="success" icon="el-icon-download" :disabled="(filterTypeNow == 4 && !listQuery.filterStr) || list.length == 0" @click="reissueApplyTicket();">補印</el-button>
 		</div>
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -406,6 +406,12 @@ export default {
 	watch: {},
 	created() {
 		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
+
+		if (this.$route.query.caseSN) {
+			this.listQuery.filterType = 4;
+			this.listQuery.filterStr = this.$route.query.caseSN;
+			this.getList();
+		}
 	},
 	mounted() {
 		this.showDetailDialog = false;
@@ -723,10 +729,14 @@ export default {
 				this.loading = false;
 			});
 		},
-		reissuePDF() {
+		reissueApplyTicket() {
+			this.loading = true;
 			this.tableSelect.splice(0, this.tableSelect.length, ...this.list);
 			this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
-			this.$refs.applyTicketPdf.createPdf(this.listQuery.filterStr).then(() => { this.$refs.applyTicketPdf.pdfDoc.save(`修復申請單_${this.listQuery.filterStr}.pdf`) });
+			this.$refs.applyTicketPdf.createPdf(this.listQuery.filterStr).then(() => { 
+				this.$refs.applyTicketPdf.pdfDoc.save(`修復申請單_${this.listQuery.filterStr}.pdf`);
+				this.loading = false;
+			});
 		},
 		showDetail(row) {
 			this.loading = true;
