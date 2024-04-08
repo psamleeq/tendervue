@@ -160,7 +160,7 @@ export default {
 		applyTicketDetail(row) {
 			this.$router.push({
 				name: "caseApply",
-				query: { caseSN: row.CaseSN },
+				params: { caseSN: row.CaseSN },
 			});
 		},
 		reissueApplyTicket(row) {

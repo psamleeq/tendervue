@@ -119,17 +119,30 @@
 			<el-table-column v-if="deviceTypeNow == 3" label="設計數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini"
-							@click="beforeEdit(row)">設計</el-button>
+						<el-button v-if="row.State == 1" :type="row.TaskRealGroup == 0 ? 'success' : 'info'"
+							:plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
+				</template>
+			</el-table-column>
+
+			<el-table-column label="狀態" width="140" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.State == 0">已成案</span>
+					<span v-else-if="row.State == 1">上傳至新工</span>
+					<span v-else-if="row.State == 3">送出申請單</span>
+					<span v-else-if="row.State == 7">已分派</span>
+					<span v-else-if="row.State == 15">送出派工單</span>
+					<span v-else-if="row.State == 31">已完工</span>
+					<span v-else>{{ row.State }}</span>
 				</template>
 			</el-table-column>
 
 			<el-table-column label="動作" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="deviceTypeNow != 4" type="primary" size="mini" @click="row.edit = true">編輯</el-button>
+						<el-button v-if="deviceTypeNow != 4 && row.State == 1" type="primary" size="mini"
+							@click="row.edit = true">編輯</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 					<el-button-group v-else>
@@ -386,9 +399,9 @@ export default {
 	created() {
 		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
 
-		if (this.$route.query.caseSN) {
+		if (this.$route.params.caseSN) {
 			this.listQuery.filterType = 4;
-			this.listQuery.filterStr = this.$route.query.caseSN;
+			this.listQuery.filterStr = this.$route.params.caseSN;
 			this.getList();
 		}
 	},
@@ -685,7 +698,7 @@ export default {
 		downloadPdf(callback) {
 			this.$confirm(`確認列印？`, "確認", { showClose: false }).then(() => {
 				confirmApply({
-					caseSN: this.listQuery.caseSN,
+					caseSN: this.listQuery.caseSN || '',
 					serialNoArr: this.tableSelect.map(l => l.SerialNo)
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
