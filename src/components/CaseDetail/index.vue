@@ -82,7 +82,7 @@ export default {
 			type: Boolean
 		},
 		deviceTypeNow: {
-			required: true,
+			default: 0,
 			type: Number
 		}
 	},
@@ -264,7 +264,7 @@ export default {
 			// console.log(row);
 			this.detail = [];
 			this.otherImage = [];
-			let deviceType = this.deviceTypeNow;
+			let deviceType = this.deviceTypeNow || row.DeviceType;
 
 			// 補繪標線查詢原始案件
 			if(deviceType == 4) {

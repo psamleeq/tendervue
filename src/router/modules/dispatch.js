@@ -45,6 +45,16 @@ const dispatchRouter = {
 			}
 		},
 		{
+			path: 'applyReview',
+			component: () => import('@/views/dispatch/applyReview'),
+			name: 'applyReview',
+			meta: {
+				title: '分工判核',
+				roles: ['restored.assign'],
+				vTag: 'alpha'
+			}
+		},
+		{
 			path: 'plan',
 			component: () => import('@/views/dispatch/plan'),
 			name: 'plan',

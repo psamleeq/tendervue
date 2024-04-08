@@ -16,8 +16,10 @@ import caseRouter from './modules/case';
 import pciManageRouter from './modules/PCIManage';
 import caseHistRouter from './modules/caseHist';
 import dispatchV0Router from './modules/dispatchV0';
-import dispatchRouter from './modules/dispatch';
-import priceRouter from './modules/price';
+// import dispatchRouter from './modules/dispatch';
+import maintManageRouter from './modules/maintManage'
+import maintenanceRouter from './modules/maintenance';
+// import priceRouter from './modules/price';
 import PCIRouter from './modules/PCI';
 import expAnalysisRouter from './modules/expAnalysis';
 import PIRouter from './modules/PI';
@@ -120,8 +122,10 @@ export const asyncRoutes = [
 	pciManageRouter,
 	caseHistRouter,
 	dispatchV0Router,
-	dispatchRouter,
-  priceRouter,
+	// dispatchRouter,
+  maintManageRouter,
+  maintenanceRouter,
+  // priceRouter,
 	PCIRouter,
 	PIRouter,
 	PIReportRouter,

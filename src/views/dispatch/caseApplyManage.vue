@@ -211,7 +211,6 @@ export default {
 					text-align: center
 				.el-input__suffix
 					right: 0
-					// margin-right: -5px
 					transform: scale(0.7)
 				&.tender-select
 					width: 520px
@@ -245,9 +244,6 @@ export default {
 		.el-select
 			margin-top: 5px
 			margin-bottom: 5px
-			width: 250px
-		.revokeReasonNote
-			margin-top: 5px
 			width: 250px
 		.footer-btns
 			display: flex

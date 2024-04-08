@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container cost-kit" v-loading="loading">
-		<h2>計價套組</h2>
+		<h2>工法管理</h2>
 		<div class="filter-container">
 			<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 200px">
 				<span slot="prepend">關鍵字</span>
