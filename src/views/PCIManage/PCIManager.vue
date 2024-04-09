@@ -116,11 +116,12 @@
 				</el-table-column>
 			</el-table-column>
 
-			<el-table-column v-if="listQuery.tenderId > 1001" :key="listQuery.tenderId" label="缺失匯入" width="120" align="center">
+			<el-table-column v-if="listQuery.tenderId > 1001" :key="listQuery.tenderId" label="缺失匯入" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button class="btn-action" type="primary" plain :disabled="isUpload" @click="uploadCase(row, 1)">通報</el-button>
-						<el-button class="btn-action" type="warning" plain :disabled="isUpload" @click="uploadCase(row, 2)">PCI</el-button>
+						<el-button class="btn-action" type="info" plain :disabled="isUpload" @click="uploadCase(row, 1, true)">部分</el-button>
+						<el-button class="btn-action" type="primary" plain :disabled="isUpload" @click="uploadCase(row, 1, false)">通報</el-button>
+						<el-button class="btn-action" type="warning" plain :disabled="isUpload" @click="uploadCase(row, 2, false)">PCI</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
@@ -369,7 +370,7 @@ export default {
 				}).catch(err => console.log(err))
 			}
 		},
-		uploadCase(row, targetType) {
+		uploadCase(row, targetType, isSub = false) {
 			const content = `確定上傳缺失至「${targetType == 1 ? '追蹤列表' : '缺失列表'}」?`;
 			this.$confirm(content, "確認", { showClose: false }).then(() => {
 				this.loading = true;
@@ -377,7 +378,8 @@ export default {
 
 				importAllInspectCase({
 					surveyId: row.id,
-					targetType
+					targetType,
+					isSub
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						const result = response.result;
