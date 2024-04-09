@@ -119,7 +119,7 @@
 			<el-table-column v-if="listQuery.tenderId > 1001" :key="listQuery.tenderId" label="缺失匯入" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button class="btn-action" type="info" plain :disabled="isUpload" @click="uploadCase(row, 1, true)">部分</el-button>
+						<el-button class="btn-action" type="info" plain :disabled="isUpload" @click="uploadCase(row, 1, true)">重點</el-button>
 						<el-button class="btn-action" type="primary" plain :disabled="isUpload" @click="uploadCase(row, 1, false)">通報</el-button>
 						<el-button class="btn-action" type="warning" plain :disabled="isUpload" @click="uploadCase(row, 2, false)">PCI</el-button>
 					</el-button-group>
