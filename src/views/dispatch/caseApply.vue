@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-apply" v-loading="loading">
-		<h2>製作申請單</h2>
+		<h2>製作通報單</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -46,7 +46,7 @@
 			<br>
 			<span v-if="filterTypeNow != 4" class="filter-item">
 				<el-input v-model="listQuery.caseSN">
-					<span slot="prepend">申請單號</span>
+					<span slot="prepend">通報單號</span>
 				</el-input>
 			</span>
 			<el-tooltip class="filter-item" effect="dark" content="請選擇案件" placement="bottom"
@@ -67,7 +67,7 @@
 					<span>{{ $index + 1 }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-else-if="filterTypeNow == 4" prop="CaseSN" label="申請單號" width="125" align="center" fixed
+			<el-table-column v-else-if="filterTypeNow == 4" prop="CaseSN" label="通報單號" width="125" align="center" fixed
 				sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
@@ -130,7 +130,7 @@
 				<template slot-scope="{ row }">
 					<span v-if="row.State == 0">已成案</span>
 					<span v-else-if="row.State == 1">上傳至新工</span>
-					<span v-else-if="row.State == 3">送出申請單</span>
+					<span v-else-if="row.State == 3">送出通報單</span>
 					<span v-else-if="row.State == 7">已分派</span>
 					<span v-else-if="row.State == 15">送出派工單</span>
 					<span v-else-if="row.State == 31">已完工</span>
@@ -372,7 +372,7 @@ export default {
 					1: "合約",
 					2: "道管編號",
 					3: "地點(關鍵字)",
-					4: "申請單號"
+					4: "通報單號"
 				},
 				deviceType: {
 					1: "道路",
@@ -719,13 +719,13 @@ export default {
 							this.tableSelect.splice(0, this.tableSelect.length, ...list);
 							this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
 							this.$refs.applyTicketPdf.createPdf(caseSN).then(() => {
-								this.$refs.applyTicketPdf.pdfDoc.save(`修復申請單_${caseSN}.pdf`);
+								this.$refs.applyTicketPdf.pdfDoc.save(`修復通報單_${caseSN}.pdf`);
 								// this.loading = false;
 								this.getList(false);
 							});
 
 							this.$message({
-								message: `製作成功(申請單號 ${caseSN})`,
+								message: `製作成功(通報單號 ${caseSN})`,
 								type: "success",
 							});
 						}).catch(err => { console.log(err); this.loading = false; });
@@ -748,7 +748,7 @@ export default {
 			this.tableSelect.splice(0, this.tableSelect.length, ...this.list);
 			this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
 			this.$refs.applyTicketPdf.createPdf(this.listQuery.filterStr).then(() => { 
-				this.$refs.applyTicketPdf.pdfDoc.save(`修復申請單_${this.listQuery.filterStr}.pdf`);
+				this.$refs.applyTicketPdf.pdfDoc.save(`修復通報單_${this.listQuery.filterStr}.pdf`);
 				this.loading = false;
 			});
 		},

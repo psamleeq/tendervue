@@ -38,7 +38,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable>
+			<el-table-column prop="CaseSN" label="通報單號" width="125" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseSN }}</span>
 					<br>
@@ -163,7 +163,7 @@
 				</template>
 			</el-table-column>
 			<!-- <el-table-column type="index" label="序號" width="50" align="center" /> -->
-			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="CaseSN" label="通報單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -293,7 +293,7 @@ export default {
 			},
 			headers: {
 				// CaseSN: {
-				// 	name: "申請單號",
+				// 	name: "通報單號",
 				// 	sortable: true,
 				// },
 				// CaseNo: {

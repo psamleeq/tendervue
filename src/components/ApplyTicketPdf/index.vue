@@ -122,7 +122,7 @@ export default {
 					this.pdfDoc.setFontSize(this.pdfSetting.fontSize+4);
 					this.pdfDoc.setTextColor('#000000');
 					this.pdfDoc.setCharSpace(2);
-					this.pdfDoc.text(`修復申請單`, width / 2, 20, { align: 'center' });
+					this.pdfDoc.text(`修復通報單`, width / 2, 20, { align: 'center' });
 
 					//內容
 					this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
@@ -140,7 +140,7 @@ export default {
 					this.pdfDoc.text(`${caseSpec.Place}C`, width - 170, height-246, { align: 'left', maxWidth: 60 });
 					this.pdfDoc.text(`修 復　項 目:`, width - 100, height-246, { align: 'left' });
 					this.pdfDoc.text(`${caseSpec.DName}`, width - 65, height-246, { align: 'left' });
-					this.pdfDoc.text(`申請日期:`, width - 195, height-232, { align: 'left' });
+					this.pdfDoc.text(`通報日期:`, width - 195, height-232, { align: 'left' });
 					let dateCreateStr = '-';
 					if(moment(caseSpec.DateCreate).isValid()) {
 						const dateCreateArr = moment(caseSpec.DateCreate).format("YYYY/MM/DD").split("/");
@@ -245,7 +245,7 @@ export default {
 			this.$emit("downloadPdf", (caseSN) => {
 				this.viewer.setInputs([{ "CaseSN":  String(caseSN) }]);
 				this.showApplyTicket = false;
-				this.handleDownload(`修復申請單_${caseSN}.pdf`);
+				this.handleDownload(`修復通報單_${caseSN}.pdf`);
 			});
 		},
 		handleDownload(filename) {

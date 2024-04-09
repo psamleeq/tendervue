@@ -62,7 +62,7 @@ export function getTaskReal(query) {
 }
 
 //---------------------------------------
-// 案件修復申請
+// 案件修復通報
 export function getApply(query) {
 	return request({
 		url: '/dispatch/apply',
@@ -79,7 +79,7 @@ export function confirmApply(data) {
 	})
 }
 
-// 申請單列表
+// 通報單列表
 export function getApplyTicketList(query) {
 	return request({
 		url: '/dispatch/applyTicketList',

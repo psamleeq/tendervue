@@ -69,7 +69,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="CaseSN" label="通報單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -205,7 +205,7 @@
 					<el-button v-else type="danger" size="mini" style="padding: 5px" @click="beforeRemove(row, 1)">主任</el-button>
 				</template>
 			</el-table-column>
-			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="CaseSN" label="通報單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -355,7 +355,7 @@ export default {
 			},
 			headers: {
 				// CaseSN: {
-				// 	name: "申請單號",
+				// 	name: "通報單號",
 				// 	sortable: true,
 				// },
 				// CaseNo: {

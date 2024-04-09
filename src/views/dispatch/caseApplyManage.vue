@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-apply-manage" v-loading="loading">
-		<h2>申請單管理</h2>
+		<h2>通報單管理</h2>
 		<div class="filter-container">
 			<!-- <div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
@@ -21,7 +21,7 @@
 			</span> -->
 			<div class="filter-item">
 				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
-					<span slot="prepend">申請單號</span>
+					<span slot="prepend">通報單號</span>
 				</el-input>
 			</div>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
@@ -58,7 +58,7 @@
 			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<el-button class="btn-action" type="success" plain @click="applyTicketDetail(row)">檢視</el-button>
-					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">補印申請單</el-button>
+					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">補印通報單</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -98,7 +98,7 @@ export default {
 			},
 			headers: {
 				CaseSN: {
-					name: "申請單號",
+					name: "通報單號",
 					sortable: true
 				},
 				// OrderType: {
@@ -183,7 +183,7 @@ export default {
 				this.tableSelect.splice(0, this.tableSelect.length, ...list);
 				this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
 				this.$refs.applyTicketPdf.createPdf(row.CaseSN).then(() => { 
-					this.$refs.applyTicketPdf.pdfDoc.save(`修復申請單_${row.CaseSN}.pdf`); 
+					this.$refs.applyTicketPdf.pdfDoc.save(`修復通報單_${row.CaseSN}.pdf`); 
 					this.loading = false;
 				});
 			}).catch(err => this.loading = false);

@@ -730,7 +730,7 @@ export default {
 			},
 			headers: {
 				// CaseSN: {
-				// 	name: "申請單號",
+				// 	name: "通報單號",
 				// 	sortable: true,
 				// },
 				// CaseNo: {

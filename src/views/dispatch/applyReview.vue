@@ -4,7 +4,7 @@
 		<div class="filter-container">
 			<div class="filter-item">
 				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
-					<span slot="prepend">申請單號</span>
+					<span slot="prepend">通報單號</span>
 				</el-input>
 			</div>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
@@ -12,7 +12,7 @@
 
 		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" border fit highlight-current-row
 			:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%">
-			<el-table-column prop="CaseSN" label="申請單號" width="125" align="center" fixed sortable />
+			<el-table-column prop="CaseSN" label="通報單號" width="125" align="center" fixed sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
 					<span>{{ row.CaseNo }}</span>
@@ -52,7 +52,7 @@
 				<template slot-scope="{ row }">
 					<span v-if="row.State == 0">已成案</span>
 					<span v-else-if="row.State == 1">上傳至新工</span>
-					<span v-else-if="row.State == 3">送出申請單</span>
+					<span v-else-if="row.State == 3">送出通報單</span>
 					<span v-else-if="row.State == 7">已分派</span>
 					<span v-else-if="row.State == 15">送出派工單</span>
 					<span v-else-if="row.State == 31">已完工</span>
@@ -166,7 +166,7 @@ export default {
 		getList(showMsg = true) {
 			if (!this.listQuery.filterStr || this.listQuery.filterStr.length == 0) {
 				this.$message({
-					message: "請輸入申請單號",
+					message: "請輸入通報單號",
 					type: "warning",
 				});
 			} else {
