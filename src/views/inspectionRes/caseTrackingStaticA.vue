@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-tracking-StaticA" v-loading="loading">
-		<h2>回報分析(全)</h2>
+		<h2>判核分析(全)</h2>
 		<aside style="white-space: pre-line">
 			僅列出「坑洞(全)、龜裂(重)」的案件。
 		</aside>
