@@ -27,21 +27,21 @@ const maintenanceRouter = {
 			},
 			children: [
 				{
-					path: 'caseApply',
-					component: () => import('@/views/dispatch/caseApply'),
-					name: 'caseApply',
-					meta: {
-						title: '製作通報單',
-						roles: ['restored.assign'],
-						vTag: 'alpha'
-					}
-				},
-				{
 					path: 'caseApplyManage',
 					component: () => import('@/views/dispatch/caseApplyManage'),
 					name: 'caseApplyManage',
 					meta: {
 						title: '通報單管理',
+						roles: ['restored.assign'],
+						vTag: 'alpha'
+					}
+				},
+				{
+					path: 'caseApply',
+					component: () => import('@/views/dispatch/caseApply'),
+					name: 'caseApply',
+					meta: {
+						title: '製作通報單',
 						roles: ['restored.assign'],
 						vTag: 'alpha'
 					}
@@ -91,6 +91,16 @@ const maintenanceRouter = {
 					}
 				},
 				{
+					path: 'jobTicketManage',
+					component: () => import('@/views/dispatch/jobTicketManage'),
+					name: 'jobTicketManage',
+					meta: {
+						title: '派工單管理',
+						roles: ['restored.viewer'],
+						isNew: true
+					}
+				},
+				{
 					path: 'jobTicket',
 					component: () => import('@/views/dispatch/jobTicket'),
 					name: 'jobTicket',
@@ -117,16 +127,6 @@ const maintenanceRouter = {
 					meta: {
 						title: '完工登錄',
 						roles: ['restored.reporter'],
-						isNew: true
-					}
-				},
-				{
-					path: 'jobTicketManage',
-					component: () => import('@/views/dispatch/jobTicketManage'),
-					name: 'jobTicketManage',
-					meta: {
-						title: '派工單管理',
-						roles: ['restored.viewer'],
 						isNew: true
 					}
 				}
