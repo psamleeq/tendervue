@@ -129,10 +129,10 @@ export default {
 					name: "通報時間",
 					sortable: true
 				},
-				DateDeadline: {
-					name: "預計完工日期",
-					sortable: false
-				}
+				// DateDeadline: {
+				// 	name: "預計完工日期",
+				// 	sortable: false
+				// }
 			},
 			total: 0,
 			list: [],
