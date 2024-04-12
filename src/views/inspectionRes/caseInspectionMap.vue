@@ -180,6 +180,7 @@
 
 <script>
 import moment from "moment";
+import * as jsts from 'jsts/dist/jsts.min.js';
 import { Loader } from "@googlemaps/js-api-loader";
 import { stringify } from 'csv-stringify/dist/esm/sync';
 import echarts from "echarts/lib/echarts";

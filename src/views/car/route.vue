@@ -154,6 +154,7 @@
 
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
+import * as jsts from 'jsts/dist/jsts.min.js';
 import moment from 'moment';
 import { getInspectionList, getSpecInspection, getSpecInspectionTracks } from "@/api/car";
 import { getInspectionRoute } from "@/api/inspection";

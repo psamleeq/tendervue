@@ -117,6 +117,7 @@
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
+import * as jsts from 'jsts/dist/jsts.min.js';
 import { getPanoramaJson, getInspectionCaseGeoJson, uploadInspectionCase, getInspectionRoute } from "@/api/inspection";
 import { getTenderRound, getDistMap, getDTypeMap, getCompetentTypeMap } from "@/api/type";
 import data2blob from '@/utils/data2blob.js';

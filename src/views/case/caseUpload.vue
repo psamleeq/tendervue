@@ -85,6 +85,7 @@
 
 <script>
 import moment from "moment";
+import * as jsts from 'jsts/dist/jsts.min.js';
 import { mapGetters } from "vuex";
 import { Loader } from "@googlemaps/js-api-loader";
 import { parseXml, xml2json } from '../../utils/xml2json';
