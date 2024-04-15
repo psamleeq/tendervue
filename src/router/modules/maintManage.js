@@ -17,7 +17,7 @@ const maintManageRouter = {
 	children: [
 		{
 			path: 'kit',
-			component: () => import('@/views/dispatch/kit'),
+			component: () => import('@/views/maintManage/kit'),
 			name: 'kit',
 			meta: {
 				title: '工法管理',
