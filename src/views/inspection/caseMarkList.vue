@@ -56,6 +56,7 @@
 				<el-checkbox :label="2">已完工</el-checkbox>
 				<el-checkbox :label="0">誤判</el-checkbox>
 			</el-checkbox-group>
+			
 		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
@@ -69,6 +70,7 @@
 
 		<h5 v-if="[4, 5].includes(listQuery.filterType) && list.length != 0">查詢期間：{{ searchRange }}</h5>
 		<h5 v-if="list.length != 0">案件數：{{ total }}</h5>
+		<el-button v-if="list.length != 0" style="float: right; margin-top: -50px;" type="warning" icon="el-icon-document" @click="exportCSV">匯出csv</el-button>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -78,7 +80,14 @@
 			:row-class-name="tableRowClassName"
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
 			style="width: 100%"
+			@selection-change="handleSelectionChange"
+			ref="multipleTable"
 		>
+			<el-table-column
+				type="selection"
+				width="55"
+				align="center">
+			</el-table-column>
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"
@@ -203,6 +212,7 @@ import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
+import { stringify } from "csv";
 
 export default {
 	name: "caseMarkerList",
@@ -222,6 +232,7 @@ export default {
 			screenWidth: window.innerWidth,
 			dateRange: [ moment().startOf("day").toDate(), moment().endOf("day").toDate()],
 			searchRange: "",
+			multipleSelection: [], // table checkBox
 			listQuery: {
 				filter: [],
 				checkRoadName: false,
@@ -454,6 +465,50 @@ export default {
 		this.dialogMapVisible = false;
 	},
 	methods: {
+		exportCSV() {
+    console.log(this.multipleSelection);
+    const records = ['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因'];
+    const data = [];
+    data.push(records);
+
+    this.multipleSelection.forEach(row => {
+        const rowData = [
+            row.id, // 缺失Id
+            row.InspectId, // 路線Id
+            row.TrackingId, // 追蹤Id
+            this.options.DistressTypeFlat[row.DistressType], // 缺失類型
+						this.options.DistressLevel[row.DistressLevel], // 損壞程度
+            this.formatTime(row.DateReport), // 通報時間
+            row.Duty_With_Name, // 標記人員
+            row.Place, // 地址
+            `${this.options.roadDir[row.Direction]}-${row.Lane}`, // 車道
+            row.MillingLength, // 長度(m)
+            row.MillingWidth, // 寬度(m)
+            row.MillingArea, // 面積(m2)
+            row.ImgZoomIn, // 近照
+            row.ImgZoomOut, // 遠照
+            row.StatusDesc // 刪除原因
+        ];
+        data.push(rowData);
+    });
+
+    stringify(data, (err, output) => {
+        if (err) {
+					console.error(err);
+					return;
+        }
+
+        // 創建並下載 CSV 文件
+        const blob = new Blob([output], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', '標記列表.csv');
+        link.click();
+    });
+},
+		handleSelectionChange(val) {
+			this.multipleSelection = val;
+		},
 		tableRowClassName({row, rowIndex}) {
 			const tenderFilter = Object.values(this.options.tenderRoundMap).filter(val => val.id == row.SurveyId);
 			const tenderRound = tenderFilter.length > 0 ? tenderFilter[0] : { zipCode: 0 };
