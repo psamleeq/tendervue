@@ -36,8 +36,8 @@
 				min-width="30" :sortable="value.sortable">
 				<template slot-scope="{ row, column }">
 					<span v-if="[ 'CaseNoArr' ].includes(column.property)">
-						<span v-if="row.CaseNoArr.length != 0">
-							<span>{{ row.CaseNoArr.length }}</span>
+						<span v-if="Object.keys(row.CaseNoObj).length != 0">
+							<span>{{ Object.keys(row.CaseNoObj).length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
 								<span slot="content">
 									<!-- <div v-for="caseNo in row.CaseNoInActiveArr" :key="caseNo">{{ caseNo }}<span
