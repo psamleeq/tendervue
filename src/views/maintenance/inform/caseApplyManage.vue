@@ -40,9 +40,24 @@
 							<span>{{ row.CaseNoArr.length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
 								<span slot="content">
-									<div v-for="(caseNo, index) in row.CaseNoArr" :key="`${caseNo}_${index}`">{{ caseNo }}</div>
 									<!-- <div v-for="caseNo in row.CaseNoInActiveArr" :key="caseNo">{{ caseNo }}<span
 											style="color: #F56C6C">(退回)</span></div> -->
+									<div v-for="(obj, caseNo) in row.CaseNoObj" :key="`${caseNo}_${obj.flowState}`">
+										{{ caseNo }}
+										(<span v-if="obj.State & 16">已完工</span>
+										<span v-else-if="obj.State & 8">送出派工單</span>
+										<span v-else-if="obj.State & 4">已分派</span>
+										<span v-else-if="obj.State & 2">待分派</span>
+										<span v-else-if="obj.State == 1">
+											<span v-if="obj.FlowState & 8">施工前會勘</span>
+											<span v-else-if="obj.FlowState & 4 || obj.FlowState & 64">分隊審核</span>
+											<span v-else-if="obj.FlowState & 2 || obj.FlowState & 32">機關審核</span>
+											<span v-else-if="obj.FlowState & 1">主任審核</span>
+											<span v-else>上傳至新工</span>
+										</span>
+										<span v-else-if="obj.State == 0">已成案</span>
+										<span v-else>{{ obj.State }}</span>)
+									</div>
 								</span>
 								<i class="icon-tooltip el-icon-warning" />
 							</el-tooltip>
@@ -54,16 +69,20 @@
 					</span>
 				</template>
 			</el-table-column>
-
 			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="success" plain @click="applyTicketDetail(row)">檢視</el-button>
+					<el-button class="btn-action" type="primary" @click="applyReview(row)"
+						:disabled="Object.values(row.CaseNoObj).every(obj => !obj.State == 1 || obj.FlowState & 4 || obj.FlowState & 64)">判核</el-button>
+					<el-button class="btn-action" type="success" @click="applyInvestigation(row)"
+						:disabled="Object.values(row.CaseNoObj).find(obj => !obj.State == 1 || !(obj.FlowState & 4 || obj.FlowState & 64) || obj.FlowState & 8) ">會勘</el-button>
+					<el-button class="btn-action" type="info" plain @click="applyTicketDetail(row)">檢視</el-button>
 					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">列印通報單</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
 
-		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading" :tableSelect.sync="tableSelect" />
+		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading"
+			:tableSelect.sync="tableSelect" />
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
 			@pagination="getList" />
@@ -146,7 +165,7 @@ export default {
 				pageSize: this.listQuery.pageSize
 			}).then(response => {
 				if (response.data.list.length == 0) {
-					if(showMsg) this.$message({
+					if (showMsg) this.$message({
 						message: "查無資料",
 						type: "error",
 					});
@@ -162,6 +181,18 @@ export default {
 				name: "caseApply",
 				params: { caseSN: row.CaseSN },
 			});
+		},
+		applyReview(row) {
+			this.$router.push({
+				name: "applyReview",
+				params: { caseSN: row.CaseSN },
+			});
+		},
+		applyInvestigation(row) {
+			// this.$router.push({
+			// 	name: "applyReview",
+			// 	params: { caseSN: row.CaseSN },
+			// });
 		},
 		reissueApplyTicket(row) {
 			// console.log(row);
