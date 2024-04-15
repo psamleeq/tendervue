@@ -117,6 +117,14 @@ export function setCaseTrackingSpec(id, data) {
 	})
 }
 
+export function setCaseTrackingFlow(id, data) {
+	return request({
+		url: `/inspection/caseTrackingList/flow/${id}`,
+		method: 'put',
+		data
+	})
+}
+
 // 回報分析
 export function getCaseTrackingStatic(query) {
 	return request({
