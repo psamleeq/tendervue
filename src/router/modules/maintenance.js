@@ -15,11 +15,11 @@ const maintenanceRouter = {
 	},
 	children: [
 		{
-			path: 'apply',
+			path: 'inform',
 			component: {
 				render: (c) => c('router-view')
 			},
-			name: 'apply',
+			name: 'inform',
 			redirect: 'noRedirect',
 			meta: {
 				title: '養護通報',
@@ -27,18 +27,8 @@ const maintenanceRouter = {
 			},
 			children: [
 				{
-					path: 'caseApply',
-					component: () => import('@/views/dispatch/caseApply'),
-					name: 'caseApply',
-					meta: {
-						title: '製作通報單',
-						roles: ['restored.assign'],
-						vTag: 'alpha'
-					}
-				},
-				{
 					path: 'caseApplyManage',
-					component: () => import('@/views/dispatch/caseApplyManage'),
+					component: () => import('@/views/maintenance/inform/caseApplyManage'),
 					name: 'caseApplyManage',
 					meta: {
 						title: '通報單管理',
@@ -47,8 +37,18 @@ const maintenanceRouter = {
 					}
 				},
 				{
+					path: 'caseApply',
+					component: () => import('@/views/maintenance/inform/caseApply'),
+					name: 'caseApply',
+					meta: {
+						title: '製作通報單',
+						roles: ['restored.assign'],
+						vTag: 'alpha'
+					}
+				},
+				{
 					path: 'applyReview',
-					component: () => import('@/views/dispatch/applyReview'),
+					component: () => import('@/views/maintenance/inform/applyReview'),
 					name: 'applyReview',
 					meta: {
 						title: '分工判核',
@@ -72,7 +72,7 @@ const maintenanceRouter = {
 			children: [
 				{
 					path: 'plan',
-					component: () => import('@/views/dispatch/plan'),
+					component: () => import('@/views/maintenance/job/plan'),
 					name: 'plan',
 					meta: {
 						title: '施作分派',
@@ -82,7 +82,7 @@ const maintenanceRouter = {
 				},
 				{
 					path: 'jobReview',
-					component: () => import('@/views/dispatch/jobReview'),
+					component: () => import('@/views/maintenance/job/jobReview'),
 					name: 'jobReview',
 					meta: {
 						title: '派工審核',
@@ -91,8 +91,18 @@ const maintenanceRouter = {
 					}
 				},
 				{
+					path: 'jobTicketManage',
+					component: () => import('@/views/maintenance/job/jobTicketManage'),
+					name: 'jobTicketManage',
+					meta: {
+						title: '派工單管理',
+						roles: ['restored.viewer'],
+						isNew: true
+					}
+				},
+				{
 					path: 'jobTicket',
-					component: () => import('@/views/dispatch/jobTicket'),
+					component: () => import('@/views/maintenance/job/jobTicket'),
 					name: 'jobTicket',
 					meta: {
 						title: '製作派工單',
@@ -102,7 +112,7 @@ const maintenanceRouter = {
 				},
 				{
 					path: 'jobTicketEdit',
-					component: () => import('@/views/dispatch/jobTicketEdit'),
+					component: () => import('@/views/maintenance/job/jobTicketEdit'),
 					name: 'jobTicketEdit',
 					meta: {
 						title: '修改派工單',
@@ -112,21 +122,11 @@ const maintenanceRouter = {
 				},
 				{
 					path: 'finRegister',
-					component: () => import('@/views/dispatch/finRegister'),
+					component: () => import('@/views/maintenance/job/finRegister'),
 					name: 'finRegister',
 					meta: {
 						title: '完工登錄',
 						roles: ['restored.reporter'],
-						isNew: true
-					}
-				},
-				{
-					path: 'jobTicketManage',
-					component: () => import('@/views/dispatch/jobTicketManage'),
-					name: 'jobTicketManage',
-					meta: {
-						title: '派工單管理',
-						roles: ['restored.viewer'],
 						isNew: true
 					}
 				}
@@ -147,7 +147,7 @@ const maintenanceRouter = {
 			children: [
 				{
 					path: 'priceManage',
-					component: () => import('@/views/price/price'),
+					component: () => import('@/views/maintenance/price/price'),
 					name: 'priceManage',
 					meta: {
 						title: '計價管理',

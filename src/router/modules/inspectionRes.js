@@ -28,7 +28,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspectionRes/caseTrackingList'),
 			name: 'caseTrackingList',
 			meta: {
-				title: '案件列表',
+				title: '缺失判核',
 				roles: ['inspection.editor']
 			}
 		},
@@ -37,7 +37,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspectionRes/caseTrackingStatic'),
 			name: 'caseTrackingStatic',
 			meta: {
-				title: '回報分析',
+				title: '判核分析',
 				roles: ['inspection.viewer']
 			}
 		},
@@ -46,7 +46,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspectionRes/caseTrackingStaticA'),
 			name: 'caseTrackingStaticA',
 			meta: {
-				title: '回報分析(全)',
+				title: '判核分析(全)',
 				roles: ['inspection.viewer'],
 				isNew: true
 			}

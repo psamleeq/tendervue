@@ -114,9 +114,9 @@ export default {
 				Postal_vil: {
 					name: "里別",
 				},
-				CaseSucc: {
-					name: "通報單號",
-				},
+				// CaseSucc: {
+				// 	name: "通報單號",
+				// },
 				CaseNo: {
 					name: "案件編號",
 				},

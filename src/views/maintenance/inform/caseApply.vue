@@ -51,19 +51,19 @@
 			</span>
 			<el-tooltip class="filter-item" effect="dark" content="請選擇案件" placement="bottom"
 				:disabled="tableSelect.length != 0">
-				<apply-ticket-pdf v-show="filterTypeNow != 4" ref="applyTicketPdf" :loading.sync="loading"
-					:tableSelect.sync="tableSelect" @downloadPdf="downloadPdf" />
+				<el-button v-show="filterTypeNow != 4" type="success" :disabled="tableSelect.length == 0" @click="createApply"">建立</el-button>
 			</el-tooltip>
 		</div>
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
-		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" :key="`${deviceTypeNow}_${filterTypeNow}`" border fit
-			highlight-current-row :header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%"
+		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" :key="`${deviceTypeNow}_${filterTypeNow}`" border
+			fit highlight-current-row :header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%"
 			@selection-change="handleCheckedChange">
 			<el-table-column v-if="filterTypeNow != 4" type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
-					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px" @change="cellCheckBox(row, $index)" />
+					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px"
+						@change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
 				</template>
 			</el-table-column>
@@ -128,12 +128,19 @@
 
 			<el-table-column label="狀態" width="140" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.State == 0">已成案</span>
-					<span v-else-if="row.State == 1">上傳至新工</span>
-					<span v-else-if="row.State == 3">送出通報單</span>
-					<span v-else-if="row.State == 7">已分派</span>
-					<span v-else-if="row.State == 15">送出派工單</span>
-					<span v-else-if="row.State == 31">已完工</span>
+					<span v-if="row.State & 16">已完工</span>
+					<span v-else-if="row.State & 8">送出派工單</span>
+					<span v-else-if="row.State & 4">已分派</span>
+					<span v-else-if="row.State & 2">待分派</span>
+					<span v-else-if="row.State == 1">
+						<span v-if="row.FlowState & 8">施工前會勘</span>
+						<span v-else-if="row.FlowState & 4 || row.FlowState & 64">分隊審核</span>
+						<span v-else-if="row.FlowState & 2 || row.FlowState & 32">機關審核</span>
+						<span v-else-if="row.CaseSN != 0">製作通報單</span>
+						<span v-else-if="row.FlowState & 1">主任審核</span>
+						<span v-else>上傳至新工</span>
+					</span>
+					<span v-else-if="row.State == 0">已成案</span>
 					<span v-else>{{ row.State }}</span>
 				</template>
 			</el-table-column>
@@ -179,8 +186,8 @@
 			@pagination="getList" />
 
 		<!-- Dialog: 計價套組-->
-		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false"
-			:close-on-press-escape="false" :before-close="() => cleanDetail()">
+		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit"
+			:close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
 			<div class="filter-container">
 				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇"
 					popper-class="type-select" style="width: 500px">
@@ -265,6 +272,9 @@
 				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
 			</div>
 		</el-dialog>
+
+		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading"
+			:tableSelect.sync="tableSelect" />
 	</div>
 </template>
 
@@ -695,43 +705,49 @@ export default {
 					})
 				}).catch(err => {});
 		},
-		downloadPdf(callback) {
-			this.$confirm(`確認列印？`, "確認", { showClose: false }).then(() => {
+		createApply() {
+			this.$confirm(`確認建立派工單？`, "確認", { showClose: false }).then(() => {
 				confirmApply({
 					caseSN: this.listQuery.caseSN || '',
 					serialNoArr: this.tableSelect.map(l => l.SerialNo)
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						const caseSN = response.data.caseSN;
-						getApply({
-							caseSN: caseSN,
-							pageCurrent: 1,
-							pageSize: 99999
-						}).then(response => {
-							const list = response.data.list;
-							list.forEach(l => {
-								l.DateCreate = this.formatDate(l.DateCreate);
-								l.DateDeadline = this.formatDate(l.DateDeadline);
-								for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea'])
-									if (Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
-							})
+						// getApply({
+						// 	caseSN: caseSN,
+						// 	pageCurrent: 1,
+						// 	pageSize: 99999
+						// }).then(response => {
+						// 	const list = response.data.list;
+						// 	list.forEach(l => {
+						// 		l.DateCreate = this.formatDate(l.DateCreate);
+						// 		l.DateDeadline = this.formatDate(l.DateDeadline);
+						// 		for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea'])
+						// 			if (Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
+						// 	})
 
-							this.tableSelect.splice(0, this.tableSelect.length, ...list);
-							this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
-							this.$refs.applyTicketPdf.createPdf(caseSN).then(() => {
-								this.$refs.applyTicketPdf.pdfDoc.save(`修復通報單_${caseSN}.pdf`);
-								// this.loading = false;
-								this.getList(false);
-							});
+						// 	this.tableSelect.splice(0, this.tableSelect.length, ...list);
+						// 	this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
+						// 	this.$refs.applyTicketPdf.createPdf(caseSN).then(() => {
+						// 		this.$refs.applyTicketPdf.pdfDoc.save(`修復通報單_${caseSN}.pdf`);
+						// 		// this.loading = false;
+						// 		this.getList(false);
+						// 	});
 
-							this.$message({
-								message: `製作成功(通報單號 ${caseSN})`,
-								type: "success",
-							});
-						}).catch(err => { console.log(err); this.loading = false; });
+						// 	this.$message({
+						// 		message: `建立成功(通報單號 ${caseSN})`,
+						// 		type: "success",
+						// 	});
+						// }).catch(err => { console.log(err); this.loading = false; });
+
+						this.$message({
+							message: `建立成功(通報單號 ${caseSN})`,
+							type: "success",
+						});
+						this.getList(false);
 					} else {
 						this.$message({
-							message: "製作失敗",
+							message: "建立失敗",
 							type: "error",
 						});
 						this.getList(false);

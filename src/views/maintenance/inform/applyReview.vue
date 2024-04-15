@@ -32,30 +32,47 @@
 
 			<el-table-column label="監造審核" width="140" align="center">
 				<template slot-scope="{ row }">
-					<el-button-group>
-						<el-button type="primary" size="mini" @click="beforeSetResult(row, Number(32))">分隊</el-button>
-						<el-button type="success" size="mini" @click="beforeSetResult(row, Number(2))">廠商</el-button>
+					<span v-if="row.FlowState & 2 || row.FlowState & 32">
+						<span v-if=" row.FlowState & 2">廠商</span>
+						<span v-else>分隊</span>
+						<div v-if="row.FlowDesc.SV && row.FlowDesc.SV.length > 0">({{ row.FlowDesc.SV }})</div>
+					</span>
+					<el-button-group v-else>
+						<el-button type="primary" size="mini" @click="setResult(row, 32)">分隊</el-button>
+						<el-button type="success" size="mini" @click="setResult(row, 2)">廠商</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 
 			<el-table-column label="分隊審核" width="140" align="center">
 				<template slot-scope="{ row }">
-					<el-button-group>
-						<el-button type="primary" size="mini" @click="beforeSetResult(row, Number(32))">分隊</el-button>
-						<el-button type="success" size="mini" @click="beforeSetResult(row, Number(2))">廠商</el-button>
+					<span v-if="row.FlowState & 4 || row.FlowState & 64">
+						<span v-if="row.FlowState & 4">廠商</span>
+						<span v-else>分隊</span>
+						<div v-if="row.FlowDesc.Team && row.FlowDesc.Team.length > 0">({{ row.FlowDesc.Team }})</div>
+					</span>
+					<el-button-group v-else>
+						<el-button type="primary" size="mini" @click="setResult(row, 64)">分隊</el-button>
+						<el-button type="success" size="mini" @click="setResult(row, 4)">廠商</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 
 			<el-table-column label="狀態" width="140" align="center">
 				<template slot-scope="{ row }">
-					<span v-if="row.State == 0">已成案</span>
-					<span v-else-if="row.State == 1">上傳至新工</span>
-					<span v-else-if="row.State == 3">送出通報單</span>
-					<span v-else-if="row.State == 7">已分派</span>
-					<span v-else-if="row.State == 15">送出派工單</span>
-					<span v-else-if="row.State == 31">已完工</span>
+					<span v-if="row.State & 16">已完工</span>
+					<span v-else-if="row.State & 8">送出派工單</span>
+					<span v-else-if="row.State & 4">已分派</span>
+					<span v-else-if="row.State & 2">待分派</span>
+					<span v-else-if="row.State == 1">
+						<span v-if="row.FlowState & 8">施工前會勘</span>
+						<span v-else-if="row.FlowState & 4 || row.FlowState & 64">分隊審核</span>
+						<span v-else-if="row.FlowState & 2 || row.FlowState & 32">機關審核</span>
+						<span v-else-if="row.CaseSN != 0">製作通報單</span>
+						<span v-else-if="row.FlowState & 1">主任審核</span>
+						<span v-else>上傳至新工</span>
+					</span>
+					<span v-else-if="row.State == 0">已成案</span>
 					<span v-else>{{ row.State }}</span>
 				</template>
 			</el-table-column>
@@ -84,7 +101,8 @@
 <script>
 import moment from "moment";
 import { getDTypeMap } from "@/api/type";
-import { getApply } from "@/api/dispatch";
+import { getApplyReviewList } from "@/api/dispatch";
+import { setCaseTrackingFlow } from "@/api/inspection";
 import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 import CaseDetail from "@/components/CaseDetail";
@@ -129,10 +147,10 @@ export default {
 					name: "通報時間",
 					sortable: true
 				},
-				DateDeadline: {
-					name: "預計完工日期",
-					sortable: false
-				}
+				// DateDeadline: {
+				// 	name: "預計完工日期",
+				// 	sortable: false
+				// }
 			},
 			total: 0,
 			list: [],
@@ -158,6 +176,11 @@ export default {
 				return acc;
 			}, {});
 		})
+
+		if (this.$route.params.caseSN) {
+			this.listQuery.filterStr = this.$route.params.caseSN;
+			this.getList();
+		}
 	},
 	mounted() {
 		this.showDetailDialog = false;
@@ -173,7 +196,7 @@ export default {
 				this.loading = true;
 				this.list = [];
 
-				getApply({
+				getApplyReviewList({
 					caseSN: this.listQuery.filterStr,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
@@ -198,6 +221,33 @@ export default {
 					this.loading = false;
 				}).catch(err => this.loading = false);
 			}
+		},
+		setResult(row, state) {
+			const confirmText = (state == 0) ? '分隊' : '廠商';
+			this.$prompt(`確定給「${confirmText}」辦理?`, "確認", { 
+				showClose: false,
+				inputPlaceholder: "備註"
+			}).then(({value}) => {
+				this.loading = true;
+				if (state == 2 || state == 32) row.FlowDesc.SV = value;
+				if (state == 4 || state == 64) row.FlowDesc.Team = value;
+
+				setCaseTrackingFlow(row.SerialNo, {
+					flowState: row.FlowState + state,
+					flowDesc: JSON.stringify(row.FlowDesc)
+				}).then(response => {
+					if (response.statusCode == 20000) {
+						this.$message({
+							message: "提交成功",
+							type: "success",
+						});
+						this.getList();
+					}
+				}).catch(err => {
+					console.log(err);
+					this.getList();
+				})
+			}).catch(err => console.log(err));
 		},
 		showDetail(row) {
 			this.loading = true;

@@ -62,7 +62,7 @@ export function getTaskReal(query) {
 }
 
 //---------------------------------------
-// 案件修復通報
+// 養護通報
 export function getApply(query) {
 	return request({
 		url: '/dispatch/apply',
@@ -83,6 +83,15 @@ export function confirmApply(data) {
 export function getApplyTicketList(query) {
 	return request({
 		url: '/dispatch/applyTicketList',
+		method: 'get',
+		params: query
+	})
+}
+
+// 分工判核
+export function getApplyReviewList(query) {
+	return request({
+		url: '/dispatch/applyReview',
 		method: 'get',
 		params: query
 	})

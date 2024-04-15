@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-tracking-list" v-loading="loading">
-		<h2>案件列表</h2>
+		<h2>缺失判核</h2>
 		<aside style="white-space: pre-line">
 			預設列出「坑洞(全)、龜裂(重)」的案件。
 		</aside>
@@ -272,7 +272,7 @@
 <script>
 import moment from "moment";
 import { getTenderRound, getDTypeMap } from "@/api/type";
-import { getCaseTrackingList, setCaseTrackingSpec } from "@/api/inspection";
+import { getCaseTrackingList, setCaseTrackingSpec, setCaseTrackingFlow } from "@/api/inspection";
 import { setInsCaseList } from "@/api/PI";
 import { setInspectFlowList } from "@/api/app";
 import Pagination from "@/components/Pagination";
@@ -704,10 +704,29 @@ export default {
 				this.scrollTop = document.documentElement.scrollTop;
 				if(row.state == 1) {
 					this.loading = true;
+
+					// TODO: V1 (之後拔掉)
 					setInsCaseList(row.SerialNo, {
 						PCIValue: row.PCIValue,
 						PIState: row.PIState += row.state,
 						PIStateNotes: row.PIStateNotes
+					}).then(response => {
+						// if (response.statusCode == 20000) {
+						// 	this.$message({
+						// 		message: "提交成功",
+						// 		type: "success",
+						// 	});
+						// 	this.getList();
+						// }
+					}).catch(err => {
+						console.log(err);
+						// this.getList();
+					})
+
+					// V2
+					setCaseTrackingFlow(row.SerialNo, {
+						flowState: row.state,
+						// flowDesc: ''
 					}).then(response => {
 						if (response.statusCode == 20000) {
 							this.$message({
