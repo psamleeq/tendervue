@@ -58,7 +58,7 @@
 			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<el-button class="btn-action" type="success" plain @click="applyTicketDetail(row)">檢視</el-button>
-					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">補印通報單</el-button>
+					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">列印通報單</el-button>
 				</template>
 			</el-table-column>
 		</el-table>

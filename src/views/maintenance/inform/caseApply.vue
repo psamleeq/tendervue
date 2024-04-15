@@ -129,8 +129,15 @@
 			<el-table-column label="狀態" width="140" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.State == 0">已成案</span>
-					<span v-else-if="row.State == 1">上傳至新工</span>
-					<span v-else-if="row.State == 3">送出通報單</span>
+					<span v-else-if="row.State == 1">
+						<span v-if="row.FlowState == 15">施工前會勘</span>
+						<span v-else-if="row.FlowState == 7">分隊審核</span>
+						<span v-else-if="row.FlowState == 3">機關審核</span>
+						<span v-else-if="row.CaseSN != 0">製作通報單</span>
+						<span v-else-if="row.FlowState == 1">主任審核</span>
+						<span v-else>上傳至新工</span>
+					</span>
+					<span v-else-if="row.State == 3">待分派</span>
 					<span v-else-if="row.State == 7">已分派</span>
 					<span v-else-if="row.State == 15">送出派工單</span>
 					<span v-else-if="row.State == 31">已完工</span>
