@@ -70,7 +70,8 @@
 
 		<h5 v-if="[4, 5].includes(listQuery.filterType) && list.length != 0">查詢期間：{{ searchRange }}</h5>
 		<h5 v-if="list.length != 0">案件數：{{ total }}</h5>
-		<el-button v-if="list.length != 0" style="float: right; margin-top: -50px;" type="warning" icon="el-icon-document" @click="exportCSV">匯出csv</el-button>
+		<el-button v-if="list.length != 0" style="float: right; margin-right: 150px; margin-top: -50px;" type="success" icon="el-icon-document" @click="exportCSV" plain>匯出csv</el-button>
+		<el-button v-if="list.length != 0" style="float: right; margin-top: -50px;" type="warning" icon="el-icon-document" @click="exportAllCSV" plain>匯出全部csv</el-button>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -206,7 +207,7 @@
 
 <script>
 import moment from "moment";
-import { getInspectionCaseList, setInspectionCaseList, getImportCase } from "@/api/inspection";
+import { getInspectionCaseList, setInspectionCaseList, getImportCase, exportToDistress } from "@/api/inspection";
 import { getTenderRound, getDTypeMap } from "@/api/type";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
@@ -465,47 +466,89 @@ export default {
 		this.dialogMapVisible = false;
 	},
 	methods: {
-		exportCSV() {
-    console.log(this.multipleSelection);
-    const records = ['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因'];
-    const data = [];
-    data.push(records);
+		exportAllCSV() {
+			const data = [];
+			data.push(['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因']);
 
-    this.multipleSelection.forEach(row => {
-        const rowData = [
-            row.id, // 缺失Id
-            row.InspectId, // 路線Id
-            row.TrackingId, // 追蹤Id
-            this.options.DistressTypeFlat[row.DistressType], // 缺失類型
-						this.options.DistressLevel[row.DistressLevel], // 損壞程度
-            this.formatTime(row.DateReport), // 通報時間
-            row.Duty_With_Name, // 標記人員
-            row.Place, // 地址
-            `${this.options.roadDir[row.Direction]}-${row.Lane}`, // 車道
-            row.MillingLength, // 長度(m)
-            row.MillingWidth, // 寬度(m)
-            row.MillingArea, // 面積(m2)
-            row.ImgZoomIn, // 近照
-            row.ImgZoomOut, // 遠照
-            row.StatusDesc // 刪除原因
-        ];
-        data.push(rowData);
-    });
+			this.list.forEach(row => {
+				const rowData = [
+					row.id, // 缺失Id
+					row.InspectId, // 路線Id
+					row.TrackingId, // 追蹤Id
+					this.options.DistressTypeFlat[row.DistressType], // 缺失類型
+					this.options.DistressLevel[row.DistressLevel], // 損壞程度
+					this.formatTime(row.DateReport), // 通報時間
+					row.Duty_With_Name, // 標記人員
+					row.Place, // 地址
+					`${this.options.roadDir[row.Direction]}-${row.Lane}`, // 車道
+					row.MillingLength, // 長度(m)
+					row.MillingWidth, // 寬度(m)
+					row.MillingArea, // 面積(m2)
+					row.ImgZoomIn, // 近照
+					row.ImgZoomOut, // 遠照
+					row.StatusDesc // 刪除原因
+				];
+				data.push(rowData);
+			});
 
-    stringify(data, (err, output) => {
-        if (err) {
+			stringify(data, (err, output) => {
+				if (err) {
 					console.error(err);
 					return;
-        }
+				}
+				// 創建並下載 CSV 文件
+				const blob = new Blob([output], { type: 'text/csv;charset=utf-8;' });
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.setAttribute('download', '標記列表.csv');
+				link.click();
+			});
+		},
+		exportCSV() {
+			// console.log(this.multipleSelection);
+			if (this.multipleSelection.length == 0) {
+				this.$message('左邊框框要打勾 才能匯出資料喔');
+			} else {
+				const records = ['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因'];
+				const data = [];
+				data.push(records);
 
-        // 創建並下載 CSV 文件
-        const blob = new Blob([output], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', '標記列表.csv');
-        link.click();
-    });
-},
+				this.multipleSelection.forEach(row => {
+					const rowData = [
+						row.id, // 缺失Id
+						row.InspectId, // 路線Id
+						row.TrackingId, // 追蹤Id
+						this.options.DistressTypeFlat[row.DistressType], // 缺失類型
+						this.options.DistressLevel[row.DistressLevel], // 損壞程度
+						this.formatTime(row.DateReport), // 通報時間
+						row.Duty_With_Name, // 標記人員
+						row.Place, // 地址
+						`${this.options.roadDir[row.Direction]}-${row.Lane}`, // 車道
+						row.MillingLength, // 長度(m)
+						row.MillingWidth, // 寬度(m)
+						row.MillingArea, // 面積(m2)
+						row.ImgZoomIn, // 近照
+						row.ImgZoomOut, // 遠照
+						row.StatusDesc // 刪除原因
+					];
+					data.push(rowData);
+				});
+
+				stringify(data, (err, output) => {
+					if (err) {
+						console.error(err);
+						return;
+					}
+					// 創建並下載 CSV 文件
+					const blob = new Blob([output], { type: 'text/csv;charset=utf-8;' });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.setAttribute('download', '標記列表.csv');
+					link.click();
+				});
+			}
+			
+		},
 		handleSelectionChange(val) {
 			this.multipleSelection = val;
 		},
