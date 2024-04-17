@@ -69,7 +69,7 @@
 						</el-image>
 					</el-col>
 					<el-col :span="14" class="hole-info">
-						<el-row v-for="(name, key) in headers.holeInfo" :gutter="3">
+						<el-row v-for="(name, key) in headers.holeInfo" :gutter="3" :key="key">
 							<template v-if="holeSpecInfo[key] && holeSpecInfo[key].length != 0">
 								<el-col :span="6" class="hole-title">{{ name }}: </el-col>
 								<el-col :span="18">{{ holeSpecInfo[key] }}</el-col>
