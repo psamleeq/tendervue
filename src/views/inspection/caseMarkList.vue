@@ -70,8 +70,9 @@
 
 		<h5 v-if="[4, 5].includes(listQuery.filterType) && list.length != 0">查詢期間：{{ searchRange }}</h5>
 		<h5 v-if="list.length != 0">案件數：{{ total }}</h5>
-		<el-button v-if="list.length != 0" style="float: right; margin-right: 150px; margin-top: -50px;" type="success" icon="el-icon-document" @click="exportCSV" plain>匯出csv</el-button>
-		<el-button v-if="list.length != 0" style="float: right; margin-top: -50px;" type="warning" icon="el-icon-document" @click="exportAllCSV" plain>匯出全部csv</el-button>
+		<el-button v-if="list.length != 0" style="float: right; margin-right: 250px; margin-top: -50px;" type="success" icon="el-icon-document" @click="exportCSV">匯出csv</el-button>
+		<el-button v-if="list.length != 0" style="float: right; margin-right: 100px; margin-top: -50px;" type="warning" icon="el-icon-document" @click="exportAllCSV">匯出全部csv</el-button>
+		<el-button v-if="list.length != 0" style="float: right; margin-top: -50px;" type="danger" icon="el-icon-s-promotion" @click="exportResult">匯出</el-button>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -466,6 +467,14 @@ export default {
 		this.dialogMapVisible = false;
 	},
 	methods: {
+		exportResult() {
+			const caseDetectionId = [];
+			for (let i = 0; i < this.list.length; i++) {
+				caseDetectionId.push(this.list[i].id);
+			}
+
+			exportToDistress({ CaseDetectionId: caseDetectionId });
+		},
 		exportAllCSV() {
 			const data = [];
 			data.push(['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因']);

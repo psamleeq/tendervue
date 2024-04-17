@@ -100,6 +100,14 @@ export function uploadInspectionCaseNco(data) {
 	})
 }
 
+export function exportToDistress(data) {
+	return request({
+		url: '/inspection/exportCaseDistress',
+		method: 'post',
+		data
+	})
+}
+
 // 追蹤列表
 export function getCaseTrackingList(query) {
 	return request({
