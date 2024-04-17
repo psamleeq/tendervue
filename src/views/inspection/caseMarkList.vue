@@ -479,45 +479,104 @@ export default {
 			const data = [];
 			data.push(['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因']);
 
-			this.list.forEach(row => {
-				const rowData = [
-					row.id, // 缺失Id
-					row.InspectId, // 路線Id
-					row.TrackingId, // 追蹤Id
-					this.options.DistressTypeFlat[row.DistressType], // 缺失類型
-					this.options.DistressLevel[row.DistressLevel], // 損壞程度
-					this.formatTime(row.DateReport), // 通報時間
-					row.Duty_With_Name, // 標記人員
-					row.Place, // 地址
-					`${this.options.roadDir[row.Direction]}-${row.Lane}`, // 車道
-					row.MillingLength, // 長度(m)
-					row.MillingWidth, // 寬度(m)
-					row.MillingArea, // 面積(m2)
-					row.ImgZoomIn, // 近照
-					row.ImgZoomOut, // 遠照
-					row.StatusDesc // 刪除原因
-				];
-				data.push(rowData);
-			});
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+		
+			this.listQuery.caseType.forEach(typeArr => typeArr[1] = this.typeLevel[typeArr[0]]);
 
-			stringify(data, (err, output) => {
-				if (err) {
-					console.error(err);
-					return;
-				}
-				// 創建並下載 CSV 文件
-				const blob = new Blob([output], { type: 'text/csv;charset=utf-8;' });
-				const link = document.createElement('a');
-				link.href = URL.createObjectURL(blob);
-				link.setAttribute('download', '標記列表.csv');
-				link.click();
-			});
+			let inspectId = null;
+			let caseId = null;
+			let trackingId = null;
+			let dutyWith = null;
+			let surveyId = null;
+
+			switch (this.listQuery.filterType) {
+				case 1: // 路線Id
+					inspectId = this.listQuery.filterId;
+					break;
+				case 2: // 缺失Id
+					caseId = this.listQuery.filterId;
+					break;
+				case 3: // 追蹤Id
+					trackingId = this.listQuery.filterId;
+					break;
+				case 4: // 標記人員
+					dutyWith = this.listQuery.filterId;
+					break;
+				case 5: // 合約
+					const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+					surveyId = tenderRound.id;
+					break;
+			}
+
+			getInspectionCaseList({
+				filter: this.listQuery.filter[0] != undefined ? this.listQuery.filter[0] : -1,
+				surveyId,
+				inspectId,
+				checkRoadName: this.listQuery.checkRoadName,
+				caseId,
+				trackingId,
+				dutyWith,
+				caseType: JSON.stringify(this.listQuery.caseType),
+				timeStart: [4, 5].includes(this.listQuery.filterType) ? startDate : '',
+				timeEnd: [4, 5].includes(this.listQuery.filterType) ? moment(endDate).add(1, "d").format("YYYY-MM-DD") : '',
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: 99999
+			}).then(response => {
+				const list = response.data.list;
+				list.forEach(l => {
+					l.DateReport = this.formatTime(l.DateReport);
+					l.MillingLength = Math.round(l.MillingLength * 100) / 100;
+					l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
+					l.MillingArea = Math.round(l.MillingArea * 100) / 100;
+					l.ImgZoomInUnMark = l.ImgZoomIn ? l.ImgZoomIn.replace("caseDetection", "caseDetection_unMark").replace("ImgZoomIn", "ImageZoomIn_unMark") : null;
+
+				})
+
+				list.forEach(row => {
+					const rowData = [
+						row.id, // 缺失Id
+						row.InspectId, // 路線Id
+						row.TrackingId, // 追蹤Id
+						this.options.DistressTypeFlat[row.DistressType], // 缺失類型
+						this.options.DistressLevel[row.DistressLevel], // 損壞程度
+						this.formatTime(row.DateReport), // 通報時間
+						row.Duty_With_Name, // 標記人員
+						row.Place, // 地址
+						`${this.options.roadDir[row.Direction]}-${row.Lane}`, // 車道
+						row.MillingLength, // 長度(m)
+						row.MillingWidth, // 寬度(m)
+						row.MillingArea, // 面積(m2)
+						row.ImgZoomIn, // 近照
+						row.ImgZoomOut, // 遠照
+						row.StatusDesc // 刪除原因
+					];
+					data.push(rowData);
+				});
+
+				stringify(data, (err, output) => {
+					if (err) {
+						console.error(err);
+						return;
+					}
+					// 創建並下載 CSV 文件
+					const blob = new Blob([output], { type: 'text/csv;charset=utf-8;' });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.setAttribute('download', '標記列表.csv');
+					link.click();
+				});
+
+			})
+			
 		},
 		exportCSV() {
 			// console.log(this.multipleSelection);
 			if (this.multipleSelection.length == 0) {
 				this.$message('左邊框框要打勾 才能匯出資料喔');
 			} else {
+
+				
 				const records = ['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因'];
 				const data = [];
 				data.push(records);
