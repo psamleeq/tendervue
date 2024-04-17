@@ -27,11 +27,10 @@
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
 		</div>
 
-		<h5 v-if="list.length != 0 && (!listQuery.filterStr || listQuery.filterStr.length == 0)">查詢期間：{{ searchRange }}</h5>
+		<!-- <h5 v-if="list.length != 0 && (!listQuery.filterStr || listQuery.filterStr.length == 0)">查詢期間：{{ searchRange }}</h5> -->
 
 		<el-table empty-text="目前沒有資料" :data="list" border fit :header-cell-style="{ 'background-color': '#F2F6FC' }"
 			style="width: 100%">
-
 			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" align="center"
 				min-width="30" :sortable="value.sortable">
 				<template slot-scope="{ row, column }">
@@ -40,8 +39,6 @@
 							<span>{{ Object.keys(row.CaseNoObj).length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
 								<span slot="content">
-									<!-- <div v-for="caseNo in row.CaseNoInActiveArr" :key="caseNo">{{ caseNo }}<span
-											style="color: #F56C6C">(退回)</span></div> -->
 									<div v-for="(obj, caseNo) in row.CaseNoObj" :key="`${caseNo}_${obj.flowState}`">
 										{{ caseNo }}
 										(<span v-if="obj.State & 16">已完工</span>
@@ -69,12 +66,52 @@
 					</span>
 				</template>
 			</el-table-column>
+			<el-table-column label="判核" align="center" min-width="40">
+				<template slot-scope="{ row }">
+					<i v-if="row.InformState & 2" class="el-icon-check" style="color: #67C23A" />
+					<el-button class="btn-action" :type="row.InformState & 2 ? 'info' : 'primary'" @click="applyReview(row)">
+						{{ row.InformState & 2 ? '檢視' : '判核' }}
+					</el-button>
+					<el-button
+						v-if="!row.InformState & 2 && (Object.values(row.CaseNoObj).every(obj => !obj.State == 1 || obj.FlowState & 4 || obj.FlowState & 64))"
+						class="btn-action" type="success" @click="informConfirm(row, 2)"">完成</el-button>
+				</template>
+			</el-table-column>
+			<el-table-column label=" 會勘" align="center" min-width="40">
+				<template slot-scope="{ row }">
+					<i v-if="row.InformState & 4" class="el-icon-check" style="color: #67C23A" />
+					<el-button v-else-if="row.InformState & 2" class="btn-action" type="success"
+						@click="informConfirm(row, 4)">完成</el-button>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+			<el-table-column label="派工" align="center" min-width="40">
+				<template slot-scope="{ row }">
+					<i v-if="row.InformState & 8" class="el-icon-check" style="color: #67C23A" />
+					<el-button v-else-if="row.InformState & 4" class="btn-action" type="success"
+						@click="informConfirm(row, 8)">完成</el-button>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+			<el-table-column label="計價" align="center" min-width="40">
+				<template slot-scope="{ row }">
+					<i v-if="row.InformState & 16" class="el-icon-check" style="color: #67C23A" />
+					<el-button v-else-if="row.InformState & 8" class="btn-action" type="success"
+						@click="informConfirm(row, 16)">完成</el-button>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+			<el-table-column label="結案" align="center" min-width="40">
+				<template slot-scope="{ row }">
+					<i v-if="row.InformState & 32" class="el-icon-check" style="color: #67C23A" />
+					<el-button v-else-if="row.InformState & 16" class="btn-action" type="success"
+						@click="informConfirm(row, 32)">結案</el-button>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+
 			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="primary" @click="applyReview(row)"
-						:disabled="Object.values(row.CaseNoObj).every(obj => !obj.State == 1 || obj.FlowState & 4 || obj.FlowState & 64)">判核</el-button>
-					<el-button class="btn-action" type="success" @click="applyInvestigation(row)"
-						:disabled="Object.values(row.CaseNoObj).find(obj => !obj.State == 1 || !(obj.FlowState & 4 || obj.FlowState & 64) || obj.FlowState & 8) ">會勘</el-button>
 					<el-button class="btn-action" type="info" plain @click="applyTicketDetail(row)">檢視</el-button>
 					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">列印通報單</el-button>
 				</template>
@@ -92,7 +129,7 @@
 <script>
 import moment from "moment";
 import checkPermission from '@/utils/permission';
-import { getApply, getApplyTicketList } from "@/api/dispatch";
+import { getApply, getApplyTicketList, setApplyTicketList } from "@/api/dispatch";
 import Pagination from "@/components/Pagination";
 import ApplyTicketPdf from "@/components/ApplyTicketPdf";
 
@@ -188,11 +225,35 @@ export default {
 				params: { caseSN: row.CaseSN },
 			});
 		},
-		applyInvestigation(row) {
-			// this.$router.push({
-			// 	name: "applyReview",
-			// 	params: { caseSN: row.CaseSN },
-			// });
+		informConfirm(row, state) {
+			const textOption = {
+				2: '判核',
+				4: '會勘',
+				8: '派工',
+				16: '計價',
+				32: '結案'
+			}
+
+			this.$confirm(`確定提交「${textOption[state]}」完成?`, "確認", {
+				showClose: false,
+			}).then(() => {
+				this.loading = true;
+
+				setApplyTicketList(row.CaseSN, {
+					informState: row.InformState + state
+				}).then(response => {
+					if (response.statusCode == 20000) {
+						this.$message({
+							message: "提交成功",
+							type: "success",
+						});
+						this.getList();
+					}
+				}).catch(err => {
+					console.log(err);
+					this.getList();
+				})
+			}).catch(err => console.log(err));
 		},
 		reissueApplyTicket(row) {
 			// console.log(row);
@@ -201,7 +262,7 @@ export default {
 			getApply({
 				caseSN: row.CaseSN,
 				pageCurrent: 1,
-				pageSize: 99999
+				pageSize: 999999
 			}).then(response => {
 				const list = response.data.list;
 				list.forEach(l => {

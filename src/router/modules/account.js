@@ -28,7 +28,8 @@ const accountRouter = {
 			meta: {
 				title: '權限管理',
 				roles: ['rAdm']
-			}
+			},
+			hidden: true
 		},
 		{
 			path: 'accountLog',
