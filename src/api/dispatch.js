@@ -88,6 +88,14 @@ export function getApplyTicketList(query) {
 	})
 }
 
+export function setApplyTicketList(id, data) {
+	return request({
+		url: `/dispatch/applyTicketList/${id}`,
+		method: 'put',
+		data
+	})
+}
+
 // 分工判核
 export function getApplyReviewList(query) {
 	return request({
