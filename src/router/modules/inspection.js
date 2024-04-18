@@ -8,7 +8,7 @@ const inspectionRouter = {
 	redirect: '/inspection/inspectionProgress',
 	name: 'inspection',
 	meta: {
-		title: '環景巡查',
+		title: '環景調查',
 		icon: 'map-marker-path',
 		roles: ['inspection'],
 		isNew: true 
@@ -37,7 +37,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspection/caseMark'),
 			name: 'caseMark',
 			meta: {
-				title: '標記缺失',
+				title: '缺失標記',
 				roles: ['inspection.marker'],
 				isNew: true
 			}
@@ -47,7 +47,7 @@ const inspectionRouter = {
 			component: () => import('@/views/inspection/caseMarkList'),
 			name: 'caseMarkList',
 			meta: {
-				title: '標記列表',
+				title: '缺失列表',
 				roles: ['inspection.marker']
 			}
 		}

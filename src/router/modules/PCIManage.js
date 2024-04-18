@@ -9,7 +9,7 @@ const caseRouter = {
 	name: 'PCIManage',
 	alwaysShow: true,
 	meta: {
-		title: 'PCI計算',
+		title: '鋪面指標',
 		icon: 'el-icon-star-on', 
 		roles: ['distress', 'PCIManage']
 	},
@@ -19,7 +19,7 @@ const caseRouter = {
 			component: () => import('@/views/PCIManage/PCIManager'),
 			name: 'PCIManager',
 			meta: {
-				title: '合約管理',
+				title: '合約管理 (PCI計算)',
 				roles: ['PCIManage.base']
 			}
 		},

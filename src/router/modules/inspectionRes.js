@@ -8,7 +8,7 @@ const inspectionRouter = {
 	redirect: '/inspection/inspectionProgress',
 	name: 'inspectionRes',
 	meta: {
-		title: '環巡成果',
+		title: '調查成果',
 		icon: 'el-icon-s-marketing',
 		roles: ['inspection.viewer', 'inspection.editor'],
 		isNew: true 
