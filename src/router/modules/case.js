@@ -8,7 +8,7 @@ const caseRouter = {
 	redirect: '/case/caseList',
 	name: 'road',
 	meta: {
-		title: '鋪面管理',
+		title: '鋪面檢測',
 		icon: 'el-icon-s-release', 
 		roles: ['distress']
 	},

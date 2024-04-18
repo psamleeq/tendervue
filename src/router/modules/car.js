@@ -8,27 +8,27 @@ const carRouter = {
 	redirect: '/car/route',
 	name: 'car',
 	meta: {
-		title: '車輛管理',
+		title: '道路巡視',
 		icon: 'el-icon-truck',
 		roles: ['car']
 	},
 	children: [
 		{
+			path: 'route',
+			component: () => import('@/views/car/route'),
+			name: 'carRoute',
+			meta: {
+				title: '巡視路線',
+				roles: ['car.route']
+			}
+		},
+		{
 			path: 'monitor',
 			component: () => import('@/views/car/monitor'),
 			name: 'carMonitor',
 			meta: {
-				title: '即時影像',
+				title: '巡視影像',
 				roles: ['car.viewer']
-			}
-		},
-		{
-			path: 'route',
-			component: () => import('@/views/car/route'),
-			name: 'carRoute',
-			meta: { 
-				title: '車巡管理',
-				roles: ['car.route']
 			}
 		}
 	]
