@@ -56,6 +56,7 @@
 				<el-checkbox :label="2">已完工</el-checkbox>
 				<el-checkbox :label="0">誤判</el-checkbox>
 			</el-checkbox-group>
+			
 		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1400px; min-width: 500px">
@@ -69,6 +70,9 @@
 
 		<h5 v-if="[4, 5].includes(listQuery.filterType) && list.length != 0">查詢期間：{{ searchRange }}</h5>
 		<h5 v-if="list.length != 0">案件數：{{ total }}</h5>
+		<el-button v-if="list.length != 0" style="float: right; margin-right: 250px; margin-top: -50px;" type="success" icon="el-icon-document" @click="exportCSV">匯出csv</el-button>
+		<el-button v-if="list.length != 0" style="float: right; margin-right: 100px; margin-top: -50px;" type="warning" icon="el-icon-document" @click="exportAllCSV">匯出全部csv</el-button>
+		<el-button v-if="list.length != 0" style="float: right; margin-top: -50px;" type="danger" icon="el-icon-s-promotion" @click="exportResult">匯出</el-button>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -78,7 +82,14 @@
 			:row-class-name="tableRowClassName"
 			:header-cell-style="{ 'background-color': '#F2F6FC' }"
 			style="width: 100%"
+			@selection-change="handleSelectionChange"
+			ref="multipleTable"
 		>
+			<el-table-column
+				type="selection"
+				width="55"
+				align="center">
+			</el-table-column>
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"
@@ -197,12 +208,13 @@
 
 <script>
 import moment from "moment";
-import { getInspectionCaseList, setInspectionCaseList, getImportCase } from "@/api/inspection";
+import { getInspectionCaseList, setInspectionCaseList, getImportCase, exportToDistress } from "@/api/inspection";
 import { getTenderRound, getDTypeMap } from "@/api/type";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
+import { stringify } from "csv";
 
 export default {
 	name: "caseMarkerList",
@@ -222,6 +234,7 @@ export default {
 			screenWidth: window.innerWidth,
 			dateRange: [ moment().startOf("day").toDate(), moment().endOf("day").toDate()],
 			searchRange: "",
+			multipleSelection: [], // table checkBox
 			listQuery: {
 				filter: [],
 				checkRoadName: false,
@@ -454,10 +467,188 @@ export default {
 		this.dialogMapVisible = false;
 	},
 	methods: {
+		exportResult() {
+			const caseDetectionId = [];
+			for (let i = 0; i < this.multipleSelection.length; i++) {
+				if (this.multipleSelection[i].Duplicate == 0) {
+					caseDetectionId.push(this.multipleSelection[i].id);
+				}
+			}
+			
+			if (caseDetectionId.length == 0) {
+				this.$message({
+					message: '查無可匯出的案件',
+					type: 'warning'
+				})
+			} else {
+				exportToDistress({ CaseDetectionId: caseDetectionId }).then(response => {
+					if (response.statusCode == 20000) {
+						const result = response.result;
+						this.$message({
+							message: `匯出案件(共 ${result.total}件): 成功 ${result.success}件 / 重複 ${result.duplicate}件 / 地址錯誤 ${result.addrFail}件 / 查無合約 ${result.surveyFail}件`,
+							type: "success",
+						});
+					}
+					this.getList();
+				}).catch(error => {
+					console.log(error);
+					this.$message({
+						message: '匯出失敗',
+						type: 'error'
+					})
+				});
+			}
+		},
+		exportAllCSV() {
+			const data = [];
+			data.push(['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因']);
+
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+		
+			this.listQuery.caseType.forEach(typeArr => typeArr[1] = this.typeLevel[typeArr[0]]);
+
+			let inspectId = null;
+			let caseId = null;
+			let trackingId = null;
+			let dutyWith = null;
+			let surveyId = null;
+
+			switch (this.listQuery.filterType) {
+				case 1: // 路線Id
+					inspectId = this.listQuery.filterId;
+					break;
+				case 2: // 缺失Id
+					caseId = this.listQuery.filterId;
+					break;
+				case 3: // 追蹤Id
+					trackingId = this.listQuery.filterId;
+					break;
+				case 4: // 標記人員
+					dutyWith = this.listQuery.filterId;
+					break;
+				case 5: // 合約
+					const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+					surveyId = tenderRound.id;
+					break;
+			}
+
+			getInspectionCaseList({
+				filter: this.listQuery.filter[0] != undefined ? this.listQuery.filter[0] : -1,
+				surveyId,
+				inspectId,
+				checkRoadName: this.listQuery.checkRoadName,
+				caseId,
+				trackingId,
+				dutyWith,
+				caseType: JSON.stringify(this.listQuery.caseType),
+				timeStart: [4, 5].includes(this.listQuery.filterType) ? startDate : '',
+				timeEnd: [4, 5].includes(this.listQuery.filterType) ? moment(endDate).add(1, "d").format("YYYY-MM-DD") : '',
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: 99999
+			}).then(response => {
+				const list = response.data.list;
+				list.forEach(l => {
+					l.DateReport = this.formatTime(l.DateReport);
+					l.MillingLength = Math.round(l.MillingLength * 100) / 100;
+					l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
+					l.MillingArea = Math.round(l.MillingArea * 100) / 100;
+					l.ImgZoomInUnMark = l.ImgZoomIn ? l.ImgZoomIn.replace("caseDetection", "caseDetection_unMark").replace("ImgZoomIn", "ImageZoomIn_unMark") : null;
+
+				})
+
+				list.forEach(row => {
+					const rowData = [
+						row.id, // 缺失Id
+						row.InspectId, // 路線Id
+						row.TrackingId, // 追蹤Id
+						this.options.DistressTypeFlat[row.DistressType], // 缺失類型
+						this.options.DistressLevel[row.DistressLevel], // 損壞程度
+						this.formatTime(row.DateReport), // 通報時間
+						row.Duty_With_Name, // 標記人員
+						row.Place, // 地址
+						`${this.options.roadDir[row.Direction]}-${row.Lane}`, // 車道
+						row.MillingLength, // 長度(m)
+						row.MillingWidth, // 寬度(m)
+						row.MillingArea, // 面積(m2)
+						row.ImgZoomIn, // 近照
+						row.ImgZoomOut, // 遠照
+						row.StatusDesc // 刪除原因
+					];
+					data.push(rowData);
+				});
+
+				stringify(data, (err, output) => {
+					if (err) {
+						console.error(err);
+						return;
+					}
+					// 創建並下載 CSV 文件
+					const blob = new Blob([output], { type: 'text/csv;charset=utf-8;' });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.setAttribute('download', '標記列表.csv');
+					link.click();
+				});
+
+			})
+			
+		},
+		exportCSV() {
+			// console.log(this.multipleSelection);
+			if (this.multipleSelection.length == 0) {
+				this.$message('左邊框框要打勾 才能匯出資料喔');
+			} else {
+
+				
+				const records = ['缺失Id', '路線Id', '追蹤Id', '缺失類型', '損壞程度', '通報時間', '標記人員', '地址', '車道', '長度(m)', '寬度(m)', '面積(m2)', '近照', '遠照', '刪除原因'];
+				const data = [];
+				data.push(records);
+
+				this.multipleSelection.forEach(row => {
+					const rowData = [
+						row.id, // 缺失Id
+						row.InspectId, // 路線Id
+						row.TrackingId, // 追蹤Id
+						this.options.DistressTypeFlat[row.DistressType], // 缺失類型
+						this.options.DistressLevel[row.DistressLevel], // 損壞程度
+						this.formatTime(row.DateReport), // 通報時間
+						row.Duty_With_Name, // 標記人員
+						row.Place, // 地址
+						`${this.options.roadDir[row.Direction]}-${row.Lane}`, // 車道
+						row.MillingLength, // 長度(m)
+						row.MillingWidth, // 寬度(m)
+						row.MillingArea, // 面積(m2)
+						row.ImgZoomIn, // 近照
+						row.ImgZoomOut, // 遠照
+						row.StatusDesc // 刪除原因
+					];
+					data.push(rowData);
+				});
+
+				stringify(data, (err, output) => {
+					if (err) {
+						console.error(err);
+						return;
+					}
+					// 創建並下載 CSV 文件
+					const blob = new Blob([output], { type: 'text/csv;charset=utf-8;' });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.setAttribute('download', '標記列表.csv');
+					link.click();
+				});
+			}
+			
+		},
+		handleSelectionChange(val) {
+			this.multipleSelection = val;
+		},
 		tableRowClassName({row, rowIndex}) {
 			const tenderFilter = Object.values(this.options.tenderRoundMap).filter(val => val.id == row.SurveyId);
 			const tenderRound = tenderFilter.length > 0 ? tenderFilter[0] : { zipCode: 0 };
 			const checkRoadName = this.options.districtList[tenderRound.zipCode];
+			if (row.Duplicate == 1) return 'export-warning-row'
 
 			if (row.DateMark) return 'warning-row';
 			else if (checkRoadName && !row.Place.includes(checkRoadName)) return 'danger-row';
@@ -764,6 +955,10 @@ export default {
 				background-color: initial !important
 		.warning-row
 			background: #FCF3E6
+			&.hover-row > td
+				background-color: initial !important
+		.export-warning-row
+			background: #e1f3fa
 			&.hover-row > td
 				background-color: initial !important
 	.img-preview
