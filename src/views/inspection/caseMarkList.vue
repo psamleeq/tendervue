@@ -469,11 +469,35 @@ export default {
 	methods: {
 		exportResult() {
 			const caseDetectionId = [];
-			for (let i = 0; i < this.list.length; i++) {
-				caseDetectionId.push(this.list[i].id);
+			for (let i = 0; i < this.multipleSelection.length; i++) {
+				if (this.multipleSelection[i].Duplicate == 0) {
+					caseDetectionId.push(this.multipleSelection[i].id);
+				}
 			}
+			
+			if (caseDetectionId.length == 0) {
+				this.$message({
+						message: '查無可匯出的案件',
+						type: 'warning'
+					})
+			} else {
+				exportToDistress({ CaseDetectionId: caseDetectionId })
+        .then(response => {
+          this.$message({
+						message: '匯出成功',
+						type: 'success'
+					})
+        })
+        .catch(error => {
+          this.$message({
+						message: '匯出失敗',
+						type: 'error'
+					})
+        });
+			}
+			
 
-			exportToDistress({ CaseDetectionId: caseDetectionId });
+			this.getList();
 		},
 		exportAllCSV() {
 			const data = [];
@@ -624,6 +648,7 @@ export default {
 			const tenderFilter = Object.values(this.options.tenderRoundMap).filter(val => val.id == row.SurveyId);
 			const tenderRound = tenderFilter.length > 0 ? tenderFilter[0] : { zipCode: 0 };
 			const checkRoadName = this.options.districtList[tenderRound.zipCode];
+			if (row.Duplicate == 1) return 'export-warning-row'
 
 			if (row.DateMark) return 'warning-row';
 			else if (checkRoadName && !row.Place.includes(checkRoadName)) return 'danger-row';
@@ -930,6 +955,10 @@ export default {
 				background-color: initial !important
 		.warning-row
 			background: #FCF3E6
+			&.hover-row > td
+				background-color: initial !important
+		.export-warning-row
+			background: #e1f3fa
 			&.hover-row > td
 				background-color: initial !important
 	.img-preview
