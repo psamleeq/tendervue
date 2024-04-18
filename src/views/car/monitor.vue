@@ -31,6 +31,8 @@ export default {
 					order: 5,
 					contractId: 0,
 					src: "https://www.gstech.com.tw/ec/FLTLMVideo.aspx?group=FL383&carid=RCX-8095&vno=0&type=fuho"
+					// contractId: 3,
+					// carId: 1
 				},
 				103: {
 					name: "大同區",
@@ -55,12 +57,16 @@ export default {
 					order: 11,
 					contractId: 0,
 					src: "https://www.gstech.com.tw/ec/FLTLMVideo.aspx?group=FL383&carid=RCX-7561&vno=0&type=fuho"
+					// contractId: 6,
+					// carId: 1
 				},
 				108: {
 					name: "萬華區",
 					order: 6,
 					contractId: 0,
 					src: "https://www.gstech.com.tw/ec/FLTLMVideo.aspx?group=FL383&carid=RCX-7562&vno=0&type=fuho"
+					// contractId: 3,
+					// carId: 2
 				},
 				110: {
 					name: "信義區",
@@ -97,6 +103,8 @@ export default {
 					order: 12,
 					contractId: 0,
 					src: "https://www.gstech.com.tw/ec/FLTLMVideo.aspx?group=FL383&carid=RCX-7560&vno=0&type=fuho"
+					// contractId: 6,
+					// carId: 2
 				}
 			},
 			options: {
@@ -106,7 +114,7 @@ export default {
 					3: "三標",
 					4: "四標",
 					5: "五標",
-					// 6: "六標"
+					6: "六標"
 				},
 				carId: {
 					1: {
@@ -119,9 +127,9 @@ export default {
 						2: "BFX-7552", //信義
 					},
 					3: {
-						1: "ALV-3038",
-						2: "APD-3308",
-						3: "AAA-0000",
+						// 1: "RCX-7762"
+						1: "1001", //中正
+						2: "1081", //萬華
 					},
 					4: {
 						1: "ATE-3287", //南港
@@ -130,7 +138,12 @@ export default {
 					5: {
 						1: "BPG-0891", //士林
 						2: "BFX-7551", //北投
-					}
+					},
+					6: {
+						// 1: "RCX-7761"
+						1: "1061", //大安
+						2: "1161", //文山
+					},
 				}
 			}
 		};
