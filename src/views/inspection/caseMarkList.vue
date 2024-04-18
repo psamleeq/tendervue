@@ -477,27 +477,27 @@ export default {
 			
 			if (caseDetectionId.length == 0) {
 				this.$message({
-						message: '查無可匯出的案件',
-						type: 'warning'
-					})
+					message: '查無可匯出的案件',
+					type: 'warning'
+				})
 			} else {
-				exportToDistress({ CaseDetectionId: caseDetectionId })
-        .then(response => {
-          this.$message({
-						message: '匯出成功',
-						type: 'success'
-					})
-        })
-        .catch(error => {
-          this.$message({
+				exportToDistress({ CaseDetectionId: caseDetectionId }).then(response => {
+					if (response.statusCode == 20000) {
+						const result = response.result;
+						this.$message({
+							message: `匯出案件(共 ${result.total}件): 成功 ${result.success}件 / 重複 ${result.duplicate}件 / 地址錯誤 ${result.addrFail}件 / 查無合約 ${result.surveyFail}件`,
+							type: "success",
+						});
+					}
+					this.getList();
+				}).catch(error => {
+					console.log(error);
+					this.$message({
 						message: '匯出失敗',
 						type: 'error'
 					})
-        });
+				});
 			}
-			
-
-			this.getList();
 		},
 		exportAllCSV() {
 			const data = [];
