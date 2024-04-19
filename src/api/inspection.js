@@ -133,3 +133,12 @@ export function getCaseTrackingStatic(query) {
 		params: query
 	})
 }
+
+// 回報分析 - 時間
+export function getCaseTrackingStaticTime(query) {
+	return request({
+		url: '/inspection/caseTrackingStaticTime',
+		method: 'get',
+		params: query
+	})
+}

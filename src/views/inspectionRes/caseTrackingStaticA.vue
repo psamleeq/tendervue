@@ -70,6 +70,10 @@
 						</el-row>
 					</el-col>
 				</el-row>
+				<div class="filter-item" style="margin-bottom: 10px;">
+					<time-picker class="filter-item" :shortcutType="'year'" :timeTabId.sync="timeTabId[dist.zipCode]" :dateRange.sync="dateRange" @search="getTimePickerList(dist.zipCode)"/>
+					<el-button icon="el-icon-search" type="success" size="mini" @click="getTimePickerList(dist.zipCode)" plain>搜尋</el-button>
+				</div>
 			</el-col>
 		</el-row>
 	</div>
@@ -79,14 +83,16 @@
 import CountTo from 'vue-count-to';
 import moment from "moment";
 import { getTenderRound } from "@/api/type";
-import { getCaseTrackingStatic } from "@/api/inspection";
-import { options } from 'dropzone';
+import { getCaseTrackingStatic, getCaseTrackingStaticTime } from "@/api/inspection";
+import TimePicker from '@/components/TimePicker';
 
 export default {
 	name: "caseTrackingStaticA",
-	components: { CountTo },
+	components: { CountTo, TimePicker },
 	data() {
 		return {
+			dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
+			timeTabId: {},
 			loading: false,
 			screenWidth: window.innerWidth,
 			listQuery: {
@@ -115,6 +121,7 @@ export default {
 					this.options.zipCodeArr.push({ tenderName: cur.tenderName.replace("區", ""), zipCode: cur.zipCode })
 					acc[zipCode] = {};
 					this.listQuery.tenderRound[zipCode] = {};
+					this.timeTabId[zipCode] = 0;
 				}
 
 				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
@@ -137,6 +144,7 @@ export default {
 						this.listQuery.tenderRound[dist.zipCode] = Number(Object.keys(this.options.tenderRoundMap[dist.zipCode])[Object.keys(this.options.tenderRoundMap[dist.zipCode]).length - 1]);
 					}
 					await this.getList(dist.zipCode);
+					
 				}
 				if (Object.keys(this.options.tenderRoundMap[dist.zipCode]).length == 0) {
 					this.options.tenderRoundMap[dist.zipCode] = { "-1": { id: -1 } };
@@ -152,7 +160,7 @@ export default {
 			this.list = [];
 			this.static[zipCode] = {};
 			const tenderRound = this.options.tenderRoundMap[zipCode][this.listQuery.tenderRound[zipCode]];
-
+			
 			await getCaseTrackingStatic({
 				surveyId: tenderRound.id
 			}).then(response => {
@@ -160,6 +168,28 @@ export default {
 				this.list[zipCode] = response.data.list;
 				this.loading = false;
 			}).catch(err => this.loading = false);
+
+		},
+		async getTimePickerList(zipCode) {
+			this.loading = true;
+			this.list = [];
+			this.static[zipCode] = {};
+			const tenderRound = this.options.tenderRoundMap[zipCode][this.listQuery.tenderRound[zipCode]];
+			console.log(tenderRound);
+
+			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+			let endDate = moment(this.dateRange[1]).add(1, "days").format("YYYY-MM-DD");
+
+			await getCaseTrackingStaticTime({
+				surveyId: tenderRound.id,
+				startDate: startDate,
+				endDate: endDate
+			}).then(response => {
+				this.static[zipCode] = response.data.static;
+				this.$forceUpdate()
+				this.loading = false;
+			}).catch(err => this.loading = false);
+
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD");
