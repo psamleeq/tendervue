@@ -11,8 +11,10 @@
 				<el-row class="panel-group">
 					<el-col :span="6" class="panel-dist">
 						<div class="dist-text">{{ dist.tenderName }}</div>
-						<el-select v-model.number="listQuery.tenderRound[dist.zipCode]" class="tender-select" popper-class="type-select tender" size="small" @change="getList(dist.zipCode)">
-							<el-option v-for="(val, type) in options.tenderRoundMap[dist.zipCode]" :key="type" :label="val.name" :value="Number(type)">{{ val.name }}</el-option>
+						<el-select v-model.number="listQuery.tenderRound[dist.zipCode]" class="tender-select"
+							popper-class="type-select tender" size="small" @change="getList(dist.zipCode)">
+							<el-option v-for="(val, type) in options.tenderRoundMap[dist.zipCode]" :key="type" :label="val.name"
+								:value="Number(type)">{{ val.name }}</el-option>
 						</el-select>
 					</el-col>
 					<el-col :span="18">
@@ -68,12 +70,12 @@
 								</div>
 							</el-col>
 						</el-row>
+						<el-row type="flex" style="justify-content: center;">
+							<time-picker :hasYear="false" :shortcutType="'year'" :timeTabId.sync="timeTabId[dist.zipCode]" :dateRange.sync="dateRange" @search="getTimePickerList(dist.zipCode)" />
+							<el-button icon="el-icon-search" type="success" size="mini" @click="getTimePickerList(dist.zipCode)" plain />
+						</el-row>
 					</el-col>
 				</el-row>
-				<div class="filter-item" style="margin-bottom: 10px;">
-					<time-picker class="filter-item" :shortcutType="'year'" :timeTabId.sync="timeTabId[dist.zipCode]" :dateRange.sync="dateRange" @search="getTimePickerList(dist.zipCode)"/>
-					<el-button icon="el-icon-search" type="success" size="mini" @click="getTimePickerList(dist.zipCode)" plain>搜尋</el-button>
-				</div>
 			</el-col>
 		</el-row>
 	</div>
@@ -91,7 +93,7 @@ export default {
 	components: { CountTo, TimePicker },
 	data() {
 		return {
-			dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
+			dateRange: [moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate()],
 			timeTabId: {},
 			loading: false,
 			screenWidth: window.innerWidth,
@@ -106,31 +108,31 @@ export default {
 			}
 		};
 	},
-	computed: { },
-	watch: { },
+	computed: {},
+	watch: {},
 	async created() {
 		getTenderRound({
 			excludeShadow: true
 		}).then(async (response) => {
 			this.options.zipCodeArr = [];
 			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
-				if(cur.tenderId <= 1001) return acc;
-				
+				if (cur.tenderId <= 1001) return acc;
+
 				const zipCode = cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec;
-				if(acc[zipCode] == undefined) {
+				if (acc[zipCode] == undefined) {
 					this.options.zipCodeArr.push({ tenderName: cur.tenderName.replace("區", ""), zipCode: cur.zipCode })
 					acc[zipCode] = {};
 					this.listQuery.tenderRound[zipCode] = {};
-					this.timeTabId[zipCode] = 0;
+					this.timeTabId[zipCode] = -1;
 				}
 
 				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
-				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
+				if (cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
 
-				acc[zipCode][roundId] = { 
+				acc[zipCode][roundId] = {
 					id: cur.id,
 					name: cur.title,
-					tenderId: cur.tenderId, 
+					tenderId: cur.tenderId,
 					tenderName: cur.tenderName,
 					isMain: cur.zipCodeSpec == 0,
 					zipCode
@@ -138,13 +140,13 @@ export default {
 				return acc;
 			}, {});
 
-			for(const dist of this.options.zipCodeArr) {
+			for (const dist of this.options.zipCodeArr) {
 				if (Object.keys(this.options.tenderRoundMap[dist.zipCode]).length > 0) {
 					if (!Object.keys(this.options.tenderRoundMap[dist.zipCode]).includes(String(this.listQuery.tenderRound[dist.zipCode]))) {
 						this.listQuery.tenderRound[dist.zipCode] = Number(Object.keys(this.options.tenderRoundMap[dist.zipCode])[Object.keys(this.options.tenderRoundMap[dist.zipCode]).length - 1]);
 					}
 					await this.getList(dist.zipCode);
-					
+
 				}
 				if (Object.keys(this.options.tenderRoundMap[dist.zipCode]).length == 0) {
 					this.options.tenderRoundMap[dist.zipCode] = { "-1": { id: -1 } };
@@ -153,14 +155,14 @@ export default {
 			}
 		});
 	},
-	mounted() {},
+	mounted() { },
 	methods: {
 		async getList(zipCode) {
 			this.loading = true;
 			this.list = [];
 			this.static[zipCode] = {};
 			const tenderRound = this.options.tenderRoundMap[zipCode][this.listQuery.tenderRound[zipCode]];
-			
+
 			await getCaseTrackingStatic({
 				surveyId: tenderRound.id
 			}).then(response => {
@@ -209,9 +211,11 @@ export default {
 		margin-bottom: 10px
 		overflow: hidden
 		.panel-dist
-			display: inline-block
-			position: relative
-			height: 156px
+			display: flex
+			flex-direction: column
+			justify-content: center
+			height: 196px
+			margin: auto 0
 			box-shadow: inset -2px 0 2px rgba(#E6E8EB, 0.4)
 			background-color: #D4D7DE
 			.dist-text
