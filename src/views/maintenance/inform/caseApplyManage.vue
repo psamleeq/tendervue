@@ -68,18 +68,24 @@
 			</el-table-column>
 			<el-table-column label="判核" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<i v-if="row.InformState & 2" class="el-icon-check" style="color: #67C23A" />
+					<span v-if="row.InformState & 2">
+						<i class="el-icon-check" style="color: #67C23A" />
+						<div v-if="row.Bit2_At">({{ row.Bit2_At }})</div>
+					</span>
 					<el-button class="btn-action" :type="row.InformState & 2 ? 'info' : 'primary'" @click="applyReview(row)">
 						{{ row.InformState & 2 ? '檢視' : '判核' }}
 					</el-button>
 					<el-button
-						v-if="!row.InformState & 2 && (Object.values(row.CaseNoObj).every(obj => !obj.State == 1 || obj.FlowState & 4 || obj.FlowState & 64))"
+						v-if="!(row.InformState & 2) && Object.values(row.CaseNoObj).every(obj => (obj.FlowState & 2 || obj.FlowState & 32) && (obj.FlowState & 4 || obj.FlowState & 64))"
 						class="btn-action" type="success" @click="informConfirm(row, 2)"">完成</el-button>
 				</template>
 			</el-table-column>
 			<el-table-column label=" 會勘" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<i v-if="row.InformState & 4" class="el-icon-check" style="color: #67C23A" />
+					<span v-if="row.InformState & 4">
+						<i class="el-icon-check" style="color: #67C23A" />
+						<div v-if="row.Bit4_At">({{ row.Bit4_At }})</div>
+					</span>
 					<el-button v-else-if="row.InformState & 2" class="btn-action" type="success"
 						@click="informConfirm(row, 4)">完成</el-button>
 					<span v-else> - </span>
@@ -87,7 +93,10 @@
 			</el-table-column>
 			<el-table-column label="派工" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<i v-if="row.InformState & 8" class="el-icon-check" style="color: #67C23A" />
+					<span v-if="row.InformState & 8">
+						<i class="el-icon-check" style="color: #67C23A" />
+						<div v-if="row.Bit8_At">({{ row.Bit8_At }})</div>
+					</span>
 					<el-button v-else-if="row.InformState & 4" class="btn-action" type="success"
 						@click="informConfirm(row, 8)">完成</el-button>
 					<span v-else> - </span>
@@ -95,7 +104,10 @@
 			</el-table-column>
 			<el-table-column label="計價" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<i v-if="row.InformState & 16" class="el-icon-check" style="color: #67C23A" />
+					<span v-if="row.InformState & 16">
+						<i class="el-icon-check" style="color: #67C23A" />
+						<div v-if="row.Bit16_At">({{ row.Bit16_At }})</div>
+					</span>
 					<el-button v-else-if="row.InformState & 8" class="btn-action" type="success"
 						@click="informConfirm(row, 16)">完成</el-button>
 					<span v-else> - </span>
@@ -103,7 +115,10 @@
 			</el-table-column>
 			<el-table-column label="結案" align="center" min-width="40">
 				<template slot-scope="{ row }">
-					<i v-if="row.InformState & 32" class="el-icon-check" style="color: #67C23A" />
+					<span v-if="row.InformState & 32">
+						<i class="el-icon-check" style="color: #67C23A" />
+						<div v-if="row.Bit32_At">({{ row.Bit32_At }})</div>
+					</span>
 					<el-button v-else-if="row.InformState & 16" class="btn-action" type="success"
 						@click="informConfirm(row, 32)">結案</el-button>
 					<span v-else> - </span>
@@ -157,22 +172,14 @@ export default {
 					name: "通報單號",
 					sortable: true
 				},
-				// OrderType: {
-				// 	name: "維護類型",
-				// 	sortable: false
-				// },
 				CaseNoArr: {
 					name: "案件數量",
 					sortable: false
 				},
-				// Creater: {
-				// 	name: "建單人員",
-				// 	sortable: false
-				// },
-				// DateAssign: {
-				// 	name: "建單時間",
-				// 	sortable: false
-				// }
+				Create_At: {
+					name: "建單時間",
+					sortable: false
+				},
 			},
 			total: 0,
 			list: [],
@@ -209,6 +216,15 @@ export default {
 					this.total = 0;
 				} else {
 					this.list = response.data.list;
+					this.list.forEach(l => {
+						l.Create_At = this.formatDate(l.Create_At);
+						l.Bit1_At = this.formatDate(l.Bit1_At);
+						l.Bit2_At = this.formatDate(l.Bit2_At);
+						l.Bit4_At = this.formatDate(l.Bit4_At);
+						l.Bit8_At = this.formatDate(l.Bit8_At);
+						l.Bit16_At = this.formatDate(l.Bit16_At);
+						l.Bit32_At = this.formatDate(l.Bit32_At);
+					})
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
