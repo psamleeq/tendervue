@@ -119,7 +119,6 @@ export default {
 
 <style lang="sass">
 	.time-picker
-		display: inline-flex
 		.el-input__icon.el-range__close-icon
 			display: none
 	.time-picker > *
