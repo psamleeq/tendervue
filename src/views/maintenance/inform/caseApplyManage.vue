@@ -77,17 +77,21 @@
 					</el-button>
 					<el-button
 						v-if="!(row.InformState & 2) && Object.values(row.CaseNoObj).every(obj => (obj.FlowState & 2 || obj.FlowState & 32) && (obj.FlowState & 4 || obj.FlowState & 64))"
-						class="btn-action" type="success" @click="informConfirm(row, 2)"">完成</el-button>
+						class="btn-action" type="success" @click="informConfirm(row, 2)">完成</el-button>
 				</template>
 			</el-table-column>
-			<el-table-column label=" 會勘" align="center" min-width="40">
+			<el-table-column label="會勘" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 4">
 						<i class="el-icon-check" style="color: #67C23A" />
 						<div v-if="row.Bit4_At">({{ row.Bit4_At }})</div>
 					</span>
-					<el-button v-else-if="row.InformState & 2" class="btn-action" type="success"
-						@click="informConfirm(row, 4)">完成</el-button>
+					<template v-else-if="row.InformState & 2">
+						<el-button class="btn-action" type="success"
+							@click="informConfirm(row, 4)">完成</el-button>
+						<el-button class="btn-action" type="warning"
+							@click="showPDFDialog = true; showMeetingPDF = true;">路段表PDF</el-button>
+					</template>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
@@ -136,6 +140,11 @@
 		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading"
 			:tableSelect.sync="tableSelect" />
 
+		<!-- 會勘路段表PDF -->
+		<el-dialog :visible.sync="showPDFDialog" title="會勘路段表" width="1200px">
+			<meeting-pdf v-if="showMeetingPDF" :caseSN="caseSN" />
+		</el-dialog>
+		
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
 			@pagination="getList" />
 	</div>
@@ -147,14 +156,17 @@ import checkPermission from '@/utils/permission';
 import { getApply, getApplyTicketList, setApplyTicketList } from "@/api/dispatch";
 import Pagination from "@/components/Pagination";
 import ApplyTicketPdf from "@/components/ApplyTicketPdf";
+import meetingPdf from "@/views/maintenance/inform/pdf/meetingPDF.vue";
 
 export default {
 	name: "caseApplyManage",
-	components: { ApplyTicketPdf, Pagination },
+	components: { ApplyTicketPdf, Pagination, meetingPdf },
 	data() {
 		return {
 			loading: false,
 			screenWidth: window.innerWidth,
+			showPDFDialog: true,
+			meetingPDFRef: null,
 			// timeTabId: 2,
 			// dateRange: [
 			// 	moment().startOf("month").toDate(),
@@ -184,7 +196,9 @@ export default {
 			total: 0,
 			list: [],
 			// detail: [],
-			tableSelect: []
+			tableSelect: [],
+			caseSN: '',
+			showMeetingPDF: false,
 		};
 	},
 	computed: { },
@@ -196,7 +210,9 @@ export default {
 	created() { 
 		this.getList();
 	},
-	mounted() { },
+	mounted() {
+		this.showPDFDialog = false;
+	},
 	methods: {
 		checkPermission,
 		getList(showMsg = true) {
@@ -216,6 +232,7 @@ export default {
 					this.total = 0;
 				} else {
 					this.list = response.data.list;
+					console.log(this.list);
 					this.list.forEach(l => {
 						l.Create_At = this.formatDate(l.Create_At);
 						l.Bit1_At = this.formatDate(l.Bit1_At);
@@ -296,6 +313,14 @@ export default {
 				});
 			}).catch(err => this.loading = false);
 		},
+		// getMeetingPDF(row) {
+		// 	this.caseSN = String(row.CaseSN);
+
+		// 	// getApplyTicketListPDF({ caseSN: row.CaseSN }).then(response => {
+		// 	// 	this.loading = false;
+		// 	// 	this.showPDFDialog = true;
+		// 	// }).catch(err => this.loading = false);
+		// },
 		formatDate(time) {
 			return time ? moment(time).format("YYYY-MM-DD") : "";
 		},
