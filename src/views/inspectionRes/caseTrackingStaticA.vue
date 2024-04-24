@@ -30,7 +30,7 @@
 							<el-col :span="12">
 								<div class="card-panel">
 									<div class="card-panel-description">
-										<div class="card-panel-text">本週新增</div>
+										<div class="card-panel-text">7日內新增</div>
 										<count-to :start-val="0" :end-val="Number(static[dist.zipCode] ? static[dist.zipCode].addCount : 0)" :duration="500" class="card-panel-num text-large" />
 									</div>
 								</div>
