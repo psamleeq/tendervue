@@ -96,6 +96,15 @@ export function setApplyTicketList(id, data) {
 	})
 }
 
+// 通報單列表PDF
+export function getApplyTicketListPDF(query) {
+	return request({
+		url: '/dispatch/applyTicketListPDF',
+		method: 'get',
+		params: query
+	})
+}
+
 // 分工判核
 export function getApplyReviewList(query) {
 	return request({

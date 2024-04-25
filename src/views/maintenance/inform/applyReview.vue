@@ -241,7 +241,7 @@ export default {
 			}
 		},
 		setResult(row, state) {
-			const confirmText = (state == 0) ? '分隊' : '廠商';
+			const confirmText = (state & 32 || state & 64) ? '分隊' : '廠商';
 			this.$prompt(`確定給「${confirmText}」辦理?`, "確認", { 
 				showClose: false,
 				inputPlaceholder: "備註"
