@@ -44,6 +44,15 @@ export function getGuildMap(query) {
 	})
 }
 
+// 契約Map
+export function getTenderGroup(query) {
+	return request({
+		url: '/type/tenderGroup',
+		method: 'get',
+		params: query
+	})
+}
+
 // 合約Map
 export function getTenderMap(query) {
 	return request({

@@ -3,6 +3,18 @@
 		<h2>分工判核</h2>
 		<div class="filter-container">
 			<div class="filter-item">
+				<div class="el-input el-input el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>契約</span>
+					</div>
+					<el-select v-model.number="listQuery.groupId" class="tender-select" placeholder="請選擇"
+						popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="Number(id)" :label="obj.groupName" />
+					</el-select>
+				</div>
+			</div>
+			<br>
+			<div class="filter-item">
 				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
 					<span slot="prepend">通報單號</span>
 				</el-input>
@@ -100,7 +112,7 @@
 
 <script>
 import moment from "moment";
-import { getDTypeMap } from "@/api/type";
+import { getTenderGroup, getDTypeMap } from "@/api/type";
 import { getApplyReviewList } from "@/api/dispatch";
 import { setCaseTrackingFlow } from "@/api/inspection";
 import TimePicker from "@/components/TimePicker";
@@ -126,6 +138,7 @@ export default {
 			],
 			searchRange: "",
 			listQuery: {
+				groupId: null,
 				caseSN: null,
 				pageCurrent: 1,
 				pageSize: 50,
@@ -156,6 +169,7 @@ export default {
 			list: [],
 			detail: [],
 			options: {
+				tenderGroup: {},
 				DistressType: {},
 				DistressTypeFlat: {},
 				DistressLevel: {
@@ -169,6 +183,8 @@ export default {
 	computed: { },
 	watch: {},
 	created() { 
+		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
+		
 		getDTypeMap().then(response => {
 			this.options.DistressType = response.data.distressTypeMap;
 			this.options.DistressTypeFlat = Object.values(this.options.DistressType).reduce((acc, cur) => {
@@ -177,7 +193,8 @@ export default {
 			}, {});
 		})
 
-		if (this.$route.params.caseSN) {
+		if (this.$route.params.groupId && this.$route.params.caseSN) {
+			this.listQuery.groupId = this.$route.params.groupId;
 			this.listQuery.filterStr = this.$route.params.caseSN;
 			this.getList();
 		}
@@ -187,9 +204,9 @@ export default {
 	},
 	methods: {
 		getList(showMsg = true) {
-			if (!this.listQuery.filterStr || this.listQuery.filterStr.length == 0) {
+			if (!this.listQuery.groupId || !this.listQuery.filterStr || this.listQuery.filterStr.length == 0) {
 				this.$message({
-					message: "請輸入通報單號",
+					message: "請輸入合約和通報單號",
 					type: "warning",
 				});
 			} else {
@@ -197,6 +214,7 @@ export default {
 				this.list = [];
 
 				getApplyReviewList({
+					groupId: this.listQuery.groupId,
 					caseSN: this.listQuery.filterStr,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize

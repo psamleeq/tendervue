@@ -380,8 +380,8 @@ export default {
 				tenderMap: {},
 				filterType: {
 					1: "合約",
-					2: "道管編號",
-					3: "地點(關鍵字)",
+					// 2: "道管編號",
+					// 3: "地點(關鍵字)",
 					4: "通報單號"
 				},
 				deviceType: {
@@ -474,51 +474,58 @@ export default {
 			return sums;
 		},
 		getList(showMsg = true) {
-			this.loading = true;
-			this.list = [];
-			this.tableSelect = [];
-			this.searchRange = '';
+			if (this.listQuery.filterType == 1 && !this.listQuery.tenderId) {
+				this.$message({
+					message: '請選擇合約',
+					type: "error",
+				});
+			} else {
+				this.loading = true;
+				this.list = [];
+				this.tableSelect = [];
+				this.searchRange = '';
 
-			let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
-			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-			if(this.listQuery.filterType != 4) this.searchRange = startDate + " - " + endDate;
+				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
+				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
+				if(this.listQuery.filterType != 4) this.searchRange = startDate + " - " + endDate;
 
-			getApply({
-				tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
-				caseNo: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				caseSN: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-				deviceType: this.listQuery.deviceType,
-				timeStart: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' : startDate,
-				timeEnd: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
-				pageCurrent: this.listQuery.pageCurrent,
-				pageSize: this.listQuery.pageSize
-			}).then(response => {
-				if (response.data.list.length == 0) {
-					if(showMsg) this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-					this.total = 0;
-				} else {
-					this.list = response.data.list;
-					this.total = response.data.total;
-					this.checkList = Array.from({ length: this.list.length }, () => false);
-					this.deviceTypeNow = this.listQuery.deviceType;
-					this.filterTypeNow = this.listQuery.filterType;
+				getApply({
+					tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
+					caseNo: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					caseSN: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					deviceType: this.listQuery.deviceType,
+					timeStart: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' : startDate,
+					timeEnd: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+					pageCurrent: this.listQuery.pageCurrent,
+					pageSize: this.listQuery.pageSize
+				}).then(response => {
+					if (response.data.list.length == 0) {
+						if(showMsg) this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+						this.total = 0;
+					} else {
+						this.list = response.data.list;
+						this.total = response.data.total;
+						this.checkList = Array.from({ length: this.list.length }, () => false);
+						this.deviceTypeNow = this.listQuery.deviceType;
+						this.filterTypeNow = this.listQuery.filterType;
 
-					this.list.forEach(l => {
-						l.DateCreate = this.formatDate(l.DateCreate);
-						l.DateDeadline = this.formatDate(l.DateDeadline);
-						for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
-							if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
-						this.$set(l, "editFormula", l.MillingFormula != '0');
-						this.$set(l, "notesSync", true);
-						this.$set(l, "edit", false);
-					})
-				}
-				this.loading = false;
-			}).catch(err => this.loading = false);
+						this.list.forEach(l => {
+							l.DateCreate = this.formatDate(l.DateCreate);
+							l.DateDeadline = this.formatDate(l.DateDeadline);
+							for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
+								if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
+							this.$set(l, "editFormula", l.MillingFormula != '0');
+							this.$set(l, "notesSync", true);
+							this.$set(l, "edit", false);
+						})
+					}
+					this.loading = false;
+				}).catch(err => this.loading = false);	
+			}
 		},
 		getTaskDetail(row) {
 			return new Promise(resolve => {
@@ -707,7 +714,9 @@ export default {
 		},
 		createApply() {
 			this.$confirm(`確認建立派工單？`, "確認", { showClose: false }).then(() => {
+				const groupId = this.options.tenderMap[this.listQuery.tenderId].groupId;
 				confirmApply({
+					groupId,
 					caseSN: this.listQuery.caseSN || '',
 					serialNoArr: this.tableSelect.map(l => l.SerialNo)
 				}).then(response => {

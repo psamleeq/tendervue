@@ -2,18 +2,18 @@
 	<div class="app-container case-apply-manage" v-loading="loading">
 		<h2>通報單管理</h2>
 		<div class="filter-container">
-			<!-- <div class="filter-item">
-				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+			<div class="filter-item">
+				<div class="el-input el-input el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
-						<span>類型</span>
+						<span>契約</span>
 					</div>
-					<el-select v-model.number="listQuery.deviceType" placeholder="請選擇" popper-class="type-select"
-						style="width: 100px">
-						<el-option v-for="(name, id) in options.deviceType" :key="id" :value="Number(id)" :label="name" />
+					<el-select v-model.number="listQuery.groupId" class="tender-select" placeholder="請選擇"
+						popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="Number(id)" :label="obj.groupName" />
 					</el-select>
 				</div>
 			</div>
-			<br> -->
+			<br>
 
 			<!-- <span class="filter-item">
 				<div style="font-size: 12px; color: #909399">建單日期</div>
@@ -144,6 +144,7 @@
 <script>
 import moment from "moment";
 import checkPermission from '@/utils/permission';
+import { getTenderGroup } from "@/api/type";
 import { getApply, getApplyTicketList, setApplyTicketList } from "@/api/dispatch";
 import Pagination from "@/components/Pagination";
 import ApplyTicketPdf from "@/components/ApplyTicketPdf";
@@ -162,6 +163,7 @@ export default {
 			// ],
 			searchRange: "",
 			listQuery: {
+				groupId: null,
 				filterStr: null,
 				deviceType: 1,
 				pageCurrent: 1,
@@ -184,7 +186,10 @@ export default {
 			total: 0,
 			list: [],
 			// detail: [],
-			tableSelect: []
+			tableSelect: [],
+			options: {
+				tenderGroup: {},
+			}
 		};
 	},
 	computed: { },
@@ -194,6 +199,8 @@ export default {
 		}
 	},
 	created() { 
+		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
+
 		this.getList();
 	},
 	mounted() { },
@@ -204,6 +211,7 @@ export default {
 			this.list = [];
 
 			getApplyTicketList({
+				groupId: this.listQuery.groupId || 0,
 				caseSN: this.listQuery.filterStr,
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize
@@ -238,7 +246,7 @@ export default {
 		applyReview(row) {
 			this.$router.push({
 				name: "applyReview",
-				params: { caseSN: row.CaseSN },
+				params: { groupId: row.GroupId, caseSN: row.CaseSN },
 			});
 		},
 		informConfirm(row, state) {
@@ -255,7 +263,7 @@ export default {
 			}).then(() => {
 				this.loading = true;
 
-				setApplyTicketList(row.CaseSN, {
+				setApplyTicketList(row.id, {
 					informState: row.InformState + state
 				}).then(response => {
 					if (response.statusCode == 20000) {
@@ -321,21 +329,10 @@ export default {
 					right: 0
 					transform: scale(0.7)
 				&.tender-select
-					width: 520px
-			.select-contract
-				.el-select:first-child .el-input__inner
-					background-color: #F5F7FA
-					color: #909399
-					border-right: none
-					border-top-right-radius: 0
-					border-bottom-right-radius: 0
-					&:focus
-						border-color: #DCDFE6
-				.el-select:last-child .el-input__inner
-					border-top-left-radius: 0
-					border-bottom-left-radius: 0
-					padding-left: 10px
-					text-align: left
+					width: 420px
+					.el-input__inner
+						padding-left: 10px
+						text-align: left
 	.el-table
 		.success-row 
 			background: #F0F9EB
