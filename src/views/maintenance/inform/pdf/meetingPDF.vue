@@ -45,6 +45,11 @@ export default {
 			},
 		}
 	},
+  watch: {
+    caseSN() {
+      this.getList();
+    }
+  },
 	computed: {	},
   created() {
     this.initFont();
@@ -79,11 +84,14 @@ export default {
           this.pdfDoc.addFont("edukai.ttf", "edukai", "normal");
           this.pdfDoc.setFont("edukai");
 
-          this.getList();
+          // this.getList();
         });
     },
     createPDF() {
       return new Promise((resolve, reject) => {
+        this.pdfDoc.addPage();
+        while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
+
         const { width, height } = this.pdfDoc.internal.pageSize;
         this.pdfDoc.setFontSize(14);
         this.pdfDoc.text(`112年度道路預約式契約維護修繕工程第3標`, width/2, height-280, { align: 'center' });
@@ -167,6 +175,16 @@ export default {
       });
     },
     getList() {
+      this.caseNo = [];
+      this.dateDeadline = [];
+      this.dateUpload = [];
+      this.distressType = [];
+      this.millingArea = [];
+      this.millingDepth = [];
+      this.millingLength =  [];
+      this.millingWidth = [];
+      this.place = [];
+
       // Fetch PDF data from API
       getApplyTicketListPDF({ caseSN: this.caseSN }).then(response => {
         const list = response.data.list;

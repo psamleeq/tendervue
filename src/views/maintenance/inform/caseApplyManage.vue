@@ -90,7 +90,7 @@
 						<el-button class="btn-action" type="success"
 							@click="informConfirm(row, 4)">完成</el-button>
 						<el-button class="btn-action" type="warning"
-							@click="showPDFDialog = true; showMeetingPDF = true;">路段表PDF</el-button>
+							@click="caseSN = String(row.CaseSN); showPDFDialog = true;">路段表PDF</el-button>
 					</template>
 					<span v-else> - </span>
 				</template>
@@ -142,7 +142,7 @@
 
 		<!-- 會勘路段表PDF -->
 		<el-dialog :visible.sync="showPDFDialog" title="會勘路段表" width="1200px">
-			<meeting-pdf v-if="showMeetingPDF" :caseSN="caseSN" />
+			<meeting-pdf :caseSN="caseSN" />
 		</el-dialog>
 		
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
@@ -200,7 +200,6 @@ export default {
 			// detail: [],
 			tableSelect: [],
 			caseSN: '',
-			showMeetingPDF: false,
 			options: {
 				tenderGroup: {},
 			}
