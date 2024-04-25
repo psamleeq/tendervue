@@ -89,6 +89,14 @@
 				</template>
 			</el-table-column>
 
+			<el-table-column prop="FlowState" label="分派" width="90" align="center" fixed>
+				<template slot-scope="{ row }">
+					<span v-if="row.FlowState & 4">廠商</span>
+					<span v-else-if="row.FlowState & 64">分隊</span>
+					<span v-else> - </span>
+				</template>
+			</el-table-column>
+
 			<el-table-column v-if="filterNow" :key="filterNow" prop="Contractor" label="廠商" width="90" align="center" fixed />
 
 			<el-table-column
