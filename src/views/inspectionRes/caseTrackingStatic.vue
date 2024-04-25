@@ -41,7 +41,7 @@
 							<i class="el-icon-star-on" />
 						</div> -->
 						<div class="card-panel-description">
-							<div class="card-panel-text">新增案件數(本週)</div>
+							<div class="card-panel-text">新增案件數(7日內)</div>
 							<count-to :start-val="0" :end-val="Number(static.addCount) || 0" :duration="500" class="card-panel-num text-large" />
 							<!-- <div class="card-panel-num text-large">{{ Number(static.addCount || 0).toLocaleString() }}</div> -->
 						</div>
