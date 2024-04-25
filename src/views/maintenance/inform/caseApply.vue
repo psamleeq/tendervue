@@ -3,31 +3,13 @@
 		<h2>製作通報單</h2>
 		<div class="filter-container">
 			<div class="filter-item">
-				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
-					<div class="el-input-group__prepend">
-						<span>類型</span>
-					</div>
-					<el-select v-model.number="listQuery.deviceType" placeholder="請選擇" popper-class="type-select"
-						style="width: 100px">
-						<el-option v-for="(name, id) in options.deviceType" :key="id" :value="Number(id)" :label="name" />
-					</el-select>
-				</div>
-			</div>
-
-			<span class="filter-item">
-				<div style="font-size: 12px; color: #909399">成案日期</div>
-				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList" />
-			</span>
-			<br />
-
-			<div class="filter-item">
 				<div v-if="listQuery.filterType == 1" class="select-contract">
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
-					<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇"
-						popper-class="type-select tender" clearable @clear="listQuery.tenderId = null">
-						<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="id" :label="obj.tenderName" />
+					<el-select v-model="listQuery.groupId" class="tender-select" placeholder="請選擇"
+						popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="id" :label="obj.groupName" />
 					</el-select>
 				</div>
 
@@ -37,22 +19,44 @@
 					</el-select>
 				</el-input>
 			</div>
+			<br>
+
+			<span class="filter-item">
+				<div style="font-size: 12px; color: #909399">成案日期</div>
+				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList" />
+			</span>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search"
 				@click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
 			<el-button v-if="filterTypeNow == 4" class="filter-item" type="success" icon="el-icon-download"
 				:disabled="(filterTypeNow == 4 && !listQuery.filterStr) || list.length == 0"
 				@click="reissueApplyTicket();">補印</el-button>
-			<br>
-			<span v-if="filterTypeNow != 4" class="filter-item">
-				<el-input v-model="listQuery.caseSN">
-					<span slot="prepend">通報單號</span>
-				</el-input>
-			</span>
-			<el-tooltip class="filter-item" effect="dark" content="請選擇案件" placement="bottom"
-				:disabled="tableSelect.length != 0">
-				<el-button v-show="filterTypeNow != 4" type="success" :disabled="tableSelect.length == 0" @click="createApply"">建立</el-button>
-			</el-tooltip>
+
+			<template v-if="filterTypeNow != 4">
+				<el-divider />
+
+				<div class="filter-item">
+					<div class="el-input el-input--medium el-input-group el-input-group--prepend">
+						<div class="el-input-group__prepend">
+							<span>類型</span>
+						</div>
+						<el-select v-model.number="listQuery.deviceType" placeholder="請選擇" popper-class="type-select"
+							style="width: 100px">
+							<el-option v-for="(name, id) in options.deviceType" :key="id" :value="Number(id)" :label="name" />
+						</el-select>
+					</div>
+				</div>
+
+				<span class="filter-item">
+					<el-input v-model="listQuery.caseSN">
+						<span slot="prepend">通報單號</span>
+					</el-input>
+				</span>
+				<el-tooltip class="filter-item" effect="dark" content="請選擇案件" placement="bottom"
+					:disabled="tableSelect.length != 0">
+					<el-button type="success" :disabled="tableSelect.length == 0" @click="createApply"">建立</el-button>
+				</el-tooltip>
+			</template>
 		</div>
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
@@ -280,7 +284,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getKitItemMap } from "@/api/type";
+import { getTenderGroup, getKitItemMap } from "@/api/type";
 import { getApply, confirmApply, setDispatchSpec, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
@@ -310,9 +314,8 @@ export default {
 			listQuery: {
 				filter: false,
 				filterType: 1,
-				tenderRound: 100001,
 				filterStr: null,
-				tenderId: null,
+				groupId: null,
 				deviceType: 1,
 				caseSN: null,
 				pageCurrent: 1,
@@ -377,9 +380,9 @@ export default {
 			tableSelect:[],
 			apiHeader: [ "SerialNo", "RestoredId", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes", "TaskRealGroup", "KitNotes" ],
 			options: {
-				tenderMap: {},
+				tenderGroup: {},
 				filterType: {
-					1: "合約",
+					1: "契約",
 					// 2: "道管編號",
 					// 3: "地點(關鍵字)",
 					4: "通報單號"
@@ -407,7 +410,7 @@ export default {
 	},
 	watch: {},
 	created() {
-		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
+		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
 
 		if (this.$route.params.caseSN) {
 			this.listQuery.filterType = 4;
@@ -474,9 +477,9 @@ export default {
 			return sums;
 		},
 		getList(showMsg = true) {
-			if (this.listQuery.filterType == 1 && !this.listQuery.tenderId) {
+			if (this.listQuery.filterType == 1 && !this.listQuery.groupId) {
 				this.$message({
-					message: '請選擇合約',
+					message: '請選擇契約',
 					type: "error",
 				});
 			} else {
@@ -490,11 +493,10 @@ export default {
 				if(this.listQuery.filterType != 4) this.searchRange = startDate + " - " + endDate;
 
 				getApply({
-					tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
+					groupId: this.listQuery.filterType == 1 ? this.listQuery.groupId : null,
 					caseNo: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 					keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 					caseSN: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					deviceType: this.listQuery.deviceType,
 					timeStart: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' : startDate,
 					timeEnd: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 					pageCurrent: this.listQuery.pageCurrent,
@@ -510,7 +512,7 @@ export default {
 						this.list = response.data.list;
 						this.total = response.data.total;
 						this.checkList = Array.from({ length: this.list.length }, () => false);
-						this.deviceTypeNow = this.listQuery.deviceType;
+						// this.deviceTypeNow = this.listQuery.deviceType;
 						this.filterTypeNow = this.listQuery.filterType;
 
 						this.list.forEach(l => {
@@ -714,9 +716,9 @@ export default {
 		},
 		createApply() {
 			this.$confirm(`確認建立派工單？`, "確認", { showClose: false }).then(() => {
-				const groupId = this.options.tenderMap[this.listQuery.tenderId].groupId;
 				confirmApply({
-					groupId,
+					deviceType: this.listQuery.deviceType,
+					groupId: this.listQuery.groupId,
 					caseSN: this.listQuery.caseSN || '',
 					serialNoArr: this.tableSelect.map(l => l.SerialNo)
 				}).then(response => {
@@ -814,7 +816,7 @@ export default {
 					margin-right: -3px
 					transform: scale(0.7)
 				&.tender-select
-					width: 520px
+					width: 330px
 					.el-input__inner
 						padding-left: 10px
 						text-align: left

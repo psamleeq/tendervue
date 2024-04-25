@@ -87,10 +87,9 @@
 						<div v-if="row.Bit4_At">({{ row.Bit4_At }})</div>
 					</span>
 					<template v-else-if="row.InformState & 2">
-						<el-button class="btn-action" type="success"
-							@click="informConfirm(row, 4)">完成</el-button>
 						<el-button class="btn-action" type="warning"
 							@click="caseSN = String(row.CaseSN); showPDFDialog = true;">路段表PDF</el-button>
+						<el-button class="btn-action" type="success" @click="informConfirm(row, 4)">完成</el-button>
 					</template>
 					<span v-else> - </span>
 				</template>
@@ -353,7 +352,7 @@ export default {
 					right: 0
 					transform: scale(0.7)
 				&.tender-select
-					width: 420px
+					width: 330px
 					.el-input__inner
 						padding-left: 10px
 						text-align: left

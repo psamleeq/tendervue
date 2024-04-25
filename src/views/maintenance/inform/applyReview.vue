@@ -306,7 +306,7 @@ export default {
 					margin-right: -3px
 					transform: scale(0.7)
 				&.tender-select
-					width: 520px
+					width: 330px
 					.el-input__inner
 						padding-left: 10px
 						text-align: left
