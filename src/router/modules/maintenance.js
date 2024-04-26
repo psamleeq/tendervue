@@ -75,7 +75,7 @@ const maintenanceRouter = {
 					component: () => import('@/views/maintenance/job/plan'),
 					name: 'plan',
 					meta: {
-						title: '施作分派',
+						title: '廠商分派 (主任分派)',
 						roles: ['restored.assign'],
 						isNew: true
 					}

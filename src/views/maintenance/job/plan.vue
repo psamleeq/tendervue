@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-plan" v-loading="loading">
-		<h2>施作分派</h2>
+		<h2>廠商分派 (主任分派)</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
