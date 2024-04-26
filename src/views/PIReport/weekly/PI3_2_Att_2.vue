@@ -432,25 +432,10 @@ export default {
 							this.inputs = this.list.content.inputs;
 
 							// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
-							const fetchImg = async (key) => {
-								return new Promise( resolve => {
-									fetch(this.inputs[key])
-										.then(res => res.blob())
-										.then(blob => {
-											const reader = new FileReader();
-											reader.onloadend = () => { 
-												this.inputs[key] = reader.result; 
-												resolve();
-											};
-											reader.readAsDataURL(blob);
-										})
-								})
-							};
-
 							let fetchImgList = [];
 							for(const key in this.inputs) {
 								if(key.includes('Img') && this.inputs[key] && this.inputs[key].length != 0) {
-									fetchImgList.push(fetchImg(key));
+									fetchImgList.push(this.fetchImg(key));
 								}
 							}
 							await Promise.all(fetchImgList);
@@ -475,6 +460,20 @@ export default {
 					resolve();
 					// this.loading = false;
 				}).catch(err => { this.loading = false; });
+			})
+		},
+		async fetchImg(key) {
+			return new Promise( resolve => {
+				fetch(this.inputs[key])
+					.then(res => res.blob())
+					.then(blob => {
+						const reader = new FileReader();
+						reader.onloadend = () => { 
+							this.inputs[key] = reader.result; 
+							resolve();
+						};
+						reader.readAsDataURL(blob);
+					})
 			})
 		},
 		async initPDF() {
@@ -512,12 +511,15 @@ export default {
 				}
 
 				const aspectRatioImgList = [];
+				const fetchImgList = [];
 				if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
 					if(arg.value != undefined) {
 						this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
 						aspectRatioImgList.push(this.aspectRatioImg(arg));
+						if(this.inputForm[arg.key] && this.inputForm[arg.key].length != 0) fetchImgList.push(this.fetchImg(arg.key));
 					}
 				}
+				await Promise.all(fetchImgList);
 				await Promise.all(aspectRatioImgList);
 				resolve();
 			})
@@ -705,7 +707,7 @@ export default {
 		storeData(){
 			this.loading = true;
 			let imgObj = {}; 
-			let inputs = JSON.parse(JSON.stringify(this.inputs));
+			const inputs = JSON.parse(JSON.stringify(this.inputs));
 
 			Object.keys(this.inputs).forEach(key => {
 				if(key.includes('Img')) {
@@ -713,18 +715,17 @@ export default {
 					inputs[key] = "";
 				}
 			})
-			
 			const storedContent = {
 				initPage: this.initPage,
 				inputs: this.inputs
 			}
-			setPerfContent(this.listQuery.perfContentId, {
-				caseNo: Number(this.inputForm.caseNumber),
-				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: ((['3'].includes(this.inputs.distressSrc)) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0),
-				content: JSON.stringify(storedContent),
-				imgObj
-			}).then(response => {
+			let uploadForm = new FormData();
+			uploadForm.append('checkDate', moment(this.checkDate).format("YYYY-MM-DD"));
+			uploadForm.append('pageCount', ((['3'].includes(this.inputs.distressSrc)) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0));
+			uploadForm.append('content', JSON.stringify(storedContent));
+			uploadForm.append('imgObj', JSON.stringify(imgObj));
+
+			setPerfContent(this.listQuery.perfContentId, uploadForm).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "提交成功",

@@ -445,7 +445,7 @@ export default {
 		storeData(){
 			this.loading = true;
 			let imgObj = {}; 
-			let inputs = JSON.parse(JSON.stringify(this.inputs));
+			const inputs = JSON.parse(JSON.stringify(this.inputs));
 
 			Object.keys(this.inputs).forEach(key => {
 				if(key.includes('Img')) {
@@ -457,13 +457,13 @@ export default {
 				initPage: this.initPage,
 				inputs
 			}
+			let uploadForm = new FormData();
+			uploadForm.append('checkDate', moment(this.checkDate).format("YYYY-MM-DD"));
+			uploadForm.append('pageCount', this.inputFormArr.length + 1);
+			uploadForm.append('content', JSON.stringify(storedContent));
+			uploadForm.append('imgObj', JSON.stringify(imgObj));
 
-			setPerfContent(this.listQuery.perfContentId,{
-				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: this.inputFormArr.length + 1,
-				content: JSON.stringify(storedContent),
-				imgObj
-			}).then(response => {
+			setPerfContent(this.listQuery.perfContentId, uploadForm).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "提交成功",

@@ -293,15 +293,17 @@ export default {
 		},
 		storeData(){
 			this.loading = true;
+			const inputs = JSON.parse(JSON.stringify(this.inputs));
 			const storedContent = {
 				initPage: this.initPage,
-				inputs: this.inputs
+				inputs
 			}
-			setPerfContent(this.listQuery.perfContentId,{
-				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: 1,
-				content: JSON.stringify(storedContent)
-			}).then(response => {
+			let uploadForm = new FormData();
+			uploadForm.append('checkDate', moment(this.checkDate).format("YYYY-MM-DD"));
+			uploadForm.append('pageCount', 1);
+			uploadForm.append('content', JSON.stringify(storedContent));
+
+			setPerfContent(this.listQuery.perfContentId, uploadForm).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "提交成功",

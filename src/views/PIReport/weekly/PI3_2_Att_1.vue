@@ -410,36 +410,26 @@ export default {
 		},
 		storeData(){
 			this.loading = true;
-			let imgObj = {}; 
-			let inputs = JSON.parse(JSON.stringify(this.inputs));
-
-			Object.keys(this.inputs).forEach(key => {
-				if(key.includes('Img')) {
-					imgObj[key] = this.inputs[key];
-					inputs[key] = "";
-				}
-			})
-
+			const inputs = JSON.parse(JSON.stringify(this.inputs));
 			const storedContent = {
 				initPage: this.initPage,
 				inputs
 			}
-			// console.log(storedContent, imgObj);
+			const perfItems = [
+				{
+					"reportId": this.listQuery.reportId,
+					"perfItem": 302,
+					"perfAtt": [ 2 ],
+					"perfPages": [ this.inputs.caseList.length ]
+				}
+			]
+			let uploadForm = new FormData();
+			uploadForm.append('checkDate', moment(this.checkDate).format("YYYY-MM-DD"));
+			uploadForm.append('pageCount', this.pdfDoc.internal.getNumberOfPages());
+			uploadForm.append('content', JSON.stringify(storedContent));
+			uploadForm.append('perfItems', JSON.stringify(perfItems));
 
-			setPerfContent(this.listQuery.perfContentId,{
-				checkDate: moment(this.checkDate).format("YYYY-MM-DD"),
-				pageCount: this.pdfDoc.internal.getNumberOfPages(),
-				content: JSON.stringify(storedContent),
-				imgObj,
-				perfItems: [
-					{
-						"reportId": this.listQuery.reportId,
-						"perfItem": 302,
-						"perfAtt": [ 2 ],
-						"perfPages": [ this.inputs.caseList.length ]
-					}
-				]
-			}).then(response => {
+			setPerfContent(this.listQuery.perfContentId, uploadForm).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "提交成功",
