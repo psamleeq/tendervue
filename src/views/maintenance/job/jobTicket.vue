@@ -34,8 +34,8 @@
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
-					<el-select v-model="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.tenderId = null">
-						<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="id" :label="obj.tenderName" />
+					<el-select v-model.number="listQuery.groupId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="Number(id)" :label="obj.groupName" />
 					</el-select>
 				</div>
 				
@@ -351,7 +351,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getGuildMap } from "@/api/type";
+import { getTenderGroup, getGuildMap } from "@/api/type";
 import { getJobTicket, getJobTicketSort, confirmJobTicket, revokeDispatch, getTaskReal } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import JobTicketPdf from "@/components/JobTicketPdf";
@@ -376,7 +376,7 @@ export default {
 			listQuery: {
 				filterType: 1,
 				filterStr: null,
-				tenderId: null,
+				groupId: null,
 				deviceType: 1,
 				contractor: null,
 				// pageCurrent: 1,
@@ -494,7 +494,7 @@ export default {
 			tableSelect: [],
 			apiHeader: [ "SerialNo", "OrderIndex" ],
 			options: {
-				tenderMap: {},
+				tenderGroup: {},
 				guildMap: {},
 				deviceType: {
 					1: "道路",
@@ -503,7 +503,7 @@ export default {
 					4: "標線"
 				},
 				filterType: {
-					1: "合約",
+					1: "契約",
 					2: "通報單號",
 					3: "地點(關鍵字)"
 				},
@@ -550,7 +550,7 @@ export default {
 		// marker
 		this.markers = [];
 
-		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap });
+		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
 		getGuildMap().then(response => { this.options.guildMap = response.data.guildMap });
 	},
 	mounted() {
@@ -640,7 +640,7 @@ export default {
 				
 				getJobTicket({
 					contractor: this.listQuery.contractor,
-					tenderId: this.listQuery.filterType == 1 ? this.listQuery.tenderId : null,
+					groupId: this.listQuery.filterType == 1 ? this.listQuery.groupId : null,
 					reportSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 					keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 					deviceType: this.listQuery.deviceType
@@ -871,7 +871,7 @@ export default {
 			.el-select
 				width: 110px
 				&.tender-select
-					width: 520px
+					width: 330px
 			.select-contract
 				.el-select:first-child .el-input__inner
 					background-color: #F5F7FA
