@@ -7,8 +7,7 @@
 					<div class="el-input-group__prepend">
 						<span>契約</span>
 					</div>
-					<el-select v-model.number="listQuery.groupId" class="tender-select" placeholder="請選擇"
-						popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+					<el-select v-model.number="listQuery.groupId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
 						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="Number(id)" :label="obj.groupName" />
 					</el-select>
 				</div>
@@ -212,7 +211,6 @@ export default {
 	},
 	created() { 
 		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
-
 		this.getList();
 	},
 	mounted() {

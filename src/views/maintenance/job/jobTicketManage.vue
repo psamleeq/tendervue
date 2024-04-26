@@ -335,7 +335,7 @@ export default {
 		},
 		showTicketDetail(row) {
 			this.$router.push({
-				path: "/dispatch/finRegister",
+				name: "finRegister",
 				query: { deviceType: this.deviceTypeNow, contractor: this.contractorNow, orderSN: row.OrderSN },
 			});
 		},
