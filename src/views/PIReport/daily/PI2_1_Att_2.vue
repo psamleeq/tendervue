@@ -333,12 +333,24 @@ export default {
 			const reader = new FileReader();
 			reader.readAsDataURL(file.raw);
 			reader.onloadend = (evt) => {
-				this.imgList = [{
-					url: evt.target.result
-				}];
-				this.inputs.case1999Img = evt.target.result;
+				const img = new Image();
+				img.onload = () => {
+					const canvas = document.createElement('canvas');
+					// console.log("image: ", img.width, img.height);
+					const scale = Math.max(img.width, img.height) >= 1024 ? 1024/Math.max(img.width, img.height) : 1;
+					canvas.width = img.width * scale;
+					canvas.height = img.height * scale;
+					// console.log("canvas: ", canvas.width, canvas.height);
+					const canvasContext = canvas.getContext('2d');
+					canvasContext.drawImage(img, 0, 0, canvas.width, canvas.height);
+					const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
 
-				this.previewPdf();
+					this.imgList = [{ url: dataUrl }];
+					this.inputs.case1999Img = dataUrl;
+
+					this.previewPdf();
+				}
+				img.src = evt.target.result;
 			};
 		},
 		handleRemove(file, fileList) {
