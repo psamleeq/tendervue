@@ -411,8 +411,6 @@
 						</div>
 					</span>
 				</template>
-
-				<span></span>
 			</el-table-column>
 		</el-table>
 		<br>

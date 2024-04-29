@@ -61,7 +61,7 @@
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
-		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" :key="`${deviceTypeNow}_${filterTypeNow}`" border
+		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" :key="`${listQuery.deviceType}_${filterTypeNow}`" border
 			fit highlight-current-row :header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%"
 			@selection-change="handleCheckedChange">
 			<el-table-column v-if="filterTypeNow != 4" type="selection" width="60" align="center" fixed>
@@ -81,11 +81,11 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" align="center"
+			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" :min-width="value.width" align="center"
 				:formatter="formatter" :sortable="value.sortable" />
 
 			<!-- 道路、熱再生 -->
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
+			<el-table-column v-if="[1,2].includes(listQuery.deviceType)" label="算式" width="320" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
@@ -107,30 +107,80 @@
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="85" align="center">
+			<el-table-column v-if="[1,2].includes(listQuery.deviceType)" label="預估面積" width="60" align="center">
 				<template slot-scope="{ row }">
 					<span>{{ row.MillingArea || "-" }}</span>
 				</template>
 			</el-table-column>
 
+			<!-- 道路 -->
+			<el-table-column v-if="listQuery.deviceType == '1'" label="刨鋪深度" width="60" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.edit">
+						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
+							<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
+						</el-select>
+					</span>
+					<span v-else>{{ row.MillingDepth }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column v-if="listQuery.deviceType == '1'" label="使用粒料" width="220" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.edit">
+						<el-row :gutter="5">
+							<el-col :span="7" style="line-height: 28px">粒料3/4</el-col>
+							<el-col :span="5">
+								<el-select v-model="row.Aggregate34" size="mini" popper-class="type-select">
+									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
+								</el-select>
+							</el-col>
+							<el-col :span="7" style="line-height: 28px">粒料3/8</el-col>
+							<el-col :span="5">
+								<el-select v-model="row.Aggregate38" size="mini" popper-class="type-select">
+									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
+								</el-select>
+							</el-col>
+						</el-row>
+					</span>
+					<span v-else>
+						<el-row :gutter="5">
+							<el-col :span="8">粒料3/4: </el-col>
+							<el-col :span="3" class="item-content">{{ row.Aggregate34 }}</el-col>
+							<el-col :span="2" class="item-content"> | </el-col>
+							<el-col :span="8">粒料3/8: </el-col>
+							<el-col :span="3" class="item-content">{{ row.Aggregate38 }}</el-col>
+						</el-row>
+					</span>
+				</template>
+			</el-table-column>
+
 			<!-- 設施 -->
-			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
+			<el-table-column v-if="listQuery.deviceType == 3" label="工程概述" align="center">
 				<template slot-scope="{ row }">
 					<el-input v-if="row.edit" v-model="row.Notes" />
 					<span v-else>{{ row.Notes || " - " }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="deviceTypeNow == 3" label="設計數量" width="140" align="center">
+
+			<!-- 標線 -->
+			<el-table-column v-if="listQuery.deviceType == 4" label="面積" width="80" align="center">
+				<template slot-scope="{ row }">
+					<!-- <el-input v-model="row.MillingArea" size="mini" /> -->
+					<span>{{ row.MillingArea || "-" }}</span>
+				</template>
+			</el-table-column>
+
+			<!-- 設施、標線 -->
+			<el-table-column v-if="[3,4].includes(listQuery.deviceType)" label="設計數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="row.State == 1" :type="row.TaskRealGroup == 0 ? 'success' : 'info'"
-							:plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<el-button v-if="row.State == 1" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 
-			<el-table-column label="狀態" width="140" align="center">
+			<el-table-column label="狀態" width="100" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.State & 16">已完工</span>
 					<span v-else-if="row.State & 8">送出派工單</span>
@@ -152,7 +202,7 @@
 			<el-table-column label="動作" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="deviceTypeNow != 4 && row.State == 1" type="primary" size="mini"
+						<el-button v-if="listQuery.deviceType != 4 && row.State == 1" type="primary" size="mini"
 							@click="row.edit = true">編輯</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
@@ -167,15 +217,15 @@
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<span v-else>
-						<el-table class="expandTable" empty-text="目前沒有資料" :data="row.Content" border fit highlight-current-row
+						<el-table v-if="listQuery.deviceType == 3" class="expandTable" empty-text="目前沒有資料" :data="row.Content" border fit highlight-current-row
 							:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe show-summary
 							:summary-method="(param) => getSummaries(param, row.Content)" style="width: 100%">
 							<el-table-column type="index" label="序號" width="50" align="center" />
-							<el-table-column v-for="(value, key) in detailHeaders" :key="key" :prop="key"
+							<el-table-column v-for="(value, key) in detailHeaders[listQuery.deviceType]" :key="key" :prop="key"
 								:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
 								:label="value.name" align="center" :sortable="value.sortable" />
 						</el-table>
-						<div class="expand-note">
+						<div v-if="listQuery.deviceType == 3" class="expand-note">
 							<!-- <div>金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div> -->
 							<div>施作數量: {{ row.KitNotes.DesignDetail || "-" }}</div>
 							<div>施工方式: {{ row.KitNotes.DesignDesc || "-"}}</div>
@@ -190,9 +240,8 @@
 			@pagination="getList" />
 
 		<!-- Dialog: 計價套組-->
-		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit"
-			:close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
-			<div class="filter-container">
+		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
+			<div v-if="listQuery.deviceType == 3" class="filter-container">
 				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇"
 					popper-class="type-select" style="width: 500px">
 					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)"
@@ -202,54 +251,80 @@
 			</div>
 			<el-table v-loading="loading" empty-text="目前沒有資料" :data="detailPlus" border fit highlight-current-row
 				:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%">
-				<el-table-column v-for="(value, key) in detailHeaders" :key="key" :prop="key"
+				<el-table-column v-for="(value, key) in detailHeaders[listQuery.deviceType]" :key="key" :prop="key"
 					:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30"
 					:label="value.name" align="center" :sortable="value.sortable">
 					<template slot-scope="{ row, column }">
-						<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
-							<span v-if="row.isAdd || row.isEdit">
-								<el-input v-model="row[column.property]" size="mini" style="width: 55px" />
-								<el-button v-if="row.isEdit" class="btn-dialog" type="info" size="mini"
-									@click="row.isEdit = false;">取消</el-button>
+						<span v-if="listQuery.deviceType == 3">
+							<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+								<span v-if="row.isAdd || row.isEdit">
+									<el-input v-model="row[column.property]" size="mini" style="width: 55px" />
+									<el-button v-if="row.isEdit" class="btn-dialog" type="info" size="mini"
+										@click="row.isEdit = false;">取消</el-button>
+								</span>
+								<span v-else>
+									<span>{{ row[column.property] }}</span>
+									<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+										<i class="el-icon-edit" />
+									</el-button>
+								</span>
 							</span>
-							<span v-else>
-								<span>{{ row[column.property] }}</span>
-								<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
-									<i class="el-icon-edit" />
-								</el-button>
+							<span v-else-if="['UnitSN'].includes(column.property) && row.isAdd">
+								<span v-if="row.isAdd || row.isEdit">
+									<el-input v-model="row[column.property]" size="mini">
+										<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" slot="suffix"
+											effect="dark" placement="bottom" content="點選代入">
+											<el-button type="text" style="padding: 5px 0" @click="getKitItem(row)">
+												<i class="el-icon-check" style="color: #67C23A" />
+											</el-button>
+										</el-tooltip>
+									</el-input>
+								</span>
 							</span>
+							<span v-else>{{ row[column.property] }}</span>
 						</span>
-						<span v-else-if="['UnitSN'].includes(column.property) && row.isAdd">
-							<span v-if="row.isAdd || row.isEdit">
-								<el-input v-model="row[column.property]" size="mini">
-									<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" slot="suffix"
-										effect="dark" placement="bottom" content="點選代入">
-										<el-button type="text" style="padding: 5px 0" @click="getKitItem(row)">
-											<i class="el-icon-check" style="color: #67C23A" />
-										</el-button>
-									</el-tooltip>
-								</el-input>
+						<span v-else-if="listQuery.deviceType == 4">
+							<span v-if="['MillingFormula','number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+								<span v-if="row.isAdd || row.isEdit">
+									<el-input v-model="row[column.property]" size="mini" @change="calArea(row)">
+										<el-button slot="append" v-if="row.isEdit" class="btn-dialog" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
+									</el-input>
+								</span>
+								<span v-else>
+									<span>{{ row[column.property] }}</span>
+									<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+										<i class="el-icon-edit" />
+									</el-button>
+								</span>
 							</span>
+							<span v-else-if="['ItemPaint', 'ItemType'].includes(column.property)">
+								<span v-if="row.isAdd">
+									<el-select v-model.number="row[column.property]" placeholder="請選擇" size="mini" popper-class="type-select" style="width: 120px">
+										<el-option v-for="(val, id) in options[`${column.property}Map`]" :key="id" :value="Number(id)" :label="val.name" />
+									</el-select>
+								</span>
+								<span v-else>{{ options[`${column.property}Map`][row[column.property]].name }}</span>
+							</span>
+							<span v-else>{{ row[column.property] }}</span>
 						</span>
-						<span v-else>{{ row[column.property] }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column label="動作" align="center" :min-width="30">
 					<template slot-scope="{ row, $index }">
 						<span v-if="row.isAdd">
-							<el-button type="success" size="mini" @click="addKitItem">新增</el-button>
+							<el-button type="success" size="mini" @click="addItem">新增</el-button>
 						</span>
 						<span v-else-if="row.isEdit">
 							<el-button type="primary" size="mini" @click="row.isEdit = false;">確定</el-button>
 						</span>
 						<span v-else>
-							<el-button type="danger" size="mini" @click="delKitItem($index)">刪除</el-button>
+							<el-button type="danger" size="mini" @click="delItem($index)">刪除</el-button>
 						</span>
 					</template>
 				</el-table-column>
 			</el-table>
 			<div class="detail-caption amount">金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
-			<div>
+			<div v-if="listQuery.deviceType == 3">
 				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDetail">
 					<template slot="prepend">施作數量</template>
 				</el-input>
@@ -270,7 +345,7 @@
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
 			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog"
-				:deviceTypeNow="deviceTypeNow" />
+				:deviceTypeNow="listQuery.deviceType" />
 			<div slot="footer" class="dialog-footer">
 				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
 				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
@@ -284,7 +359,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderGroup, getKitItemMap } from "@/api/type";
+import { getTenderGroup, getKitItemMap, getSCTypeItemMap } from "@/api/type";
 import { getApply, confirmApply, setDispatchSpec, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
@@ -309,7 +384,6 @@ export default {
 				moment().subtract(1, 'd').endOf("day").toDate(),
 			],
 			searchRange: "",
-			deviceTypeNow: 1,
 			filterTypeNow: 1,
 			listQuery: {
 				filter: false,
@@ -324,33 +398,59 @@ export default {
 			headers: {
 				Place: {
 					name: "案件地點",
-					sortable: false
+					sortable: false,
+					width: 60
 				},
 				DateDeadline: {
 					name: "預計完工日期",
-					sortable: false
+					sortable: false,
+					width: 40
 				}
 			},
 			detailHeaders: {
-				UnitSN: {
-					name: "項次",
-					sortable: false,
+				3: {
+					UnitSN: {
+						name: "項次",
+						sortable: false,
+					},
+					TaskName: {
+						name: "工程項目名稱",
+						sortable: false,
+					},
+					TaskUnit: {
+						name: "單位",
+						sortable: false,
+					},
+					TaskPrice: {
+						name: "單價",
+						sortable: false,
+					},
+					number: {
+						name: "數量",
+						sortable: false,
+					}
 				},
-				TaskName: {
-					name: "工程項目名稱",
-					sortable: false,
-				},
-				TaskUnit: {
-					name: "單位",
-					sortable: false,
-				},
-				TaskPrice: {
-					name: "單價",
-					sortable: false,
-				},
-				number: {
-					name: "數量",
-					sortable: false,
+				4: {
+					ItemPaint: {
+						name: "顏料",
+						sortable: false
+					},
+					ItemType: {
+						name: "維修項目",
+						sortable: false
+					},
+					MillingFormula: {
+						name: "公式",
+						sortable: false
+					},
+					number: {
+						name: "數量",
+						sortable: false
+					},
+					MillingArea: {
+						name: "面積",
+						sortable: false
+					}
 				}
 			},
 			total: 0,
@@ -399,6 +499,12 @@ export default {
 					2: "中",
 					3: "重"
 				},
+				depthArr: [0, 5, 10],
+				ItemPaintMap: {
+					1: { name: "熱塑性塑膠" },
+					2: { name: "油漆" }
+				},
+				ItemTypeMap: { },
 				kitArr: []
 			}
 		};
@@ -411,6 +517,7 @@ export default {
 	watch: {},
 	created() {
 		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
+		getSCTypeItemMap().then(response => { this.options.ItemTypeMap = response.data.SCType2Map });
 
 		if (this.$route.params.caseSN) {
 			this.listQuery.filterType = 4;
@@ -512,7 +619,6 @@ export default {
 						this.list = response.data.list;
 						this.total = response.data.total;
 						this.checkList = Array.from({ length: this.list.length }, () => false);
-						// this.deviceTypeNow = this.listQuery.deviceType;
 						this.filterTypeNow = this.listQuery.filterType;
 
 						this.list.forEach(l => {
@@ -637,6 +743,10 @@ export default {
 				}).catch(err => { this.loading = false; resolve(); });
 			})
 		},
+		async addItem() {
+			if(this.listQuery.deviceType == 3) await this.addKitItem();
+			else if(this.listQuery.deviceType == 4) this.addMarkerItem();
+		},
 		async addKitItem() {
 			if(!this.newItem.UnitSN) {
 				this.$message({
@@ -662,7 +772,22 @@ export default {
 				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });
 			}
 		},
-		delKitItem(index) {
+		async addMarkerItem() {
+			const newItem = this.newItem[this.deviceTypeNow];
+			if(!newItem.ItemPaint || !newItem.ItemType || newItem.MillingFormula.length == 0 || newItem.number == '0') {
+				const itemText = newItem.MillingFormula.length == 0 ? "公式" : "數量";
+				this.$message({
+					message: `請填入正確${itemText}`,
+					type: "error",
+				});
+			} else {
+				newItem.isAdd = false;
+				this.detail.push({...newItem, isEdit: false});
+
+				Object.assign(newItem, { ItemPaint: 1, ItemType: 1, MillingFormula: "", number: 1, MillingArea: 0, editFormula: true, isAdd: true });
+			}
+		},
+		delItem(index) {
 			this.detail.splice(index, 1);
 		},
 		dispatchSpec(row = this.rowActive, editContent = true) {
@@ -674,7 +799,7 @@ export default {
 					
 					if(!row.editFormula) row.MillingFormula = '0';
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
-					if([1,2].includes(this.deviceTypeNow)) {
+					if([1,2].includes(this.listQuery.deviceType)) {
 						this.calArea(caseSpec);
 						
 						if(caseSpec.MillingFormula && caseSpec.MillingFormula != '0' && caseSpec.MillingFormula.length != 0) {
@@ -683,17 +808,17 @@ export default {
 						} else delete caseSpec.MillingFormula;
 
 						delete caseSpec.KitNotes;
-					} else if([3,4].includes(this.deviceTypeNow)) {
+					} else if([3,4].includes(this.listQuery.deviceType)) {
 						this.detail.forEach(row => {
 							row.number == Number(row.number);
 							for(const key of [ "SerialNo", "isAdd", "isEdit" ]) delete row[key];
 						});
 
-						if(this.deviceTypeNow == 3) {
+						if(this.listQuery.deviceType == 3) {
 							if(this.detail.length > 0) caseSpec.KitContent = this.detail;
 							caseSpec.KitNotes = JSON.stringify(caseSpec.KitNotes);
 							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
-						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
+						} else if(this.listQuery.deviceType == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
 					}
 					
 					setDispatchSpec({
