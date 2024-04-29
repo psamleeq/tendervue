@@ -306,11 +306,19 @@ export default {
 								this.form.updateTemplate(this.template);
 							}
 
-							this.inputs[arg.key] = arg.value;
-
 							const img = new Image();
 							img.onload = () => {
-								// console.log(img.width, img.height);
+								// 照片壓縮
+								const canvas = document.createElement('canvas');
+								// console.log("image: ", img.width, img.height);
+								const scale = Math.max(img.width, img.height) >= 1024 ? 1024/Math.max(img.width, img.height) : 1;
+								canvas.width = img.width * scale;
+								canvas.height = img.height * scale;
+								const canvasContext = canvas.getContext('2d');
+								canvasContext.drawImage(img, 0, 0, canvas.width, canvas.height);
+								this.inputs[arg.key] = canvas.toDataURL("image/jpeg", 0.8);
+
+								// 調整比例
 								const templateWidth = this.template.schemas[index-1][arg.key].width;
 								const templateHeight = this.template.schemas[index-1][arg.key].height;
 								const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);

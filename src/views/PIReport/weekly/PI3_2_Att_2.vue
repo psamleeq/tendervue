@@ -432,10 +432,25 @@ export default {
 							this.inputs = this.list.content.inputs;
 
 							// NOTE: 將image轉成dataURI (不然pdfme generate會報錯)
+							const fetchImg = async (key) => {
+								return new Promise( resolve => {
+									fetch(this.inputs[key])
+										.then(res => res.blob())
+										.then(blob => {
+											const reader = new FileReader();
+											reader.onloadend = () => { 
+												this.inputs[key] = reader.result; 
+												resolve();
+											};
+											reader.readAsDataURL(blob);
+										})
+								})
+							};
+
 							let fetchImgList = [];
 							for(const key in this.inputs) {
 								if(key.includes('Img') && this.inputs[key] && this.inputs[key].length != 0) {
-									fetchImgList.push(this.fetchImg(key));
+									fetchImgList.push(fetchImg(key));
 								}
 							}
 							await Promise.all(fetchImgList);
@@ -460,20 +475,6 @@ export default {
 					resolve();
 					// this.loading = false;
 				}).catch(err => { this.loading = false; });
-			})
-		},
-		async fetchImg(key) {
-			return new Promise( resolve => {
-				fetch(this.inputs[key])
-					.then(res => res.blob())
-					.then(blob => {
-						const reader = new FileReader();
-						reader.onloadend = () => { 
-							this.inputs[key] = reader.result; 
-							resolve();
-						};
-						reader.readAsDataURL(blob);
-					})
 			})
 		},
 		async initPDF() {
@@ -511,15 +512,12 @@ export default {
 				}
 
 				const aspectRatioImgList = [];
-				const fetchImgList = [];
 				if(['checkReportData_Img', 'dispatchData_Img', 'completeReportData_Img', 'reportData1999_Img',  'preconstruction_Img', 'completeFixed_Img', 'construction_Img'].includes(arg.key)) {
 					if(arg.value != undefined) {
 						this.inputs[arg.key] = this.inputForm[arg.key] = arg.value;
-						aspectRatioImgList.push(this.aspectRatioImg(arg));
-						if(this.inputForm[arg.key] && this.inputForm[arg.key].length != 0) fetchImgList.push(this.fetchImg(arg.key));
+						if(arg.value && arg.value.length != 0) aspectRatioImgList.push(this.aspectRatioImg(arg));
 					}
 				}
-				await Promise.all(fetchImgList);
 				await Promise.all(aspectRatioImgList);
 				resolve();
 			})
@@ -600,7 +598,17 @@ export default {
 
 				const img = new Image();
 				img.onload = () => {
-					// console.log(img.width, img.height);
+					// 照片壓縮
+					// const canvas = document.createElement('canvas');
+					// // console.log("image: ", img.width, img.height);
+					// const scale = Math.max(img.width, img.height) >= 1024 ? 1024/Math.max(img.width, img.height) : 1;
+					// canvas.width = img.width * scale;
+					// canvas.height = img.height * scale;
+					// const canvasContext = canvas.getContext('2d');
+					// canvasContext.drawImage(img, 0, 0, canvas.width, canvas.height);
+					// this.inputs[arg.key] = canvas.toDataURL("image/jpeg", 0.8);
+					
+					// 調整比例
 					const templateWidth = this.template.schemas[keyIndex][arg.key].width;
 					const templateHeight = this.template.schemas[keyIndex][arg.key].height;
 					const ratio = Math.min(templateWidth / img.width, templateHeight / img.height);
