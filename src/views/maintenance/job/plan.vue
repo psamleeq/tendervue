@@ -653,7 +653,7 @@ export default {
 				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });	
 
 				getTaskGroup({
-					tenderId: this.rowActive.DTeam,
+					groupId: this.rowActive.GroupId,
 					pageCurrent: 1,
 					pageSize: 999999
 				}).then(response => {

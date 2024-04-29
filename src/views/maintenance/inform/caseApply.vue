@@ -7,8 +7,7 @@
 					<el-select v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
-					<el-select v-model="listQuery.groupId" class="tender-select" placeholder="請選擇"
-						popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+					<el-select v-model="listQuery.groupId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
 						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="id" :label="obj.groupName" />
 					</el-select>
 				</div>
@@ -680,7 +679,7 @@ export default {
 				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });	
 
 				getTaskGroup({
-					tenderId: this.rowActive.SurveyId,
+					groupId: this.listQuery.groupId,
 					pageCurrent: 1,
 					pageSize: 999999
 				}).then(response => {

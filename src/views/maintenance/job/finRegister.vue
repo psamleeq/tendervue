@@ -1346,7 +1346,7 @@ export default {
 
 			if(this.deviceTypeNow == 3) {
 				getTaskGroup({
-					tenderId: this.rowActive.DTeam,
+					groupId: this.rowActive.DTeam,
 					pageCurrent: 1,
 					pageSize: 999999
 				}).then(response => {
