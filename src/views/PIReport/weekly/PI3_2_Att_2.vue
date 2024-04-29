@@ -729,6 +729,7 @@ export default {
 				inputs: this.inputs
 			}
 			let uploadForm = new FormData();
+			uploadForm.append('caseNo', Number(this.inputForm.caseNumber));
 			uploadForm.append('checkDate', moment(this.checkDate).format("YYYY-MM-DD"));
 			uploadForm.append('pageCount', ((['3'].includes(this.inputs.distressSrc)) ? 2 : 1) + (this.caseList.length == this.listQuery.perfPages ? 1 : 0));
 			uploadForm.append('content', JSON.stringify(storedContent));
