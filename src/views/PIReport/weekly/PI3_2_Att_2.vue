@@ -623,8 +623,9 @@ export default {
 
 					resolve();
 				}
-				img.src = arg.value;
+
 				if(arg.value.length == 0) resolve();
+				else img.src = arg.value;
 			})
 		},
 		async setPDFinputs() {
