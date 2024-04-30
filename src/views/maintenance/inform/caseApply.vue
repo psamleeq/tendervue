@@ -113,7 +113,7 @@
 			</el-table-column>
 
 			<!-- 道路 -->
-			<el-table-column v-if="listQuery.deviceType == '1'" label="刨鋪深度" width="60" align="center">
+			<el-table-column v-if="listQuery.deviceType == '1'" label="刨鋪深度" width="80" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
@@ -123,11 +123,15 @@
 					<span v-else>{{ row.MillingDepth }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="listQuery.deviceType == '1'" label="使用粒料" width="220" align="center">
+			<el-table-column v-if="listQuery.deviceType == '1'" label="使用粒料" width="120" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row :gutter="5">
-							<el-col :span="7" style="line-height: 28px">粒料3/4</el-col>
+							<el-select v-model="row.type" size="mini" popper-class="type-select" @change="row[row.type] = row.MillingDepth">
+								<el-option label="粒料3/4" value="Aggregate34" />
+								<el-option label="粒料3/8" value="Aggregate38" />
+							</el-select>
+							<!-- <el-col :span="7" style="line-height: 28px">粒料3/4</el-col>
 							<el-col :span="5">
 								<el-select v-model="row.Aggregate34" size="mini" popper-class="type-select">
 									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
@@ -138,16 +142,20 @@
 								<el-select v-model="row.Aggregate38" size="mini" popper-class="type-select">
 									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
 								</el-select>
-							</el-col>
+							</el-col> -->
 						</el-row>
 					</span>
 					<span v-else>
 						<el-row :gutter="5">
-							<el-col :span="8">粒料3/4: </el-col>
-							<el-col :span="3" class="item-content">{{ row.Aggregate34 }}</el-col>
-							<el-col :span="2" class="item-content"> | </el-col>
-							<el-col :span="8">粒料3/8: </el-col>
-							<el-col :span="3" class="item-content">{{ row.Aggregate38 }}</el-col>
+							<span v-if="row.Aggregate34 > 0">
+								<el-col :span="8">粒料3/4: </el-col>
+								<el-col :span="3" class="item-content">{{ row.Aggregate34 }}</el-col>
+							</span>
+							<span v-else-if="row.Aggregate38 > 0">
+								<el-col :span="8">粒料3/8: </el-col>
+								<el-col :span="3" class="item-content">{{ row.Aggregate38 }}</el-col>
+							</span>
+							<span v-else> - </span>
 						</el-row>
 					</span>
 				</template>
