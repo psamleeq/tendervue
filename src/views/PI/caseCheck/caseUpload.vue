@@ -688,7 +688,6 @@ export default {
 				}
 				return obj;
 			}, {});
-			console.log(this.csvRepeatObj);
 			this.caseMinus.list = listCSNArr.filter(l => csvCSNArr.indexOf(l) == -1);
 			this.caseMinus.csv = csvCSNArr.filter(l => listCSNArr.indexOf(l) == -1);
 
