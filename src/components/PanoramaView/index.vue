@@ -120,6 +120,7 @@
 
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
+import * as jsts from 'jsts/dist/jsts.min.js';
 import moment from "moment";
 import html2canvas from 'html2canvas';
 import { parseXml, xml2json } from '../../utils/xml2json';
@@ -332,6 +333,9 @@ export default {
 
 			evt.stopPropagation();
 		});
+
+		// jsts
+			this.geometryFactory = new jsts.geom.GeometryFactory();
 	},
 	methods: {
 		changeValue(caseInfo) {
@@ -510,11 +514,18 @@ export default {
 					return;
 				}
 
-				if(uploadType == 1 && ![29, 70, 101].includes(this.caseInfo.distressType)) coordinates.push(coordinates[0]);
+				if(uploadType == 1 && ![29].includes(this.caseInfo.distressType)) coordinates.push(coordinates[0]);
+
+				let centerPt;
+				if([70, 101].includes(this.caseInfo.distressType)) {
+					const jstsBlockCenterPt = this.createJstsGeometry(coordinates).getCentroid().getCoordinate();
+					centerPt = [jstsBlockCenterPt.y, jstsBlockCenterPt.x]
+				}
+
 				// console.log(coordinates);
 				this.caseInfo.geoJson = {
 					"type": [70, 101].includes(this.caseInfo.distressType) ? 'MultiPoint' : this.caseInfo.distressType == 29 ? "MultiLineString" : 'MultiPolygon',
-					"coordinates": [70, 101].includes(this.caseInfo.distressType) ? coordinates :  this.caseInfo.distressType == 29 ? [ coordinates ] : [[ coordinates ]]
+					"coordinates": [70, 101].includes(this.caseInfo.distressType) ? [ centerPt ] :  this.caseInfo.distressType == 29 ? [ coordinates ] : [[ coordinates ]]
 				};
 				// console.log(this.caseInfo);
 
@@ -651,7 +662,7 @@ export default {
 						else if(index == 0) canvasContext.moveTo(x, y);
 						else canvasContext.lineTo(x, y);
 					}
-					if(![29, 70, 101].includes(this.caseInfo.distressType)) canvasContext.closePath();
+					if(![29].includes(this.caseInfo.distressType)) canvasContext.closePath();
 					if(!imgType.includes('unMark')) canvasContext.stroke();
 					
 					// 產出jpg
@@ -917,6 +928,17 @@ export default {
 			}
 			// console.log("geoCoordinates: ", geoCoordinates);
 			return geoCoordinates;
+		},
+		createJstsGeometry(boundary) {
+			// console.log(boundary);
+			let coordinates = boundary.map(coord => new jsts.geom.Coordinate(coord[1], coord[0]));
+
+			if (coordinates.length == 1) return this.geometryFactory.createPoint(coordinates[0]);
+			else {
+				if(coordinates[0].compareTo(coordinates[coordinates.length-1]) != 0) coordinates.push(coordinates[0]);
+				const shell = this.geometryFactory.createLinearRing(coordinates);
+				return this.geometryFactory.createPolygon(shell);
+			}
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD");
