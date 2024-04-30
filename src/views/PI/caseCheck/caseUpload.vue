@@ -675,19 +675,20 @@ export default {
 			// 比對 DB 和 新工處
 			// const listCSNArr = this.list.map(l => l.CaseNo.length > 0 ?  l.CaseNo : l.UploadCaseNo);
 			const listCSNArr = this.list.map(l => l.CaseNo);
-			const csvCSNArr = this.csvData.map(d => d["來源編號"].length > 0 ? d["來源編號"] : d["案件編號"]);
+			const csvCSNArr = this.csvData.map(d => d["來源編號"].length > 0 && !d["來源編號"].includes("調") ? d["來源編號"] : d["案件編號"]);
 			this.listRepeat = this.list.reduce((list, curr, index) => {
 				if(listCSNArr.indexOf(curr.CaseNo) != index) list.push(curr.CaseNo);
 				return list;
 			}, []);
 			this.csvRepeatObj = this.csvData.reduce((obj, curr, index ) => {
 				const firstIndex = csvCSNArr.indexOf(curr["來源編號"]);
-				if(moment(curr["查報日期"]).isSame(moment(this.searchDate)) && curr["來源編號"].length != 0 && csvCSNArr.indexOf(curr["來源編號"]) != index) {
+				if(moment(curr["查報日期"]).isSame(moment(this.searchDate)) && curr["來源編號"].length != 0 && csvCSNArr.indexOf(curr["來源編號"]) != index && firstIndex != -1) {
 					if(obj[curr["來源編號"]] == undefined) obj[curr["來源編號"]] = [ this.csvData[firstIndex]["案件編號"] ];
 					obj[curr["來源編號"]].push(curr["案件編號"]);
 				}
 				return obj;
 			}, {});
+			console.log(this.csvRepeatObj);
 			this.caseMinus.list = listCSNArr.filter(l => csvCSNArr.indexOf(l) == -1);
 			this.caseMinus.csv = csvCSNArr.filter(l => listCSNArr.indexOf(l) == -1);
 
