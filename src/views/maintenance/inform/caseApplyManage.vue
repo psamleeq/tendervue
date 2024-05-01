@@ -33,7 +33,10 @@
 			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" align="center"
 				min-width="30" :sortable="value.sortable">
 				<template slot-scope="{ row, column }">
-					<span v-if="[ 'CaseNoArr' ].includes(column.property)">
+					<span v-if="[ 'InformType' ].includes(column.property)">
+						<span>{{ options.deviceType[row.InformType] }}</span>
+					</span>
+					<span v-else-if="[ 'CaseNoArr' ].includes(column.property)">
 						<span v-if="Object.keys(row.CaseNoObj).length != 0">
 							<span>{{ Object.keys(row.CaseNoObj).length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
@@ -184,6 +187,10 @@ export default {
 					name: "通報單號",
 					sortable: true
 				},
+				InformType: {
+					name: "通報類型",
+					sortable: true
+				},
 				CaseNoArr: {
 					name: "案件數量",
 					sortable: false
@@ -200,6 +207,12 @@ export default {
 			caseSN: '',
 			options: {
 				tenderGroup: {},
+				deviceType: {
+					1: "道路",
+					2: "熱再生",
+					3: "設施",
+					4: "標線"
+				},
 			}
 		};
 	},
@@ -253,7 +266,7 @@ export default {
 		applyTicketDetail(row) {
 			this.$router.push({
 				name: "caseApply",
-				params: { caseSN: row.CaseSN },
+				params: { informType: row.InformType, caseSN: row.CaseSN },
 			});
 		},
 		applyReview(row) {

@@ -528,6 +528,7 @@ export default {
 
 		if (this.$route.params.caseSN) {
 			this.listQuery.filterType = 4;
+			this.listQuery.deviceType = this.$route.params.informType;
 			this.listQuery.filterStr = this.$route.params.caseSN;
 			this.getList();
 		}
