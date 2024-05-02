@@ -1083,6 +1083,7 @@ export default {
 				overflow-y: auto
 				.el-form-item
 					margin-bottom: 10px
+					user-select: text
 					.el-form-item__label
 						line-height: auto
 					.el-select, .road-dir, .el-textarea, .el-date-editor
