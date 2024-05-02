@@ -248,6 +248,11 @@ export default {
 					2: "中",
 					3: "重"
 				},
+				caseLevelMapE: {
+					1: "L",
+					2: "M",
+					3: "H"
+				},
 				roadDir: {
 					// 0: "無",
 					1: "順向",
@@ -535,7 +540,7 @@ export default {
 				if(feature.getProperty("isPoint")) {
 					return { 
 						icon: { 
-							url: `/assets/icon/icon_case_${this.options.caseLevelMap[feature.getProperty("DistressLevel")]}.png`,
+							url: `/assets/icon/icon_case_${this.options.caseLevelMapE[feature.getProperty("DistressLevel")]}.png`,
 							anchor: new google.maps.Point(5, 5),
 							scaledSize: new google.maps.Size(25, 25),
 						}
@@ -906,7 +911,7 @@ export default {
 			contentText += `</div>`;
 
 			this.infoWindow.setContent(contentText);
-			this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
+			this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, feature.getProperty('isPoint') ? -20 : -10)});
 			this.infoWindow.setPosition(position);
 
 			this.infoWindow.open(this.map);
