@@ -90,7 +90,7 @@
 					</span>
 					<template v-else-if="row.InformState & 2">
 						<el-button class="btn-action" type="warning"
-							@click="caseSN = String(row.CaseSN); showPDFDialog = true;">路段表PDF</el-button>
+							@click="informId = String(row.id); showPDFDialog = true;">路段表PDF</el-button>
 						<el-button class="btn-action" type="success" @click="informConfirm(row, 4)">完成</el-button>
 					</template>
 					<span v-else> - </span>
@@ -143,7 +143,7 @@
 
 		<!-- 會勘路段表PDF -->
 		<el-dialog :visible.sync="showPDFDialog" title="會勘路段表" width="1200px">
-			<meeting-pdf :caseSN="caseSN" />
+			<meeting-pdf :informId="informId" />
 		</el-dialog>
 		
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
@@ -204,7 +204,7 @@ export default {
 			list: [],
 			// detail: [],
 			tableSelect: [],
-			caseSN: '',
+			informId: 0,
 			options: {
 				tenderGroup: {},
 				deviceType: {
