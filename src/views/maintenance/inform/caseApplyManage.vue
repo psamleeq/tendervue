@@ -266,7 +266,7 @@ export default {
 		applyTicketDetail(row) {
 			this.$router.push({
 				name: "caseApply",
-				params: { informType: row.InformType, caseSN: row.CaseSN },
+				params: { groupId: row.GroupId, informType: row.InformType, caseSN: row.CaseSN },
 			});
 		},
 		applyReview(row) {

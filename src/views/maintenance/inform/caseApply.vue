@@ -527,6 +527,7 @@ export default {
 		getSCTypeItemMap().then(response => { this.options.ItemTypeMap = response.data.SCType2Map });
 
 		if (this.$route.params.caseSN) {
+			this.listQuery.groupId = this.$route.params.groupId;
 			this.listQuery.filterType = 4;
 			this.listQuery.deviceType = this.$route.params.informType;
 			this.listQuery.filterStr = this.$route.params.caseSN;
@@ -807,6 +808,7 @@ export default {
 					
 					if(!row.editFormula) row.MillingFormula = '0';
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
+
 					if([1,2].includes(this.listQuery.deviceType)) {
 						this.calArea(caseSpec);
 						
@@ -816,6 +818,11 @@ export default {
 						} else delete caseSpec.MillingFormula;
 
 						delete caseSpec.KitNotes;
+
+						if(this.listQuery.deviceType == 1) {
+							for(const key of [ "Aggregate34", "Aggregate38" ]) caseSpec[key] = row[key];
+						}
+
 					} else if([3,4].includes(this.listQuery.deviceType)) {
 						this.detail.forEach(row => {
 							row.number == Number(row.number);
@@ -883,11 +890,12 @@ export default {
 						// 		type: "success",
 						// 	});
 						// }).catch(err => { console.log(err); this.loading = false; });
-
 						this.$message({
 							message: `建立成功(通報單號 ${caseSN})`,
 							type: "success",
 						});
+						this.listQuery.filterType = 4;
+						this.listQuery.filterStr = caseSN;
 						this.getList(false);
 					} else {
 						this.$message({
