@@ -3,16 +3,17 @@
 		<h2>製作通報單</h2>
 		<div class="filter-container">
 			<div class="filter-item">
-				<div v-if="listQuery.filterType == 1" class="select-contract">
-					<el-select v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
-					<el-select v-model="listQuery.groupId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
-						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="id" :label="obj.groupName" />
+				<div class="el-input el-input el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>契約</span>
+					</div>
+					<el-select v-model.number="listQuery.groupId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="Number(id)" :label="obj.groupName" />
 					</el-select>
 				</div>
-
-				<el-input v-else v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
+			</div>
+			<div class="filter-item">
+				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
 					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
@@ -20,18 +21,18 @@
 			</div>
 			<br>
 
-			<span class="filter-item">
+			<span v-if="filterTypeNow != 2" class="filter-item">
 				<div style="font-size: 12px; color: #909399">成案日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList" />
 			</span>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search"
 				@click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
-			<el-button v-if="filterTypeNow == 4" class="filter-item" type="success" icon="el-icon-download"
-				:disabled="(filterTypeNow == 4 && !listQuery.filterStr) || list.length == 0"
+			<el-button v-if="filterTypeNow == 2" class="filter-item" type="success" icon="el-icon-download"
+				:disabled="(filterTypeNow == 2 && !listQuery.filterStr) || list.length == 0"
 				@click="reissueApplyTicket();">補印</el-button>
 
-			<template v-if="filterTypeNow != 4">
+			<template v-if="filterTypeNow != 2">
 				<el-divider />
 
 				<div class="filter-item">
@@ -60,17 +61,17 @@
 
 		<h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5>
 
-		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" :key="`${listQuery.deviceType}_${filterTypeNow}`" border
+		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" :key="`${deviceTypeNow}_${filterTypeNow}`" border
 			fit highlight-current-row :header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%"
 			@selection-change="handleCheckedChange">
-			<el-table-column v-if="filterTypeNow != 4" type="selection" width="60" align="center" fixed>
+			<el-table-column v-if="filterTypeNow != 2" type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
 					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px"
 						@change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-else-if="filterTypeNow == 4" prop="CaseSN" label="通報單號" width="125" align="center" fixed
+			<el-table-column v-else-if="filterTypeNow == 2" prop="CaseSN" label="通報單號" width="125" align="center" fixed
 				sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
@@ -84,7 +85,7 @@
 				:formatter="formatter" :sortable="value.sortable" />
 
 			<!-- 道路、熱再生 -->
-			<el-table-column v-if="[1,2].includes(listQuery.deviceType)" label="算式" width="320" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="320" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
@@ -106,14 +107,14 @@
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="[1,2].includes(listQuery.deviceType)" label="預估面積" width="60" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="60" align="center">
 				<template slot-scope="{ row }">
 					<span>{{ row.MillingArea || "-" }}</span>
 				</template>
 			</el-table-column>
 
 			<!-- 道路 -->
-			<el-table-column v-if="listQuery.deviceType == '1'" label="刨鋪深度" width="80" align="center">
+			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="80" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
@@ -123,7 +124,7 @@
 					<span v-else>{{ row.MillingDepth }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="listQuery.deviceType == '1'" label="使用粒料" width="120" align="center">
+			<el-table-column v-if="deviceTypeNow == '1'" label="使用粒料" width="120" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row :gutter="5">
@@ -131,18 +132,6 @@
 								<el-option label="粒料3/4" value="Aggregate34" />
 								<el-option label="粒料3/8" value="Aggregate38" />
 							</el-select>
-							<!-- <el-col :span="7" style="line-height: 28px">粒料3/4</el-col>
-							<el-col :span="5">
-								<el-select v-model="row.Aggregate34" size="mini" popper-class="type-select">
-									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
-								</el-select>
-							</el-col>
-							<el-col :span="7" style="line-height: 28px">粒料3/8</el-col>
-							<el-col :span="5">
-								<el-select v-model="row.Aggregate38" size="mini" popper-class="type-select">
-									<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
-								</el-select>
-							</el-col> -->
 						</el-row>
 					</span>
 					<span v-else>
@@ -162,7 +151,7 @@
 			</el-table-column>
 
 			<!-- 設施 -->
-			<el-table-column v-if="listQuery.deviceType == 3" label="工程概述" align="center">
+			<el-table-column v-if="deviceTypeNow == 3" label="工程概述" align="center">
 				<template slot-scope="{ row }">
 					<el-input v-if="row.edit" v-model="row.Notes" />
 					<span v-else>{{ row.Notes || " - " }}</span>
@@ -170,18 +159,17 @@
 			</el-table-column>
 
 			<!-- 標線 -->
-			<el-table-column v-if="listQuery.deviceType == 4" label="面積" width="80" align="center">
+			<el-table-column v-if="deviceTypeNow == 4" label="面積" width="80" align="center">
 				<template slot-scope="{ row }">
-					<!-- <el-input v-model="row.MillingArea" size="mini" /> -->
 					<span>{{ row.MillingArea || "-" }}</span>
 				</template>
 			</el-table-column>
 
 			<!-- 設施、標線 -->
-			<el-table-column v-if="[3,4].includes(listQuery.deviceType)" label="設計數量" width="140" align="center">
+			<el-table-column v-if="[3,4].includes(deviceTypeNow)" label="設計數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="row.State == 1" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<el-button v-if="row.State == 1 && row.FlowState == 1" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
 				</template>
@@ -209,7 +197,7 @@
 			<el-table-column label="動作" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="listQuery.deviceType != 4 && row.State == 1" type="primary" size="mini"
+						<el-button v-if="deviceTypeNow != 4 && row.State == 1 && row.FlowState == 1" type="primary" size="mini"
 							@click="row.edit = true">編輯</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
@@ -224,16 +212,15 @@
 				<template slot-scope="{ row }">
 					<span v-if="row.Content.length == 0">目前沒有資料</span>
 					<span v-else>
-						<el-table v-if="listQuery.deviceType == 3" class="expandTable" empty-text="目前沒有資料" :data="row.Content" border fit highlight-current-row
+						<el-table v-if="deviceTypeNow == 3" class="expandTable" empty-text="目前沒有資料" :data="row.Content" border fit highlight-current-row
 							:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe show-summary
 							:summary-method="(param) => getSummaries(param, row.Content)" style="width: 100%">
 							<el-table-column type="index" label="序號" width="50" align="center" />
-							<el-table-column v-for="(value, key) in detailHeaders[listQuery.deviceType]" :key="key" :prop="key"
+							<el-table-column v-for="(value, key) in detailHeaders[deviceTypeNow]" :key="key" :prop="key"
 								:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
 								:label="value.name" align="center" :sortable="value.sortable" />
 						</el-table>
-						<div v-if="listQuery.deviceType == 3" class="expand-note">
-							<!-- <div>金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div> -->
+						<div v-if="deviceTypeNow == 3" class="expand-note">
 							<div>施作數量: {{ row.KitNotes.DesignDetail || "-" }}</div>
 							<div>施工方式: {{ row.KitNotes.DesignDesc || "-"}}</div>
 							<div>施作人力: {{ row.KitNotes.DesignWorker || "-" }}</div>
@@ -248,7 +235,7 @@
 
 		<!-- Dialog: 計價套組-->
 		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
-			<div v-if="listQuery.deviceType == 3" class="filter-container">
+			<div v-if="deviceTypeNow == 3" class="filter-container">
 				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇"
 					popper-class="type-select" style="width: 500px">
 					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)"
@@ -258,11 +245,11 @@
 			</div>
 			<el-table v-loading="loading" empty-text="目前沒有資料" :data="detailPlus" border fit highlight-current-row
 				:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%">
-				<el-table-column v-for="(value, key) in detailHeaders[listQuery.deviceType]" :key="key" :prop="key"
+				<el-table-column v-for="(value, key) in detailHeaders[deviceTypeNow]" :key="key" :prop="key"
 					:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30"
 					:label="value.name" align="center" :sortable="value.sortable">
 					<template slot-scope="{ row, column }">
-						<span v-if="listQuery.deviceType == 3">
+						<span v-if="deviceTypeNow == 3">
 							<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
 								<span v-if="row.isAdd || row.isEdit">
 									<el-input v-model="row[column.property]" size="mini" style="width: 55px" />
@@ -290,7 +277,7 @@
 							</span>
 							<span v-else>{{ row[column.property] }}</span>
 						</span>
-						<span v-else-if="listQuery.deviceType == 4">
+						<span v-else-if="deviceTypeNow == 4">
 							<span v-if="['MillingFormula','number'].includes(column.property)" style="display: inline-flex; align-items: center;">
 								<span v-if="row.isAdd || row.isEdit">
 									<el-input v-model="row[column.property]" size="mini" @change="calArea(row)">
@@ -331,7 +318,7 @@
 				</el-table-column>
 			</el-table>
 			<div class="detail-caption amount">金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
-			<div v-if="listQuery.deviceType == 3">
+			<div v-if="deviceTypeNow == 3">
 				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDetail">
 					<template slot="prepend">施作數量</template>
 				</el-input>
@@ -352,7 +339,7 @@
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
 			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog"
-				:deviceTypeNow="listQuery.deviceType" />
+				:deviceTypeNow="deviceTypeNow" />
 			<div slot="footer" class="dialog-footer">
 				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
 				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
@@ -392,6 +379,7 @@ export default {
 			],
 			searchRange: "",
 			filterTypeNow: 1,
+			deviceTypeNow: 1,
 			listQuery: {
 				filter: false,
 				filterType: 1,
@@ -489,10 +477,8 @@ export default {
 			options: {
 				tenderGroup: {},
 				filterType: {
-					1: "契約",
-					// 2: "道管編號",
-					// 3: "地點(關鍵字)",
-					4: "通報單號"
+					1: "案件編號",
+					2: "通報單號"
 				},
 				deviceType: {
 					1: "道路",
@@ -527,9 +513,9 @@ export default {
 		getSCTypeItemMap().then(response => { this.options.ItemTypeMap = response.data.SCType2Map });
 
 		if (this.$route.params.caseSN) {
-			this.listQuery.groupId = this.$route.params.groupId;
-			this.listQuery.filterType = 4;
-			this.listQuery.deviceType = this.$route.params.informType;
+			this.listQuery.groupId = Number(this.$route.params.groupId);
+			this.listQuery.filterType = 2;
+			this.deviceTypeNow = this.$route.params.informType;
 			this.listQuery.filterStr = this.$route.params.caseSN;
 			this.getList();
 		}
@@ -593,7 +579,7 @@ export default {
 			return sums;
 		},
 		getList(showMsg = true) {
-			if (this.listQuery.filterType == 1 && !this.listQuery.groupId) {
+			if (!this.listQuery.groupId) {
 				this.$message({
 					message: '請選擇契約',
 					type: "error",
@@ -606,15 +592,14 @@ export default {
 
 				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-				if(this.listQuery.filterType != 4) this.searchRange = startDate + " - " + endDate;
+				if(this.listQuery.filterType != 2) this.searchRange = startDate + " - " + endDate;
 
 				getApply({
-					groupId: this.listQuery.filterType == 1 ? this.listQuery.groupId : null,
-					caseNo: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					caseSN: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					timeStart: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' : startDate,
-					timeEnd: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+					groupId: this.listQuery.groupId,
+					caseNo: (this.listQuery.filterType == 1 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					caseSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					timeStart: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? '' : startDate,
+					timeEnd: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
@@ -629,6 +614,7 @@ export default {
 						this.total = response.data.total;
 						this.checkList = Array.from({ length: this.list.length }, () => false);
 						this.filterTypeNow = this.listQuery.filterType;
+						this.deviceTypeNow = response.data.informType;
 
 						this.list.forEach(l => {
 							l.DateCreate = this.formatDate(l.DateCreate);
@@ -753,8 +739,8 @@ export default {
 			})
 		},
 		async addItem() {
-			if(this.listQuery.deviceType == 3) await this.addKitItem();
-			else if(this.listQuery.deviceType == 4) this.addMarkerItem();
+			if(this.deviceTypeNow == 3) await this.addKitItem();
+			else if(this.deviceTypeNow == 4) this.addMarkerItem();
 		},
 		async addKitItem() {
 			if(!this.newItem.UnitSN) {
@@ -809,7 +795,7 @@ export default {
 					if(!row.editFormula) row.MillingFormula = '0';
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
 
-					if([1,2].includes(this.listQuery.deviceType)) {
+					if([1,2].includes(this.deviceTypeNow)) {
 						this.calArea(caseSpec);
 						
 						if(caseSpec.MillingFormula && caseSpec.MillingFormula != '0' && caseSpec.MillingFormula.length != 0) {
@@ -819,25 +805,25 @@ export default {
 
 						delete caseSpec.KitNotes;
 
-						if(this.listQuery.deviceType == 1) {
+						if(this.deviceTypeNow == 1) {
 							for(const key of [ "Aggregate34", "Aggregate38" ]) caseSpec[key] = row[key];
 						}
 
-					} else if([3,4].includes(this.listQuery.deviceType)) {
+					} else if([3,4].includes(this.deviceTypeNow)) {
 						this.detail.forEach(row => {
 							row.number == Number(row.number);
 							for(const key of [ "SerialNo", "isAdd", "isEdit" ]) delete row[key];
 						});
 
-						if(this.listQuery.deviceType == 3) {
+						if(this.deviceTypeNow == 3) {
 							if(this.detail.length > 0) caseSpec.KitContent = this.detail;
 							caseSpec.KitNotes = JSON.stringify(caseSpec.KitNotes);
 							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
-						} else if(this.listQuery.deviceType == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
+						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
 					}
 					
 					setDispatchSpec({
-						deviceType: this.listQuery.deviceType,
+						deviceType: this.deviceTypeNow,
 						caseSpec
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
@@ -894,7 +880,8 @@ export default {
 							message: `建立成功(通報單號 ${caseSN})`,
 							type: "success",
 						});
-						this.listQuery.filterType = 4;
+						this.deviceTypeNow = this.listQuery.deviceType;
+						this.listQuery.filterType = 2;
 						this.listQuery.filterStr = caseSN;
 						this.getList(false);
 					} else {
