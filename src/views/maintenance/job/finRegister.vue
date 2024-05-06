@@ -994,7 +994,7 @@ export default {
 			else return null;
 		},
 		detailAmount(content) {
-			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
+			return content.reduce((acc, cur) => (acc+=cur.number*(Number(cur.TaskPrice) || 0)), 0)
 		},
 		getSummaries(param, content) {
 			const { columns, data } = param;
@@ -1106,7 +1106,7 @@ export default {
 			const replaceObj = { " ": "", "m2": "", "M2": "", "m": "", "M": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
 				"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
 			// const regex = new RegExp('^[0-9*+\/().-]+$', 'g');
-			const regex = /^[^*+/-](?:[*+/\-]?[(]*\d+\.?\d*[)]*)+$/g;
+			const regex = /^[^*+/-](?:[*+/-]?[(]*\d+\.?\d*[)]*)+$/g;
 			const number = row.number != undefined ? Number(row.number) : 1;
 			
 			if( (row.editFormula == undefined && row.MillingFormula && row.MillingFormula != '0' && row.MillingFormula.length != 0) || row.editFormula) {
@@ -1484,8 +1484,8 @@ export default {
 						}
 					} else if([3,4].includes(this.deviceTypeNow)) {
 						this.detail.forEach(row => {
-							row.number == Number(row.number);
-							for(const key of [ "SerialNo", 'GroupId', "editFormula", "isAdd", "isEdit" ]) delete row[key];
+							row.number = Number(row.number);
+							for(const key of [ "SerialNo", "GroupId", "editFormula", "isAdd", "isEdit" ]) delete row[key];
 						});
 
 						if(this.deviceTypeNow == 3) {
