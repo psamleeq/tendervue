@@ -1498,6 +1498,8 @@ export default {
 						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
 					}
 
+					if(caseSpec.IsMarking) caseSpec.Content = JSON.stringify(row.Content);
+
 					finRegisterSpec({
 						deviceType: this.deviceTypeNow,
 						caseSpec

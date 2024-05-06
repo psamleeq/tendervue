@@ -503,7 +503,7 @@ export default {
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect:[],
-			apiHeader: [ "SerialNo", "RestoredId", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes", "TaskRealGroup", "KitNotes" ],
+			apiHeader: [ "SerialNo", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes", "TaskRealGroup", "KitNotes" ],
 			options: {
 				tenderGroup: {},
 				filterType: {
