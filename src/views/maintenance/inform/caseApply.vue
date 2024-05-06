@@ -3,17 +3,17 @@
 		<h2>製作通報單</h2>
 		<div class="filter-container">
 			<div class="filter-item">
-				<div v-if="listQuery.filterType == 1" class="select-contract">
-					<el-select v-model="listQuery.filterType" popper-class="type-select">
-						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
-					</el-select>
-					<el-select v-model="listQuery.groupId" class="tender-select" placeholder="請選擇"
-						popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
-						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="id" :label="obj.groupName" />
+				<div class="el-input el-input el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>契約</span>
+					</div>
+					<el-select v-model.number="listQuery.groupId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="Number(id)" :label="obj.groupName" />
 					</el-select>
 				</div>
-
-				<el-input v-else v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
+			</div>
+			<div class="filter-item">
+				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
 					<el-select slot="prepend" v-model="listQuery.filterType" popper-class="type-select">
 						<el-option v-for="(name, type) in options.filterType" :key="type" :label="name" :value="Number(type)" />
 					</el-select>
@@ -21,18 +21,18 @@
 			</div>
 			<br>
 
-			<span class="filter-item">
+			<span v-if="filterTypeNow != 2" class="filter-item">
 				<div style="font-size: 12px; color: #909399">成案日期</div>
 				<time-picker shortcutType="day" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList" />
 			</span>
 
 			<el-button class="filter-item" type="primary" icon="el-icon-search"
 				@click="listQuery.pageCurrent = 1; getList();">搜尋</el-button>
-			<el-button v-if="filterTypeNow == 4" class="filter-item" type="success" icon="el-icon-download"
-				:disabled="(filterTypeNow == 4 && !listQuery.filterStr) || list.length == 0"
+			<el-button v-if="filterTypeNow == 2" class="filter-item" type="success" icon="el-icon-download"
+				:disabled="(filterTypeNow == 2 && !listQuery.filterStr) || list.length == 0"
 				@click="reissueApplyTicket();">補印</el-button>
 
-			<template v-if="filterTypeNow != 4">
+			<template v-if="filterTypeNow != 2">
 				<el-divider />
 
 				<div class="filter-item">
@@ -64,14 +64,14 @@
 		<el-table ref="caseTable" empty-text="目前沒有資料" :data="list" :key="`${deviceTypeNow}_${filterTypeNow}`" border
 			fit highlight-current-row :header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%"
 			@selection-change="handleCheckedChange">
-			<el-table-column v-if="filterTypeNow != 4" type="selection" width="60" align="center" fixed>
+			<el-table-column v-if="filterTypeNow != 2" type="selection" width="60" align="center" fixed>
 				<template slot-scope="{ row, $index }">
 					<el-checkbox v-model="checkList[$index]" style="margin-right: 5px"
 						@change="cellCheckBox(row, $index)" />
 					<span>{{ $index + 1 }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-else-if="filterTypeNow == 4" prop="CaseSN" label="通報單號" width="125" align="center" fixed
+			<el-table-column v-else-if="filterTypeNow == 2" prop="CaseSN" label="通報單號" width="125" align="center" fixed
 				sortable />
 			<el-table-column prop="CaseNo" label="案件編號" width="130" align="center" fixed sortable>
 				<template slot-scope="{ row }">
@@ -81,21 +81,19 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" align="center"
+			<el-table-column v-for="(value, key) in headers" :key="key" :prop="key" :label="value.name" :min-width="value.width" align="center"
 				:formatter="formatter" :sortable="value.sortable" />
 
 			<!-- 道路、熱再生 -->
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="500" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="算式" width="320" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
-							<el-col :span="4"><el-tag class="btn-tag" type="success"
-									@click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
+							<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
 							<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
 						</el-row>
 						<el-row v-else :gutter="5" type="flex" align="middle">
-							<el-col :span="4"><el-tag class="btn-tag"
-									@click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
+							<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
 							<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
 							<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
 							<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
@@ -107,9 +105,46 @@
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="85" align="center">
+			<el-table-column v-if="[1,2].includes(deviceTypeNow)" label="預估面積" width="60" align="center">
 				<template slot-scope="{ row }">
 					<span>{{ row.MillingArea || "-" }}</span>
+				</template>
+			</el-table-column>
+
+			<!-- 道路 -->
+			<el-table-column v-if="filterTypeNow == 2 && deviceTypeNow == 1" label="刨鋪深度" width="80" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.edit">
+						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select" @change="row[row.type] = row.MillingDepth">
+							<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
+						</el-select>
+					</span>
+					<span v-else>{{ row.MillingDepth }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column v-if="filterTypeNow == 2 && deviceTypeNow == 1" label="使用粒料" width="120" align="center">
+				<template slot-scope="{ row }">
+					<span v-if="row.edit">
+						<el-row :gutter="5">
+							<el-select v-model="row.type" size="mini" popper-class="type-select" @change="row[row.type] = row.MillingDepth">
+								<el-option label="粒料3/4" value="Aggregate34" />
+								<el-option label="粒料3/8" value="Aggregate38" />
+							</el-select>
+						</el-row>
+					</span>
+					<span v-else>
+						<el-row>
+							<span v-if="row.Aggregate34 > 0">
+								<el-col :span="16">粒料3/4: </el-col>
+								<el-col :span="8" class="item-content">{{ row.Aggregate34 }}</el-col>
+							</span>
+							<span v-else-if="row.Aggregate38 > 0">
+								<el-col :span="16">粒料3/8: </el-col>
+								<el-col :span="8" class="item-content">{{ row.Aggregate38 }}</el-col>
+							</span>
+							<span v-else> - </span>
+						</el-row>
+					</span>
 				</template>
 			</el-table-column>
 
@@ -120,17 +155,35 @@
 					<span v-else>{{ row.Notes || " - " }}</span>
 				</template>
 			</el-table-column>
+
+			<!-- 標線 -->
+			<el-table-column v-if="deviceTypeNow == 4" label="面積" width="80" align="center">
+				<template slot-scope="{ row }">
+					<span>{{ row.MillingArea || "-" }}</span>
+				</template>
+			</el-table-column>
+
+			<!-- 設施 -->
 			<el-table-column v-if="deviceTypeNow == 3" label="設計數量" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="row.State == 1" :type="row.TaskRealGroup == 0 ? 'success' : 'info'"
-							:plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
+						<el-button v-if="row.State == 1 && row.FlowState == 1" :type="row.TaskRealGroup == 0 ? 'success' : 'info'" :plain="row.TaskRealGroup != 0" size="mini" @click="beforeEdit(row)">設計</el-button>
 						<el-button size="mini" @click="toggleExpand(row)">詳情</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 
-			<el-table-column label="狀態" width="140" align="center">
+			<!-- 標線 -->
+			<el-table-column v-if="filterTypeNow == 2" label="標線設計" width="140" align="center">
+				<template slot-scope="{ row }">
+					<el-button-group v-if="!row.edit">
+						<el-button v-if="row.State == 1 && row.FlowState == 1" :type="row.Content[4].length == 0 ? 'success' : 'info'" :plain="row.Content[4].length != 0" size="mini" @click="beforeEdit(row, 4)">設計</el-button>
+						<el-button size="mini" @click="toggleExpand(row, 4)">詳情</el-button>
+					</el-button-group>
+				</template>
+			</el-table-column>
+
+			<el-table-column label="狀態" width="100" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.State & 16">已完工</span>
 					<span v-else-if="row.State & 8">送出派工單</span>
@@ -152,12 +205,12 @@
 			<el-table-column label="動作" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
-						<el-button v-if="deviceTypeNow != 4 && row.State == 1" type="primary" size="mini"
+						<el-button v-if="deviceTypeNow != 4 && row.State == 1 && row.FlowState == 1" type="primary" size="mini"
 							@click="row.edit = true">編輯</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
 					</el-button-group>
 					<el-button-group v-else>
-						<el-button type="primary" size="mini" @click="dispatchSpec(row, false)">確定</el-button>
+						<el-button type="primary" size="mini" @click="applySpec(row, false)">確定</el-button>
 						<el-button size="mini" @click="row.edit = false; getList();">取消</el-button>
 					</el-button-group>
 				</template>
@@ -165,18 +218,22 @@
 
 			<el-table-column type="expand" width="1" align="center" style="display: none">
 				<template slot-scope="{ row }">
-					<span v-if="row.Content.length == 0">目前沒有資料</span>
+					<span v-if="row.Content[deviceSubType].length == 0">目前沒有資料</span>
 					<span v-else>
-						<el-table class="expandTable" empty-text="目前沒有資料" :data="row.Content" border fit highlight-current-row
+						<el-table class="expandTable" :key="deviceSubType"  empty-text="目前沒有資料" :data="row.Content[deviceSubType]" border fit highlight-current-row
 							:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe show-summary
-							:summary-method="(param) => getSummaries(param, row.Content)" style="width: 100%">
+							:summary-method="(param) => getSummaries(param, row.Content[deviceSubType])" style="width: 100%">
 							<el-table-column type="index" label="序號" width="50" align="center" />
-							<el-table-column v-for="(value, key) in detailHeaders" :key="key" :prop="key"
+							<el-table-column v-for="(value, key) in detailHeaders[deviceSubType]" :key="key" :prop="key"
 								:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 18 : 30"
-								:label="value.name" align="center" :sortable="value.sortable" />
+								:label="value.name" align="center" :sortable="value.sortable">
+								<template slot-scope="{ row: rowSpec, column: colSpec }">
+									<span v-if="['ItemPaint', 'ItemType'].includes(colSpec.property)">{{ options[`${colSpec.property}Map`][rowSpec[colSpec.property]].name }}</span>
+									<span v-else>{{ rowSpec[colSpec.property] }}</span>
+								</template>
+							</el-table-column>
 						</el-table>
-						<div class="expand-note">
-							<!-- <div>金額合計: ${{ detailAmount(row.Content).toLocaleString() || "-" }}</div> -->
+						<div v-if="deviceSubType == 3" class="expand-note">
 							<div>施作數量: {{ row.KitNotes.DesignDetail || "-" }}</div>
 							<div>施工方式: {{ row.KitNotes.DesignDesc || "-"}}</div>
 							<div>施作人力: {{ row.KitNotes.DesignWorker || "-" }}</div>
@@ -190,9 +247,8 @@
 			@pagination="getList" />
 
 		<!-- Dialog: 計價套組-->
-		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit"
-			:close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
-			<div class="filter-container">
+		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
+			<div v-if="deviceSubType == 3" class="filter-container">
 				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇"
 					popper-class="type-select" style="width: 500px">
 					<el-option v-for="kit in options.kitArr" :key="kit.SerialNo" :value="Number(kit.SerialNo)"
@@ -200,56 +256,82 @@
 				</el-select>
 				<el-button class="filter-item" type="success" size="mini" @click="importKit()">匯入套組</el-button>
 			</div>
-			<el-table v-loading="loading" empty-text="目前沒有資料" :data="detailPlus" border fit highlight-current-row
+			<el-table v-loading="loading" :key="deviceSubType" empty-text="目前沒有資料" :data="detailPlus[deviceSubType]" border fit highlight-current-row
 				:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%">
-				<el-table-column v-for="(value, key) in detailHeaders" :key="key" :prop="key"
+				<el-table-column v-for="(value, key) in detailHeaders[deviceSubType]" :key="key" :prop="key"
 					:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30"
 					:label="value.name" align="center" :sortable="value.sortable">
 					<template slot-scope="{ row, column }">
-						<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
-							<span v-if="row.isAdd || row.isEdit">
-								<el-input v-model="row[column.property]" size="mini" style="width: 55px" />
-								<el-button v-if="row.isEdit" class="btn-dialog" type="info" size="mini"
-									@click="row.isEdit = false;">取消</el-button>
+						<span v-if="deviceSubType == 3">
+							<span v-if="['number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+								<span v-if="row.isAdd || row.isEdit">
+									<el-input v-model="row[column.property]" size="mini" style="width: 55px" />
+									<el-button v-if="row.isEdit" class="btn-dialog" type="info" size="mini"
+										@click="row.isEdit = false;">取消</el-button>
+								</span>
+								<span v-else>
+									<span>{{ row[column.property] }}</span>
+									<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+										<i class="el-icon-edit" />
+									</el-button>
+								</span>
 							</span>
-							<span v-else>
-								<span>{{ row[column.property] }}</span>
-								<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
-									<i class="el-icon-edit" />
-								</el-button>
+							<span v-else-if="['UnitSN'].includes(column.property) && row.isAdd">
+								<span v-if="row.isAdd || row.isEdit">
+									<el-input v-model="row[column.property]" size="mini">
+										<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" slot="suffix"
+											effect="dark" placement="bottom" content="點選代入">
+											<el-button type="text" style="padding: 5px 0" @click="getKitItem(row)">
+												<i class="el-icon-check" style="color: #67C23A" />
+											</el-button>
+										</el-tooltip>
+									</el-input>
+								</span>
 							</span>
+							<span v-else>{{ row[column.property] }}</span>
 						</span>
-						<span v-else-if="['UnitSN'].includes(column.property) && row.isAdd">
-							<span v-if="row.isAdd || row.isEdit">
-								<el-input v-model="row[column.property]" size="mini">
-									<el-tooltip v-if="column.property == 'UnitSN' && row[column.property].length != 0" slot="suffix"
-										effect="dark" placement="bottom" content="點選代入">
-										<el-button type="text" style="padding: 5px 0" @click="getKitItem(row)">
-											<i class="el-icon-check" style="color: #67C23A" />
-										</el-button>
-									</el-tooltip>
-								</el-input>
+						<span v-else-if="deviceSubType == 4">
+							<span v-if="['MillingFormula','number'].includes(column.property)" style="display: inline-flex; align-items: center;">
+								<span v-if="row.isAdd || row.isEdit">
+									<el-input v-model="row[column.property]" size="mini" @change="calArea(row)">
+										<el-button slot="append" v-if="row.isEdit" class="btn-dialog" type="info" size="mini" @click="row.isEdit = false;">取消</el-button>
+									</el-input>
+								</span>
+								<span v-else>
+									<span>{{ row[column.property] }}</span>
+									<el-button type="text" style="margin-left: 10px" size="mini" @click="row.isEdit = true">
+										<i class="el-icon-edit" />
+									</el-button>
+								</span>
 							</span>
+							<span v-else-if="['ItemPaint', 'ItemType'].includes(column.property)">
+								<span v-if="row.isAdd">
+									<el-select v-model.number="row[column.property]" placeholder="請選擇" size="mini" popper-class="type-select" style="width: 120px">
+										<el-option v-for="(val, id) in options[`${column.property}Map`]" :key="id" :value="Number(id)" :label="val.name" />
+									</el-select>
+								</span>
+								<span v-else>{{ options[`${column.property}Map`][row[column.property]].name }}</span>
+							</span>
+							<span v-else>{{ row[column.property] }}</span>
 						</span>
-						<span v-else>{{ row[column.property] }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column label="動作" align="center" :min-width="30">
 					<template slot-scope="{ row, $index }">
 						<span v-if="row.isAdd">
-							<el-button type="success" size="mini" @click="addKitItem">新增</el-button>
+							<el-button type="success" size="mini" @click="addItem">新增</el-button>
 						</span>
 						<span v-else-if="row.isEdit">
 							<el-button type="primary" size="mini" @click="row.isEdit = false;">確定</el-button>
 						</span>
 						<span v-else>
-							<el-button type="danger" size="mini" @click="delKitItem($index)">刪除</el-button>
+							<el-button type="danger" size="mini" @click="delItem($index)">刪除</el-button>
 						</span>
 					</template>
 				</el-table-column>
 			</el-table>
-			<div class="detail-caption amount">金額合計: ${{ detailAmount(detailPlus).toLocaleString() }}</div>
-			<div>
+			<div class="detail-caption amount">金額合計: ${{ detailAmount(detailPlus[deviceSubType]).toLocaleString() }}</div>
+			<div v-if="deviceSubType == 3">
 				<el-input placeholder="請輸入" v-model="rowActive.KitNotes.DesignDetail">
 					<template slot="prepend">施作數量</template>
 				</el-input>
@@ -263,14 +345,13 @@
 			</div>
 			<div slot="footer" class="dialog-footer">
 				<el-button @click="cleanDetail()">取消</el-button>
-				<el-button type="primary" @click="dispatchSpec()">確定</el-button>
+				<el-button type="primary" @click="applySpec()">確定</el-button>
 			</div>
 		</el-dialog>
 
 		<!-- Dialog: 案件檢視 -->
 		<el-dialog width="500px" title="案件檢視" :visible.sync="showDetailDialog">
-			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog"
-				:deviceTypeNow="deviceTypeNow" />
+			<case-detail ref="caseDetail" :loading.sync="loading" :showDetailDialog.sync="showDetailDialog" :deviceTypeNow="deviceTypeNow" />
 			<div slot="footer" class="dialog-footer">
 				<!-- <el-button @click="showDispatch = false">取消</el-button> -->
 				<el-button type="primary" @click="showDetailDialog = false">確定</el-button>
@@ -284,7 +365,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderGroup, getKitItemMap } from "@/api/type";
+import { getTenderGroup, getKitItemMap, getSCTypeItemMap } from "@/api/type";
 import { getApply, confirmApply, setDispatchSpec, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
@@ -309,8 +390,9 @@ export default {
 				moment().subtract(1, 'd').endOf("day").toDate(),
 			],
 			searchRange: "",
-			deviceTypeNow: 1,
 			filterTypeNow: 1,
+			deviceTypeNow: 1,
+			deviceSubType: 4,
 			listQuery: {
 				filter: false,
 				filterType: 1,
@@ -324,68 +406,109 @@ export default {
 			headers: {
 				Place: {
 					name: "案件地點",
-					sortable: false
+					sortable: false,
+					width: 60
 				},
 				DateDeadline: {
 					name: "預計完工日期",
-					sortable: false
+					sortable: false,
+					width: 40
 				}
 			},
 			detailHeaders: {
-				UnitSN: {
-					name: "項次",
-					sortable: false,
+				3: {
+					UnitSN: {
+						name: "項次",
+						sortable: false,
+					},
+					TaskName: {
+						name: "工程項目名稱",
+						sortable: false,
+					},
+					TaskUnit: {
+						name: "單位",
+						sortable: false,
+					},
+					TaskPrice: {
+						name: "單價",
+						sortable: false,
+					},
+					number: {
+						name: "數量",
+						sortable: false,
+					}
 				},
-				TaskName: {
-					name: "工程項目名稱",
-					sortable: false,
-				},
-				TaskUnit: {
-					name: "單位",
-					sortable: false,
-				},
-				TaskPrice: {
-					name: "單價",
-					sortable: false,
-				},
-				number: {
-					name: "數量",
-					sortable: false,
+				4: {
+					ItemPaint: {
+						name: "顏料",
+						sortable: false
+					},
+					ItemType: {
+						name: "維修項目",
+						sortable: false
+					},
+					MillingFormula: {
+						name: "公式",
+						sortable: false
+					},
+					number: {
+						name: "數量",
+						sortable: false
+					},
+					MillingArea: {
+						name: "面積",
+						sortable: false
+					}
 				}
 			},
 			total: 0,
 			list: [],
-			detail: [],
+			detail: {
+				3: [],
+				4: []
+			},
 			newKit: {
 				GroupName: ""
 			},
-			newItem: {
-				UnitSN: "",
-				TaskName: "",
-				TaskUnit: "",
-				TaskPrice: "",
-				number: 0,
-				DTeam: 0,
-				isAdd: true
-			},
 			rowActive: {
+				Content: { 
+					3: [],
+					4: []
+				},
 				KitNotes: {
 					DesignDetail: "",
 					DesignDesc: "",
 					DesignWorker: ""
 				}
 			},
+			newItem: {
+				3: {
+					UnitSN: "",
+					TaskName: "",
+					TaskUnit: "",
+					TaskPrice: "",
+					number: 0,
+					isAdd: true
+				},
+				4: {
+					ItemPaint: 1,
+					ItemType: 1,
+					MillingFormula: "",
+					number: 0,
+					MillingArea: 0,
+					editFormula: true,
+					isAdd: true
+				}
+			},
 			checkIndeterminate: false,
 			checkList: [],
 			tableSelect:[],
-			apiHeader: [ "SerialNo", "RestoredId", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes", "TaskRealGroup", "KitNotes" ],
+			apiHeader: [ "SerialNo", "MillingLength", "MillingWidth", "MillingDepth", "MillingFormula", "MillingArea", "IsPressing", "Notes", "TaskRealGroup", "KitNotes" ],
 			options: {
 				tenderGroup: {},
 				filterType: {
-					1: "契約",
-					// 2: "道管編號",
-					// 3: "地點(關鍵字)",
-					4: "通報單號"
+					1: "案件編號",
+					2: "通報單號"
 				},
 				deviceType: {
 					1: "道路",
@@ -399,21 +522,33 @@ export default {
 					2: "中",
 					3: "重"
 				},
+				depthArr: [0, 5, 10],
+				ItemPaintMap: {
+					1: { name: "熱塑性塑膠" },
+					2: { name: "油漆" }
+				},
+				ItemTypeMap: { },
 				kitArr: []
 			}
 		};
 	},
 	computed: {
 		detailPlus() {
-			return [ ...this.detail, this.newItem ]
+			return {
+				3: [ ...this.detail[3], this.newItem[3]  ],
+				4: [ ...this.detail[4], this.newItem[4]  ]
+			}
 		},
 	},
 	watch: {},
 	created() {
 		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
+		getSCTypeItemMap().then(response => { this.options.ItemTypeMap = response.data.SCType2Map });
 
 		if (this.$route.params.caseSN) {
-			this.listQuery.filterType = 4;
+			this.listQuery.groupId = Number(this.$route.params.groupId);
+			this.listQuery.filterType = 2;
+			this.deviceTypeNow = this.$route.params.informType;
 			this.listQuery.filterStr = this.$route.params.caseSN;
 			this.getList();
 		}
@@ -431,7 +566,8 @@ export default {
 			if(this.checkList[index]) this.$refs.caseTable.toggleRowSelection(row, true);
 			else this.$refs.caseTable.toggleRowSelection(row, false);
 		},
-		toggleExpand(row) {
+		toggleExpand(row, deviceSubType = this.deviceTypeNow) {
+			this.deviceSubType = deviceSubType;
 			this.getTaskDetail(row).then(() => { 
 				this.$refs.caseTable.toggleRowExpansion(row);
 
@@ -460,7 +596,7 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		detailAmount(content) {
-			return content.reduce((acc, cur) => (acc+=cur.number*Number(cur.TaskPrice)), 0)
+			return content.reduce((acc, cur) => (acc+=cur.number*(Number(cur.TaskPrice) || 0)), 0)
 		},
 		getSummaries(param, content) {
 			const { columns, data } = param;
@@ -477,7 +613,7 @@ export default {
 			return sums;
 		},
 		getList(showMsg = true) {
-			if (this.listQuery.filterType == 1 && !this.listQuery.groupId) {
+			if (!this.listQuery.groupId) {
 				this.$message({
 					message: '請選擇契約',
 					type: "error",
@@ -490,15 +626,14 @@ export default {
 
 				let startDate = moment(this.dateRange[0]).format("YYYY-MM-DD");
 				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
-				if(this.listQuery.filterType != 4) this.searchRange = startDate + " - " + endDate;
+				if(this.listQuery.filterType != 2) this.searchRange = startDate + " - " + endDate;
 
 				getApply({
-					groupId: this.listQuery.filterType == 1 ? this.listQuery.groupId : null,
-					caseNo: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					keywords: (this.listQuery.filterType == 3 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					caseSN: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
-					timeStart: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' : startDate,
-					timeEnd: (this.listQuery.filterType == 4 && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
+					groupId: this.listQuery.groupId,
+					caseNo: (this.listQuery.filterType == 1 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					caseSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
+					timeStart: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? '' : startDate,
+					timeEnd: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? '' :  moment(endDate).add(1, "d").format("YYYY-MM-DD"),
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
 				}).then(response => {
@@ -512,14 +647,16 @@ export default {
 						this.list = response.data.list;
 						this.total = response.data.total;
 						this.checkList = Array.from({ length: this.list.length }, () => false);
-						// this.deviceTypeNow = this.listQuery.deviceType;
 						this.filterTypeNow = this.listQuery.filterType;
+						this.deviceTypeNow = response.data.informType;
 
 						this.list.forEach(l => {
 							l.DateCreate = this.formatDate(l.DateCreate);
 							l.DateDeadline = this.formatDate(l.DateDeadline);
 							for (const col of ['MillingDepth', 'MillingLength', 'MillingWidth', 'MillingArea']) 
 								if(Number(l[col])) l[col] = Math.round(l[col] * 1000) / 1000;
+							this.$set(l, "Content", { 3: [], 4: l.Content }) 
+							this.$set(l, "type", l.Aggregate34 > 0 ? 'Aggregate34' : 'Aggregate38');
 							this.$set(l, "editFormula", l.MillingFormula != '0');
 							this.$set(l, "notesSync", true);
 							this.$set(l, "edit", false);
@@ -531,23 +668,27 @@ export default {
 		},
 		getTaskDetail(row) {
 			return new Promise(resolve => {
-				row.Content = [];
-				getTaskReal({ taskRealGroup: row.TaskRealGroup }).then(response => {
-					row.Content = response.data.list.filter(l => l.GroupId == row.TaskRealGroup);
-					resolve();
-				}).catch(err => this.loading = false);
+				row.Content[3] = [];
+
+				if(this.deviceSubType == 3) {
+					getTaskReal({ taskRealGroup: row.TaskRealGroup }).then(response => {
+						row.Content[3] = response.data.list.filter(l => l.GroupId == row.TaskRealGroup);
+						resolve();
+					}).catch(err => this.loading = false);
+				} else resolve();
 			})
 		},
 		calArea(row) {
 			const replaceObj = { " ": "", "m": "", "M": "", "=": "", "＝": "", "＋": "+", "－": "-", "＊": "*", "x": "*", "X": "*", "×": "*", "／": "/", "（": "(", "）": ")",
 				"０": '0', "１": "1", "２": "2", "３": "3", "４": "4", "５": "5", "６": "6", "７": "7", "８": "8", "９": "9" };
 			// const regex = new RegExp('^[0-9*+\/().-]+$', 'g');
-			const regex = /^[^*+/-](?:[*+/\-]?[(]*\d+\.?\d*[)]*)+$/g;
+			const regex = /^[^*+/-](?:[*+/-]?[(]*\d+\.?\d*[)]*)+$/g;
+			const number = row.number != undefined ? Number(row.number) : 1;
 			
 			if( (row.editFormula == undefined && row.MillingFormula && row.MillingFormula != '0' && row.MillingFormula.length != 0) || row.editFormula)  {
 				for(const key in replaceObj) row.MillingFormula = row.MillingFormula.replaceAll(key, replaceObj[key]);
-				row.MillingArea = regex.test(row.MillingFormula) ? Math.round(new Function(`return ${row.MillingFormula}`)() * 100) / 100 : 0;
-			} else row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * 100) / 100;
+				row.MillingArea = regex.test(row.MillingFormula) ? Math.round(new Function(`return ${row.MillingFormula} * ${number}`)() * 100) / 100 : 0;
+			} else row.MillingArea = Math.round(row.MillingLength * row.MillingWidth * number * 100) / 100;
 		},
 		caseFilterList(list) {
 			// console.log(list);
@@ -560,21 +701,27 @@ export default {
 
 			return caseFilterList;
 		},
-		beforeEdit(row) {
+		beforeEdit(row, deviceSubType = this.deviceTypeNow) {
+			this.deviceSubType = deviceSubType;
 			for(const row of this.list) this.$refs.caseTable.toggleRowExpansion(row, false);
 			this.loading = true;
 
 			this.getTaskDetail(row).then(() => { 
 				this.rowActive = JSON.parse(JSON.stringify(row)); 
-				this.detail = this.rowActive.Content;
-				this.detail.forEach(row => {
+				this.detail[this.deviceSubType] = this.rowActive.Content[this.deviceSubType];
+				this.detail[this.deviceSubType].forEach(row => {
 					this.$set(row, "isAdd", false);
 					this.$set(row, "isEdit", false);
 				});
-				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });	
+
+				const newItemSample = {
+					3: { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, isAdd: true },
+					4: { ItemPaint: 1, ItemType: 1, MillingFormula: "", number: 0, MillingArea: 0, editFormula: true, isAdd: true } 
+				}
+				Object.assign(this.newItem, newItemSample);	
 
 				getTaskGroup({
-					tenderId: this.rowActive.SurveyId,
+					groupId: this.listQuery.groupId,
 					pageCurrent: 1,
 					pageSize: 999999
 				}).then(response => {
@@ -585,8 +732,15 @@ export default {
 			}).catch(err => this.loading = false);
 		},
 		cleanDetail() {
-			this.detail = [];
+			this.detail = {
+				3: [],
+				4: []
+			};
 			this.rowActive = {
+				Content: {
+					3: [],
+					4: []
+				},
 				KitNotes: {
 					DesignDetail: "",
 					DesignDesc: "",
@@ -602,11 +756,11 @@ export default {
 			}).then(response => {
 				const itemArr = response.data.list;
 				itemArr.forEach(itemAdd => {
-					const detailFilter = this.detail.filter(itemNow => itemNow.UnitSN == itemAdd.UnitSN);
-					if( detailFilter.length == 0) this.detail.push(itemAdd);
+					const detailFilter = this.detail[this.deviceSubType].filter(itemNow => itemNow.UnitSN == itemAdd.UnitSN);
+					if( detailFilter.length == 0) this.detail[this.deviceSubType].push(itemAdd);
 					else detailFilter[0].number += itemAdd.number;
 				});
-				this.detail.forEach(l => { this.$set(l, "isEdit", false); });
+				this.detail[this.deviceSubType].forEach(l => { this.$set(l, "isEdit", false); });
 
 				const isReplaceNote = (Object.values(this.rowActive.KitNotes).filter(val => val && val.length != 0)).length == 0;
 				if(isReplaceNote) this.rowActive.KitNotes = this.options.kitArr.filter(kit => (kit.SerialNo == this.listQuery.groupSN)).map(kit => ({ DesignDetail: kit.DesignDetail, DesignDesc: kit.DesignDesc, DesignWorker: kit.DesignWorker }))[0];
@@ -617,7 +771,7 @@ export default {
 		async getKitItem(row) {
 			return new Promise(resolve => {
 				this.loading = true;
-				const rowActive = row.SerialNo != undefined ? row : this.newItem;
+				const rowActive = row.SerialNo != undefined ? row : this.newItem[this.deviceSubType];
 				Object.assign(rowActive, { TaskName: "", TaskUnit: "", TaskPrice: "" });
 
 				getKitItemMap({
@@ -637,8 +791,13 @@ export default {
 				}).catch(err => { this.loading = false; resolve(); });
 			})
 		},
+		async addItem() {
+			if(this.deviceSubType == 3) await this.addKitItem();
+			else if(this.deviceSubType == 4) this.addMarkerItem();
+		},
 		async addKitItem() {
-			if(!this.newItem.UnitSN) {
+			const newItem = this.newItem[this.deviceSubType];
+			if(!newItem.UnitSN) {
 				this.$message({
 					message: "請填入正確項次",
 					type: "error",
@@ -647,25 +806,40 @@ export default {
 				return;
 			}
 
-			await this.getKitItem(this.newItem);
+			await this.getKitItem(newItem);
 
-			if(!this.newItem.TaskName || !this.newItem.TaskUnit || !this.newItem.TaskPrice || this.newItem.number == 0) {
-				const itemText = this.newItem.number == 0 ? "數量" : "項次";
+			if(!newItem.TaskName || !newItem.TaskUnit || !newItem.TaskPrice || newItem.number == 0) {
+				const itemText = newItem.number == 0 ? "數量" : "項次";
 				this.$message({
 					message: `請填入正確${itemText}`,
 					type: "error",
 				});
 			} else {
 				this.newItem.isAdd = false;
-				this.detail.push({...this.newItem, isEdit: false});
+				this.detail[this.deviceSubType].push({...newItem, isEdit: false});
 
-				Object.assign(this.newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });
+				Object.assign(newItem, { UnitSN: "", TaskName: "", TaskUnit: "", TaskPrice: "", number: 0, DTeam: this.rowActive.DTeam, isAdd: true });
 			}
 		},
-		delKitItem(index) {
-			this.detail.splice(index, 1);
+		async addMarkerItem() {
+			const newItem = this.newItem[this.deviceSubType];
+			if(!newItem.ItemPaint || !newItem.ItemType || newItem.MillingFormula.length == 0 || newItem.number == '0') {
+				const itemText = newItem.MillingFormula.length == 0 ? "公式" : "數量";
+				this.$message({
+					message: `請填入正確${itemText}`,
+					type: "error",
+				});
+			} else {
+				newItem.isAdd = false;
+				this.detail[this.deviceSubType].push({...newItem, isEdit: false});
+
+				Object.assign(newItem, { ItemPaint: 1, ItemType: 1, MillingFormula: "", number: 1, MillingArea: 0, editFormula: true, isAdd: true });
+			}
 		},
-		dispatchSpec(row = this.rowActive, editContent = true) {
+		delItem(index) {
+			this.detail[this.deviceSubType].splice(index, 1);
+		},
+		applySpec(row = this.rowActive, editContent = true) {
 			this.$confirm(`確認 案件編號${row.CaseNo} 資料登錄?`, "確認", { showClose: false } )
 				.then(() => {
 					this.loading = true;
@@ -674,6 +848,7 @@ export default {
 					
 					if(!row.editFormula) row.MillingFormula = '0';
 					let caseSpec = JSON.parse(JSON.stringify(this.caseFilterList([row])[0]));
+
 					if([1,2].includes(this.deviceTypeNow)) {
 						this.calArea(caseSpec);
 						
@@ -683,21 +858,27 @@ export default {
 						} else delete caseSpec.MillingFormula;
 
 						delete caseSpec.KitNotes;
-					} else if([3,4].includes(this.deviceTypeNow)) {
-						this.detail.forEach(row => {
-							row.number == Number(row.number);
-							for(const key of [ "SerialNo", "isAdd", "isEdit" ]) delete row[key];
-						});
 
-						if(this.deviceTypeNow == 3) {
-							if(this.detail.length > 0) caseSpec.KitContent = this.detail;
-							caseSpec.KitNotes = JSON.stringify(caseSpec.KitNotes);
-							if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
-						} else if(this.deviceTypeNow == 4) caseSpec.Content = JSON.stringify(editContent ? this.detail : row.Content);
+						if(this.deviceTypeNow == 1) {
+							for(const key of [ "Aggregate34", "Aggregate38" ]) caseSpec[key] = row[key];
+						}
+
+					} else if(this.deviceTypeNow == 3) {
+						if(this.detail[3].length > 0) caseSpec.KitContent = this.detail[3];
+						caseSpec.KitNotes = JSON.stringify(caseSpec.KitNotes);
+						if(row.notesSync) caseSpec.Notes = row.KitNotes.DesignDesc;
+					} 
+
+					for(let deviceType of [3, 4]) {
+						this.detail[deviceType].forEach(row => {
+							row.number = Number(row.number);
+							for(const key of [ "SerialNo", "GroupId", "editFormula", "isAdd", "isEdit" ]) delete row[key];
+						});
 					}
+					caseSpec.Content = JSON.stringify(editContent ? this.detail[4] : row.Content[4]);
 					
 					setDispatchSpec({
-						deviceType: this.listQuery.deviceType,
+						deviceType: this.deviceTypeNow,
 						caseSpec
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
@@ -750,11 +931,13 @@ export default {
 						// 		type: "success",
 						// 	});
 						// }).catch(err => { console.log(err); this.loading = false; });
-
 						this.$message({
 							message: `建立成功(通報單號 ${caseSN})`,
 							type: "success",
 						});
+						this.deviceTypeNow = this.listQuery.deviceType;
+						this.listQuery.filterType = 2;
+						this.listQuery.filterStr = caseSN;
 						this.getList(false);
 					} else {
 						this.$message({

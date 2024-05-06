@@ -8,10 +8,10 @@
 			<div class="filter-item">
 				<div class="el-input el-input--medium el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
-						<span>合約</span>
+						<span>契約</span>
 					</div>
-					<el-select v-model="listQuery.tenderId" class="tender-select" popper-class="type-select tender" placeholder="請選擇">
-						<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="id" :label="obj.tenderName" />
+					<el-select v-model="listQuery.groupId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" clearable @clear="listQuery.groupId = null">
+						<el-option v-for="(obj, id) in options.tenderGroup" :key="id" :value="id" :label="obj.groupName" />
 					</el-select>
 				</div>
 			</div>
@@ -228,7 +228,7 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getKitItemMap } from "@/api/type";
+import { getTenderGroup, getKitItemMap } from "@/api/type";
 import { getTaskGroup, addTaskGroup, delTaskGroup, getTaskGroupDetail, setTaskGroupDetail } from "@/api/dispatch";
 // import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
@@ -253,7 +253,7 @@ export default {
 			confirmType: 0, //del: 0, add: 1
 			listQuery: {
 				filterStr: null,
-				tenderId: null,
+				groupId: null,
 				pageCurrent: 1,
 				pageSize: 50,
 			},
@@ -313,7 +313,7 @@ export default {
 			},
 			rowActive: {},
 			options: {
-				tenderMap: {}
+				tenderGroup: {}
 			}
 		};
 	},
@@ -324,7 +324,7 @@ export default {
 	},
 	watch: { },
 	created() { 
-		getTenderMap().then(response => { this.options.tenderMap = response.data.tenderMap});
+		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
 	},
 	methods: {
 		toggleExpand(row) {
@@ -382,16 +382,16 @@ export default {
 			// let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			// this.searchRange = startDate + " - " + endDate;
 			
-			if (!this.listQuery.tenderId) {
+			if (!this.listQuery.groupId) {
 				this.$message({
-					message: "請選擇合約",
+					message: "請選擇契約",
 					type: "error",
 				});
 			} else {
 				this.loading = true;
 				this.list = [];
 				getTaskGroup({
-					tenderId: this.listQuery.tenderId,
+					groupId: this.listQuery.groupId,
 					keyword: this.listQuery.filterStr,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize
@@ -421,8 +421,8 @@ export default {
 		addKit() {
 			this.showAddKit = false;
 			addTaskGroup({
-				GroupName: this.newKit.GroupName,
-				TenderId: this.listQuery.tenderId
+				groupName: this.newKit.GroupName,
+				groupId: this.listQuery.groupIdId
 			}).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
@@ -452,12 +452,12 @@ export default {
 						for(const key of [ "SerialNo", "GroupSN", "isAdd", "isEdit", "TaskPrice", "DTeam" ]) delete row[key];
 					});
 					setTaskGroupDetail({
-						SerialNo: this.rowActive.SerialNo,
-						TenderId: this.listQuery.tenderId,
-						KitContent: this.detail,
-						DesignDetail: this.rowActive.DesignDetail || undefined,
-						DesignDesc: this.rowActive.DesignDesc || undefined,
-						DesignWorker: this.rowActive.DesignWorker || undefined
+						serialNo: this.rowActive.SerialNo,
+						groupId: this.listQuery.groupId,
+						kitContent: this.detail,
+						designDetail: this.rowActive.DesignDetail || undefined,
+						designDesc: this.rowActive.DesignDesc || undefined,
+						designWorker: this.rowActive.DesignWorker || undefined
 					}).then(response => {
 						if ( response.statusCode == 20000 ) {
 							this.$message({
@@ -596,7 +596,7 @@ export default {
 		.filter-item
 			margin-right: 5px
 			.tender-select
-				width: 520px
+				width: 330px
 				.el-input__inner
 					padding-left: 10px
 					text-align: left
