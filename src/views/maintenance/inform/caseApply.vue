@@ -89,13 +89,11 @@
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row v-if="row.editFormula" :gutter="5" type="flex" align="middle">
-							<el-col :span="4"><el-tag class="btn-tag" type="success"
-									@click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
+							<el-col :span="4"><el-tag class="btn-tag" type="success" @click="row.editFormula = false; calArea(row);">自訂</el-tag></el-col>
 							<el-col :span="20"><el-input v-model="row.MillingFormula" @change="calArea(row)" /></el-col>
 						</el-row>
 						<el-row v-else :gutter="5" type="flex" align="middle">
-							<el-col :span="4"><el-tag class="btn-tag"
-									@click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
+							<el-col :span="4"><el-tag class="btn-tag" @click="row.editFormula = true; calArea(row);">簡單</el-tag></el-col>
 							<el-col :span="8"><el-input v-model="row.MillingLength" @change="calArea(row)" /></el-col>
 							<el-col :span="2" style="line-height: 36px"> ✕ </el-col>
 							<el-col :span="8"><el-input v-model="row.MillingWidth" @change="calArea(row)" /></el-col>
@@ -114,17 +112,17 @@
 			</el-table-column>
 
 			<!-- 道路 -->
-			<el-table-column v-if="deviceTypeNow == '1'" label="刨鋪深度" width="80" align="center">
+			<el-table-column v-if="filterTypeNow == 2 && deviceTypeNow == 1" label="刨鋪深度" width="80" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
-						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select">
+						<el-select v-model="row.MillingDepth" size="mini" popper-class="type-select" @change="row[row.type] = row.MillingDepth">
 							<el-option v-for="value in options.depthArr" :key="value" :label="value" :value="value"/>
 						</el-select>
 					</span>
 					<span v-else>{{ row.MillingDepth }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="deviceTypeNow == '1'" label="使用粒料" width="120" align="center">
+			<el-table-column v-if="filterTypeNow == 2 && deviceTypeNow == 1" label="使用粒料" width="120" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="row.edit">
 						<el-row :gutter="5">
@@ -135,14 +133,14 @@
 						</el-row>
 					</span>
 					<span v-else>
-						<el-row :gutter="5">
+						<el-row>
 							<span v-if="row.Aggregate34 > 0">
-								<el-col :span="8">粒料3/4: </el-col>
-								<el-col :span="3" class="item-content">{{ row.Aggregate34 }}</el-col>
+								<el-col :span="16">粒料3/4: </el-col>
+								<el-col :span="8" class="item-content">{{ row.Aggregate34 }}</el-col>
 							</span>
 							<span v-else-if="row.Aggregate38 > 0">
-								<el-col :span="8">粒料3/8: </el-col>
-								<el-col :span="3" class="item-content">{{ row.Aggregate38 }}</el-col>
+								<el-col :span="16">粒料3/8: </el-col>
+								<el-col :span="8" class="item-content">{{ row.Aggregate38 }}</el-col>
 							</span>
 							<span v-else> - </span>
 						</el-row>
@@ -176,7 +174,7 @@
 			</el-table-column>
 
 			<!-- 標線 -->
-			<el-table-column label="標線設計" width="140" align="center">
+			<el-table-column v-if="filterTypeNow == 2" label="標線設計" width="140" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
 						<el-button v-if="row.State == 1 && row.FlowState == 1" :type="row.Content[4].length == 0 ? 'success' : 'info'" :plain="row.Content[4].length != 0" size="mini" @click="beforeEdit(row, 4)">設計</el-button>
