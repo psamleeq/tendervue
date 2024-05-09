@@ -82,7 +82,7 @@
 						@click="dateTimePickerVisible = !dateTimePickerVisible"
 					>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
 					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getCarList()">搜尋</el-button>
-					<el-switch v-show="admAuth && timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
+					<el-switch v-show="timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
 				</span>
 			</div>
 		</div>
@@ -162,7 +162,7 @@ export default {
 			timer: null,
 			mapType: 'roadmap',
 			map: null,
-			polyLine: null,
+			polyLines: [],
 			markers: {
 				start: null,
 				end: null
@@ -288,30 +288,30 @@ export default {
 					},
 					1: {
 						// 1: "ATE-5102",
-						1: "大同 (RDX-6883)",
+						1: "RDX-6883 (大同)",
 						2: "RDQ-6279",
 						// 3: "ATE-3192",
-						3: "中山 (RDX-6881)",
+						3: "RDX-6881 (中山)",
 					},
 					2: {
-						1: "松山 (ATE-3236)",
-						2: "信義 (BFX-7552)",
+						1: "ATE-3236 (松山)",
+						2: "BFX-7552 (信義)",
 					},
 					3: {
-						1: "中正 (RCX-8095)", //中正
-						2: "萬華 (RCX-7562)", //萬華
+						1: "RCX-8095 (中正)", //中正
+						2: "RCX-7562 (萬華)", //萬華
 					},
 					4: {
-						1: "南港 (ATE-3287)",
-						2: "內湖 (ATE-3192)",
+						1: "ATE-3287 (南港)",
+						2: "ATE-3192 (內湖)",
 					},
 					5: {
-						1: "士林 (BPG-0891)",
-						2: "北投 (BFX-7551)",
+						1: "BPG-0891 (士林)",
+						2: "BFX-7551 (北投)",
 					},
 					6: {
-						1: "大安 (RCX-7561)", //大安
-						2: "文山 (RCX-7560)", //文山
+						1: "RCX-7561 (大安)", //大安
+						2: "RCX-7560 (文山)", //文山
 					}
 				},
 				mapList: {
@@ -328,7 +328,8 @@ export default {
 			carList: [],
 			carVodList: [],
 			carInfo: [],
-			carTracks: []
+			carTracks: [],
+			carTrackLastId: 0
 		};
 	},
 	computed: {
@@ -362,7 +363,6 @@ export default {
 	},
 	watch: {
 		autoRefresh(newValue) {
-			console.log(newValue);
 			if(newValue) this.timer = setInterval(() => { 
 				if(this.timeTabId == 0 && this.listQuery.inspectionId) this.getCarTrack(false);
 				else this.autoRefresh = false;
@@ -509,7 +509,8 @@ export default {
 			this.carVodList = [];
 			this.carTracks = [];
 			this.listQuery.inspectionId = "";
-			if(this.polyLine != undefined) this.polyLine.setMap(null);
+			this.polyLines.forEach(polyLine => polyLine.setMap(null));
+			this.polyLines = [];
 			for(const marker of Object.values(this.markers).filter(marker => marker != null)) marker.setMap(null);
 
 			const date = moment(this.searchDate).format("YYYY-MM-DD");
@@ -574,23 +575,25 @@ export default {
 				}).catch(err => { this.loading = false; });
 		},
 		getCarTrack(isFocusAll = true) {
-			// if(this.polyLine != undefined) this.polyLine.setMap(null);
-			// for(const marker of Object.values(this.markers)) marker.setMap(null);
 			if (isFocusAll) this.dataLayer.route.revertStyle();
+			const lastId = isFocusAll ? 0 : this.carTrackLastId;
 
-			getSpecInspectionTracks(this.listQuery.inspectionId).then(response => {
+			getSpecInspectionTracks(this.listQuery.inspectionId, { lastId }).then(response => {
 				if (response.data.list.length == 0) {
 					this.$message({
 						message: "查無資料",
 						type: "error",
 					});
+					this.autoRefresh = false;
 					this.loading = false;
 				} else {
-					this.carTracks = response.data.list;
+					this.carTracks.push(response.data.list);
+					this.carTrackLastId = this.carTracks.length == 0 ? 0 : this.carTracks[this.carTracks.length - 1][0].id;
 
-					const paths = this.carTracks.map(point => ({ lat: point.lat, lng: point.long }));
+					const paths = this.carTracks[this.carTracks.length - 1].map(point => ({ lat: point.lat, lng: point.long }));
 					// 建立路線
-					this.polyLine = new google.maps.Polyline({
+					
+					const polyLine = new google.maps.Polyline({
 						path: paths,
 						geodesic: true,
 						strokeColor: "#6158EA",
@@ -598,6 +601,7 @@ export default {
 						strokeWeight: 8,
 						map: this.map
 					})
+					this.polyLines.push(polyLine);
 
 					if(isFocusAll) {
 						const bounds = new google.maps.LatLngBounds();
@@ -605,7 +609,7 @@ export default {
 						this.map.fitBounds(bounds);
 					} this.map.panTo(paths[0]);
 
-					this.markers.start.setPosition(paths[paths.length-1]);
+					if(isFocusAll) this.markers.start.setPosition(paths[paths.length-1]);
 					this.markers.end.setPosition(paths[0]);
 					for(const marker of Object.values(this.markers)) marker.setMap(this.map);
 
