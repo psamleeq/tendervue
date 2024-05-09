@@ -37,11 +37,11 @@
 					</el-card>
 				</span>
 				<br>
-				<el-select v-model="listQuery.contractId" placeholder="請選擇">
+				<el-select v-model="listQuery.contractId" placeholder="請選擇" style="width: 100px;">
 					<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
 				</el-select>
 
-				<el-select v-model="listQuery.carId" placeholder="請選擇" @change="getCarList()">
+				<el-select v-model="listQuery.carId" placeholder="請選擇" style="width: 160px;"  @change="getCarList()">
 					<el-option v-for="(text, id) in options.carId[listQuery.contractId]" :key="`car_${id}`" :label="text" :value="Number(id)" />
 				</el-select> 
 
@@ -87,8 +87,13 @@
 			</div>
 		</div>
 		<el-row>
-			<el-col :span="16">
+			<el-col :span="16" style="position: relative;">
 				<div id="map" ref="map" />
+
+				<!-- 操作 -->
+				<div class="action-box">
+					<el-button class="btn-MapType" icon="el-icon-copy-document" size="small" :style="`color: ${options.mapList[mapType].color}`" @click="setMapType">{{ options.mapList[mapType].name }}</el-button>
+				</div>
 			</el-col>
 			<el-col class="info-panel" :span="8">
 				<div class="car-vod-panel">
@@ -155,6 +160,7 @@ export default {
 			showLayerAttach: false,
 			autoRefresh: false,
 			timer: null,
+			mapType: 'roadmap',
 			map: null,
 			polyLine: null,
 			markers: {
@@ -282,32 +288,40 @@ export default {
 					},
 					1: {
 						// 1: "ATE-5102",
-						1: "RDX-6883",
+						1: "大同 (RDX-6883)",
 						2: "RDQ-6279",
 						// 3: "ATE-3192",
-						3: "RDX-6881",
+						3: "中山 (RDX-6881)",
 					},
 					2: {
-						1: "ATE-3236",
-						2: "BFX-7552",
+						1: "松山 (ATE-3236)",
+						2: "信義 (BFX-7552)",
 					},
 					3: {
-						// 1: "RCX-7762",
-						1: "1001", //中正
-						2: "1081", //萬華
+						1: "中正 (RCX-8095)", //中正
+						2: "萬華 (RCX-7562)", //萬華
 					},
 					4: {
-						1: "ATE-3287",
-						2: "ATE-3192",
+						1: "南港 (ATE-3287)",
+						2: "內湖 (ATE-3192)",
 					},
 					5: {
-						1: "BPG-0891",
-						2: "BFX-7551",
+						1: "士林 (BPG-0891)",
+						2: "北投 (BFX-7551)",
 					},
 					6: {
-						// 1: "RCX-7761",
-						1: "1061", //大安
-						2: "1161", //文山
+						1: "大安 (RCX-7561)", //大安
+						2: "文山 (RCX-7560)", //文山
+					}
+				},
+				mapList: {
+					roadmap: {
+						name: "地圖",
+						color: "#B22222",
+					},
+					hybrid: {
+						name: "衛星(Google)",
+						color: "#00BFFF",
 					}
 				},
 			},
@@ -480,6 +494,13 @@ export default {
 					break;
 			}
 			this.getCarList();
+		},
+		setMapType() {
+			const mapKeyList = Object.keys(this.options.mapList);
+			let index = mapKeyList.indexOf(this.mapType);
+			index = (index+1) % mapKeyList.length;
+			this.mapType = mapKeyList[index];
+			this.map.setMapTypeId(this.mapType);
 		},
 		getCarList() {
 			this.loading = true;
@@ -740,6 +761,12 @@ export default {
 		// 		.el-dialog__body
 		// 			padding: 0
 		// 			height: 405px
+	.action-box
+		.btn-MapType
+			position: absolute
+			top: 24px
+			right: 24px
+			background-color: rgba(white, 0.8)
 	#map
 		overflow: hidden
 		background: none !important
