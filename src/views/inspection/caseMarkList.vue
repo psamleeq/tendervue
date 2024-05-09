@@ -70,9 +70,9 @@
 
 		<h5 v-if="[4, 5].includes(listQuery.filterType) && list.length != 0">查詢期間：{{ searchRange }}</h5>
 		<h5 v-if="list.length != 0">案件數：{{ total }}</h5>
-		<el-button v-if="list.length != 0" style="float: right; margin-right: 250px; margin-top: -50px;" type="success" icon="el-icon-document" @click="exportCSV">匯出csv</el-button>
-		<el-button v-if="list.length != 0" style="float: right; margin-right: 100px; margin-top: -50px;" type="warning" icon="el-icon-document" @click="exportAllCSV">匯出全部csv</el-button>
-		<el-button v-if="list.length != 0" style="float: right; margin-top: -50px;" type="danger" icon="el-icon-s-promotion" @click="exportResult">匯出</el-button>
+		<el-button v-if="checkPermission(['inspection.editor']) && list.length != 0" style="float: right; margin-right: 250px; margin-top: -50px;" type="success" icon="el-icon-document" @click="exportCSV">匯出csv</el-button>
+		<el-button v-if="checkPermission(['inspection.editor']) && list.length != 0" style="float: right; margin-right: 100px; margin-top: -50px;" type="warning" icon="el-icon-document" @click="exportAllCSV">匯出全部csv</el-button>
+		<el-button v-if="checkPermission(['inspection.editor']) && list.length != 0" style="float: right; margin-top: -50px;" type="danger" icon="el-icon-s-promotion" @click="exportResult">匯出</el-button>
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -85,11 +85,7 @@
 			@selection-change="handleSelectionChange"
 			ref="multipleTable"
 		>
-			<el-table-column
-				type="selection"
-				width="55"
-				align="center">
-			</el-table-column>
+			<el-table-column v-if="checkPermission(['inspection.editor'])" type="selection" width="55" align="center" />
 			<el-table-column
 				v-for="(value, key) in headersFilter"
 				:key="key"
@@ -215,6 +211,7 @@ import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 import { stringify } from "csv";
+import checkPermission from '@/utils/permission';
 
 export default {
 	name: "caseMarkerList",
@@ -467,6 +464,7 @@ export default {
 		this.dialogMapVisible = false;
 	},
 	methods: {
+		checkPermission,
 		exportResult() {
 			const caseDetectionId = [];
 			for (let i = 0; i < this.multipleSelection.length; i++) {
