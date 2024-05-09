@@ -294,8 +294,8 @@ export default {
 						3: "RDX-6881 (中山)",
 					},
 					2: {
-						1: "ATE-3236 (信義)",
-						2: "BFX-7552 (松山)",
+						1: "ATE-3236 (松山)",
+						2: "BFX-7552 (信義)",
 					},
 					3: {
 						1: "RCX-8095 (中正)", //中正
@@ -587,12 +587,16 @@ export default {
 					this.autoRefresh = false;
 					this.loading = false;
 				} else {
+					let lastPt = [];
+					if(this.carTracks.length != 0) {
+						const lastTracks = this.carTracks[this.carTracks.length - 1];
+						lastPt = [ lastTracks[0] ];
+					}
 					this.carTracks.push(response.data.list);
 					this.carTrackLastId = this.carTracks.length == 0 ? 0 : this.carTracks[this.carTracks.length - 1][0].id;
 
-					const paths = this.carTracks[this.carTracks.length - 1].map(point => ({ lat: point.lat, lng: point.long }));
 					// 建立路線
-					
+					const paths = [ ...this.carTracks[this.carTracks.length - 1], ...lastPt ].map(point => ({ lat: point.lat, lng: point.long }));
 					const polyLine = new google.maps.Polyline({
 						path: paths,
 						geodesic: true,
