@@ -1,6 +1,6 @@
 <template>
 	<div class="car-monitor" v-loading="loading"> 
-		<h2>即時影像</h2>
+		<h2>巡視影像</h2>
 		<el-row>
 			<el-col :span="6" v-for="zip in zipCodeOrder" :key="zip">
 				<div class="car-vod-panel">

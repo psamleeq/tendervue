@@ -1,7 +1,7 @@
 <template>
 	<div class="car-route" v-loading="loading"> 
 		<div class="header-bar">
-			<h2 class="route-title">車巡管理
+			<h2 class="route-title">巡視路線
 				<!-- <span v-if="carId.length != 0" class="route-info">車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span> -->
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
@@ -121,34 +121,6 @@
 				</div>
 			</el-col>
 		</el-row> 
-
-		<!-- <h5 v-if="list.length != 0">查詢期間：{{ searchRange }}</h5> -->
-
-		<!-- <el-table
-			empty-text="目前沒有資料"
-			:data="list"
-			border
-			fit
-			highlight-current-row
-			:header-cell-style="{'background-color': '#F2F6FC'}"
-			stripe
-			style="width: 100%"
-		>
-			<el-table-column
-				v-for="(value, key) in headers"
-				:key="key"
-				:prop="key"
-				:label="value.name"
-				align="center"
-				:formatter="formatter"
-				:sortable="value.sortable"
-			/>
-		</el-table> -->
-		<!-- <el-dialog v-el-drag-dialog class="streaming" :visible="true" width="720px" :modal="false" :modal-append-to-body="false" :append-to-body="false" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false" center> -->
-			<!-- <iframe width="720" height="405" src="https://www.youtube.com/embed/d148YHkaAGg?controls=0&autoplay=1&mute=1&rel=0&modestbranding=1" frameborder="0" allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;" /> -->
-			<!-- <iframe src="http://bimtest.sytes.net:5080/WebRTCAppEE/play.html?name=246612205179051969409588&autoplay=true" frameborder="0" width="720" height="405"></iframe>
-		</el-dialog> -->
-
 	</div>
 </template>
 
@@ -158,7 +130,6 @@ import * as jsts from 'jsts/dist/jsts.min.js';
 import moment from 'moment';
 import { getInspectionList, getSpecInspection, getSpecInspectionTracks } from "@/api/car";
 import { getInspectionRoute } from "@/api/inspection";
-import elDragDialog from '@/directive/el-drag-dialog';
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -175,7 +146,6 @@ const loader = new Loader(loaderOpt);
 
 export default {
 	name: "carRoute",
-	directives: { elDragDialog },
 	data() {
 		return {
 			admAuth: false,
@@ -602,9 +572,9 @@ export default {
 					this.polyLine = new google.maps.Polyline({
 						path: paths,
 						geodesic: true,
-						strokeColor: "#9E9D24",
-						strokeOpacity: 1,
-						strokeWeight: 5,
+						strokeColor: "#6158EA",
+						strokeOpacity: 0.8,
+						strokeWeight: 8,
 						map: this.map
 					})
 
