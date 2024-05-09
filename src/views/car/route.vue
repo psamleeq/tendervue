@@ -294,16 +294,16 @@ export default {
 						3: "RDX-6881 (中山)",
 					},
 					2: {
-						1: "ATE-3236 (松山)",
-						2: "BFX-7552 (信義)",
+						1: "ATE-3236 (信義)",
+						2: "BFX-7552 (松山)",
 					},
 					3: {
 						1: "RCX-8095 (中正)", //中正
 						2: "RCX-7562 (萬華)", //萬華
 					},
 					4: {
-						1: "ATE-3287 (南港)",
-						2: "ATE-3192 (內湖)",
+						1: "ATE-3287 (內湖)",
+						2: "ATE-3192 (南港)",
 					},
 					5: {
 						1: "BPG-0891 (士林)",
@@ -366,7 +366,7 @@ export default {
 			if(newValue) this.timer = setInterval(() => { 
 				if(this.timeTabId == 0 && this.listQuery.inspectionId) this.getCarTrack(false);
 				else this.autoRefresh = false;
-			}, 30000);
+			}, 20000);
 			else clearInterval(this.timer);
 		}
 	},
@@ -663,7 +663,7 @@ export default {
 		},
 		intersectRoute() {
 			this.dataLayer.route.revertStyle();
-			const jstsRoutePoints = this.carTracks.map(point => this.createJstsGeometry([[ point.long, point.lat ]]));
+			const jstsRoutePoints = this.carTracks.flat(1).map(point => this.createJstsGeometry([[ point.long, point.lat ]]));
 			// console.log(jstsRoutePoints.length);
 			this.dataLayer.route.forEach(feature => {
 				feature.toGeoJson(json => {
