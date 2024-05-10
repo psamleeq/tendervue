@@ -526,9 +526,24 @@ export default {
 		changeTender() {
 			const zipCode = this.options.tenderRoundMap[this.listQuery.tenderRound].zipCode;
 
-			this.dataLayer.district.setStyle(feature => {
+			this.dataLayer.mask.setStyle(feature => {
 				// console.log(feature);
-				const condition = [1001, 999].includes(zipCode) || this.options.districtMap[zipCode].district.includes(feature.getProperty("TOWNNAME"));
+				const condition = [1000].includes(zipCode);
+
+				return {
+					strokeColor: "#000000",
+					strokeWeight: 0,
+					strokeOpacity: 1,
+					fillColor: "#000000",
+					fillOpacity: condition ? 0 : 0.7,
+					zIndex: 0
+				}
+			});
+
+			this.dataLayer.district.setStyle(feature => {
+
+				// console.log(feature);
+				const condition = [1001, 999, 1000].includes(zipCode) || this.options.districtMap[zipCode].district.includes(feature.getProperty("TOWNNAME"));
 
 				return {
 					strokeColor: "#827717",

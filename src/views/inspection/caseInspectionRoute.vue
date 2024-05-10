@@ -443,9 +443,24 @@ export default {
 			this.loading = true;
 			this.handleRemove(); 
 			this.blockList = [];
+
+			this.dataLayer.mask.setStyle(feature => {
+				// console.log(feature);
+				const condition = [1000].includes(zipCode);
+
+				return {
+					strokeColor: "#000000",
+					strokeWeight: 0,
+					strokeOpacity: 1,
+					fillColor: "#000000",
+					fillOpacity: condition ? 0 : 0.7,
+					zIndex: 0
+				}
+			});
+			
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const condition = [1001, 999].includes(this.listQuery.zipCode) || this.options.districtMap[this.listQuery.zipCode].district.includes(feature.getProperty("TOWNNAME"));
+				const condition = [1001, 999, 1000].includes(this.listQuery.zipCode) || this.options.districtMap[this.listQuery.zipCode].district.includes(feature.getProperty("TOWNNAME"));
 
 				return {
 					strokeColor: "#827717",
