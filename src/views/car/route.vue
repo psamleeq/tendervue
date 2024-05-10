@@ -38,10 +38,11 @@
 				</span>
 				<br>
 				<el-select v-model="listQuery.contractId" placeholder="請選擇" style="width: 100px;">
+					<el-option label="全部" :value="99" />
 					<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
 				</el-select>
 
-				<el-select v-model="listQuery.carId" placeholder="請選擇" style="width: 160px;"  @change="getCarList()">
+				<el-select v-if="listQuery.contractId != 99" v-model="listQuery.carId" placeholder="請選擇" style="width: 160px;"  @change="getCarList()">
 					<el-option v-for="(text, id) in options.carId[listQuery.contractId]" :key="`car_${id}`" :label="text" :value="Number(id)" />
 				</el-select> 
 
@@ -81,7 +82,7 @@
 						size="mini"
 						@click="dateTimePickerVisible = !dateTimePickerVisible"
 					>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
-					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getCarList()">搜尋</el-button>
+					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 					<el-switch v-show="timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
 				</span>
 			</div>
@@ -359,7 +360,7 @@ export default {
 		loader.load().then(() => this.initMap()).catch(err => console.log("err: ", err));
 	},
 	mounted() {
-		this.getCarList();
+		// this.getCarList();
 	},
 	watch: {
 		autoRefresh(newValue) {
@@ -441,23 +442,27 @@ export default {
 			}
 
 			// 建立marker
-			this.markers.start = new google.maps.Marker({
-				map: this.map,
-				icon: {
-					url: "/assets/icon/icon_redDot.png",
-					anchor: new google.maps.Point(5, 5),
-					scaledSize: new google.maps.Size(10, 10)
-				}
-			});
+			for(let contractId of Object.keys(this.options.carId)) {
+				for(let carId of Object.keys(this.options.carId[contractId])) {
+					this.markers[`start${contractId}${carId}`] = new google.maps.Marker({
+						map: this.map,
+						icon: {
+							url: "/assets/icon/icon_redDot.png",
+							anchor: new google.maps.Point(5, 5),
+							scaledSize: new google.maps.Size(10, 10)
+						}
+					});
 
-			this.markers.end = new google.maps.Marker({
-				map: this.map,
-				icon: {
-					url: "/assets/icon/truck.png",
-					anchor: new google.maps.Point(12, 12),
-					scaledSize: new google.maps.Size(24, 24)
+					this.markers[`end${contractId}${carId}`] = new google.maps.Marker({
+						map: this.map,
+						icon: {
+							url: "/assets/icon/truck.png",
+							anchor: new google.maps.Point(12, 12),
+							scaledSize: new google.maps.Size(24, 24)
+						}
+					});
 				}
-			});
+			}
 
 			// 巡查路線(預定)
 			this.dataLayer.route = new google.maps.Data({ map: this.map });
@@ -493,7 +498,7 @@ export default {
 					this.searchDate = moment().subtract(2, "d");
 					break;
 			}
-			this.getCarList();
+			this.getList();
 		},
 		setMapType() {
 			const mapKeyList = Object.keys(this.options.mapList);
@@ -501,6 +506,10 @@ export default {
 			index = (index+1) % mapKeyList.length;
 			this.mapType = mapKeyList[index];
 			this.map.setMapTypeId(this.mapType);
+		},
+		getList() {
+			if(this.listQuery.contractId == 99) this.getAllCarTrack();
+			else this.getCarList();
 		},
 		getCarList() {
 			this.loading = true;
@@ -613,14 +622,73 @@ export default {
 						this.map.fitBounds(bounds);
 					} this.map.panTo(paths[0]);
 
-					if(isFocusAll) this.markers.start.setPosition(paths[paths.length-1]);
-					this.markers.end.setPosition(paths[0]);
-					for(const marker of Object.values(this.markers)) marker.setMap(this.map);
+					if(isFocusAll) {
+						this.markers[`start${this.listQuery.contractId}${this.listQuery.carId}`].setPosition(paths[paths.length-1]);
+						this.markers[`start${this.listQuery.contractId}${this.listQuery.carId}`].setMap(this.map);
+					}
+
+					this.markers[`end${this.listQuery.contractId}${this.listQuery.carId}`].setPosition(paths[0]);
+					this.markers[`end${this.listQuery.contractId}${this.listQuery.carId}`].setMap(this.map);
 
 					if (this.showLayerAttach) this.intersectRoute();
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
+		},
+		getAllCarTrack() {
+			this.loading = true;
+			this.carList = [];
+			this.carInfo = {};
+			this.carVodList = [];
+			this.carTracks = [];
+			this.listQuery.inspectionId = "";
+			this.polyLines.forEach(polyLine => polyLine.setMap(null));
+			this.polyLines = [];
+			for(const marker of Object.values(this.markers).filter(marker => marker != null)) marker.setMap(null);
+
+			const date = moment(this.searchDate).format("YYYY-MM-DD");
+			this.searchRange = date;
+
+			for(let contractId of [1, 2, 3, 4, 5, 6]) {
+				for(let carId of Object.keys(this.options.carId[contractId])) {
+					this.loading = true;
+					getInspectionList({
+						contractId: contractId,
+						modeId: this.listQuery.modeId,
+						carId: carId,
+						date: date
+					}).then(response => {
+						if (response.data.list.length != 0) {
+							//NOTE: 因為一天只會有一次車巡，所以取第一筆
+							const inspectionId = response.data.list[0].id;
+
+							getSpecInspectionTracks(inspectionId).then(response => {
+								if (response.data.list.length != 0) {
+									this.carTracks.push(response.data.list);
+
+									// 建立路線
+									const paths = this.carTracks[this.carTracks.length - 1].map(point => ({ lat: point.lat, lng: point.long }));
+									const polyLine = new google.maps.Polyline({
+										path: paths,
+										geodesic: true,
+										strokeColor: "#6158EA",
+										strokeOpacity: 0.8,
+										strokeWeight: 8,
+										map: this.map
+									})
+									this.polyLines.push(polyLine);
+
+									this.markers[`start${contractId}${carId}`].setPosition(paths[paths.length-1]);
+									this.markers[`start${contractId}${carId}`].setMap(this.map);
+									this.markers[`end${contractId}${carId}`].setPosition(paths[0]);
+									this.markers[`end${contractId}${carId}`].setMap(this.map);
+								}
+							}).catch(err => { this.loading = false; });
+						}
+					}).catch(err => console.log(err))
+						.finally(() => this.loading = false);
+				}
+			}
 		},
 		getRouteList() {
 			this.loading = true;
