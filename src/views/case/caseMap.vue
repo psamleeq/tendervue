@@ -6,9 +6,9 @@
 			<div class="filter-container">
 				<div class="filter-item">
 					<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
-							<div class="el-input-group__prepend">
-								<span>合約</span>
-							</div>
+						<div class="el-input-group__prepend">
+							<span>合約</span>
+						</div>
 						<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender" @input="changeTender()">
 							<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)" />
 						</el-select>

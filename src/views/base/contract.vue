@@ -1,6 +1,6 @@
 <template>
-	<div class="app-container PCI-Manager" v-loading="loading">
-		<h2>PCI計算</h2>
+	<div class="app-container contract" v-loading="loading">
+		<h2>合約管理</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="filter-item">
@@ -33,7 +33,7 @@
 				:prop="key"
 				:label="value.name"
 				align="center"
-				:width="key == 'round' ? 60 : ['title', 'roundStart', 'roundEnd'].includes(key) ? 190 : null"
+				:min-width="key == 'round' ? 60 : ['title', 'roundStart', 'roundEnd'].includes(key) ? 100 : null"
 				:formatter="formatter"
 				:sortable="value.sortable"
 			>
@@ -54,64 +54,19 @@
 			<el-table-column label="操作" width="120" align="center">
 				<template slot-scope="{ row }">
 					<span v-if="!row.archiveTime">
-						<el-button-group v-if="!row.edit">
-							<el-button class="btn-action" type="primary" plain @click="row.edit = true">編輯</el-button>
-							<el-button class="btn-action" type="danger" plain @click="archiveRound(row)">封存</el-button>
-						</el-button-group>
+						<el-button v-if="!row.edit" class="btn-action" type="primary" plain @click="row.edit = true">編輯</el-button>
 						<el-button v-else type="info" class="btn-action" @click="row.edit = false; getList();">取消</el-button>
 					</span>
 					<span v-else style="color: #F56C6C">已封存 <br> ({{ formatTime(row.archiveTime) }})</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="PCI計算" align="center" >
-				<el-table-column v-if="checkPermission(['PCIManage.master'])" label="即時運算" align="center" width='120'>
-					<template slot-scope="{ row }">
-						<el-button-group v-if="!row.archiveTime">
-							<el-button class="btn-action" type="primary" plain @click="calPCI(row.id, 0)">重算</el-button>
-							<el-button class="btn-action" type="success" plain @click="calPCI(row.id, 100)">滿值</el-button>
-						</el-button-group>
-						<span v-else> - </span>
-					</template>
-				</el-table-column>
-
-				<el-table-column label="區塊" align="center">
-					<template slot-scope="{ row }">
-						<el-row v-if="!row.archiveTime" :gutter="5" type="flex" justify="center" align="middle">
-							<el-col :span="14">
-								<el-input v-model="row.blockId" placeholder="區塊編碼" />
-							</el-col>
-							<el-col :span="10">
-								<el-button-group>
-									<el-button class="btn-action" type="primary" plain @click="calPCISpec(row.id, row.blockId, 0)">重算</el-button>
-									<el-button class="btn-action" type="info" plain @click="calPCISpec(row.id, row.blockId, -1)">重置</el-button>
-									<el-button class="btn-action" type="success" plain @click="calPCISpec(row.id, row.blockId, 100)">滿值</el-button>
-								</el-button-group>
-							</el-col>
-						</el-row>
-						<span v-else> - </span>
-					</template>
-				</el-table-column>
-
-				<el-table-column label="路段" align="center">
-					<template slot-scope="{ row }">
-						<el-row v-if="!row.archiveTime" :gutter="5" type="flex" justify="center" align="middle">
-							<el-col :span="14">
-								<el-input v-model="row.roadName" placeholder="道路名稱" />
-							</el-col>
-							<el-col :span="10">
-								<el-button-group>
-									<el-button class="btn-action" type="primary" plain @click="calPCIRoad(row.id, row.roadName, 0)">重算</el-button>
-									<el-button class="btn-action" type="info" plain @click="calPCIRoad(row.id, row.roadName, -1)">重置</el-button>
-									<el-button class="btn-action" type="success" plain @click="calPCIRoad(row.id, row.roadName, 100)">填滿</el-button>
-								</el-button-group>
-							</el-col>
-						</el-row>
-						<span v-else>  - </span>
-					</template>
-				</el-table-column>
+			<el-table-column v-if="/^1\d{2}1$/.test(listQuery.tenderId)" :key="listQuery.tenderId" label="上傳至新工" min-width="80" align="center">
+				<template slot-scope="{ row }">
+					<el-button class="btn-action" type="warning" plain :disabled="isUpload" @click="uploadCase2NCO(row)">上傳</el-button>
+				</template>
 			</el-table-column>
 
-			<el-table-column v-if="listQuery.tenderId > 1001" :key="listQuery.tenderId" label="缺失匯入" width="140" align="center">
+			<el-table-column v-if="listQuery.tenderId > 1001" :key="listQuery.tenderId" label="缺失匯入" min-width="100" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group v-if="!row.edit">
 						<el-button class="btn-action" type="info" plain :disabled="isUpload" @click="uploadCase(row, 1, true)">重點</el-button>
@@ -147,13 +102,12 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getTenderRound, addTenderRound, setTenderRound, archiveTenderRound } from "@/api/type";
-import { resetPCI, updatePCI, updatePCIByName } from "@/api/tool";
-import { importAllInspectCase } from "@/api/inspection";
+import { getTenderMap, getTenderRound, addTenderRound, setTenderRound } from "@/api/type";
+import { importAllInspectCase,  uploadInspectionCaseNco } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 
 export default {
-	name: "PCIManager",
+	name: "contract",
 	data() {
 		return {
 			loading: false,
@@ -291,80 +245,6 @@ export default {
 				});
 			})
 		},
-		archiveRound(row) {
-			let roundName = `Round${row.round}`;
-			if(row.title.length > 0) roundName += `(${row.title})`;
-
-			this.$confirm(`確定封存 ${roundName}，區間為${row.roundStart} - ${row.roundEnd}?`, "確認", {
-					showClose: false,
-				}).then(() => {
-				archiveTenderRound( row.id, { tenderId: this.listQuery.tenderId } ).then(response => {
-					if (response.statusCode == 20000 ) {
-						this.$message({
-							message: "封存成功",
-							type: "success",
-						});
-						this.getList();
-					} else {
-						this.$message({
-							message: "封存失敗",
-							type: "error",
-						});
-					}
-				}).catch(err => {
-					console.log(err);
-					this.getList();
-				});
-			})
-		},
-		calPCI(surveyId, pciValue) {
-			resetPCI({ tenderId: this.listQuery.tenderId, surveyId, pciValue }).then(response => {
-				if (response.statusCode == 20000 ) {
-					const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '滿值';
-					this.$message({
-						message: `${action}成功`,
-						type: "success",
-					});
-				} 
-			}).catch(err => console.log(err));
-		},
-		calPCISpec(surveyId, blockId, pciValue) {
-			if(!Number(blockId)) {
-				this.$message({
-					message: "請輸入正確區塊Id",
-					type: "error",
-				});
-				blockId = "";
-			} else {
-				updatePCI({ tenderId: this.listQuery.tenderId, surveyId, pciValue, blockId }).then(response => {
-					if (response.statusCode == 20000 ) {
-						const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '滿值';
-						this.$message({
-							message: `${action}成功`,
-							type: "success",
-						});
-					} 
-				}).catch(err => console.log(err))
-			}
-		},
-		calPCIRoad(surveyId, roadName, pciValue) {
-			if(roadName.length == 0) {
-				this.$message({
-					message: "請輸入路名",
-					type: "error",
-				});
-			} else {
-				updatePCIByName({ tenderId: this.listQuery.tenderId, surveyId, pciValue, roadName }).then(response => {
-					if (response.statusCode == 20000 ) {
-						const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '填滿';
-						this.$message({
-							message: `${action}成功`,
-							type: "success",
-						});
-					} 
-				}).catch(err => console.log(err))
-			}
-		},
 		uploadCase(row, targetType, isSub = false) {
 			const content = `確定上傳缺失至「${targetType == 1 ? '追蹤列表' : '缺失列表'}」?`;
 			this.$confirm(content, "確認", { showClose: false }).then(() => {
@@ -397,6 +277,36 @@ export default {
 			});
 
 		},
+		uploadCase2NCO(row) {
+			const content = `確定上傳缺失至「新工處」?`;
+			this.$confirm(content, "確認", { showClose: false }).then(() => {
+				this.loading = true;
+				this.isUpload = true;
+
+				uploadInspectionCaseNco({
+					surveyId: row.id
+				}).then(response => {
+					if ( response.statusCode == 20000 ) {
+						const result = response.result;
+						this.$message({
+							message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件 / 失敗 ${result.fail}件 / 重複 ${result.duplicate}件`,
+							type: "success",
+						});
+					} 
+					this.getList();
+					this.isUpload = false;
+					this.loading = false;
+				}).catch(err => {
+					console.log(err);
+					this.loading = false;
+					this.isUpload = false;
+				})
+
+			}).catch(err => {
+				console.log(err);
+			});
+
+		},
 		formatter(row, column) {
 			if (Number(row[column.property])) return row[column.property];
 			else return row[column.property] || "-";
@@ -412,7 +322,7 @@ export default {
 // *
 // 	border: 1px solid #000
 // 	box-sizing: border-box
-.PCI-Manager
+.contract
 	.filter-container .filter-item .select-contract .el-select
 		&.tender-select
 			width: 520px

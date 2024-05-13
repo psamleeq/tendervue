@@ -378,7 +378,7 @@ export default {
 	methods: {
 		// showMap(row) {
 		// 	this.$router.push({
-		// 		path: "/unit/genBlockMap",
+		// 		path: "/base/unit/genBlockMap",
 		// 		query: { laneCode: row.laneCode },
 		// 	});
 		// },

@@ -19,7 +19,7 @@ const caseRouter = {
 			component: () => import('@/views/PCIManage/PCIManager'),
 			name: 'PCIManager',
 			meta: {
-				title: '合約管理 (PCI計算)',
+				title: 'PCI計算',
 				roles: ['PCIManage.base']
 			}
 		},

@@ -8,7 +8,7 @@ import Layout from '@/layout';
 
 /* Router Modules */
 import accountList from './modules/account';
-import unitRouter from './modules/unit';
+import baseRouter from './modules/base';
 import inspectionRouter from './modules/inspection';
 import inspectionReaRouter from './modules/inspectionRes';
 import caseRouter from './modules/case';
@@ -109,7 +109,7 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
 	accountList,
-	unitRouter,
+	baseRouter,
 	carRouter,
 	inspectionRouter,
 	inspectionReaRouter,
