@@ -24,3 +24,12 @@ export function getSpecInspectionTracks(id, query) {
 		params: query
 	})
 }
+
+// 巡視案件
+export function getInspectionCase(query) {
+	return request({
+		url: '/car/insCases',
+		method: 'get',
+		params: query
+	})
+}

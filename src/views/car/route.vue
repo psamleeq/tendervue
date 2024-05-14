@@ -91,6 +91,15 @@
 			<el-col :span="16" style="position: relative;">
 				<div id="map" ref="map" />
 
+				<el-card v-if="caseInfo.length != 0" class="info-box left">
+					<el-row v-for="(info, index) in caseInfo" :key="`caseInfo_${info.caseName}_${index}`" class="color-box" :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
+						<el-col :span="16" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
+						<el-col :span="8">
+							<span>{{ info.total }}</span>
+						</el-col>
+					</el-row>
+				</el-card>
+
 				<!-- 操作 -->
 				<div class="action-box">
 					<el-button class="btn-MapType" icon="el-icon-copy-document" size="small" :style="`color: ${options.mapList[mapType].color}`" @click="setMapType">{{ options.mapList[mapType].name }}</el-button>
@@ -134,7 +143,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import * as jsts from 'jsts/dist/jsts.min.js';
 import moment from 'moment';
-import { getInspectionList, getSpecInspection, getSpecInspectionTracks } from "@/api/car";
+import { getInspectionList, getSpecInspection, getSpecInspectionTracks, getInspectionCase } from "@/api/car";
 import { getInspectionRoute } from "@/api/inspection";
 
 // 載入 Google Map API
@@ -168,6 +177,8 @@ export default {
 				start: null,
 				end: null
 			},
+			infoWindow: null,
+			caseInfo: [],
 			activeVodName: "",
 			timeTabId: 0,
 			dateTimePickerVisible: false,
@@ -325,6 +336,12 @@ export default {
 						color: "#00BFFF",
 					}
 				},
+				caseMap: [
+					{ caseName: '縱向與橫向裂縫', color: '#1E90FF', icon: '/assets/icon/icon_blue.png' },
+					{ caseName: '坑洞', color: '#00FFFF', icon: '/assets/icon/icon_lightBlue.png' },
+					{ caseName: '龜裂', color: '#90EE90', icon: '/assets/icon/icon_green.png' },
+					{ caseName: '人手孔破損', color: '#9932CC', icon: '/assets/icon/icon_purple' },
+				]
 			},
 			carList: [],
 			carVodList: [],
@@ -464,6 +481,9 @@ export default {
 				}
 			}
 
+			// 巡視缺失
+			this.dataLayer.case = new google.maps.Data({ map: this.map });
+
 			// 巡查路線(預定)
 			this.dataLayer.route = new google.maps.Data({ map: this.map });
 			this.dataLayer.route.setStyle({ 
@@ -510,6 +530,8 @@ export default {
 		getList() {
 			if(this.listQuery.contractId == 99) this.getAllCarTrack();
 			else this.getCarList();
+
+			this.getCaseInfo();
 		},
 		getCarList() {
 			this.loading = true;
@@ -690,6 +712,71 @@ export default {
 				}
 			}
 		},
+		getCaseInfo() {
+			this.dataLayer.case.forEach(feature => this.dataLayer.case.remove(feature));
+
+			const timeStart = moment(this.searchDate).format("YYYY-MM-DD");
+			const timeEnd = moment(this.searchDate).add(1, 'd').format("YYYY-MM-DD");
+			getInspectionCase({ timeStart, timeEnd }).then(response => {
+				const caseList = response.data.list.map(caseSpec => {
+					const codeArr = caseSpec.caseType.match(/&#(\d+);/g) || [];
+					if(codeArr.length > 0) {
+						caseSpec.caseType = String.fromCharCode(...codeArr.map(l => Number(l.replace(/[&#;]/g, ''))));
+					}
+					return caseSpec
+				});
+
+				this.caseInfo = caseList.reduce((acc, cur)=> {
+					const caseFilter = acc.filter(caseSpec => caseSpec.caseName == cur.caseType);
+					if(caseFilter.length == 0) {
+						const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName == cur.caseType);
+						acc.push({ 
+							caseName: cur.caseType, 
+							color: caseFilter.length == 0 ? '#1E90FF' : caseFilter[0].color,
+							total: 1 
+						});
+					} else caseFilter[0].total++;
+
+					return acc;
+				}, []);
+
+				let geoJSON = {
+					"type": "FeatureCollection",
+					"name": "caseJSON",
+					"features": []
+				};
+
+				for (const caseSpec of caseList) {
+					let feature = {
+						"type": "Feature",
+						"properties": {
+							"id": caseSpec.serialno,
+							"roadName": caseSpec.casename,
+							"caseName": caseSpec.caseType
+						},
+						"geometry": {
+							"type": "POINT",
+							"coordinates": [ Number(caseSpec.yy), Number(caseSpec.xx) ]
+						}
+					};
+					geoJSON.features.push(feature);
+				}
+				this.dataLayer.case.addGeoJson(geoJSON);
+
+				this.dataLayer.case.setStyle(feature => {
+					const caseName = feature.getProperty("caseName");
+					const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName == caseName);
+
+					return { 
+						icon: { 
+							url: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
+							anchor: new google.maps.Point(5, 5),
+							scaledSize: new google.maps.Size(30, 30),
+						}
+					};
+				})
+			}).catch(err => console.log(err))
+		},
 		getRouteList() {
 			this.loading = true;
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
@@ -857,6 +944,18 @@ export default {
 				border-collapse: collapse !important
 				border: none !important
 				padding: 5px
+	.info-box
+		position: absolute
+		width: 250px
+		background-color: rgba(white, 0.7)
+		z-index: 1
+		&.left
+			top: 200px
+			left: 15px
+		.el-card__body
+			padding: 2px
+			.color-box
+				line-height: 30px
 	.info-panel
 		height: calc(100vh - 50px)
 		background-color: #E6EE9C
