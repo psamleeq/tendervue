@@ -14,7 +14,10 @@
 					</div>
 				</div>
 			</div>
-			<el-button style="float: right;" @click="showAddDialog = true" type="success">新增</el-button>
+			<el-button-group style="float: right;">
+				<el-button type="primary" @click="getAction">重整</el-button>
+				<el-button type="success" @click="showAddDialog = true">新增</el-button>
+			</el-button-group>
 		</div>
 
 		<el-table
@@ -62,7 +65,8 @@
 			</el-table-column>
 			<el-table-column v-if="/^1\d{2}1$/.test(listQuery.tenderId)" :key="listQuery.tenderId" label="上傳至新工" min-width="80" align="center">
 				<template slot-scope="{ row }">
-					<el-button class="btn-action" type="warning" plain :disabled="isUpload" @click="uploadCase2NCO(row)">上傳</el-button>
+					<el-button class="btn-action" type="warning" plain :disabled="isUpload" style="margin-bottom: 5px;" @click="uploadCase2NCO(row)">上傳</el-button>
+					<el-progress v-if="row.actionId" text-inside :stroke-width="16" :percentage="row.process" />
 				</template>
 			</el-table-column>
 
@@ -102,8 +106,8 @@
 
 <script>
 import moment from "moment";
-import { getTenderMap, getTenderRound, addTenderRound, setTenderRound } from "@/api/type";
-import { importAllInspectCase,  uploadInspectionCaseNco } from "@/api/inspection";
+import { getTenderMap, getTenderRound, addTenderRound, setTenderRound, getActionProcess } from "@/api/type";
+import { importAllInspectCase, uploadInspectionCaseNco } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 
 export default {
@@ -176,12 +180,14 @@ export default {
 					this.newRoundForm.round = 1;
 				} else {
 					this.list = response.data.list;
+
 					this.newRoundForm = {
 						round: Math.max(...this.list.map(l => l.round)) + 1,
 						title: "",
 						roundStart: "",
 						roundEnd: ""
 					}
+
 					this.list.forEach(l => {
 						l.roundStart = this.formatTime(l.roundStart);
 						l.roundEnd = this.formatTime(l.roundEnd);
@@ -189,9 +195,20 @@ export default {
 						this.$set(l, "roadName", "");
 						this.$set(l, "edit", false);
 					});
+
+					this.getAction();
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
+		},
+		getAction() {
+			getActionProcess({ idList: this.list.map(l => l.actionId) }).then(res => {
+				this.list.forEach(l => {
+					const actionSpec = res.data.list.filter(r => r.id == l.actionId);
+					if(actionSpec.length > 0) this.$set(l, "process", actionSpec[0].total == 0 ? 100 : Math.round(actionSpec[0].success / actionSpec[0].total * 100));
+					else this.$set(l, "process", 0);
+				});
+			});
 		},
 		addRound() {
 			let roundName = `Round${this.newRoundForm.round}`;

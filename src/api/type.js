@@ -95,6 +95,15 @@ export function archiveTenderRound(id, data) {
 	})
 }
 
+// 進程
+export function getActionProcess(query) {
+	return request({
+		url: '/type/action',
+		method: 'get',
+		params: query
+	})
+}
+
 // 類型Map
 export function getTypeMap(query) {
 	return request({
