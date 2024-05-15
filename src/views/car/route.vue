@@ -381,11 +381,18 @@ export default {
 	},
 	watch: {
 		autoRefresh(newValue) {
-			if(newValue) this.timer = setInterval(() => { 
-				if(this.timeTabId == 0 && this.listQuery.inspectionId) this.getCarTrack(false);
-				else this.autoRefresh = false;
-			}, 20000);
-			else clearInterval(this.timer);
+			if(newValue) {
+				if(this.markers[`end${this.listQuery.contractId}${this.listQuery.carId}`].getAnimation() == null)
+					this.markers[`end${this.listQuery.contractId}${this.listQuery.carId}`].setAnimation(google.maps.Animation.BOUNCE);
+
+				this.timer = setInterval(() => { 
+					if(this.timeTabId == 0 && this.listQuery.inspectionId) this.getCarTrack(false);
+					else this.autoRefresh = false;
+				}, 20000);
+			} else {
+				clearInterval(this.timer);
+				this.markers[`end${this.listQuery.contractId}${this.listQuery.carId}`].setAnimation(null);
+			}
 		}
 	},
 	methods: {
