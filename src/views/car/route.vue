@@ -5,6 +5,15 @@
 				<!-- <span v-if="carId.length != 0" class="route-info">車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span> -->
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
+			<el-card v-if="caseInfo.length != 0" class="info-box" shadow="never">
+				<el-row v-for="(info, index) in caseInfo" :key="`caseInfo_${info.caseName}_${index}`" class="color-box" type="flex" :style="`background-color: ${info.color}`">
+					<el-col :span="5"><el-image :src="info.icon" fit="scale-down" style="height: 30px" /></el-col>
+					<el-col :span="12" style="padding: 0 5px">{{ info.showName || info.caseName }}</el-col>
+					<el-col :span="5">
+						<span>{{ info.total }}</span>
+					</el-col>
+				</el-row>
+			</el-card>
 			<div class="filter-container">
 				<span class="filter-item" style="display: inline-flex">
 					<el-button :type="showLayerAttach ? 'primary' : 'info'" @click="showLayerAttach = !showLayerAttach">路線圖層</el-button>
@@ -90,16 +99,6 @@
 		<el-row>
 			<el-col :span="16" style="position: relative;">
 				<div id="map" ref="map" />
-
-				<el-card v-if="caseInfo.length != 0" class="info-box left">
-					<el-row v-for="(info, index) in caseInfo" :key="`caseInfo_${info.caseName}_${index}`" class="color-box" :style="`background-color: ${info.color}; width: 100%; margin-bottom: 0px`">
-						<el-col :span="16" style="padding: 0 5px">{{ String(info.caseName) || " - " }}</el-col>
-						<el-col :span="8">
-							<span>{{ info.total }}</span>
-						</el-col>
-					</el-row>
-				</el-card>
-
 				<!-- 操作 -->
 				<div class="action-box">
 					<el-button class="btn-MapType" icon="el-icon-copy-document" size="small" :style="`color: ${options.mapList[mapType].color}`" @click="setMapType">{{ options.mapList[mapType].name }}</el-button>
@@ -337,10 +336,10 @@ export default {
 					}
 				},
 				caseMap: [
-					{ caseName: '縱向與橫向裂縫', color: '#1E90FF', icon: '/assets/icon/icon_blue.png' },
-					{ caseName: '坑洞', color: '#00FFFF', icon: '/assets/icon/icon_lightBlue.png' },
-					{ caseName: '龜裂', color: '#90EE90', icon: '/assets/icon/icon_green.png' },
-					{ caseName: '人手孔破損', color: '#9932CC', icon: '/assets/icon/icon_purple' },
+					{ caseName: '坑洞', color: '#FF6347', icon: '/assets/icon/icon_red.png', order: 1 },
+					{ caseName: '縱向與橫向裂縫', showName: '裂縫', color: '#FFE4B5', icon: '/assets/icon/icon_orange.png', order: 2 },
+					{ caseName: '龜裂', color: '#00FFFF', icon: '/assets/icon/icon_lightBlue.png', order: 3 },
+					{ caseName: '人手孔破損', showName: '人孔', color: '#90EE90', icon: '/assets/icon/icon_green.png', order: 4 },
 				]
 			},
 			carList: [],
@@ -734,18 +733,23 @@ export default {
 				});
 
 				this.caseInfo = caseList.reduce((acc, cur)=> {
-					const caseFilter = acc.filter(caseSpec => caseSpec.caseName == cur.caseType);
-					if(caseFilter.length == 0) {
+					const accFilter = acc.filter(caseSpec => caseSpec.caseName == cur.caseType || (caseSpec.showName && cur.caseType.includes(caseSpec.showName)));
+					if(accFilter.length == 0) {
 						const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName == cur.caseType);
 						acc.push({ 
 							caseName: cur.caseType, 
+							showName: caseFilter.length == 0 || !caseFilter[0].showName ? '' : caseFilter[0].showName,
 							color: caseFilter.length == 0 ? '#1E90FF' : caseFilter[0].color,
+							icon: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
+							order: caseFilter.length == 0 ? 5 : caseFilter[0].order,
 							total: 1 
 						});
-					} else caseFilter[0].total++;
+					} else accFilter[0].total++;
 
 					return acc;
 				}, []);
+
+				this.caseInfo.sort((a, b) => a.order - b.order);
 
 				let geoJSON = {
 					"type": "FeatureCollection",
@@ -931,6 +935,22 @@ export default {
 		// 		.el-dialog__body
 		// 			padding: 0
 		// 			height: 405px
+	.info-box
+		position: absolute
+		top: 18px
+		left: 248px
+		background-color: rgba(white, 0.1)
+		border: none
+		z-index: 1
+		.el-card__body
+			padding: 2px
+			display: flex
+			.color-box
+				line-height: 30px
+				height: 30px
+				width: 120px
+				margin-bottom: 0px
+				margin-left: 5px
 	.action-box
 		.btn-MapType
 			position: absolute
@@ -951,18 +971,6 @@ export default {
 				border-collapse: collapse !important
 				border: none !important
 				padding: 5px
-	.info-box
-		position: absolute
-		width: 250px
-		background-color: rgba(white, 0.7)
-		z-index: 1
-		&.left
-			top: 200px
-			left: 15px
-		.el-card__body
-			padding: 2px
-			.color-box
-				line-height: 30px
 	.info-panel
 		height: calc(100vh - 50px)
 		background-color: #E6EE9C
