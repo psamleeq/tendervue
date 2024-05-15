@@ -924,17 +924,6 @@ export default {
 				text-align: center
 		.filter-item
 			margin-right: 5px
-		// .streaming
-		// 	z-index: 0 !important
-		// 	.el-dialog
-		// 		top: -20px
-		// 		left: -350px
-		// 		.el-dialog__header
-		// 			height: 0
-		// 			background-color: #409EFF
-		// 		.el-dialog__body
-		// 			padding: 0
-		// 			height: 405px
 	.info-box
 		position: absolute
 		top: 18px
