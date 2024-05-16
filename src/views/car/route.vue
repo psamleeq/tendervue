@@ -478,10 +478,16 @@ export default {
 
 					this.markers[`end${contractId}${carId}`] = new google.maps.Marker({
 						map: this.map,
+						label: {
+							text: `${contractId}-${carId}`,
+							color: 'white',
+							fontSize: '12px'
+						},
 						icon: {
 							url: "/assets/icon/truck.png",
-							anchor: new google.maps.Point(12, 12),
-							scaledSize: new google.maps.Size(24, 24)
+							anchor: new google.maps.Point(14, 14),
+							scaledSize: new google.maps.Size(28, 28),
+							labelOrigin: new google.maps.Point(10, 11)
 						}
 					});
 				}
