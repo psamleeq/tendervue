@@ -479,8 +479,10 @@ export default {
 			this.infoWindow.addListener('domready', () => {
 				const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
 				if(infoScrnFullBtn) {
-					const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
-						this.showImgViewer = true;
+					const clickHandle = infoScrnFullBtn.addEventListener("click", () => {
+						// NOTE 因為http，圖片另開視窗
+						// this.showImgViewer = true;
+						window.open(this.imgUrls[0]);
 						infoScrnFullBtn.removeEventListener("click", clickHandle);
 					});
 				}
