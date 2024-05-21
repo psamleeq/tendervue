@@ -135,6 +135,7 @@
 				</div>
 			</el-col>
 		</el-row> 
+		<el-image-viewer v-if="showImgViewer" class="img-preview" :on-close="() => { showImgViewer = false; }" :url-list="imgUrls" />
 	</div>
 </template>
 
@@ -144,6 +145,7 @@ import * as jsts from 'jsts/dist/jsts.min.js';
 import moment from 'moment';
 import { getInspectionList, getSpecInspection, getSpecInspectionTracks, getInspectionCase } from "@/api/car";
 import { getInspectionRoute } from "@/api/inspection";
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -160,10 +162,12 @@ const loader = new Loader(loaderOpt);
 
 export default {
 	name: "carRoute",
+	components: { ElImageViewer },
 	data() {
 		return {
 			admAuth: false,
 			loading: false,
+			showImgViewer: false,
 			mediaAPIUrl: process.env.VUE_APP_MEDIA_API,
 			mediaGCSUrl: process.env.VUE_APP_MEDIA_URL,
 			showLayerAttach: false,
@@ -176,6 +180,7 @@ export default {
 				start: null,
 				end: null
 			},
+			imgUrls: [],
 			infoWindow: null,
 			caseInfo: [],
 			activeVodName: "",
@@ -471,6 +476,15 @@ export default {
 			}
 
 			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
+			this.infoWindow.addListener('domready', () => {
+				const infoScrnFullBtn = this.$el.querySelector("#map #info-scrn-full-btn");
+				if(infoScrnFullBtn) {
+					const clickHandle = infoScrnFullBtn.addEventListener("click", () => { 
+						this.showImgViewer = true;
+						infoScrnFullBtn.removeEventListener("click", clickHandle);
+					});
+				}
+			});
 
 			// 建立marker
 			for(let contractId of Object.keys(this.options.carId)) {
@@ -809,6 +823,12 @@ export default {
 			}).catch(err => console.log(err))
 		},
 		showCaseContent(props, position) {
+			let imgUrl = props.getProperty('imgUrl');
+			const codeArr = imgUrl.match(/&#(\d+);/g) || [];
+			const codeConvert = codeArr.map(l => String.fromCharCode(Number(l.replace(/[&#;]/g, ''))));
+			for(const i in codeArr) imgUrl = imgUrl.replace(codeArr[i], codeConvert[i]);
+			this.imgUrls = [ imgUrl ];
+
 			let contentText = `<div style="width: 400px;">`;
 			for(const key in this.headers.caseInfo) {
 				if(props.getProperty(key)) {
@@ -819,8 +839,8 @@ export default {
 					contentText += `</div>`;
 				}
 			}
-			contentText += `<img src="${props.getProperty('imgUrl')}" class="img" onerror="this.className='img hide-img'">`;
-			// contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
+			contentText += `<img src="${imgUrl}" class="img" onerror="this.className='img hide-img'">`;
+			contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
 			contentText += `</div>`;
 			// console.log(contentText);
 			this.infoWindow.setContent(contentText);
@@ -973,6 +993,12 @@ export default {
 			top: 24px
 			right: 24px
 			background-color: rgba(white, 0.8)
+	.img-preview
+		width: 100%
+		.el-image-viewer__mask
+			opacity: 0.7
+		.el-icon-circle-close
+			color:  #FFF
 	#map
 		overflow: hidden
 		background: none !important
