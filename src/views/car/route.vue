@@ -6,7 +6,7 @@
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
 			<el-card v-if="caseInfo.length != 0" class="info-box" shadow="never">
-				<el-row v-for="(info, index) in caseInfo" :key="`caseInfo_${info.showName}_${index}`" class="color-box" type="flex" :style="`background-color: ${info.color}`">
+				<el-row v-for="(info, index) in caseInfo" :key="`caseInfo_${info.showName}_${index}`" class="color-box" type="flex" :style="`background-color: ${info.active ? info.color : '#eee'}; cursor: pointer`" @click.native="info.active = !info.active; caseFilter();">
 					<el-col :span="5"><el-image :src="info.icon" fit="scale-down" style="height: 30px" /></el-col>
 					<el-col :span="12" style="padding: 0 5px">{{ info.showName || info.caseName }}</el-col>
 					<el-col :span="5">
@@ -754,8 +754,6 @@ export default {
 			}
 		},
 		getCaseInfo() {
-			this.dataLayer.case.forEach(feature => this.dataLayer.case.remove(feature));
-
 			const timeStart = moment(this.searchDate).format("YYYY-MM-DD");
 			const timeEnd = moment(this.searchDate).add(1, 'd').format("YYYY-MM-DD");
 			getInspectionCase({ contractId: this.listQuery.contractId, timeStart, timeEnd }).then(response => {
@@ -768,15 +766,16 @@ export default {
 				});
 
 				this.caseInfo = caseList.reduce((acc, cur)=> {
-					const accFilter = acc.filter(caseSpec => caseSpec.caseName == cur.caseType || (caseSpec.showName && cur.caseType.includes(caseSpec.showName)));
+					const accFilter = acc.filter(caseSpec => caseSpec.caseName.includes(cur.caseType) || (caseSpec.showName && cur.caseType.includes(caseSpec.showName)));
 					if(accFilter.length == 0) {
 						const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName.includes(cur.caseType) || (caseSpec.showName && cur.caseType.includes(caseSpec.showName)));
 						acc.push({ 
-							caseName: cur.caseType, 
+							caseName: caseFilter.length == 0 ? [] : caseFilter[0].caseName,
 							showName: caseFilter.length == 0 || !caseFilter[0].showName ? '' : caseFilter[0].showName,
 							color: caseFilter.length == 0 ? '#1E90FF' : caseFilter[0].color,
 							icon: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
 							order: caseFilter.length == 0 ? 5 : caseFilter[0].order,
+							active: true,
 							total: 1 
 						});
 					} else accFilter[0].total++;
@@ -786,7 +785,7 @@ export default {
 
 				this.caseInfo.sort((a, b) => a.order - b.order);
 
-				let geoJSON = {
+				this.geoJSON = {
 					"type": "FeatureCollection",
 					"name": "caseJSON",
 					"features": []
@@ -806,23 +805,36 @@ export default {
 							"coordinates": [ Number(caseSpec.yy), Number(caseSpec.xx) ]
 						}
 					};
-					geoJSON.features.push(feature);
+					this.geoJSON.features.push(feature);
 				}
-				this.dataLayer.case.addGeoJson(geoJSON);
 
-				this.dataLayer.case.setStyle(feature => {
-					const caseName = feature.getProperty("caseName");
-					const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName == caseName);
-
-					return { 
-						icon: { 
-							url: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
-							anchor: new google.maps.Point(5, 5),
-							scaledSize: new google.maps.Size(30, 30),
-						}
-					};
-				})
+				this.setCaseLayer(this.geoJSON);
 			}).catch(err => console.log(err))
+		},
+		setCaseLayer(geoJSON) {
+			this.dataLayer.case.forEach(feature => this.dataLayer.case.remove(feature));
+			this.dataLayer.case.addGeoJson(geoJSON);
+			this.dataLayer.case.setStyle(feature => {
+				const caseName = feature.getProperty("caseName");
+				const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName.includes(caseName));
+
+				return { 
+					icon: { 
+						url: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
+						anchor: new google.maps.Point(5, 5),
+						scaledSize: new google.maps.Size(30, 30),
+					}
+				};
+			})
+		},
+		caseFilter() { 
+			let geoJSONFilter = JSON.parse(JSON.stringify(this.geoJSON));
+			geoJSONFilter.features = geoJSONFilter.features.filter(feature => {
+				const selectCaseList = this.caseInfo.filter(caseSpec => caseSpec.active).map(caseSpec => caseSpec.caseName).flat();
+				return selectCaseList.includes(feature.properties.caseName)
+			})
+
+			this.setCaseLayer(geoJSONFilter);
 		},
 		showCaseContent(props, position) {
 			let imgUrl = props.getProperty('imgUrl');
