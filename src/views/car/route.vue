@@ -6,7 +6,7 @@
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
 			<el-card v-if="caseInfo.length != 0" class="info-box" shadow="never">
-				<el-row v-for="(info, index) in caseInfo" :key="`caseInfo_${info.caseName}_${index}`" class="color-box" type="flex" :style="`background-color: ${info.color}`">
+				<el-row v-for="(info, index) in caseInfo" :key="`caseInfo_${info.showName}_${index}`" class="color-box" type="flex" :style="`background-color: ${info.color}`">
 					<el-col :span="5"><el-image :src="info.icon" fit="scale-down" style="height: 30px" /></el-col>
 					<el-col :span="12" style="padding: 0 5px">{{ info.showName || info.caseName }}</el-col>
 					<el-col :span="5">
@@ -121,7 +121,7 @@
 				<div class="car-info-panel">
 					<i class="el-icon-truck" />
 					<div v-if="Object.keys(carInfo).length > 0" class="car-info">
-						<el-row v-for="(text, key) in headers" :key="key" >
+						<el-row v-for="(text, key) in headers.carInfo" :key="key" >
 							<el-col :span="8">{{ text }}: </el-col>
 							<el-col :span="16">
 								<span v-if="key == 'pathId'">週期{{ carInfo[key] }}</span>
@@ -219,12 +219,18 @@ export default {
 				inspectionId: ""
 			},
 			headers: {
-				// id: "路線",
-				pathId: "週期",
-				carId: "車號",
-				driverId: "駕駛",
-				modeId: "巡查方式",
-				createdAt: "開始時間"
+				carInfo: {
+					// id: "路線",
+					pathId: "週期",
+					carId: "車號",
+					driverId: "駕駛",
+					modeId: "巡查方式",
+					createdAt: "開始時間"
+				},
+				caseInfo: {
+					caseName: "缺失類型",
+					roadName: "地址" 
+				}
 			},
 			options: {
 				districtList: {
@@ -336,10 +342,10 @@ export default {
 					}
 				},
 				caseMap: [
-					{ caseName: '坑洞', color: '#FF6347', icon: '/assets/icon/icon_red.png', order: 1 },
-					{ caseName: '縱向與橫向裂縫', showName: '裂縫', color: '#FFE4B5', icon: '/assets/icon/icon_orange.png', order: 2 },
-					{ caseName: '龜裂', color: '#00FFFF', icon: '/assets/icon/icon_lightBlue.png', order: 3 },
-					{ caseName: '人手孔破損', showName: '人孔', color: '#90EE90', icon: '/assets/icon/icon_green.png', order: 4 },
+					{ caseName: ['坑洞'], showName: '坑洞', color: '#FF6347', icon: '/assets/icon/icon_red.png', order: 1 },
+					{ caseName: ['龜裂'], showName: '龜裂', color: '#00FFFF', icon: '/assets/icon/icon_lightBlue.png', order: 2 },
+					{ caseName: ['人手孔破損', '人孔'], showName: '人孔', color: '#90EE90', icon: '/assets/icon/icon_green.png', order: 3 },
+					{ caseName: ['縱向與橫向裂縫', '縱橫裂縫'], showName: '裂縫', color: '#FFE4B5', icon: '/assets/icon/icon_orange.png', order: 4 },
 				]
 			},
 			carList: [],
@@ -464,6 +470,8 @@ export default {
 				this.map.overlayMapTypes.push(labelsMapType);
 			}
 
+			this.infoWindow = new google.maps.InfoWindow({ pixelOffset: new google.maps.Size(0, -10) });
+
 			// 建立marker
 			for(let contractId of Object.keys(this.options.carId)) {
 				for(let carId of Object.keys(this.options.carId[contractId])) {
@@ -495,6 +503,11 @@ export default {
 
 			// 巡視缺失
 			this.dataLayer.case = new google.maps.Data({ map: this.map });
+
+			this.dataLayer.case.addListener('click', (event) => {
+				// console.log("click: ", event);
+				this.showCaseContent(event.feature, event.latLng);
+			});
 
 			// 巡查路線(預定)
 			this.dataLayer.route = new google.maps.Data({ map: this.map });
@@ -729,7 +742,7 @@ export default {
 
 			const timeStart = moment(this.searchDate).format("YYYY-MM-DD");
 			const timeEnd = moment(this.searchDate).add(1, 'd').format("YYYY-MM-DD");
-			getInspectionCase({ timeStart, timeEnd }).then(response => {
+			getInspectionCase({ contractId: this.listQuery.contractId, timeStart, timeEnd }).then(response => {
 				const caseList = response.data.list.map(caseSpec => {
 					const codeArr = caseSpec.caseType.match(/&#(\d+);/g) || [];
 					if(codeArr.length > 0) {
@@ -741,7 +754,7 @@ export default {
 				this.caseInfo = caseList.reduce((acc, cur)=> {
 					const accFilter = acc.filter(caseSpec => caseSpec.caseName == cur.caseType || (caseSpec.showName && cur.caseType.includes(caseSpec.showName)));
 					if(accFilter.length == 0) {
-						const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName == cur.caseType);
+						const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName.includes(cur.caseType) || (caseSpec.showName && cur.caseType.includes(caseSpec.showName)));
 						acc.push({ 
 							caseName: cur.caseType, 
 							showName: caseFilter.length == 0 || !caseFilter[0].showName ? '' : caseFilter[0].showName,
@@ -769,7 +782,8 @@ export default {
 						"properties": {
 							"id": caseSpec.serialno,
 							"roadName": caseSpec.casename,
-							"caseName": caseSpec.caseType
+							"caseName": caseSpec.caseType,
+							"imgUrl": `http://center.bim-group.com${caseSpec.imgfile}`
 						},
 						"geometry": {
 							"type": "POINT",
@@ -793,6 +807,27 @@ export default {
 					};
 				})
 			}).catch(err => console.log(err))
+		},
+		showCaseContent(props, position) {
+			let contentText = `<div style="width: 400px;">`;
+			for(const key in this.headers.caseInfo) {
+				if(props.getProperty(key)) {
+					const prop = props.getProperty(key);
+					contentText += `<div class="el-row" style="margin-bottom: 4px">`;
+					contentText += `<div class="el-col el-col-8" style="padding-left: 5px; font-size: 18px; line-height: 18px;">${this.headers.caseInfo[key]}</div>`;
+					contentText += `<div class="el-col el-col-16" style="font-size: 18px; line-height: 18px;">${prop}</div>`;
+					contentText += `</div>`;
+				}
+			}
+			contentText += `<img src="${props.getProperty('imgUrl')}" class="img" onerror="this.className='img hide-img'">`;
+			// contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
+			contentText += `</div>`;
+			// console.log(contentText);
+			this.infoWindow.setContent(contentText);
+			this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -10)});
+			this.infoWindow.setPosition(position);
+
+			this.infoWindow.open(this.map);
 		},
 		getRouteList() {
 			this.loading = true;
@@ -878,20 +913,6 @@ export default {
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:mm:ss");
 		},
-		handleDownload() {
-			let tHeader = Object.values(this.headers);
-			let filterVal = Object.keys(this.headers);
-			// tHeader = [ "日期", "星期", "DAU", "新增帳號數", "PCU", "ACU", "儲值金額", "DAU帳號付費數", "DAU付費率", "DAU ARPPU", "DAU ARPU", "新增帳號儲值金額", "新增帳號付費數", "新增付費率", "新增帳號ARPPU", "新增帳號ARPU" ]
-			// filterVal = [ "date", "weekdayText", "dau", "newUser", "pcu", "acu", "amount", "dauPaid", "dauPaidRatio", "dauARPPU", "dauARPU", "newUserAmount", "newUserPaid", "newUserPaidRatio", "newUserARPPU", "newUserARPU" ]
-			let data = this.formatJson(filterVal, this.list);
-
-			import("@/vendor/Export2Excel").then((excel) => {
-				excel.export_json_to_excel({
-					header: tHeader,
-					data,
-				});
-			});
-		},
 		formatJson(filterVal, jsonData) {
 			return jsonData.map((v) => filterVal.map((j) => v[j]));
 		}
@@ -966,6 +987,19 @@ export default {
 				border-collapse: collapse !important
 				border: none !important
 				padding: 5px
+			.img
+				width: 100%
+				object-fit: scale-down
+				&.hide-img
+					display: none
+			.info-btn
+				position: absolute
+				right: 30px
+				&.scrn-full
+					padding: 0
+					bottom: 25px
+					background-color: rgba( #FFF, 0.3)
+					border-color:  #FFF
 	.info-panel
 		height: calc(100vh - 50px)
 		background-color: #E6EE9C
