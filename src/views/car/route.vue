@@ -528,10 +528,10 @@ export default {
 			// 巡查路線(預定)
 			this.dataLayer.route = new google.maps.Data({ map: this.map });
 			this.dataLayer.route.setStyle({ 
-				strokeColor: '#FFF',
-				strokeWeight: 1,
-				strokeOpacity: 1,
-				fillColor: '#FF8C00',
+				strokeColor: '#B0C4DE',
+				strokeWeight: 3,
+				strokeOpacity: 0.8,
+				fillColor: '#B0C4DE',
 				fillOpacity: 0.6,
 				zIndex: 1
 			});
@@ -906,12 +906,12 @@ export default {
 						if(i == 0) this.loading = true;
 						if(jstsBlockPolygon.contains(jstsRoutePoints[i])) {
 							// console.log("BINGO: ", i);
-							this.dataLayer.route.overrideStyle(feature, { fillColor: "#8FBC8F" });
+							this.dataLayer.route.overrideStyle(feature, { strokeColor: '#4169E1', fillColor: "#4169E1" });
 							this.loading = false;
 							break;
 						} else if(i == jstsRoutePoints.length - 1) {
 							this.loading = false;
-							this.dataLayer.route.overrideStyle(feature, { fillColor: "#DC143C" });
+							this.dataLayer.route.overrideStyle(feature, { strokeColor: '#DC143C', fillColor: "#DC143C" });
 						}
 					}
 				});
