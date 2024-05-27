@@ -23,6 +23,15 @@ const carRouter = {
 			}
 		},
 		{
+			path: 'routeMap',
+			component: () => import('@/views/car/routeMap'),
+			name: 'carRouteMap',
+			meta: {
+				title: '巡視路線(所有車輛)',
+				roles: ['car.route']
+			}
+		},
+		{
 			path: 'monitor',
 			component: () => import('@/views/car/monitor'),
 			name: 'carMonitor',
