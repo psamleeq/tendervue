@@ -332,7 +332,6 @@ export default {
 				this.map.data.setStyle({
 					icon: { 
 						url: "/assets/icon/icon_manhole.png",
-						anchor: new google.maps.Point(5, 5),
 						scaledSize: new google.maps.Size(40, 40),
 					},
 				});

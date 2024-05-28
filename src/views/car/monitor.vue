@@ -30,7 +30,7 @@ export default {
 					name: "中正區",
 					order: 5,
 					contractId: 0,
-					src: "https://www.gstech.com.tw/ec/FLTLMVideo.aspx?group=FL383&carid=RCX-8095&vno=0&type=fuho"
+					src: "https://www.gstech.com.tw/ec/FLTLMVideo.aspx?group=FL383&carid=BUX-0597&vno=0&type=fuho"
 					// contractId: 3,
 					// carId: 1
 				},

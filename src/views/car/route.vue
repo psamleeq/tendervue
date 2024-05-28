@@ -367,7 +367,7 @@ export default {
 		}
 	},
 	created() {
-		this.dataLayer = { route: {} };
+		this.dataLayer = { route: {}, case: {} };
 		this.admAuth = ['howard', 'ryan', 'lancelin'].includes(localStorage.username);
 		if(this.admAuth) {
 			this.options.contractId[0] = "超鉞";
@@ -495,7 +495,6 @@ export default {
 						map: this.map,
 						icon: {
 							url: "/assets/icon/icon_redDot.png",
-							anchor: new google.maps.Point(5, 5),
 							scaledSize: new google.maps.Size(10, 10)
 						}
 					});
@@ -821,7 +820,6 @@ export default {
 				return { 
 					icon: { 
 						url: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
-						anchor: new google.maps.Point(5, 5),
 						scaledSize: new google.maps.Size(30, 30),
 					}
 				};
@@ -946,9 +944,6 @@ export default {
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:mm:ss");
-		},
-		formatJson(filterVal, jsonData) {
-			return jsonData.map((v) => filterVal.map((j) => v[j]));
 		}
 	},
 };

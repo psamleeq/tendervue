@@ -541,7 +541,6 @@ export default {
 					return { 
 						icon: { 
 							url: `/assets/icon/icon_case_${this.options.caseLevelMapE[feature.getProperty("DistressLevel")]}.png`,
-							anchor: new google.maps.Point(5, 5),
 							scaledSize: new google.maps.Size(25, 25),
 						}
 					};
