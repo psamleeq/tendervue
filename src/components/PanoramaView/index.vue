@@ -337,7 +337,7 @@ export default {
 		changeValue(caseInfo) {
 			if(caseInfo.lane) caseInfo.lane = caseInfo.lane.replace(/[^\d]/g,''); 
 			if(caseInfo.lane <= 1) caseInfo.lane = 1; 
-			if(caseInfo.lane >=5) caseInfo.lane = 5; 
+			if(caseInfo.lane >= 5) caseInfo.lane = 5; 
 		},
 		changeDeviceType() {
 			this.caseInfo.distressType = ''; 
