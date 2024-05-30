@@ -18,7 +18,16 @@ const carRouter = {
 			component: () => import('@/views/car/route'),
 			name: 'carRoute',
 			meta: {
-				title: '巡視路線',
+				title: '巡視路線(車輛)',
+				roles: ['car.route']
+			}
+		},
+		{
+			path: 'routeMap',
+			component: () => import('@/views/car/routeMap'),
+			name: 'carRouteMap',
+			meta: {
+				title: '巡視路線(分隊)',
 				roles: ['car.route']
 			}
 		},
@@ -29,7 +38,7 @@ const carRouter = {
 			meta: {
 				title: '巡視分案',
 				roles: ['car.route'],
-				isNew: true
+				vTag: 'alpha'
 			}
 		},
 		{
