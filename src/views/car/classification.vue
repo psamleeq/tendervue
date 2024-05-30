@@ -191,6 +191,7 @@ export default {
 			},
 			headers: {
 				caseInfo: {
+					id: "缺失Id",
 					caseType: "缺失類型",
 					caseLevel: "缺失程度",
 					elength: "預估長", 
@@ -475,7 +476,7 @@ export default {
 								distressLevel: caseSpec.caseLevel || 1,
 								millingLength: caseSpec.elength || 0,
 								millingWidth: caseSpec.blength || 0,
-								place: caseSpec.casename || '',
+								place: caseSpec.casename == '0' ? '' : caseSpec.casename,
 								roadDir: caseSpec.lane || 1,
 								direction: caseSpec.direction || 1,
 								imgUrl: caseSpec.imgUrl,
@@ -565,7 +566,7 @@ export default {
 		cancelClick() {
 			this.rowActive = {};
 			this.infoWindow.close();
-			
+
 			this.markers.forEach(marker => {
 				marker.setDraggable(false);
 

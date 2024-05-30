@@ -233,8 +233,13 @@ export default {
 					createdAt: "開始時間"
 				},
 				caseInfo: {
+					id: "缺失Id",
 					caseName: "缺失類型",
-					roadName: "地址" 
+					caseLevel: "缺失程度",
+					millingLength: "預估長", 
+					millingWidth: "預估寬",
+					roadName: "地址",
+					status: "狀態"
 				}
 			},
 			options: {
@@ -351,7 +356,12 @@ export default {
 					{ caseName: ['龜裂'], showName: '龜裂', color: '#00FFFF', icon: '/assets/icon/icon_lightBlue.png', order: 2 },
 					{ caseName: ['人手孔破損', '人孔'], showName: '人孔', color: '#90EE90', icon: '/assets/icon/icon_green.png', order: 3 },
 					{ caseName: ['縱向與橫向裂縫', '縱橫裂縫'], showName: '裂縫', color: '#FFE4B5', icon: '/assets/icon/icon_orange.png', order: 4 },
-				]
+				],
+				caseLevelMap: {
+					1: "輕",
+					2: "中",
+					3: "重"
+				}
 			},
 			carList: [],
 			carVodList: [],
@@ -795,8 +805,12 @@ export default {
 						"type": "Feature",
 						"properties": {
 							"id": caseSpec.serialno,
-							"roadName": caseSpec.casename,
+							"roadName": caseSpec.casename == '0' ? '' : caseSpec.casename,
 							"caseName": caseSpec.caseType,
+							"caseLevel": caseSpec.broketype ? this.options.caseLevelMap[caseSpec.broketype] : '',
+							"millingLength": caseSpec.elength || 0, 
+							"millingWidth": caseSpec.blength || 0,
+							"status": caseSpec.reccontrol == 2 ? '已分案' : '未分案',
 							"imgUrl": `http://center.bim-group.com${caseSpec.imgfile}`
 						},
 						"geometry": {
