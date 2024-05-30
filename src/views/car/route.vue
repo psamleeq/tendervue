@@ -1,7 +1,7 @@
 <template>
 	<div class="car-route" v-loading="loading"> 
 		<div class="header-bar">
-			<h2 class="route-title">巡視路線
+			<h2 class="route-title">巡視路線(車輛)
 				<!-- <span v-if="carId.length != 0" class="route-info">車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span> -->
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
@@ -771,6 +771,12 @@ export default {
 					if(codeArr.length > 0) {
 						caseSpec.caseType = String.fromCharCode(...codeArr.map(l => Number(l.replace(/[&#;]/g, ''))));
 					}
+
+					const codeArr2 = caseSpec.imgfile.match(/&#(\d+);/g) || [];
+						for(const code of codeArr2) {
+							caseSpec.imgfile = caseSpec.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
+						}
+					caseSpec.imgUrl =  /^https:\/\//.test(caseSpec.imgfile) ? caseSpec.imgfile : `http://center.bim-group.com${caseSpec.imgfile}`;
 					return caseSpec
 				});
 
@@ -811,7 +817,7 @@ export default {
 							"millingLength": caseSpec.elength || 0, 
 							"millingWidth": caseSpec.blength || 0,
 							"status": caseSpec.reccontrol == 2 ? '已分案' : '未分案',
-							"imgUrl": `http://center.bim-group.com${caseSpec.imgfile}`
+							"imgUrl": caseSpec.imgUrl
 						},
 						"geometry": {
 							"type": "POINT",

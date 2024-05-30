@@ -1,7 +1,7 @@
 <template>
 	<div class="car-route" v-loading="loading"> 
 		<div class="header-bar">
-			<h2 class="route-title">巡視路線(所有車輛)
+			<h2 class="route-title">巡視路線(分隊)
 				<!-- <span v-if="carId.length != 0" class="route-info">車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span> -->
 				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
@@ -97,16 +97,11 @@
 				</span>
 			</div>
 		</div>
-		<el-row>
-			<el-col :span="24" style="position: relative;">
-				<div id="map" ref="map" />
-				<!-- 操作 -->
-				<div class="action-box">
-					<el-button class="btn-MapType" icon="el-icon-copy-document" size="small" :style="`color: ${options.mapList[mapType].color}`" @click="setMapType">{{ options.mapList[mapType].name }}</el-button>
-				</div>
-			</el-col>
-			
-		</el-row> 
+		<div id="map" ref="map" />
+		<!-- 操作 -->
+		<div class="action-box">
+			<el-button class="btn-MapType" icon="el-icon-copy-document" size="small" :style="`color: ${options.mapList[mapType].color}`" @click="setMapType">{{ options.mapList[mapType].name }}</el-button>
+		</div>
 		<el-image-viewer v-if="showImgViewer" class="img-preview" :on-close="() => { showImgViewer = false; }" :url-list="imgUrls" />
 	</div>
 </template>
@@ -205,8 +200,13 @@ export default {
 					createdAt: "開始時間"
 				},
 				caseInfo: {
+					id: "缺失Id",
 					caseName: "缺失類型",
-					roadName: "地址" 
+					caseLevel: "缺失程度",
+					millingLength: "預估長", 
+					millingWidth: "預估寬",
+					roadName: "地址",
+					status: "狀態"
 				}
 			},
 			options: {
@@ -292,7 +292,7 @@ export default {
 						2: "BFX-7552 (信義)",
 					},
 					3: {
-						1: "RCX-8095 (中正)", //中正
+						1: "BUX-0597 (中正)", //中正
 						2: "RCX-7562 (萬華)", //萬華
 					},
 					4: {
@@ -323,7 +323,12 @@ export default {
 					{ caseName: ['龜裂'], showName: '龜裂', color: '#00FFFF', icon: '/assets/icon/icon_lightBlue.png', order: 2 },
 					{ caseName: ['人手孔破損', '人孔'], showName: '人孔', color: '#90EE90', icon: '/assets/icon/icon_green.png', order: 3 },
 					{ caseName: ['縱向與橫向裂縫', '縱橫裂縫'], showName: '裂縫', color: '#FFE4B5', icon: '/assets/icon/icon_orange.png', order: 4 },
-				]
+				],
+				caseLevelMap: {
+					1: "輕",
+					2: "中",
+					3: "重"
+				}
 			},
 			carList: [],
 			carVodList: [],
@@ -339,7 +344,7 @@ export default {
 		}
 	},
 	created() {
-		this.dataLayer = { route: {} };
+		this.dataLayer = { route: {}, case: {} };
 		this.admAuth = ['howard', 'ryan', 'lancelin'].includes(localStorage.username);
 		if(this.admAuth) {
 			this.options.contractId[0] = "超鉞";
@@ -467,7 +472,6 @@ export default {
 						map: this.map,
 						icon: {
 							url: "/assets/icon/icon_redDot.png",
-							anchor: new google.maps.Point(5, 5),
 							scaledSize: new google.maps.Size(10, 10)
 						}
 					});
@@ -574,6 +578,7 @@ export default {
 					this.loading = false;
 				} else {
 					this.carList = response.data.list;
+
 					//NOTE: 因為一天只會有一次車巡，所以取第一筆
 					this.listQuery.inspectionId = this.carList[0].id;
 					this.getCarInfo();
@@ -786,6 +791,12 @@ export default {
 					if(codeArr.length > 0) {
 						caseSpec.caseType = String.fromCharCode(...codeArr.map(l => Number(l.replace(/[&#;]/g, ''))));
 					}
+
+					const codeArr2 = caseSpec.imgfile.match(/&#(\d+);/g) || [];
+						for(const code of codeArr2) {
+							caseSpec.imgfile = caseSpec.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
+						}
+					caseSpec.imgUrl =  /^https:\/\//.test(caseSpec.imgfile) ? caseSpec.imgfile : `http://center.bim-group.com${caseSpec.imgfile}`;
 					return caseSpec
 				});
 
@@ -820,9 +831,13 @@ export default {
 						"type": "Feature",
 						"properties": {
 							"id": caseSpec.serialno,
-							"roadName": caseSpec.casename,
+							"roadName": caseSpec.casename == '0' ? '' : caseSpec.casename,
 							"caseName": caseSpec.caseType,
-							"imgUrl": `http://center.bim-group.com${caseSpec.imgfile}`
+							"caseLevel": caseSpec.broketype ? this.options.caseLevelMap[caseSpec.broketype] : '',
+							"millingLength": caseSpec.elength || 0, 
+							"millingWidth": caseSpec.blength || 0,
+							"status": caseSpec.reccontrol == 2 ? '已分案' : '未分案',
+							"imgUrl": caseSpec.imgUrl
 						},
 						"geometry": {
 							"type": "POINT",
@@ -845,7 +860,6 @@ export default {
 				return { 
 					icon: { 
 						url: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
-						anchor: new google.maps.Point(5, 5),
 						scaledSize: new google.maps.Size(30, 30),
 					}
 				};
@@ -970,9 +984,6 @@ export default {
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:mm:ss");
-		},
-		formatJson(filterVal, jsonData) {
-			return jsonData.map((v) => filterVal.map((j) => v[j]));
 		}
 	},
 };
