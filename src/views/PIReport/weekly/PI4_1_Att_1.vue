@@ -270,10 +270,10 @@ export default {
 				this.inputs.caseList = [];
 
 				let timeStart = moment(this.reportDate).day() == 0 
-					? moment(this.reportDate).day(-6).format("YYYY-MM-DD") 
-					: moment(this.reportDate).day(1).format("YYYY-MM-DD");
-				if(moment(timeStart).month() != moment(this.reportDate).month()) timeStart = moment(this.reportDate).startOf('month').format("YYYY-MM-DD");
-				const timeEnd = moment(this.reportDate).add(1, "d").format("YYYY-MM-DD");
+					? moment(this.reportDate).day(-6).subtract(8, 'hours').format("YYYY-MM-DD") 
+					: moment(this.reportDate).day(1).subtract(8, 'hours').format("YYYY-MM-DD");
+				if(moment(timeStart).month() != moment(this.reportDate).month()) timeStart = moment(this.reportDate).startOf('month').subtract(8, 'hours').format("YYYY-MM-DD");
+				const timeEnd = moment(this.reportDate).startOf('day').add(1, "d").subtract(8, 'hours').format("YYYY-MM-DD");
 
 				getCaseWarrantyList({
 					zipCode: Number(this.inputs.zipCode),
