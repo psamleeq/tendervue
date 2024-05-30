@@ -23,6 +23,16 @@ const carRouter = {
 			}
 		},
 		{
+			path: 'classification',
+			component: () => import('@/views/car/classification'),
+			name: 'caseClassification',
+			meta: {
+				title: '巡視分案',
+				roles: ['car.route'],
+				isNew: true
+			}
+		},
+		{
 			path: 'monitor',
 			component: () => import('@/views/car/monitor'),
 			name: 'carMonitor',
