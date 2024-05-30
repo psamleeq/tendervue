@@ -33,3 +33,21 @@ export function getInspectionCase(query) {
 		params: query
 	})
 }
+
+// 巡視分案
+export function setInspectionCase(data) {
+	return request({
+		url: '/car/insCases',
+		method: 'post',
+		data
+	})
+}
+
+// 巡視案件刪除
+export function delInspectionCase(data) {
+	return request({
+		url: '/car/insCases',
+		method: 'delete',
+		data
+	})
+}

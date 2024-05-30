@@ -62,28 +62,36 @@
 					<el-form-item prop="id" label="缺失Id" style="margin-bottom: 0">
 						<span>{{ rowActive.id }}</span>
 					</el-form-item>
-					<el-form-item prop="type" label="缺失類型" style="margin-bottom: 0">
+					<el-form-item prop="distressType" label="缺失類型" style="margin-bottom: 0">
 						<el-select v-model="rowActive.distressType" size="mini">
 							<el-option v-for="caseType in options.caseTypeMap" :key="caseType.id" :label="caseType.caseName[0]" :value="Number(caseType.id)" />
 						</el-select>
 					</el-form-item>
-					<el-form-item prop="level" label="缺失程度">
+					<el-form-item prop="distressLevel" label="缺失程度">
 						<el-select v-model="rowActive.distressLevel" size="mini">
 							<el-option v-for="(name, level) in options.caseLevelMap" :key="level" :label="name" :value="Number(level)" />
 						</el-select>
 					</el-form-item>
 					<el-form-item prop="millingLength" label="預估長" style="margin-bottom: 0">
-						<el-input v-model="rowActive.millingLength" size="mini" style="width: 130px" />
+						<el-input v-model="rowActive.millingLength" size="mini" style="width: 130px" @change="calArea()" />
 					</el-form-item>
-					<el-form-item prop="millingWidth" label="預估寬" style="margin-bottom: 0">
-						<el-input v-model="rowActive.millingWidth" size="mini" style="width: 130px" />
+					<el-form-item prop="millingWidth" label="預估寬">
+						<el-input v-model="rowActive.millingWidth" size="mini" style="width: 130px" @change="calArea()" />
 					</el-form-item>
-					<el-form-item prop="address" label="地址" style="margin-bottom: 0">
+					<el-form-item prop="zipCode" label="地區" style="margin-bottom: 0">
+						<el-select v-model="rowActive.zipCode" size="mini">
+							<el-option v-for="(name, code) in options.districtList[contractIdNow]" :key="code" :label="name" :value="Number(code)" />
+						</el-select>
+					</el-form-item>
+					<el-form-item prop="place" label="地址" style="margin-bottom: 0">
 						<el-input v-model="rowActive.place" type="textarea" :rows="2" />
 						<div slot="label">
 							<div style="height: 24px; line-height: 24px; margin: -3px 2px -5px 0">地址</div>
 							<el-button type="success" size="mini" style="padding: 5px" :loading="isGetAddress" @click="getAddress()">填入</el-button>
 						</div>
+					</el-form-item>
+					<el-form-item prop="position" label="位置" style="margin-bottom: 0">
+						<span>({{ rowActive.position.lng }}, {{ rowActive.position.lat }})</span>
 					</el-form-item>
 					<el-form-item prop="roadDir" label="車道" style="margin-bottom: 0">
 						<el-input class="road-dir" type="number" v-model="rowActive.lane" size="mini" :min="1" :max="5" @blur="changeValue(rowActive)">
@@ -101,8 +109,8 @@
 					</el-form-item>
 				</el-form>
 				<el-button-group class="btn-action-group">
-					<el-button type="primary" @click="uploadCase(1)" :loading="loading">成案</el-button>
-					<el-button type="danger" @click="uploadCase(1)" :loading="loading">刪除</el-button>
+					<el-button type="primary" @click="setCase()" :loading="loading">成案</el-button>
+					<el-button type="danger" @click="delCase()" :loading="loading">刪除</el-button>
 					<el-button type="info" @click="cancelClick()">取消</el-button>
 				</el-button-group>
 			</el-card>
@@ -115,11 +123,10 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from 'moment';
 import { parseXml, xml2json } from '../../utils/xml2json';
-import { getInspectionCase } from "@/api/car";
+import { getInspectionCase, setInspectionCase, delInspectionCase } from "@/api/car";
 import { getAddress } from "@/api/tool";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 import 'element-ui/lib/theme-chalk/base.css';
-import { toHexString } from "pdf-lib";
 
 // 載入 Google Map API
 const loaderOpt = {
@@ -147,7 +154,6 @@ export default {
 			mapType: 'hybrid',
 			map: null,
 			polyLines: [],
-			markers: [],
 			imgUrls: [],
 			infoWindow: null,
 			caseInfo: [],
@@ -186,6 +192,7 @@ export default {
 			searchDate: moment().startOf("d"),
 			searchRange: "",
 			rowActive: { },
+			contractIdNow: 1,
 			listQuery: {
 				contractId: 1
 			},
@@ -201,6 +208,32 @@ export default {
 				}
 			},
 			options: {
+				districtList: {
+					1: {
+						103: "大同區",
+						104: "中山區"
+					},
+					2: {
+						105: "松山區",
+						110: "信義區"
+					},
+					3: {
+						100: "中正區",
+						108: "萬華區"
+					},
+					4: {
+						114: "內湖區",
+						115: "南港區",
+					},
+					5: {
+						111: "士林區",
+						112: "北投區"
+					},
+					6: {
+						106: "大安區",
+						116: "文山區"
+					}
+				},
 				contractId: {
 					// 0: "超鉞",
 					1: "一標",
@@ -396,6 +429,7 @@ export default {
 					});
 					this.loading = false;
 				} else {
+					this.contractIdNow = this.listQuery.contractId;
 					this.caseList = response.data.list.map(caseSpec => {
 						caseSpec.caseLevel = caseSpec.broketype ? this.options.caseLevelMap[caseSpec.broketype] : '';
 						caseSpec.status = caseSpec.reccontrol == 2 ? '已分案' : '未分案';
@@ -408,8 +442,8 @@ export default {
 						const codeArr2 = caseSpec.imgfile.match(/&#(\d+);/g) || [];
 						for(const code of codeArr2) {
 							caseSpec.imgfile = caseSpec.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
-							caseSpec.imgUrl = `http://center.bim-group.com${caseSpec.imgfile}`;
 						}
+						caseSpec.imgUrl =  /^https:\/\//.test(caseSpec.imgfile) ? caseSpec.imgfile : `http://center.bim-group.com${caseSpec.imgfile}`;
 						return caseSpec
 					});
 
@@ -453,6 +487,7 @@ export default {
 					},
 					// draggable: caseSpec.reccontrol == '1',
 					caseType,
+					position_ori: { lat: Number(caseSpec.xx), lng: Number(caseSpec.yy) },
 					map: this.map
 				});
 
@@ -480,10 +515,16 @@ export default {
 								roadDir: caseSpec.lane || 1,
 								direction: caseSpec.direction || 1,
 								imgUrl: caseSpec.imgUrl,
-								position: event.latLng
+								position: event.latLng.toJSON(),
+								position_ori: event.latLng.toJSON()
 							}
 						})	
 					} else this.showCaseContent(caseSpec, event.latLng);
+				})
+
+				marker.addListener('dragend', (event) => {
+					// console.log(event.latLng.toJSON());
+					this.rowActive.position = event.latLng.toJSON();
 				})
 
 				this.markers.push(marker);
@@ -495,7 +536,7 @@ export default {
 		getAddress() {
 			this.isGetAddress = true;
 
-			getAddress(this.rowActive.position.toJSON()).then(res => {
+			getAddress(this.rowActive.position).then(res => {
 				const resJson = JSON.parse(xml2json(parseXml(res.data), ''));
 				const addressJson = JSON.parse(resJson.string['#text']);
 				// console.log(addressJson);
@@ -569,6 +610,7 @@ export default {
 
 			this.markers.forEach(marker => {
 				marker.setDraggable(false);
+				marker.setPosition(marker.position_ori);
 
 				const caseFilter = this.options.caseTypeMap.filter(caseSpec => caseSpec.caseName.includes(marker.caseType));
 
@@ -577,6 +619,56 @@ export default {
 					scaledSize: new google.maps.Size(30, 30),
 				});
 			});
+		},
+		setCase() {
+			this.loading = true;
+			setInspectionCase({
+				contractId: this.contractIdNow,
+				zipCode: this.rowActive.zipCode,
+				caseId: this.rowActive.id,
+				reportTime: moment(this.rowActive.reportTime).format("YYYY-MM-DD HH:mm:ss"),
+				distressType: this.rowActive.distressType,
+				distressLevel: this.rowActive.distressLevel,
+				millingLength: Number(this.rowActive.millingLength),
+				millingWidth: Number(this.rowActive.millingWidth),
+				millingArea: Number(this.rowActive.millingArea),
+				place: this.rowActive.place,
+				position: this.rowActive.position,
+				direction: this.rowActive.direction,
+				lane: Number(this.rowActive.lane),
+				imgUrl: this.rowActive.imgUrl
+			}).then(response => {
+				this.$message({
+					message: "分案成功",
+					type: "success",
+				});
+				this.getList();
+			}).catch(err => {
+				console.log(err);
+				this.$message({
+					message: "分案失敗",
+					type: "error",
+				});
+			}).finally(() => this.loading = false);
+		},
+		delCase() {
+			this.loading = true;
+			delInspectionCase({ caseId: this.rowActive.id }).then(response => {
+				this.$message({
+					message: "刪除成功",
+					type: "success",
+				});
+				this.getList();
+			}).catch(err => {
+				console.log(err);
+				this.$message({
+					message: "刪除失敗",
+					type: "error",
+				});
+			}).finally(() => this.loading = false)
+		},
+		calArea() {
+			this.rowActive.millingArea = Math.round(this.rowActive.millingLength * this.rowActive.millingWidth * 100 ) / 100;
 		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:mm:ss");
