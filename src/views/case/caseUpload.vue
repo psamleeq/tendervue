@@ -602,7 +602,7 @@ export default {
 					strokeWeight: 3,
 					strokeOpacity: 0.2,
 					fillColor: "#000000",
-					fillOpacity: condition ? 0 : 0.7,
+					fillOpacity: condition ? 0.4 : 0.7,
 					zIndex: 0
 				}
 			});
