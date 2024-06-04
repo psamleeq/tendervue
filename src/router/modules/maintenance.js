@@ -22,7 +22,7 @@ const maintenanceRouter = {
 			name: 'inform',
 			redirect: 'noRedirect',
 			meta: {
-				title: '養護通報',
+				title: '養護判核',
 				roles: ['restored.assign']
 			},
 			children: [
@@ -31,7 +31,7 @@ const maintenanceRouter = {
 					component: () => import('@/views/maintenance/inform/caseApplyManage'),
 					name: 'caseApplyManage',
 					meta: {
-						title: '通報單管理',
+						title: '判核單管理',
 						roles: ['restored.assign'],
 						vTag: 'alpha'
 					}
@@ -41,7 +41,7 @@ const maintenanceRouter = {
 					component: () => import('@/views/maintenance/inform/caseApply'),
 					name: 'caseApply',
 					meta: {
-						title: '製作通報單',
+						title: '製作判核單',
 						roles: ['restored.assign'],
 						vTag: 'alpha'
 					}
