@@ -193,8 +193,8 @@ export default {
 				},
 				competentTypeMap: {},
 				imgTypeMap: {
-					"imgZoomIn": "近照(有框)",
-					"imgZoomOut": "遠照(無框)"
+					"imgZoomIn": "近照",
+					"imgZoomOut": "遠照"
 				},
 				caseColorMap: [
 					{

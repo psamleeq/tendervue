@@ -653,8 +653,7 @@ export default {
 						else canvasContext.lineTo(x, y);
 					}
 					if(![29].includes(this.caseInfo.distressType)) canvasContext.closePath();
-					// if(!imgType.includes('unMark')) canvasContext.stroke();
-					if(imgType == 'imgZoomIn') canvasContext.stroke();
+					if(!imgType.includes('unMark')) canvasContext.stroke();
 					
 					// 產出jpg
 					html2canvas(containerDom, { canvas, backgroundColor: 'rgba(0, 0, 0, 0)', width: canvas.width, height: canvas.height, scale  }).then(canvas => {
