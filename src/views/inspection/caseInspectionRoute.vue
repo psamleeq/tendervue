@@ -446,7 +446,7 @@ export default {
 
 			this.dataLayer.mask.setStyle(feature => {
 				// console.log(feature);
-				const condition = [1000].includes(zipCode);
+				const condition = [1000].includes(this.listQuery.zipCode);
 
 				return {
 					strokeColor: "#000000",
@@ -460,7 +460,7 @@ export default {
 			
 			this.dataLayer.district.setStyle(feature => {
 				// console.log(feature);
-				const condition = [1001, 999, 1000].includes(this.listQuery.zipCode) || this.options.districtMap[this.listQuery.zipCode].district.includes(feature.getProperty("TOWNNAME"));
+				const condition = [999, 1000, 1001, 1003].includes(this.listQuery.zipCode) || this.options.districtMap[this.listQuery.zipCode].district.includes(feature.getProperty("TOWNNAME"));
 
 				return {
 					strokeColor: "#827717",
