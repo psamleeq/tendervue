@@ -49,6 +49,15 @@ const carRouter = {
 				title: '巡視影像',
 				roles: ['car.viewer']
 			}
+		},
+		{
+			path: 'caseListLog',
+			component: () => import('@/views/car/caseListLog'),
+			name: 'caseListLog',
+			meta: {
+				title: '巡視歷程',
+				roles: ['car.viewer']
+			}
 		}
 	]
 }
