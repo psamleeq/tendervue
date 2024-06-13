@@ -17,7 +17,7 @@
 			<div class="filter-container">
 				<span class="filter-item">
 					<div class="select-district el-input el-input--medium el-input-group el-input-group--prepend">
-						<el-select v-model="listQuery.contractId" placeholder="請選擇" style="width: 100px; margin-right:20px;">
+						<el-select v-model="listQuery.contractId" placeholder="請選擇" style="width: 75px; margin-right:20px;" size="small">
 							<el-option label="全部" :value="99" />
 							<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
 						</el-select>
@@ -49,7 +49,7 @@
 								size="mini"
 								@click="dateTimePickerVisible = !dateTimePickerVisible"
 							>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
-							<el-button style="margin-left: 20px;" class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+							<el-button style="margin-left: 20px;" size="small" class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
 							<el-switch v-show="timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
 						</span>
 					</div>

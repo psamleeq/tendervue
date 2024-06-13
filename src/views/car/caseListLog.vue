@@ -7,8 +7,8 @@
         <el-option label="全部" :value="99" />
           <el-option v-for="(text, id) in team" :key="`ContractId${id}`" :label="text" :value="Number(id)" />
         </el-select>
-			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-			<el-button class="filter-item" type="success" @click="csvVisible = true">匯入csv</el-button>
+			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()" style="margin-left: 10px;">搜尋</el-button>
+			<el-button class="filter-item" type="success" @click="openCsvDialog()">匯入csv</el-button>
 		</div>
 
 		<!-- 資料列表 -->
@@ -19,6 +19,7 @@
 				:label="value.name" 
 				align="center" 
 				:sortable="value.sortable"
+				:width="value.width"
 			>
 			</el-table-column>
 		</el-table>
@@ -42,17 +43,14 @@
 					:on-change="handleChange">
 					<i class="el-icon-upload"></i>
 					<div class="el-upload__text">將文件拖到此處，或<em>點擊上傳csv</em></div>
-					<!-- <div class="el-upload__tip" slot="tip">只能上傳csv</div> -->
 				</el-upload>
 			</el-form-item>
 			</el-form>
 			<span slot="footer" class="dialog-footer">
 				<el-button type="primary" @click="importCsv">匯入</el-button>
-				<el-button @click="csvVisible = false">取消</el-button>
+				<el-button @click="closeCsvDialog()">取消</el-button>
 			</span>
     </el-dialog>
-
-    
 	</div>
 </template>
 
@@ -115,26 +113,32 @@ export default {
 			CaseNo: {
         name: '案件編號',
         sortable: false,
+				width: 120
       },
       DateReport: {
         name: '查報日期',
         sortable: false,
+				width: 100
       },
       ContractId: {
         name: '標案ID',
         sortable: false,
+				width: 100
       },
       ZipCode: {
         name: '區號',
         sortable: false,
+				width: 90
       },
       ReportUser: {
         name: '登錄人員',
         sortable: false,
+				width: 120
       },
       ReceiveUser: {
         name: '收件人員',
         sortable: false,
+				width: 130
       },
       LocationReport: {
         name: '查報地點',
@@ -143,18 +147,22 @@ export default {
       DamageDesc: {
         name: '損壞情形',
         sortable: false,
+				width: 140
       },
       DamageCondition: {
         name: '損壞狀況',
         sortable: false,
+				width: 100
       },
       TemporaryFix: {
         name: '臨時修補',
         sortable: false,
+				width: 90
       },
       CaseCondition: {
         name: '案件狀態',
         sortable: false,
+				width: 90
       },
 
 		},
@@ -176,6 +184,7 @@ export default {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
 		},
 		getList() {
+			this.list = [];
 			if (this.listQuery.ContractId == 99) {
 				// 顯示全部 有6個分隊(6個標)
 				for (let i = 1; i <= 6; i++) {
@@ -222,6 +231,14 @@ export default {
 					}
 				}).catch(err => { this.loading = false; });
 			}
+		},
+		openCsvDialog() {
+			this.file = null;
+			this.csvVisible = true;
+		},
+		closeCsvDialog() {
+			this.csvVisible = false;
+			this.$ref.upload.clearFiles();
 		},
     handleChange(file) {
 			this.file = file.raw;
