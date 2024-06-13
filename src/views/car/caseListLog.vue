@@ -23,29 +23,29 @@
 			</el-table-column>
 		</el-table>
 
+		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
+
     <el-dialog
 			:visible.sync="csvVisible"
-			width="700px">
-			<div>
-				<el-form ref="file" label-width="120px">
-				<el-form-item label="導入csv">
-					<el-upload
-						class="upload-demo"
-						ref="upload"
-						drag
-						accept=".csv"
-						action=""
-						:multiple="false"
-						:limit="1"
-						:auto-upload="false"
-						:on-change="handleChange">
-						<i class="el-icon-upload"></i>
-						<div class="el-upload__text">將文件拖到此處，或<em>點擊上傳csv</em></div>
-						<!-- <div class="el-upload__tip" slot="tip">只能上傳csv</div> -->
-					</el-upload>
-				</el-form-item>
-				</el-form>
-			</div>
+			width="600px">
+			<el-form ref="file" label-width="120px">
+			<el-form-item label="導入csv">
+				<el-upload
+					class="upload-demo"
+					ref="upload"
+					drag
+					accept=".csv"
+					action=""
+					:multiple="false"
+					:limit="1"
+					:auto-upload="false"
+					:on-change="handleChange">
+					<i class="el-icon-upload"></i>
+					<div class="el-upload__text">將文件拖到此處，或<em>點擊上傳csv</em></div>
+					<!-- <div class="el-upload__tip" slot="tip">只能上傳csv</div> -->
+				</el-upload>
+			</el-form-item>
+			</el-form>
 			<span slot="footer" class="dialog-footer">
 				<el-button type="primary" @click="importCsv">匯入</el-button>
 				<el-button @click="csvVisible = false">取消</el-button>
@@ -60,6 +60,7 @@
 import moment from "moment";
 import { getCaseListLog, importCaseListLog } from "@/api/car";
 import TimePicker from '@/components/TimePicker';
+import Pagination from "@/components/Pagination";
 import commonMixin from '@/mixins/common';
 import { parse } from 'csv-parse';
 import { Trans97 } from 'trans97';
@@ -67,7 +68,7 @@ import { Trans97 } from 'trans97';
 export default {
 	mixins: [commonMixin],
 	name: "caseListLog",
-	components: { TimePicker },
+	components: { TimePicker, Pagination },
 	data() {
 	return {
 		loading: false,
@@ -75,11 +76,14 @@ export default {
 		csvVisible: false,
 		file: null,
 		timeTabId: 1,
+		total: 0,
 		dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
 			filterType: 1,
 			ZipCode: 0,
       ContractId: 1,
+			pageCurrent: 1,
+			pageSize: 50
 		},
 		area:{
 			0: "全部",
@@ -172,25 +176,52 @@ export default {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
 		},
 		getList() {
-      getCaseListLog({ ContractId: this.listQuery.ContractId }).then(response => {
-        if (response.data.list.length == 0) {
-          this.$message({
-            message: "查無資料",
-            type: "error",
-          });
-          this.loading = false;
-        } else {
-          this.list = response.data.list;
-          this.list.map(item => {
-            item.DateReport = this.formatTime(item.DateReport),
-            item.EstimatedDate = this.formatTime(item.EstimatedDate),
-            item.TemporaryFix = 0 ? '是' : '否', // 邏輯是反的 需實驗
-            item.ZipCode = this.area[item.ZipCode],
-            item.ContractId = this.team[item.ContractId]
-          });
-        }
-      }).catch(err => { this.loading = false; });
-			
+			if (this.listQuery.ContractId == 99) {
+				// 顯示全部 有6個分隊(6個標)
+				for (let i = 1; i <= 6; i++) {
+					getCaseListLog({ 
+						ContractId: i, 
+						pageCurrent: this.listQuery.pageCurrent,
+						pageSize: this.listQuery.pageSize 
+					}).then(response => {
+						this.total += response.data.total;
+						response.data.list.map(item => {
+							item.DateReport = this.formatTime(item.DateReport),
+							item.EstimatedDate = this.formatTime(item.EstimatedDate),
+							item.TemporaryFix = 0 ? '是' : '否', // 邏輯是反的 需實驗
+							item.ZipCode = this.area[item.ZipCode],
+							item.ContractId = this.team[item.ContractId],
+							this.list.push(item);
+						});
+						
+					}).catch(err => { this.loading = false });
+				}
+			} else {
+				// 只顯示一個分隊
+				getCaseListLog({ 
+					ContractId: this.listQuery.ContractId,
+					pageCurrent: this.listQuery.pageCurrent,
+					pageSize: this.listQuery.pageSize  
+				}).then(response => {
+					if (response.data.list.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+						this.loading = false;
+					} else {
+						this.total = response.data.total;
+						this.list = response.data.list;
+						this.list.map(item => {
+							item.DateReport = this.formatTime(item.DateReport),
+							item.EstimatedDate = this.formatTime(item.EstimatedDate),
+							item.TemporaryFix = 0 ? '是' : '否', // 邏輯是反的 需實驗
+							item.ZipCode = this.area[item.ZipCode],
+							item.ContractId = this.team[item.ContractId]
+						});
+					}
+				}).catch(err => { this.loading = false; });
+			}
 		},
     handleChange(file) {
 			this.file = file.raw;
@@ -220,8 +251,8 @@ export default {
 						const temporaryFix = res.map((key) => key.臨時修復);
 						const sourceReport = res.map((key) => key.查報來源);
 						const caseCondition = res.map((key) => key.案件狀態);
-						const twd97_x = res.map((key) => key.X座標);
-						const twd97_y = res.map((key) => key.Y座標);
+						const twd97_x = res.map((key) => key.X座標TWD97);
+						const twd97_y = res.map((key) => key.Y座標TWD97);
 
 						const formatDateReport = []; // 查報日期
 						const formatEstimatedDate = []; // 預計完工日期
@@ -297,6 +328,9 @@ export default {
 
 <style lang="sass">
 .inspection-progress
+	.dialog-footer
+		display: flex
+		justify-content: center
 	.filter-container
 		.filter-item
 			margin-right: 5px
