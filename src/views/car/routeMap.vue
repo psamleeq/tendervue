@@ -58,20 +58,21 @@
 						<el-button
 							v-for="(name, id) in options.inspectRound"
 							:key="id"
-							@click="listQuery.inspectRound = id"
+							@click="handleButton(id)"
 							type="success"
 							:value="Number(id)"
+							size="small"
 							plain>{{ name }}</el-button>
 						
 						<!-- <el-select class="district-select" v-model="listQuery.inspectRound">
 							<el-option v-for="(name, id) in options.inspectRound" :key="id" :label="name" :value="Number(id)" />
 						</el-select> -->
 
-						<el-button-group style="margin-left:20px;">
+						<!-- <el-button-group style="margin-left:20px;">
 							<el-button type="primary" size="small" @click="getRouteList()">載入</el-button>
 							<el-button type="success" size="small" @click="intersectRoute()">比對</el-button>
 							<el-button type="info" size="small" @click="clearRouteLayer()">清空</el-button>
-						</el-button-group>
+						</el-button-group> -->
 					</span>
 					<!-- <el-button :type="showLayerAttach ? 'primary' : 'info'" @click="showLayerAttach = !showLayerAttach">路線圖層</el-button> -->
 					<!-- <el-card v-if="showLayerAttach" :body-style="{ padding: '0 5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
@@ -169,11 +170,32 @@ export default {
 				firstDayOfWeek: 1,
 				shortcuts: [
 					{
-						text: "今日",
+						text: "前4",
 						onClick(picker) {
-							const date = moment();
+							const date = moment().subtract(5, "d");
 							picker.$emit("pick", date);
-						},
+						}
+					},
+					{
+						text: "前3",
+						onClick(picker) {
+							const date = moment().subtract(4, "d");
+							picker.$emit("pick", date);
+						}
+					},
+					{
+						text: "前2",
+						onClick(picker) {
+							const date = moment().subtract(3, "d");
+							picker.$emit("pick", date);
+						}
+					},
+					{
+						text: "前1",
+						onClick(picker) {
+							const date = moment().subtract(2, "d");
+							picker.$emit("pick", date);
+						}
 					},
 					{
 						text: "昨日",
@@ -183,32 +205,11 @@ export default {
 						}
 					},
 					{
-						text: "前日1",
+						text: "今日",
 						onClick(picker) {
-							const date = moment().subtract(2, "d");
+							const date = moment();
 							picker.$emit("pick", date);
-						}
-					},
-					{
-						text: "前日2",
-						onClick(picker) {
-							const date = moment().subtract(3, "d");
-							picker.$emit("pick", date);
-						}
-					},
-					{
-						text: "前日3",
-						onClick(picker) {
-							const date = moment().subtract(4, "d");
-							picker.$emit("pick", date);
-						}
-					},
-					{
-						text: "前日4",
-						onClick(picker) {
-							const date = moment().subtract(5, "d");
-							picker.$emit("pick", date);
-						}
+						},
 					},
 				],
 				disabledDate(date) {
@@ -285,14 +286,14 @@ export default {
 					// }
 				},
 				inspectRound: {
-					0: "全部",
-					1: "週期一",
-					2: "週期二",
-					3: "週期三",
-					4: "週期四",
-					5: "週期五",
-					6: "週期六",
-					7: "週期七"
+					// 0: "全部",
+					1: "(1)",
+					2: "(2)",
+					3: "(3)",
+					4: "(4)",
+					5: "(5)",
+					6: "(6)",
+					7: "(7)"
 				},
 				modeId: {
 					1: "手持巡查",
@@ -942,14 +943,15 @@ export default {
 
 			this.infoWindow.open(this.map);
 		},
-		getRouteList() {
+		async getRouteList() {
 			this.loading = true;
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
 			
+			this.blockList = [];
 			
 			// 因為一個標 包含2個行政區 所以呼叫2次API
 			for (let i = 0; i < 2; i++) {
-				getInspectionRoute({
+				await getInspectionRoute({
 					zipCode: this.options.contractIdToZipCode[this.listQuery.contractId][i],
 					inspectRound: this.listQuery.inspectRound,
 					isCar: true
@@ -960,7 +962,8 @@ export default {
 							type: "error",
 						});
 					} else {
-						this.blockList = response.data.blockList;
+						// this.blockList = response.data.blockList;
+						this.blockList = this.blockList.concat(response.data.blockList);
 
 						let geoJSON = {
 							"type": "FeatureCollection",
@@ -984,7 +987,12 @@ export default {
 					this.loading = false;
 				}).catch(err => this.loading = false);
 			}
-			
+		},
+		// 點擊週期可以同時載入和比對
+		async handleButton(id) {
+			this.listQuery.inspectRound = id;
+			await this.getRouteList();
+			await this.intersectRoute();
 		},
 		clearRouteLayer() {
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
