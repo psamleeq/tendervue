@@ -62,7 +62,7 @@ export function getTaskReal(query) {
 }
 
 //---------------------------------------
-// 養護通報
+// 養護判核
 export function getApply(query) {
 	return request({
 		url: '/dispatch/apply',
@@ -79,7 +79,7 @@ export function confirmApply(data) {
 	})
 }
 
-// 通報單列表
+// 判核單列表
 export function getApplyTicketList(query) {
 	return request({
 		url: '/dispatch/applyTicketList',
@@ -111,6 +111,40 @@ export function getApplyReviewList(query) {
 		url: '/dispatch/applyReview',
 		method: 'get',
 		params: query
+	})
+}
+
+//---------------------------------------
+// 養護判核
+export function getApplyInform(query) {
+	return request({
+		url: '/dispatch/applyInform',
+		method: 'get',
+		params: query
+	})
+}
+
+export function getInformTicketList(query) {
+	return request({
+		url: '/dispatch/informTicketList',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setinformTicketList(id, data) {
+	return request({
+		url: `/dispatch/informTicketList/${id}`,
+		method: 'put',
+		data
+	})
+}
+
+export function confirmInform(data) {
+	return request({
+		url: '/dispatch/applyInform',
+		method: 'post',
+		data
 	})
 }
 

@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-apply-manage" v-loading="loading">
-		<h2>判核單管理</h2>
+		<h2>通報單管理</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input el-input-group el-input-group--prepend">
@@ -68,7 +68,7 @@
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="判核" align="center" min-width="40">
+			<!-- <el-table-column label="判核" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 2">
 						<i class="el-icon-check" style="color: #67C23A" />
@@ -81,8 +81,8 @@
 						v-if="!(row.InformState & 2) && Object.values(row.CaseNoObj).every(obj => (obj.FlowState & 2 || obj.FlowState & 32) && (obj.FlowState & 4 || obj.FlowState & 64))"
 						class="btn-action" type="success" @click="informConfirm(row, 2)">完成</el-button>
 				</template>
-			</el-table-column>
-			<!-- <el-table-column label="會勘" align="center" min-width="40">
+			</el-table-column> -->
+			<el-table-column label="會勘" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 4">
 						<i class="el-icon-check" style="color: #67C23A" />
@@ -95,8 +95,8 @@
 					</template>
 					<span v-else> - </span>
 				</template>
-			</el-table-column> -->
-			<!-- <el-table-column label="派工" align="center" min-width="40">
+			</el-table-column>
+			<el-table-column label="派工" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 8">
 						<i class="el-icon-check" style="color: #67C23A" />
@@ -135,7 +135,7 @@
 					<el-button class="btn-action" type="info" plain @click="applyTicketDetail(row)">檢視</el-button>
 					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">列印判核單</el-button>
 				</template>
-			</el-table-column> -->
+			</el-table-column>
 		</el-table>
 
 		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading"
@@ -155,7 +155,7 @@
 import moment from "moment";
 import checkPermission from '@/utils/permission';
 import { getTenderGroup } from "@/api/type";
-import { getApply, getApplyTicketList, setApplyTicketList } from "@/api/dispatch";
+import { getApplyInform, getInformTicketList, setinformTicketList } from "@/api/dispatch";
 import Pagination from "@/components/Pagination";
 import ApplyTicketPdf from "@/components/ApplyTicketPdf";
 import meetingPdf from "@/views/maintenance/inform/pdf/meetingPDF.vue";
@@ -184,7 +184,7 @@ export default {
 			},
 			headers: {
 				CaseSN: {
-					name: "判核單號",
+					name: "通報單號",
 					sortable: true
 				},
 				InformType: {
@@ -195,10 +195,10 @@ export default {
 					name: "案件數量",
 					sortable: false
 				},
-				Create_At: {
-					name: "建單時間",
-					sortable: false
-				},
+				// Create_At: {
+				// 	name: "建單時間",
+				// 	sortable: false
+				// },
 			},
 			total: 0,
 			list: [],
@@ -235,7 +235,7 @@ export default {
 			this.loading = true;
 			this.list = [];
 
-			getApplyTicketList({
+			getInformTicketList({
 				groupId: this.listQuery.groupId || 0,
 				caseSN: this.listQuery.filterStr,
 				pageCurrent: this.listQuery.pageCurrent,
@@ -265,7 +265,7 @@ export default {
 		},
 		applyTicketDetail(row) {
 			this.$router.push({
-				name: "caseApply",
+				name: "caseInform",
 				params: { groupId: row.GroupId, informType: row.InformType, caseSN: row.CaseSN },
 			});
 		},
@@ -288,8 +288,9 @@ export default {
 				showClose: false,
 			}).then(() => {
 				this.loading = true;
-
-				setApplyTicketList(row.id, {
+				console.log(row);
+				
+				setinformTicketList(row.id, {
 					informState: row.InformState + state
 				}).then(response => {
 					if (response.statusCode == 20000) {
@@ -297,7 +298,6 @@ export default {
 							message: "提交成功",
 							type: "success",
 						});
-						
 						this.getList();
 					}
 				}).catch(err => {
@@ -310,7 +310,7 @@ export default {
 			// console.log(row);
 			this.loading = true;
 
-			getApply({
+			getApplyInform({
 				caseSN: row.CaseSN,
 				pageCurrent: 1,
 				pageSize: 999999
@@ -334,7 +334,7 @@ export default {
 		// getMeetingPDF(row) {
 		// 	this.caseSN = String(row.CaseSN);
 
-		// 	// getApplyTicketListPDF({ caseSN: row.CaseSN }).then(response => {
+		// 	// getInformTicketListPDF({ caseSN: row.CaseSN }).then(response => {
 		// 	// 	this.loading = false;
 		// 	// 	this.showPDFDialog = true;
 		// 	// }).catch(err => this.loading = false);
