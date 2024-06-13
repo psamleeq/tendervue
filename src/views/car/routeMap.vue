@@ -15,9 +15,67 @@
 				</el-row>
 			</el-card>
 			<div class="filter-container">
-				<span class="filter-item" style="display: inline-flex">
-					<el-button :type="showLayerAttach ? 'primary' : 'info'" @click="showLayerAttach = !showLayerAttach">路線圖層</el-button>
-					<el-card v-if="showLayerAttach" :body-style="{ padding: '0 5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
+				<span class="filter-item">
+					<div class="select-district el-input el-input--medium el-input-group el-input-group--prepend">
+						<el-select v-model="listQuery.contractId" placeholder="請選擇" style="width: 75px; margin-right:20px;" size="small">
+							<el-option label="全部" :value="99" />
+							<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
+						</el-select>
+
+						<span class="time-picker">
+							<el-button-group v-if="!dateTimePickerVisible">
+								<el-button
+									v-for="(t, i) in pickerOptions.shortcuts"
+									:key="i"
+									type="primary"
+									:plain="i != timeTabId"
+									size="mini"
+									@click="dateShortcuts(i)"
+								>{{ t.text }}</el-button>
+							</el-button-group>
+							<el-date-picker
+								v-else
+								class="filter-item"
+								v-model="searchDate"
+								type="date"
+								placeholder="日期"
+								:picker-options="pickerOptions"
+								:clearable="false"
+								@change="timeTabId = -1"
+							/>
+							<el-button
+								:type="dateTimePickerVisible ? 'info' : 'primary'"
+								plain
+								size="mini"
+								@click="dateTimePickerVisible = !dateTimePickerVisible"
+							>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
+							<el-button style="margin-left: 20px;" size="small" class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+							<el-switch v-show="timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
+						</span>
+					</div>
+
+					<span>
+						<el-button
+							v-for="(name, id) in options.inspectRound"
+							:key="id"
+							@click="handleButton(id)"
+							type="success"
+							:value="Number(id)"
+							size="small"
+							plain>{{ name }}</el-button>
+						
+						<!-- <el-select class="district-select" v-model="listQuery.inspectRound">
+							<el-option v-for="(name, id) in options.inspectRound" :key="id" :label="name" :value="Number(id)" />
+						</el-select> -->
+
+						<!-- <el-button-group style="margin-left:20px;">
+							<el-button type="primary" size="small" @click="getRouteList()">載入</el-button>
+							<el-button type="success" size="small" @click="intersectRoute()">比對</el-button>
+							<el-button type="info" size="small" @click="clearRouteLayer()">清空</el-button>
+						</el-button-group> -->
+					</span>
+					<!-- <el-button :type="showLayerAttach ? 'primary' : 'info'" @click="showLayerAttach = !showLayerAttach">路線圖層</el-button> -->
+					<!-- <el-card v-if="showLayerAttach" :body-style="{ padding: '0 5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
 						<div class="filter-item">
 							<div class="select-district el-input el-input--medium el-input-group el-input-group--prepend">
 								<div class="el-input-group__prepend">
@@ -27,29 +85,13 @@
 									<el-option v-for="(info, zip) in options.districtList" :key="zip" :label="info.name" :value="Number(zip)" />
 								</el-select>
 							</div>
-						</div>
-						<div class="filter-item">
-							<div class="select-district el-input el-input--medium el-input-group el-input-group--prepend">
-								<div class="el-input-group__prepend">
-									<span>週期</span>
-								</div>
-								<el-select class="district-select" v-model="listQuery.inspectRound">
-									<el-option v-for="(name, id) in options.inspectRound" :key="id" :label="name" :value="Number(id)" />
-								</el-select>
-							</div>
-						</div>
-						<el-button-group>
-							<el-button type="primary" size="small" @click="getRouteList()">載入</el-button>
-							<el-button type="success" size="small" @click="intersectRoute()">比對</el-button>
-							<el-button type="info" size="small" @click="clearRouteLayer()">清空</el-button>
-						</el-button-group>
-					</el-card>
+						</div> -->
+						
+						
+					<!-- </el-card> -->
 				</span>
-				<br>
-				<el-select v-model="listQuery.contractId" placeholder="請選擇" style="width: 100px;">
-					<el-option label="全部" :value="99" />
-					<el-option v-for="(text, id) in options.contractId" :key="`contractId_${id}`" :label="text" :value="Number(id)" />
-				</el-select>
+				
+				
 
 				<!-- NOTE: 選擇車號 -->
 				<!-- <el-select v-if="listQuery.contractId != 99" v-model="listQuery.carId" placeholder="請選擇" style="width: 160px;"  @change="getCarList()">
@@ -65,36 +107,7 @@
 					<el-option v-for="car in carList" :key="`car_${car.id}`" :label="`路線${car.id} (${car.carId})`" :value="Number(car.id)" />
 				</el-select> -->
 
-				<span class="time-picker">
-					<el-button-group v-if="!dateTimePickerVisible">
-						<el-button
-							v-for="(t, i) in pickerOptions.shortcuts"
-							:key="i"
-							type="primary"
-							:plain="i != timeTabId"
-							size="mini"
-							@click="dateShortcuts(i)"
-						>{{ t.text }}</el-button>
-					</el-button-group>
-					<el-date-picker
-						v-else
-						class="filter-item"
-						v-model="searchDate"
-						type="date"
-						placeholder="日期"
-						:picker-options="pickerOptions"
-						:clearable="false"
-						@change="timeTabId = -1"
-					/>
-					<el-button
-						:type="dateTimePickerVisible ? 'info' : 'primary'"
-						plain
-						size="mini"
-						@click="dateTimePickerVisible = !dateTimePickerVisible"
-					>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
-					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-					<el-switch v-show="timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
-				</span>
+				
 			</div>
 		</div>
 		<div id="map" ref="map" />
@@ -157,11 +170,32 @@ export default {
 				firstDayOfWeek: 1,
 				shortcuts: [
 					{
-						text: "今日",
+						text: "前4",
 						onClick(picker) {
-							const date = moment();
+							const date = moment().subtract(5, "d");
 							picker.$emit("pick", date);
-						},
+						}
+					},
+					{
+						text: "前3",
+						onClick(picker) {
+							const date = moment().subtract(4, "d");
+							picker.$emit("pick", date);
+						}
+					},
+					{
+						text: "前2",
+						onClick(picker) {
+							const date = moment().subtract(3, "d");
+							picker.$emit("pick", date);
+						}
+					},
+					{
+						text: "前1",
+						onClick(picker) {
+							const date = moment().subtract(2, "d");
+							picker.$emit("pick", date);
+						}
 					},
 					{
 						text: "昨日",
@@ -171,12 +205,12 @@ export default {
 						}
 					},
 					{
-						text: "前日",
+						text: "今日",
 						onClick(picker) {
-							const date = moment().subtract(2, "d");
+							const date = moment();
 							picker.$emit("pick", date);
-						}
-					}
+						},
+					},
 				],
 				disabledDate(date) {
 					return moment(date).valueOf() >= moment().endOf("d").valueOf();
@@ -252,14 +286,14 @@ export default {
 					// }
 				},
 				inspectRound: {
-					0: "全部",
-					1: "週期一",
-					2: "週期二",
-					3: "週期三",
-					4: "週期四",
-					5: "週期五",
-					6: "週期六",
-					7: "週期七"
+					// 0: "全部",
+					1: "(1)",
+					2: "(2)",
+					3: "(3)",
+					4: "(4)",
+					5: "(5)",
+					6: "(6)",
+					7: "(7)"
 				},
 				modeId: {
 					1: "手持巡查",
@@ -275,6 +309,14 @@ export default {
 					4: "四標",
 					5: "五標",
 					6: "六標"
+				},
+				contractIdToZipCode: {
+					1: [103, 104],
+					2: [105, 110],
+					3: [106, 116],
+					4: [114, 115],
+					5: [111, 112],
+					6: [100, 108]
 				},
 				carId: {
 					0: {
@@ -901,44 +943,56 @@ export default {
 
 			this.infoWindow.open(this.map);
 		},
-		getRouteList() {
+		async getRouteList() {
 			this.loading = true;
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
+			
+			this.blockList = [];
+			
+			// 因為一個標 包含2個行政區 所以呼叫2次API
+			for (let i = 0; i < 2; i++) {
+				await getInspectionRoute({
+					zipCode: this.options.contractIdToZipCode[this.listQuery.contractId][i],
+					inspectRound: this.listQuery.inspectRound,
+					isCar: true
+				}).then(response => {
+					if (response.data.blockList.length == 0 && response.data.routeList.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						// this.blockList = response.data.blockList;
+						this.blockList = this.blockList.concat(response.data.blockList);
 
-			getInspectionRoute({
-				zipCode: this.listQuery.inspectRoundZipCode,
-				inspectRound: this.listQuery.inspectRound,
-				isCar: true
-			}).then(response => {
-				if (response.data.blockList.length == 0 && response.data.routeList.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-				} else {
-					this.blockList = response.data.blockList;
-
-					let geoJSON = {
-						"type": "FeatureCollection",
-						"name": "blockJSON",
-						"features": []
-					};
-
-					for (const blockSpec of this.blockList) {
-						let feature = {
-							"type": "Feature",
-							"properties": {
-								"id": blockSpec.id,
-								"roadName": blockSpec.roadName
-							},
-							"geometry": JSON.parse(blockSpec.geometry)
+						let geoJSON = {
+							"type": "FeatureCollection",
+							"name": "blockJSON",
+							"features": []
 						};
-						geoJSON.features.push(feature);
+
+						for (const blockSpec of this.blockList) {
+							let feature = {
+								"type": "Feature",
+								"properties": {
+									"id": blockSpec.id,
+									"roadName": blockSpec.roadName
+								},
+								"geometry": JSON.parse(blockSpec.geometry)
+							};
+							geoJSON.features.push(feature);
+						}
+						this.dataLayer.route.addGeoJson(geoJSON);
 					}
-					this.dataLayer.route.addGeoJson(geoJSON);
-				}
-				this.loading = false;
-			}).catch(err => this.loading = false);
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			}
+		},
+		// 點擊週期可以同時載入和比對
+		async handleButton(id) {
+			this.listQuery.inspectRound = id;
+			await this.getRouteList();
+			await this.intersectRoute();
 		},
 		clearRouteLayer() {
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));

@@ -156,6 +156,40 @@ const maintenanceRouter = {
 					}
 				}
 			]
+		},
+		{
+			path: 'informReport',
+			component: {
+				render: (c) => c('router-view')
+			},
+			name: 'informReport',
+			redirect: 'noRedirect',
+			meta: {
+				title: '養護通報',
+				roles: ['restored.assign', 'restored.order', 'restored.reporter', 'restored.viewer']
+			},
+			children: [
+				{
+					path: 'caseInformManage',
+					component: () => import('@/views/maintenance/informReport/caseInformManage'),
+					name: 'caseInformManage',
+					meta: {
+						title: '通報單管理',
+						roles: ['restored.assign'],
+						isNew: true
+					}
+				},
+				{
+					path: 'caseInform',
+					component: () => import('@/views/maintenance/informReport/caseInform'),
+					name: 'caseInform',
+					meta: {
+						title: '製作通報單',
+						roles: ['restored.assign'],
+						isNew: true
+					}
+				}
+			]
 		}
 	]
 }

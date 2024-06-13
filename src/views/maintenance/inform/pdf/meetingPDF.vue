@@ -17,7 +17,7 @@ export default {
 	name: "meetingPDF",
 	components: { },
 	props: {
-    informId: {
+    ApplyId: {
       type: Number,
       required: true
     }
@@ -46,7 +46,7 @@ export default {
 		}
 	},
   watch: {
-    informId() {
+    ApplyId() {
       this.getList();
     }
   },
@@ -186,7 +186,7 @@ export default {
       this.place = [];
 
       // Fetch PDF data from API
-      getApplyTicketListPDF({ informId: this.informId }).then(response => {
+      getApplyTicketListPDF({ ApplyId: this.ApplyId }).then(response => {
         const list = response.data.list;
         console.log('list', list);
 

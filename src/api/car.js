@@ -51,3 +51,21 @@ export function delInspectionCase(data) {
 		data
 	})
 }
+
+// 巡視歷程
+export function getCaseListLog(query) {
+	return request({
+		url: '/car/caseLog',
+		method: 'get',
+		params: query
+	})
+}
+
+// 巡視歷程 - 匯入csv
+export function importCaseListLog(data) {
+	return request({
+		url: '/car/caseLog',
+		method: 'post',
+		data
+	})
+}

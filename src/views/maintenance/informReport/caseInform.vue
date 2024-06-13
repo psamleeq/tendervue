@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container case-apply" v-loading="loading">
-		<h2>製作判核單</h2>
+		<h2>製作通報單</h2>
 		<div class="filter-container">
 			<div class="filter-item">
 				<div class="el-input el-input el-input-group el-input-group--prepend">
@@ -366,7 +366,7 @@
 <script>
 import moment from "moment";
 import { getTenderGroup, getKitItemMap, getSCTypeItemMap } from "@/api/type";
-import { getApply, confirmApply, setDispatchSpec, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
+import { getApplyInform, confirmInform, setDispatchSpec, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 import CaseDetail from "@/components/CaseDetail";
@@ -628,7 +628,7 @@ export default {
 				let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 				if(this.listQuery.filterType != 2) this.searchRange = startDate + " - " + endDate;
 
-				getApply({
+				getApplyInform({
 					groupId: this.listQuery.groupId,
 					caseNo: (this.listQuery.filterType == 1 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
 					caseSN: (this.listQuery.filterType == 2 && this.listQuery.filterStr) ? this.listQuery.filterStr : null,
@@ -897,7 +897,7 @@ export default {
 		},
 		createApply() {
 			this.$confirm(`確認建立派工單？`, "確認", { showClose: false }).then(() => {
-				confirmApply({
+				confirmInform({
 					deviceType: this.listQuery.deviceType,
 					groupId: this.listQuery.groupId,
 					caseSN: this.listQuery.caseSN || '',
@@ -905,7 +905,7 @@ export default {
 				}).then(response => {
 					if ( response.statusCode == 20000 ) {
 						const caseSN = response.data.caseSN;
-						// getApply({
+						// getApplyInform({
 						// 	caseSN: caseSN,
 						// 	pageCurrent: 1,
 						// 	pageSize: 999999
