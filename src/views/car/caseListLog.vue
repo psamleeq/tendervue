@@ -51,6 +51,26 @@
 				<el-button @click="closeCsvDialog()">取消</el-button>
 			</span>
     </el-dialog>
+			
+		<!-- csv匯入成功與失敗顯示 -->
+		<el-dialog
+			title="匯入結果"
+			:visible.sync="csvResultVisible"
+			width="500px">
+			<h3 align="center">匯入成功</h3>
+			<el-table :data="successMapIndex" style="width: 100%;" align="center" :row-class-name="successColor">
+				<el-table-column label="案件編號" :formatter="successFormatter" align="center"/>
+			</el-table>
+
+			<h3 align="center">匯入失敗(重複)</h3>
+			<el-table :data="failMapIndex" style="width: 100%;" align="center" :row-class-name="failColor">
+				<el-table-column label="案件編號" :formatter="failFormatter" align="center" />
+			</el-table>
+
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="csvResultVisible = false">確定</el-button>
+			</span>
+		</el-dialog>
 	</div>
 </template>
 
@@ -72,9 +92,12 @@ export default {
 		loading: false,
 		dialogMapVisible: true,
 		csvVisible: false,
+		csvResultVisible: false,
 		file: null,
 		timeTabId: 1,
 		total: 0,
+		successMap: [],
+		failMap: [],
 		dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
 			filterType: 1,
@@ -175,13 +198,32 @@ export default {
 		}
 	};
 	},
-	computed: {},
+	computed: {
+		successMapIndex() {
+			return this.successMap.map((item, index) => ({ index, value: item }));
+		},
+		failMapIndex() {
+			return this.failMap.map((item, index) => ({ index, value: item }));
+		}
+	},
 	watch: {},
 	created() {},
 	mounted() {},
 	methods: {
 		formatTime(time) {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
+		},
+		successFormatter(row) {
+			return row.value;
+		},
+		failFormatter(row) {
+			return row.value;
+		},
+		successColor() {
+			return 'success-row';
+		},
+		failColor() {
+			return 'warning-row';
 		},
 		getList() {
 			this.list = [];
@@ -233,12 +275,11 @@ export default {
 			}
 		},
 		openCsvDialog() {
-			this.file = null;
 			this.csvVisible = true;
 		},
 		closeCsvDialog() {
 			this.csvVisible = false;
-			this.$ref.upload.clearFiles();
+			this.$refs.upload.clearFiles();
 		},
     handleChange(file) {
 			this.file = file.raw;
@@ -268,8 +309,8 @@ export default {
 						const temporaryFix = res.map((key) => key.臨時修復);
 						const sourceReport = res.map((key) => key.查報來源);
 						const caseCondition = res.map((key) => key.案件狀態);
-						const twd97_x = res.map((key) => key.X座標TWD97);
-						const twd97_y = res.map((key) => key.Y座標TWD97);
+						const twd97_x = res.map((key) => key["X座標(TWD97)"]);
+						const twd97_y = res.map((key) => key["Y座標(TWD97)"]);
 
 						const formatDateReport = []; // 查報日期
 						const formatEstimatedDate = []; // 預計完工日期
@@ -302,6 +343,10 @@ export default {
 						}
 						
 						const temporaryFixArr = [];
+
+						// 初始化匯入成功與失敗資料
+						this.successMap = [];
+						this.failMap = [];
 						for (let i = 0; i < caseNo.length; i++) {
 							
 							if (temporaryFix[i] == '是') temporaryFixArr.push(1);
@@ -326,14 +371,23 @@ export default {
 								WGS84_x: positionArr[i].lat,
 								WGS84_y: positionArr[i].lng
 							}).then(response => {
-								this.$message({
-									showClose: true,
-									message: '成功匯入',
-									type: 'success'
-								});
+
+								// 匯入失敗的案件編號(重複)
+								if (response.data.list && response.data.list[0] != undefined) {
+									this.failMap.push(response.data.list[0].CaseNo);
+									// console.log('fail', this.failMap);
+								}
+								
+								// 匯入成功的案件編號
+								if (response.data.importSuccess && response.data.importSuccess[0] != undefined) {
+									this.successMap.push(response.data.importSuccess[0]);
+									// console.log('success', this.successMap);
+								}
+								this.csvResultVisible = true;
 							}).catch(err => console.log(err));
 						}
 						this.csvVisible = false;
+						this.$refs.upload.clearFiles();
 					}
 				});
 			};
@@ -345,6 +399,11 @@ export default {
 
 <style lang="sass">
 .inspection-progress
+	.el-table
+		.success-row
+			background: #f0f9eb
+		.warning-row
+			background: oldlace
 	.dialog-footer
 		display: flex
 		justify-content: center
