@@ -1,6 +1,6 @@
 <template>
 	<div class="app-container inspection-progress" v-loading="loading">
-		<h2>巡視歷程</h2>
+		<h2>1999</h2>
 		<!-- 搜尋 -->
 		<div class="filter-container">
 			<el-select v-model="listQuery.ContractId" placeholder="請選擇" style="width: 110px;">
