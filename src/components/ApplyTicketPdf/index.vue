@@ -111,7 +111,7 @@ export default {
 				this.imgDOMObj[l.SerialNo] = image;
 			});
 		},
-		async createPdf(CaseSN = "          ") {
+		async createPdf(CaseSN = "          ", ticketName = "通報", groupName = "111年度中山區道路巡查維護修繕成效式契約") {
 			return new Promise((resolve, reject) => {
 				for(const [ pageIndex, caseSpec ] of this.tableSelect.entries()) {
 					this.pdfDoc.addPage(this.pdfSetting.format,this.pdfSetting.orientation)
@@ -122,7 +122,7 @@ export default {
 					this.pdfDoc.setFontSize(this.pdfSetting.fontSize+4);
 					this.pdfDoc.setTextColor('#000000');
 					this.pdfDoc.setCharSpace(2);
-					this.pdfDoc.text(`修復通報單`, width / 2, 20, { align: 'center' });
+					this.pdfDoc.text(`修復${ticketName}單`, width / 2, 20, { align: 'center' });
 
 					//內容
 					this.pdfDoc.setFontSize(this.pdfSetting.fontSize);
@@ -132,12 +132,12 @@ export default {
 					this.pdfDoc.text(`道管系統案號:`, width - 100, height-267, { align: 'left' });
 					this.pdfDoc.text(`${caseSpec.CaseNo}`, width - 65, height-267, { align: 'left' });
 					this.pdfDoc.text(`工程名稱:`, width - 195, height-257, { align: 'left' });
-					this.pdfDoc.text(`111年度中山區道路巡查維護修繕成效式契約`, width - 170, height-259, { align: 'left', maxWidth: 60 });
+					this.pdfDoc.text(groupName, width - 170, height-259, { align: 'left', maxWidth: 60 });
 					this.pdfDoc.text(`座　　　　標:`, width - 100, height-257, { align: 'left' });
 					this.pdfDoc.text(`${caseSpec.CoordinateX}`, width - 65, height-259.5, { align: 'left', maxWidth: 60 });
 					this.pdfDoc.text(`${caseSpec.CoordinateY}`, width - 65, height-254.5, { align: 'left', maxWidth: 60 });
 					this.pdfDoc.text(`修復地點:`, width - 195, height-246, { align: 'left' });
-					this.pdfDoc.text(`${caseSpec.Place}C`, width - 170, height-246, { align: 'left', maxWidth: 60 });
+					this.pdfDoc.text(`${caseSpec.Place}`, width - 170, height-246, { align: 'left', maxWidth: 60 });
 					this.pdfDoc.text(`修 復　項 目:`, width - 100, height-246, { align: 'left' });
 					this.pdfDoc.text(`${caseSpec.DName}`, width - 65, height-246, { align: 'left' });
 					this.pdfDoc.text(`通報日期:`, width - 195, height-232, { align: 'left' });

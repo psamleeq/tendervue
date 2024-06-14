@@ -20,7 +20,7 @@
 			</span> -->
 			<div class="filter-item">
 				<el-input v-model="listQuery.filterStr" placeholder="請輸入" style="width: 300px">
-					<span slot="prepend">判核單號</span>
+					<span slot="prepend">通報單號</span>
 				</el-input>
 			</div>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList();">搜尋</el-button>
@@ -68,14 +68,14 @@
 					</span>
 				</template>
 			</el-table-column>
-			<!-- <el-table-column label="判核" align="center" min-width="40">
+			<!-- <el-table-column label="通報" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 2">
 						<i class="el-icon-check" style="color: #67C23A" />
 						<div v-if="row.Bit2_At">({{ row.Bit2_At }})</div>
 					</span>
 					<el-button class="btn-action" :type="row.InformState & 2 ? 'info' : 'primary'" @click="applyReview(row)">
-						{{ row.InformState & 2 ? '檢視' : '判核' }}
+						{{ row.InformState & 2 ? '檢視' : '通報' }}
 					</el-button>
 					<el-button
 						v-if="!(row.InformState & 2) && Object.values(row.CaseNoObj).every(obj => (obj.FlowState & 2 || obj.FlowState & 32) && (obj.FlowState & 4 || obj.FlowState & 64))"
@@ -133,7 +133,7 @@
 			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<el-button class="btn-action" type="info" plain @click="applyTicketDetail(row)">檢視</el-button>
-					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">列印判核單</el-button>
+					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">列印通報單</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -311,6 +311,7 @@ export default {
 			this.loading = true;
 
 			getApplyInform({
+				groupId: row.GroupId,
 				caseSN: row.CaseSN,
 				pageCurrent: 1,
 				pageSize: 999999
@@ -325,8 +326,8 @@ export default {
 
 				this.tableSelect.splice(0, this.tableSelect.length, ...list);
 				this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
-				this.$refs.applyTicketPdf.createPdf(row.CaseSN).then(() => { 
-					this.$refs.applyTicketPdf.pdfDoc.save(`修復判核單_${row.CaseSN}.pdf`); 
+				this.$refs.applyTicketPdf.createPdf(row.CaseSN, "通報", this.options.tenderGroup[this.listQuery.groupId].groupName).then(() => { 
+					this.$refs.applyTicketPdf.pdfDoc.save(`修復通報單_${row.CaseSN}.pdf`); 
 					this.loading = false;
 				});
 			}).catch(err => this.loading = false);

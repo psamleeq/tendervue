@@ -95,8 +95,8 @@
 					</template>
 					<span v-else> - </span>
 				</template>
-			</el-table-column> -->
-			<!-- <el-table-column label="派工" align="center" min-width="40">
+			</el-table-column>
+			<el-table-column label="派工" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 8">
 						<i class="el-icon-check" style="color: #67C23A" />
@@ -128,14 +128,14 @@
 						@click="informConfirm(row, 32)">結案</el-button>
 					<span v-else> - </span>
 				</template>
-			</el-table-column>
+			</el-table-column> -->
 
 			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<el-button class="btn-action" type="info" plain @click="applyTicketDetail(row)">檢視</el-button>
 					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">列印判核單</el-button>
 				</template>
-			</el-table-column> -->
+			</el-table-column>
 		</el-table>
 
 		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading"
@@ -318,6 +318,7 @@ export default {
 			this.loading = true;
 
 			getApply({
+				groupId: row.GroupId,
 				caseSN: row.CaseSN,
 				pageCurrent: 1,
 				pageSize: 999999
@@ -332,7 +333,7 @@ export default {
 
 				this.tableSelect.splice(0, this.tableSelect.length, ...list);
 				this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
-				this.$refs.applyTicketPdf.createPdf(row.CaseSN).then(() => { 
+				this.$refs.applyTicketPdf.createPdf(row.CaseSN, "判核", this.options.tenderGroup[this.listQuery.groupId].groupName).then(() => { 
 					this.$refs.applyTicketPdf.pdfDoc.save(`修復判核單_${row.CaseSN}.pdf`); 
 					this.loading = false;
 				});

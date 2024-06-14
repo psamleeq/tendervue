@@ -896,7 +896,7 @@ export default {
 				}).catch(err => {});
 		},
 		createApply() {
-			this.$confirm(`確認建立派工單？`, "確認", { showClose: false }).then(() => {
+			this.$confirm(`確認建立判核單？`, "確認", { showClose: false }).then(() => {
 				confirmApply({
 					deviceType: this.listQuery.deviceType,
 					groupId: this.listQuery.groupId,
@@ -957,7 +957,7 @@ export default {
 			this.loading = true;
 			this.tableSelect.splice(0, this.tableSelect.length, ...this.list);
 			this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
-			this.$refs.applyTicketPdf.createPdf(this.listQuery.filterStr).then(() => { 
+			this.$refs.applyTicketPdf.createPdf(this.listQuery.filterStr, "判核", this.options.tenderGroup[this.listQuery.groupId].groupName).then(() => { 
 				this.$refs.applyTicketPdf.pdfDoc.save(`修復判核單_${this.listQuery.filterStr}.pdf`);
 				this.loading = false;
 			});
