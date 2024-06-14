@@ -170,35 +170,35 @@ export default {
 				firstDayOfWeek: 1,
 				shortcuts: [
 					{
-						text: "前4",
+						text: "前5",
 						onClick(picker) {
 							const date = moment().subtract(5, "d");
 							picker.$emit("pick", date);
 						}
 					},
 					{
-						text: "前3",
+						text: "前4",
 						onClick(picker) {
 							const date = moment().subtract(4, "d");
 							picker.$emit("pick", date);
 						}
 					},
 					{
-						text: "前2",
+						text: "前3",
 						onClick(picker) {
 							const date = moment().subtract(3, "d");
 							picker.$emit("pick", date);
 						}
 					},
 					{
-						text: "前1",
+						text: "前2",
 						onClick(picker) {
 							const date = moment().subtract(2, "d");
 							picker.$emit("pick", date);
 						}
 					},
 					{
-						text: "昨日",
+						text: "前1",
 						onClick(picker) {
 							const date = moment().subtract(1, "d");
 							picker.$emit("pick", date);
