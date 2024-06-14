@@ -195,10 +195,10 @@ export default {
 					name: "案件數量",
 					sortable: false
 				},
-				// Create_At: {
-				// 	name: "建單時間",
-				// 	sortable: false
-				// },
+				Create_At: {
+					name: "建單時間",
+					sortable: false
+				},
 			},
 			total: 0,
 			list: [],
