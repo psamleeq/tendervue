@@ -95,8 +95,8 @@
 					</template>
 					<span v-else> - </span>
 				</template>
-			</el-table-column> -->
-			<!-- <el-table-column label="派工" align="center" min-width="40">
+			</el-table-column>
+			<el-table-column label="派工" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 8">
 						<i class="el-icon-check" style="color: #67C23A" />
@@ -128,14 +128,14 @@
 						@click="informConfirm(row, 32)">結案</el-button>
 					<span v-else> - </span>
 				</template>
-			</el-table-column>
+			</el-table-column> -->
 
 			<el-table-column label="動作" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<el-button class="btn-action" type="info" plain @click="applyTicketDetail(row)">檢視</el-button>
 					<el-button class="btn-action" type="info" @click="reissueApplyTicket(row)">列印判核單</el-button>
 				</template>
-			</el-table-column> -->
+			</el-table-column>
 		</el-table>
 
 		<apply-ticket-pdf ref="applyTicketPdf" style="display: none" :loading.sync="loading"
@@ -224,7 +224,7 @@ export default {
 	},
 	created() { 
 		getTenderGroup().then(response => { this.options.tenderGroup = response.data.tenderGroup });
-		this.getList();
+		// this.getList();
 	},
 	mounted() {
 		this.showPDFDialog = false;
@@ -232,36 +232,43 @@ export default {
 	methods: {
 		checkPermission,
 		getList(showMsg = true) {
-			this.loading = true;
-			this.list = [];
+			if(!this.listQuery.groupId) {
+				this.$message({
+					message: "請選擇契約",
+					type: "error",
+				});
+			} else {
+				this.loading = true;
+				this.list = [];
 
-			getApplyTicketList({
-				groupId: this.listQuery.groupId || 0,
-				caseSN: this.listQuery.filterStr,
-				pageCurrent: this.listQuery.pageCurrent,
-				pageSize: this.listQuery.pageSize
-			}).then(response => {
-				if (response.data.list.length == 0) {
-					if (showMsg) this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-					this.total = 0;
-				} else {
-					this.list = response.data.list;
-					console.log(this.list);
-					this.list.forEach(l => {
-						l.Create_At = this.formatDate(l.Create_At);
-						l.Bit1_At = this.formatDate(l.Bit1_At);
-						l.Bit2_At = this.formatDate(l.Bit2_At);
-						l.Bit4_At = this.formatDate(l.Bit4_At);
-						l.Bit8_At = this.formatDate(l.Bit8_At);
-						l.Bit16_At = this.formatDate(l.Bit16_At);
-						l.Bit32_At = this.formatDate(l.Bit32_At);
-					})
-				}
-				this.loading = false;
-			}).catch(err => this.loading = false);
+				getApplyTicketList({
+					groupId: this.listQuery.groupId || 0,
+					caseSN: this.listQuery.filterStr,
+					pageCurrent: this.listQuery.pageCurrent,
+					pageSize: this.listQuery.pageSize
+				}).then(response => {
+					if (response.data.list.length == 0) {
+						if (showMsg) this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+						this.total = 0;
+					} else {
+						this.list = response.data.list;
+						console.log(this.list);
+						this.list.forEach(l => {
+							l.Create_At = this.formatDate(l.Create_At);
+							l.Bit1_At = this.formatDate(l.Bit1_At);
+							l.Bit2_At = this.formatDate(l.Bit2_At);
+							l.Bit4_At = this.formatDate(l.Bit4_At);
+							l.Bit8_At = this.formatDate(l.Bit8_At);
+							l.Bit16_At = this.formatDate(l.Bit16_At);
+							l.Bit32_At = this.formatDate(l.Bit32_At);
+						})
+					}
+					this.loading = false;
+				}).catch(err => this.loading = false);	
+			}
 		},
 		applyTicketDetail(row) {
 			this.$router.push({
@@ -311,6 +318,7 @@ export default {
 			this.loading = true;
 
 			getApply({
+				groupId: row.GroupId,
 				caseSN: row.CaseSN,
 				pageCurrent: 1,
 				pageSize: 999999
@@ -325,7 +333,7 @@ export default {
 
 				this.tableSelect.splice(0, this.tableSelect.length, ...list);
 				this.$refs.applyTicketPdf.imgPreload(this.tableSelect);
-				this.$refs.applyTicketPdf.createPdf(row.CaseSN).then(() => { 
+				this.$refs.applyTicketPdf.createPdf(row.CaseSN, "判核", this.options.tenderGroup[this.listQuery.groupId].groupName).then(() => { 
 					this.$refs.applyTicketPdf.pdfDoc.save(`修復判核單_${row.CaseSN}.pdf`); 
 					this.loading = false;
 				});

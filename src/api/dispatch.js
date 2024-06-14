@@ -115,7 +115,7 @@ export function getApplyReviewList(query) {
 }
 
 //---------------------------------------
-// 養護判核
+// 養護通報
 export function getApplyInform(query) {
 	return request({
 		url: '/dispatch/applyInform',
