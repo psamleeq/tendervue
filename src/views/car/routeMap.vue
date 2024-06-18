@@ -566,7 +566,10 @@ export default {
 			const DATE_OPTION = {
 				TODAY: 0,
 				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
+				DAYBEFOREYEST: 2,
+				DAYBEFOREYEST2: 3,
+				DAYBEFOREYEST3: 4,
+				DAYBEFOREYEST4: 5
 			};
 
 			switch (index) {
@@ -578,6 +581,15 @@ export default {
 					break;
 				case DATE_OPTION.DAYBEFOREYEST:
 					this.searchDate = moment().subtract(2, "d");
+					break;
+				case DATE_OPTION.DAYBEFOREYEST2:
+					this.searchDate = moment().subtract(3, "d");
+					break;
+				case DATE_OPTION.DAYBEFOREYEST3:
+					this.searchDate = moment().subtract(4, "d");
+					break;
+				case DATE_OPTION.DAYBEFOREYEST4:
+					this.searchDate = moment().subtract(5, "d");
 					break;
 			}
 			this.getList();
