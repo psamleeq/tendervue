@@ -248,7 +248,7 @@ export default {
 					}).catch(err => { this.loading = false });
 				}
 			} else {
-				// 只顯示一個分隊
+				// 只顯示其中一個分隊
 				getCaseListLog({ 
 					ContractId: this.listQuery.ContractId,
 					pageCurrent: this.listQuery.pageCurrent,

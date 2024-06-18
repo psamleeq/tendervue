@@ -52,6 +52,16 @@ const carRouter = {
 			}
 		},
 		{
+			path: 'pothole',
+			component: () => import('@/views/car/pothole'),
+			name: 'pothole',
+			meta: {
+				title: '坑洞缺失',
+				roles: ['car.route'],
+				vTag: 'alpha'
+			}
+		},
+		{
 			path: 'monitor',
 			component: () => import('@/views/car/monitor'),
 			name: 'carMonitor',

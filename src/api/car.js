@@ -52,7 +52,7 @@ export function delInspectionCase(data) {
 	})
 }
 
-// 巡視歷程
+// 1999
 export function getCaseListLog(query) {
 	return request({
 		url: '/car/caseLog',
@@ -61,11 +61,20 @@ export function getCaseListLog(query) {
 	})
 }
 
-// 巡視歷程 - 匯入csv
+// 1999 - 匯入csv
 export function importCaseListLog(data) {
 	return request({
 		url: '/car/caseLog',
 		method: 'post',
 		data
+	})
+}
+
+// 坑洞缺失
+export function getPothole(query) {
+	return request({
+		url: '/car/pothole',
+		method: 'get',
+		params: query
 	})
 }
