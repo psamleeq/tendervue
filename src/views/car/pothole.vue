@@ -7,37 +7,16 @@
         <el-option label="全部" :value="99" />
 				<el-option v-for="(text, id) in team" :key="`contractId${id}`" :label="text" :value="Number(id)" />
 			</el-select>
-
-			<!-- <span class="time-picker" style="margin-left: 10px;"> -->
-				<!-- <el-button-group v-if="!dateTimePickerVisible">
-					<el-button
-						v-for="(t, i) in pickerOptions.shortcuts"
-						:key="i"
-						type="primary"
-						:plain="i != timeTabId"
-						size="mini"
-						@click="dateShortcuts(i)"
-					>{{ t.text }}</el-button>
-				</el-button-group>
-				<el-date-picker
-					v-else
-					class="filter-item"
-					v-model="searchDate"
-					type="date"
-					placeholder="日期"
-					:picker-options="pickerOptions"
-					:clearable="false"
-					@change="timeTabId = -1"
-				/>
-				<el-button
-					:type="dateTimePickerVisible ? 'info' : 'primary'"
-					plain
-					size="mini"
-					@click="dateTimePickerVisible = !dateTimePickerVisible"
-				>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button> -->
-				<el-button size="small" class="filter-item" type="primary" icon="el-icon-search" @click="getList()" style="margin-left: 10px;">搜尋</el-button>
-			<!-- </span> -->
 			
+			<el-date-picker
+				style="margin-left: 10px;"
+				v-model="listQuery.dateRange"
+				type="daterange"
+				range-separator="至"
+				start-placeholder="開始日期"
+				end-placeholder="結束日期">
+			</el-date-picker>
+			<el-button size="small" class="filter-item" type="primary" icon="el-icon-search" @click="getList()" style="margin-left: 10px;">搜尋</el-button>
 		</div>
 
 		<!-- 資料列表 -->
@@ -80,66 +59,11 @@ export default {
 		total: 0,
 		successMap: [],
 		failMap: [],
-		dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
-		dateTimePickerVisible: false,
-		pickerOptions: {
-			firstDayOfWeek: 1,
-			shortcuts: [
-				{
-					text: "前5",
-					onClick(picker) {
-						const date = moment().subtract(5, "d");
-						picker.$emit("pick", date);
-					}
-				},
-				{
-					text: "前4",
-					onClick(picker) {
-						const date = moment().subtract(4, "d");
-						picker.$emit("pick", date);
-					}
-				},
-				{
-					text: "前3",
-					onClick(picker) {
-						const date = moment().subtract(3, "d");
-						picker.$emit("pick", date);
-					}
-				},
-				{
-					text: "前2",
-					onClick(picker) {
-						const date = moment().subtract(2, "d");
-						picker.$emit("pick", date);
-					}
-				},
-				{
-					text: "前1",
-					onClick(picker) {
-						const date = moment().subtract(1, "d");
-						picker.$emit("pick", date);
-					}
-				},
-				{
-					text: "今日",
-					onClick(picker) {
-						const date = moment();
-						picker.$emit("pick", date);
-					},
-				},
-			],
-			disabledDate(date) {
-				return moment(date).valueOf() >= moment().endOf("d").valueOf();
-			},
-		},
-		searchDate: moment().startOf("d"),
-		searchRange: "",
+		// dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
 			filterType: 1,
-			// zipCode: 0,
       contractId: 1,
-			timeStart: '',
-			timeEnd: '',
+			dateRange: [],
 			pageCurrent: 1,
 			pageSize: 50
 		},
@@ -218,53 +142,22 @@ export default {
 		formatTime(time) {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
 		},
-		dateShortcuts(index) {
-			this.timeTabId = index;
-
-			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2,
-				DAYBEFOREYEST2: 3,
-				DAYBEFOREYEST3: 4,
-				DAYBEFOREYEST4: 5
-			};
-
-			switch (index) {
-				case DATE_OPTION.TODAY:
-					this.searchDate = moment();
-					break;
-				case DATE_OPTION.YESTERDAY:
-					this.searchDate = moment().subtract(1, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST:
-					this.searchDate = moment().subtract(2, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST2:
-					this.searchDate = moment().subtract(3, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST3:
-					this.searchDate = moment().subtract(4, "d");
-					break;
-				case DATE_OPTION.DAYBEFOREYEST4:
-					this.searchDate = moment().subtract(5, "d");
-					break;
-			}
-			this.getList();
-		},
-		getList() {
+		async getList() {
 			this.list = [];
-			// const timeStart = moment(this.searchDate).format("YYYY-MM-DD");
-			// const timeEnd = moment(this.searchDate).add(1, 'd').format("YYYY-MM-DD");
+			
+			const [ timeStart, timeEnd ] = this.listQuery.dateRange;
+			const formattedTimeStart = this.formatTime(timeStart);
+			const formattedTimeEnd = this.formatTime(timeEnd);
+
 			if (this.listQuery.contractId == 99) {
 				// 顯示全部 有6個分隊(6個標)
 				for (let i = 1; i <= 6; i++) {
-					getPothole({
+					await getPothole({
 						contractId: i,
-						// timeStart: timeStart,
-						// timeEnd: timeEnd,
+						timeStart: formattedTimeStart,
+						timeEnd: formattedTimeEnd,
 						pageCurrent: this.listQuery.pageCurrent,
-						pageSize: this.listQuery.pageSize,
+						pageSize: Math.ceil(this.listQuery.pageSize / 6), // 因為loop打6次 所以pageSize需除6
 					}).then(response => {
 						this.total += response.data.total;
 						response.data.list.map(item => {
@@ -280,8 +173,8 @@ export default {
 				// 只顯示其中一個分隊
 				getPothole({
 					contractId: this.listQuery.contractId,
-					// timeStart: timeStart,
-					// timeEnd: timeEnd,
+					timeStart: formattedTimeStart,
+					timeEnd: formattedTimeEnd,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize,
 				}).then(response => {
