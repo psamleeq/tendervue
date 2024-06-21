@@ -179,7 +179,6 @@ export default {
 						item.MillingLength = Math.round(item.MillingLength * 100) / 100;
 						item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
 					});
-					console.log(this.listQuery.pageCurrent);
 					
 					this.loading = false;
 				}).catch(err => { this.loading = false });
@@ -202,7 +201,6 @@ export default {
 						item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
 					});
 
-					console.log(this.listQuery.pageCurrent);
 					this.loading = false;
 				}).catch(err => { this.loading = false });
 			}

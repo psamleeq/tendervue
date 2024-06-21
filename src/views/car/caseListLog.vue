@@ -237,7 +237,7 @@ export default {
 			return 'warning-row';
 		},
 		getList() {
-			this.list = [];
+			this.loading = true;
 
 			const [ timeStart, timeEnd ] = this.listQuery.dateRange;
 			const formattedTimeStart = this.formatTime(timeStart) || '';
@@ -260,6 +260,8 @@ export default {
 						item.ZipCode = this.area[item.ZipCode],
 						item.ContractId = this.team[item.ContractId]
 					});
+
+					this.loading = false;
 				}).catch(err => { this.loading = false });
 			} else {
 				// 只顯示其中一個分隊
@@ -286,6 +288,7 @@ export default {
 							item.ZipCode = this.area[item.ZipCode],
 							item.ContractId = this.team[item.ContractId]
 						});
+						this.loading = false;
 					}
 				}).catch(err => { this.loading = false; });
 			}
