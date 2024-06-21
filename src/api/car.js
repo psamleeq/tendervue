@@ -78,3 +78,11 @@ export function getPothole(query) {
 		params: query
 	})
 }
+
+export function getAllPothole(query) {
+	return request({
+		url: '/car/potholeAll',
+		method: 'get',
+		params: query
+	})
+}

@@ -30,6 +30,21 @@
 				:width="value.width"
 			>
 			</el-table-column>
+			<el-table-column
+				prop="imgZoomIn"
+				label="圖片"
+				align="center"
+			>
+				<template slot-scope="scope">
+					<div class="demo-image__preview">
+						<el-image
+							:src="scope.row.ImgZoomIn"
+							:preview-src-list="[scope.row.ImgZoomIn]"
+							fit="cover"></el-image>
+					</div>
+					
+				</template>
+			</el-table-column>
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
@@ -39,7 +54,7 @@
 
 <script>
 import moment from "moment";
-import { getPothole } from "@/api/car";
+import { getPothole, getAllPothole, getInspectionCase } from "@/api/car";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import commonMixin from '@/mixins/common';
@@ -57,6 +72,7 @@ export default {
 		file: null,
 		timeTabId: 1,
 		total: 0,
+		imgUrl: [],
 		successMap: [],
 		failMap: [],
 		// dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
@@ -123,7 +139,6 @@ export default {
         name: '地址',
         sortable: false,
       },
-      
 		},
 		dialogVisible: false,
 		InputNotes:'',
@@ -142,33 +157,34 @@ export default {
 		formatTime(time) {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
 		},
-		async getList() {
-			this.list = [];
-			
+		getList() {
+			this.loading = true;
 			const [ timeStart, timeEnd ] = this.listQuery.dateRange;
 			const formattedTimeStart = this.formatTime(timeStart);
 			const formattedTimeEnd = this.formatTime(timeEnd);
+			this.total = 0;
 
 			if (this.listQuery.contractId == 99) {
 				// 顯示全部 有6個分隊(6個標)
-				for (let i = 1; i <= 6; i++) {
-					await getPothole({
-						contractId: i,
-						timeStart: formattedTimeStart,
-						timeEnd: formattedTimeEnd,
-						pageCurrent: this.listQuery.pageCurrent,
-						pageSize: Math.ceil(this.listQuery.pageSize / 6), // 因為loop打6次 所以pageSize需除6
-					}).then(response => {
-						this.total += response.data.total;
-						response.data.list.map(item => {
-							item.DistressLevel = this.distressLevelMap[item.DistressLevel];
-							item.DateCreate = this.formatTime(item.DateCreate);
-							item.MillingLength = Math.round(item.MillingLength * 100) / 100;
-							item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
-							this.list.push(item);
-						});
-					}).catch(err => { this.loading = false });
-				}
+				getAllPothole({
+					timeStart: formattedTimeStart,
+					timeEnd: formattedTimeEnd,
+					pageCurrent: this.listQuery.pageCurrent,
+					pageSize: this.listQuery.pageSize
+				}).then(response => {
+					this.total = response.data.total;
+					this.list = response.data.list;
+					
+					response.data.list.map(item => {
+						item.DistressLevel = this.distressLevelMap[item.DistressLevel];
+						item.DateCreate = this.formatTime(item.DateCreate);
+						item.MillingLength = Math.round(item.MillingLength * 100) / 100;
+						item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
+					});
+					
+					this.loading = false;
+				}).catch(err => { this.loading = false });
+				
 			} else {
 				// 只顯示其中一個分隊
 				getPothole({
@@ -186,6 +202,7 @@ export default {
 						item.MillingLength = Math.round(item.MillingLength * 100) / 100;
 						item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
 					});
+					this.loading = false;
 				}).catch(err => { this.loading = false });
 			}
 		}
