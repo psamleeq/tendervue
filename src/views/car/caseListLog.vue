@@ -87,7 +87,7 @@
 
 <script>
 import moment from "moment";
-import { getCaseListLog, importCaseListLog } from "@/api/car";
+import { getCaseListLog, importCaseListLog, getAllCaseListLog } from "@/api/car";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import commonMixin from '@/mixins/common';
@@ -245,26 +245,22 @@ export default {
 
 			if (this.listQuery.ContractId == 99) {
 				// 顯示全部 有6個分隊(6個標)
-				for (let i = 1; i <= 6; i++) {
-					getCaseListLog({ 
-						ContractId: i,
-						timeStart: formattedTimeStart,
-						timeEnd: formattedTimeEnd,
-						pageCurrent: this.listQuery.pageCurrent,
-						pageSize: Math.ceil(this.listQuery.pageSize / 6), // 因為loop打6次 所以pageSize需除6
-					}).then(response => {
-						this.total += response.data.total;
-						response.data.list.map(item => {
-							item.DateReport = this.formatTime(item.DateReport),
-							item.EstimatedDate = this.formatTime(item.EstimatedDate),
-							item.TemporaryFix = 0 ? '是' : '否', // 邏輯是反的 需實驗
-							item.ZipCode = this.area[item.ZipCode],
-							item.ContractId = this.team[item.ContractId],
-							this.list.push(item);
-						});
-						
-					}).catch(err => { this.loading = false });
-				}
+				getAllCaseListLog({ 
+					timeStart: formattedTimeStart,
+					timeEnd: formattedTimeEnd,
+					pageCurrent: this.listQuery.pageCurrent,
+					pageSize: this.listQuery.pageSize,
+				}).then(response => {
+					this.total = response.data.total;
+					this.list = response.data.list;
+					response.data.list.map(item => {
+						item.DateReport = this.formatTime(item.DateReport),
+						item.EstimatedDate = this.formatTime(item.EstimatedDate),
+						item.TemporaryFix = 0 ? '是' : '否', // 邏輯是反的 需實驗
+						item.ZipCode = this.area[item.ZipCode],
+						item.ContractId = this.team[item.ContractId]
+					});
+				}).catch(err => { this.loading = false });
 			} else {
 				// 只顯示其中一個分隊
 				getCaseListLog({ 

@@ -61,6 +61,15 @@ export function getCaseListLog(query) {
 	})
 }
 
+// 1999 全部6個標
+export function getAllCaseListLog(query) {
+	return request({
+		url: '/car/caseLogAll',
+		method: 'get',
+		params: query
+	})
+}
+
 // 1999 - 匯入csv
 export function importCaseListLog(data) {
 	return request({
@@ -79,6 +88,7 @@ export function getPothole(query) {
 	})
 }
 
+// 坑洞缺失 全部6個標
 export function getAllPothole(query) {
 	return request({
 		url: '/car/potholeAll',
