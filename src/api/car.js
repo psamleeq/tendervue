@@ -52,6 +52,15 @@ export function delInspectionCase(data) {
 	})
 }
 
+// 巡視判核
+export function carCaseList(query) {
+	return request({
+		url: '/car/caseList',
+		method: 'get',
+		params: query
+	})
+}
+
 // 巡視歷程
 export function getCaseListLog(query) {
 	return request({
