@@ -7,9 +7,20 @@
         <el-option label="全部" :value="99" />
           <el-option v-for="(text, id) in team" :key="`ContractId${id}`" :label="text" :value="Number(id)" />
         </el-select>
+				<el-date-picker
+					style="margin-left: 10px;"
+					v-model="listQuery.dateRange"
+					type="daterange"
+					range-separator="至"
+					start-placeholder="開始日期"
+					end-placeholder="結束日期">
+				</el-date-picker>
+
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()" style="margin-left: 10px;">搜尋</el-button>
 			<el-button class="filter-item" type="success" @click="openCsvDialog()">匯入csv</el-button>
 		</div>
+
+		
 
 		<!-- 資料列表 -->
 		<el-table ref="multipleTable" empty-text="目前沒有資料" :data="list" border fit :header-cell-style="{ 'background-color': '#F2F6FC' }" style="width: 100%">
@@ -98,10 +109,10 @@ export default {
 		total: 0,
 		successMap: [],
 		failMap: [],
-		dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
+		// dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
 			filterType: 1,
-			ZipCode: 0,
+			dateRange: [],
       ContractId: 1,
 			pageCurrent: 1,
 			pageSize: 50
@@ -227,13 +238,20 @@ export default {
 		},
 		getList() {
 			this.list = [];
+
+			const [ timeStart, timeEnd ] = this.listQuery.dateRange;
+			const formattedTimeStart = this.formatTime(timeStart) || '';
+			const formattedTimeEnd = this.formatTime(timeEnd) || '';
+
 			if (this.listQuery.ContractId == 99) {
 				// 顯示全部 有6個分隊(6個標)
 				for (let i = 1; i <= 6; i++) {
 					getCaseListLog({ 
-						ContractId: i, 
+						ContractId: i,
+						timeStart: formattedTimeStart,
+						timeEnd: formattedTimeEnd,
 						pageCurrent: this.listQuery.pageCurrent,
-						pageSize: this.listQuery.pageSize 
+						pageSize: Math.ceil(this.listQuery.pageSize / 6), // 因為loop打6次 所以pageSize需除6
 					}).then(response => {
 						this.total += response.data.total;
 						response.data.list.map(item => {
@@ -251,6 +269,8 @@ export default {
 				// 只顯示其中一個分隊
 				getCaseListLog({ 
 					ContractId: this.listQuery.ContractId,
+					timeStart: formattedTimeStart,
+					timeEnd: formattedTimeEnd,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize  
 				}).then(response => {

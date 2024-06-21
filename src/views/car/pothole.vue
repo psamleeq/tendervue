@@ -42,7 +42,6 @@
 							:preview-src-list="[scope.row.ImgZoomIn]"
 							fit="cover"></el-image>
 					</div>
-					
 				</template>
 			</el-table-column>
 		</el-table>
@@ -162,7 +161,6 @@ export default {
 			const [ timeStart, timeEnd ] = this.listQuery.dateRange;
 			const formattedTimeStart = this.formatTime(timeStart);
 			const formattedTimeEnd = this.formatTime(timeEnd);
-			this.total = 0;
 
 			if (this.listQuery.contractId == 99) {
 				// 顯示全部 有6個分隊(6個標)
@@ -181,6 +179,7 @@ export default {
 						item.MillingLength = Math.round(item.MillingLength * 100) / 100;
 						item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
 					});
+					console.log(this.listQuery.pageCurrent);
 					
 					this.loading = false;
 				}).catch(err => { this.loading = false });
@@ -202,6 +201,8 @@ export default {
 						item.MillingLength = Math.round(item.MillingLength * 100) / 100;
 						item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
 					});
+
+					console.log(this.listQuery.pageCurrent);
 					this.loading = false;
 				}).catch(err => { this.loading = false });
 			}
