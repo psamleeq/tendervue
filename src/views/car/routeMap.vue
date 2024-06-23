@@ -50,20 +50,24 @@
 								@click="dateTimePickerVisible = !dateTimePickerVisible"
 							>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
 							<el-button style="margin-left: 20px;" size="small" class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-							<el-switch v-show="timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
+							<el-switch style="margin-left: 10px;" v-show="timeTabId == 5" v-model="autoRefresh" size="small" active-text="自動" />
 						</span>
 					</div>
 
 					<span>
-						<el-button
-							v-for="(name, id) in options.inspectRound"
-							:key="id"
-							@click="handleButton(id)"
-							type="success"
-							:value="Number(id)"
-							size="small"
-							plain>{{ name }}</el-button>
-						
+						<span style="margin-left: 18px;">週期</span>
+						<el-button-group style="margin-left: 45px;">
+							<el-button
+								style="margin-left: 0"
+								v-for="(name, id) in options.inspectRound"
+								:key="id"
+								@click="handleButton(id)"
+								type="success"
+								:value="Number(id)"
+								size="small"
+								plain>{{ name }}</el-button>
+						</el-button-group>
+
 						<!-- <el-select class="district-select" v-model="listQuery.inspectRound">
 							<el-option v-for="(name, id) in options.inspectRound" :key="id" :label="name" :value="Number(id)" />
 						</el-select> -->
@@ -92,7 +96,6 @@
 				</span>
 				
 				
-
 				<!-- NOTE: 選擇車號 -->
 				<!-- <el-select v-if="listQuery.contractId != 99" v-model="listQuery.carId" placeholder="請選擇" style="width: 160px;"  @change="getCarList()">
 					<el-option v-for="(text, id) in options.carId[listQuery.contractId]" :key="`car_${id}`" :label="text" :value="Number(id)" />
@@ -170,35 +173,35 @@ export default {
 				firstDayOfWeek: 1,
 				shortcuts: [
 					{
-						text: "前4",
+						text: "前5",
 						onClick(picker) {
 							const date = moment().subtract(5, "d");
 							picker.$emit("pick", date);
 						}
 					},
 					{
-						text: "前3",
+						text: "前4",
 						onClick(picker) {
 							const date = moment().subtract(4, "d");
 							picker.$emit("pick", date);
 						}
 					},
 					{
-						text: "前2",
+						text: "前3",
 						onClick(picker) {
 							const date = moment().subtract(3, "d");
 							picker.$emit("pick", date);
 						}
 					},
 					{
-						text: "前1",
+						text: "前2",
 						onClick(picker) {
 							const date = moment().subtract(2, "d");
 							picker.$emit("pick", date);
 						}
 					},
 					{
-						text: "昨日",
+						text: "前1",
 						onClick(picker) {
 							const date = moment().subtract(1, "d");
 							picker.$emit("pick", date);
@@ -563,7 +566,10 @@ export default {
 			const DATE_OPTION = {
 				TODAY: 0,
 				YESTERDAY: 1,
-				DAYBEFOREYEST: 2
+				DAYBEFOREYEST: 2,
+				DAYBEFOREYEST2: 3,
+				DAYBEFOREYEST3: 4,
+				DAYBEFOREYEST4: 5
 			};
 
 			switch (index) {
@@ -575,6 +581,15 @@ export default {
 					break;
 				case DATE_OPTION.DAYBEFOREYEST:
 					this.searchDate = moment().subtract(2, "d");
+					break;
+				case DATE_OPTION.DAYBEFOREYEST2:
+					this.searchDate = moment().subtract(3, "d");
+					break;
+				case DATE_OPTION.DAYBEFOREYEST3:
+					this.searchDate = moment().subtract(4, "d");
+					break;
+				case DATE_OPTION.DAYBEFOREYEST4:
+					this.searchDate = moment().subtract(5, "d");
 					break;
 			}
 			this.getList();

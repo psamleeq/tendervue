@@ -92,7 +92,7 @@
 						@click="dateTimePickerVisible = !dateTimePickerVisible"
 					>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
 					<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
-					<el-switch v-show="timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" inactive-text="手動" />
+					<el-switch style="margin-left: 10px;" v-show="timeTabId == 0 && listQuery.inspectionId" v-model="autoRefresh" size="small" active-text="自動" />
 				</span>
 			</div>
 		</div>

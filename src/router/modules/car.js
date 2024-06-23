@@ -46,7 +46,17 @@ const carRouter = {
 			component: () => import('@/views/car/caseListLog'),
 			name: 'caseListLog',
 			meta: {
-				title: '巡視歷程',
+				title: '1999',
+				roles: ['car.route'],
+				vTag: 'alpha'
+			}
+		},
+		{
+			path: 'pothole',
+			component: () => import('@/views/car/pothole'),
+			name: 'pothole',
+			meta: {
+				title: '坑洞缺失',
 				roles: ['car.route'],
 				vTag: 'alpha'
 			}

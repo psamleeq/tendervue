@@ -1,15 +1,26 @@
 <template>
 	<div class="app-container inspection-progress" v-loading="loading">
-		<h2>巡視歷程</h2>
+		<h2>1999</h2>
 		<!-- 搜尋 -->
 		<div class="filter-container">
 			<el-select v-model="listQuery.ContractId" placeholder="請選擇" style="width: 110px;">
         <el-option label="全部" :value="99" />
           <el-option v-for="(text, id) in team" :key="`ContractId${id}`" :label="text" :value="Number(id)" />
         </el-select>
+				<el-date-picker
+					style="margin-left: 10px;"
+					v-model="listQuery.dateRange"
+					type="daterange"
+					range-separator="至"
+					start-placeholder="開始日期"
+					end-placeholder="結束日期">
+				</el-date-picker>
+
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()" style="margin-left: 10px;">搜尋</el-button>
 			<el-button class="filter-item" type="success" @click="openCsvDialog()">匯入csv</el-button>
 		</div>
+
+		
 
 		<!-- 資料列表 -->
 		<el-table ref="multipleTable" empty-text="目前沒有資料" :data="list" border fit :header-cell-style="{ 'background-color': '#F2F6FC' }" style="width: 100%">
@@ -51,12 +62,32 @@
 				<el-button @click="closeCsvDialog()">取消</el-button>
 			</span>
     </el-dialog>
+			
+		<!-- csv匯入成功與失敗顯示 -->
+		<el-dialog
+			title="匯入結果"
+			:visible.sync="csvResultVisible"
+			width="500px">
+			<h3 align="center">匯入成功</h3>
+			<el-table :data="successMapIndex" style="width: 100%;" align="center" :row-class-name="successColor">
+				<el-table-column label="案件編號" :formatter="successFormatter" align="center"/>
+			</el-table>
+
+			<h3 align="center">匯入失敗(重複)</h3>
+			<el-table :data="failMapIndex" style="width: 100%;" align="center" :row-class-name="failColor">
+				<el-table-column label="案件編號" :formatter="failFormatter" align="center" />
+			</el-table>
+
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="csvResultVisible = false">確定</el-button>
+			</span>
+		</el-dialog>
 	</div>
 </template>
 
 <script>
 import moment from "moment";
-import { getCaseListLog, importCaseListLog } from "@/api/car";
+import { getCaseListLog, importCaseListLog, getAllCaseListLog } from "@/api/car";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import commonMixin from '@/mixins/common';
@@ -72,13 +103,16 @@ export default {
 		loading: false,
 		dialogMapVisible: true,
 		csvVisible: false,
+		csvResultVisible: false,
 		file: null,
 		timeTabId: 1,
 		total: 0,
-		dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
+		successMap: [],
+		failMap: [],
+		// dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
 			filterType: 1,
-			ZipCode: 0,
+			dateRange: [],
       ContractId: 1,
 			pageCurrent: 1,
 			pageSize: 50
@@ -175,7 +209,14 @@ export default {
 		}
 	};
 	},
-	computed: {},
+	computed: {
+		successMapIndex() {
+			return this.successMap.map((item, index) => ({ index, value: item }));
+		},
+		failMapIndex() {
+			return this.failMap.map((item, index) => ({ index, value: item }));
+		}
+	},
 	watch: {},
 	created() {},
 	mounted() {},
@@ -183,32 +224,51 @@ export default {
 		formatTime(time) {
 			return time ? moment(time).format("YYYY/MM/DD") : "";
 		},
+		successFormatter(row) {
+			return row.value;
+		},
+		failFormatter(row) {
+			return row.value;
+		},
+		successColor() {
+			return 'success-row';
+		},
+		failColor() {
+			return 'warning-row';
+		},
 		getList() {
-			this.list = [];
+			this.loading = true;
+
+			const [ timeStart, timeEnd ] = this.listQuery.dateRange;
+			const formattedTimeStart = this.formatTime(timeStart) || '';
+			const formattedTimeEnd = this.formatTime(timeEnd) || '';
+
 			if (this.listQuery.ContractId == 99) {
 				// 顯示全部 有6個分隊(6個標)
-				for (let i = 1; i <= 6; i++) {
-					getCaseListLog({ 
-						ContractId: i, 
-						pageCurrent: this.listQuery.pageCurrent,
-						pageSize: this.listQuery.pageSize 
-					}).then(response => {
-						this.total += response.data.total;
-						response.data.list.map(item => {
-							item.DateReport = this.formatTime(item.DateReport),
-							item.EstimatedDate = this.formatTime(item.EstimatedDate),
-							item.TemporaryFix = 0 ? '是' : '否', // 邏輯是反的 需實驗
-							item.ZipCode = this.area[item.ZipCode],
-							item.ContractId = this.team[item.ContractId],
-							this.list.push(item);
-						});
-						
-					}).catch(err => { this.loading = false });
-				}
+				getAllCaseListLog({ 
+					timeStart: formattedTimeStart,
+					timeEnd: formattedTimeEnd,
+					pageCurrent: this.listQuery.pageCurrent,
+					pageSize: this.listQuery.pageSize,
+				}).then(response => {
+					this.total = response.data.total;
+					this.list = response.data.list;
+					response.data.list.map(item => {
+						item.DateReport = this.formatTime(item.DateReport),
+						item.EstimatedDate = this.formatTime(item.EstimatedDate),
+						item.TemporaryFix = 0 ? '是' : '否', // 邏輯是反的 需實驗
+						item.ZipCode = this.area[item.ZipCode],
+						item.ContractId = this.team[item.ContractId]
+					});
+
+					this.loading = false;
+				}).catch(err => { this.loading = false });
 			} else {
-				// 只顯示一個分隊
+				// 只顯示其中一個分隊
 				getCaseListLog({ 
 					ContractId: this.listQuery.ContractId,
+					timeStart: formattedTimeStart,
+					timeEnd: formattedTimeEnd,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize  
 				}).then(response => {
@@ -228,17 +288,17 @@ export default {
 							item.ZipCode = this.area[item.ZipCode],
 							item.ContractId = this.team[item.ContractId]
 						});
+						this.loading = false;
 					}
 				}).catch(err => { this.loading = false; });
 			}
 		},
 		openCsvDialog() {
-			this.file = null;
 			this.csvVisible = true;
 		},
 		closeCsvDialog() {
 			this.csvVisible = false;
-			this.$ref.upload.clearFiles();
+			this.$refs.upload.clearFiles();
 		},
     handleChange(file) {
 			this.file = file.raw;
@@ -268,8 +328,8 @@ export default {
 						const temporaryFix = res.map((key) => key.臨時修復);
 						const sourceReport = res.map((key) => key.查報來源);
 						const caseCondition = res.map((key) => key.案件狀態);
-						const twd97_x = res.map((key) => key.X座標TWD97);
-						const twd97_y = res.map((key) => key.Y座標TWD97);
+						const twd97_x = res.map((key) => key["X座標(TWD97)"]);
+						const twd97_y = res.map((key) => key["Y座標(TWD97)"]);
 
 						const formatDateReport = []; // 查報日期
 						const formatEstimatedDate = []; // 預計完工日期
@@ -302,6 +362,10 @@ export default {
 						}
 						
 						const temporaryFixArr = [];
+
+						// 初始化匯入成功與失敗資料
+						this.successMap = [];
+						this.failMap = [];
 						for (let i = 0; i < caseNo.length; i++) {
 							
 							if (temporaryFix[i] == '是') temporaryFixArr.push(1);
@@ -326,14 +390,23 @@ export default {
 								WGS84_x: positionArr[i].lat,
 								WGS84_y: positionArr[i].lng
 							}).then(response => {
-								this.$message({
-									showClose: true,
-									message: '成功匯入',
-									type: 'success'
-								});
+
+								// 匯入失敗的案件編號(重複)
+								if (response.data.list && response.data.list[0] != undefined) {
+									this.failMap.push(response.data.list[0].CaseNo);
+									// console.log('fail', this.failMap);
+								}
+								
+								// 匯入成功的案件編號
+								if (response.data.importSuccess && response.data.importSuccess[0] != undefined) {
+									this.successMap.push(response.data.importSuccess[0]);
+									// console.log('success', this.successMap);
+								}
+								this.csvResultVisible = true;
 							}).catch(err => console.log(err));
 						}
 						this.csvVisible = false;
+						this.$refs.upload.clearFiles();
 					}
 				});
 			};
@@ -345,6 +418,11 @@ export default {
 
 <style lang="sass">
 .inspection-progress
+	.el-table
+		.success-row
+			background: #f0f9eb
+		.warning-row
+			background: oldlace
 	.dialog-footer
 		display: flex
 		justify-content: center
