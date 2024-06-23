@@ -82,7 +82,7 @@
 						class="btn-action" type="success" @click="informConfirm(row, 2)">完成</el-button>
 				</template>
 			</el-table-column> -->
-			<el-table-column label="會勘" align="center" min-width="40">
+			<el-table-column label="施工前會勘" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 4">
 						<i class="el-icon-check" style="color: #67C23A" />
@@ -96,7 +96,7 @@
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
-			<el-table-column label="派工" align="center" min-width="40">
+			<el-table-column label="施工階段" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 8">
 						<i class="el-icon-check" style="color: #67C23A" />
@@ -107,7 +107,7 @@
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
-			<el-table-column label="計價" align="center" min-width="40">
+			<el-table-column label="完工會勘" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 16">
 						<i class="el-icon-check" style="color: #67C23A" />
@@ -118,7 +118,7 @@
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
-			<el-table-column label="結案" align="center" min-width="40">
+			<el-table-column label="回報市府" align="center" min-width="40">
 				<template slot-scope="{ row }">
 					<span v-if="row.InformState & 32">
 						<i class="el-icon-check" style="color: #67C23A" />
