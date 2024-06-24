@@ -31,17 +31,24 @@
 			>
 			</el-table-column>
 			<el-table-column
-				prop="imgZoomIn"
+				prop="imgfile"
 				label="圖片"
 				align="center"
 			>
 				<template slot-scope="scope">
 					<div class="demo-image__preview">
 						<el-image
-							:src="scope.row.ImgZoomIn"
-							:preview-src-list="[scope.row.ImgZoomIn]"
-							fit="cover"></el-image>
+							:src="scope.row.imgfile"
+							:preview-src-list="[scope.row.imgfile]"
+							fit="cover">
+						<div slot="error" class="image-slot">
+							<a :href="scope.row.imgfile" target="_blank">
+								<i class="el-icon-picture-outline"></i>
+							</a>
+						</div>
+						</el-image>
 					</div>
+					
 				</template>
 			</el-table-column>
 		</el-table>
@@ -53,7 +60,7 @@
 
 <script>
 import moment from "moment";
-import { getPothole, getAllPothole, getInspectionCase } from "@/api/car";
+import { getPothole } from "@/api/car";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import commonMixin from '@/mixins/common';
@@ -114,27 +121,27 @@ export default {
 		list:[],
 		rowActive: {},
 		headers: {
-			SerialNo: {
+			serialno: {
         name: '缺失Id',
         sortable: false,
       },
-      DistressLevel: {
+      broketype: {
         name: '缺失程度',
         sortable: false,
       },
-      MillingLength: {
+      elength: {
         name: '預估長',
         sortable: false,
       },
-      MillingWidth: {
+      blength: {
         name: '預估寬',
         sortable: false,
       },
-			DateCreate: {
+			reportTime: {
 				name: '創建時間',
 				sortable: false,
 			},
-      Place: {
+      casename: {
         name: '地址',
         sortable: false,
       },
@@ -162,49 +169,35 @@ export default {
 			const formattedTimeStart = this.formatTime(timeStart);
 			const formattedTimeEnd = this.formatTime(timeEnd);
 
-			if (this.listQuery.contractId == 99) {
-				// 顯示全部 有6個分隊(6個標)
-				getAllPothole({
-					timeStart: formattedTimeStart,
-					timeEnd: formattedTimeEnd,
-					pageCurrent: this.listQuery.pageCurrent,
-					pageSize: this.listQuery.pageSize
-				}).then(response => {
-					this.total = response.data.total;
-					this.list = response.data.list;
-					
-					response.data.list.map(item => {
-						item.DistressLevel = this.distressLevelMap[item.DistressLevel];
-						item.DateCreate = this.formatTime(item.DateCreate);
-						item.MillingLength = Math.round(item.MillingLength * 100) / 100;
-						item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
-					});
-					
-					this.loading = false;
-				}).catch(err => { this.loading = false });
-				
-			} else {
-				// 只顯示其中一個分隊
-				getPothole({
-					contractId: this.listQuery.contractId,
-					timeStart: formattedTimeStart,
-					timeEnd: formattedTimeEnd,
-					pageCurrent: this.listQuery.pageCurrent,
-					pageSize: this.listQuery.pageSize,
-				}).then(response => {
-					this.total = response.data.total;
-					this.list = response.data.list;
-					this.list.map(item => {
-						item.DistressLevel = this.distressLevelMap[item.DistressLevel];
-						item.DateCreate = this.formatTime(item.DateCreate);
-						item.MillingLength = Math.round(item.MillingLength * 100) / 100;
-						item.MillingWidth = Math.round(item.MillingWidth * 100) / 100;
-					});
+			getPothole({
+				contractId: this.listQuery.contractId,
+				timeStart: formattedTimeStart,
+				timeEnd: formattedTimeEnd,
+				pageCurrent: this.listQuery.pageCurrent,
+				pageSize: this.listQuery.pageSize,
+			}).then(response => {
+				this.total = response.data.total;
+				this.list = response.data.list;
+				this.list.map(item => {
+					item.broketype = this.distressLevelMap[item.broketype];
+					item.reportTime = this.formatTime(item.reportTime);
 
-					this.loading = false;
-				}).catch(err => { this.loading = false });
-			}
-		}
+					const codeArr = item.caseType.match(/&#(\d+);/g) || [];
+					if(codeArr.length > 0) {
+						item.caseType = String.fromCharCode(...codeArr.map(l => Number(l.replace(/[&#;]/g, ''))));
+					}
+
+					const codeArr2 = item.imgfile.match(/&#(\d+);/g) || [];
+					for(const code of codeArr2) {
+						item.imgfile = item.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
+					}
+					item.imgfile = /^https:\/\//.test(item.imgfile) ? item.imgfile : `http://center.bim-group.com${item.imgfile}`;
+					console.log(item.imgfile);
+				});
+				this.loading = false;
+			}).catch(err => { this.loading = false });
+			
+		},
 	}
 };
 </script>
