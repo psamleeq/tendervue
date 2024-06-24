@@ -13,7 +13,7 @@
 				</div>
 			</div>
 			<time-picker class="filter-item" :shortcutType="'day'" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
-			<el-button type="primary" @click="getList()">搜尋</el-button>
+			<el-button size="small" type="primary" @click="getList()">搜尋</el-button>
 		</div>
 
 		<div class="el-input-group" style="margin-bottom: 10px; max-width: 1260px; min-width: 500px">
@@ -69,10 +69,10 @@
 			</el-table-column>
 			<el-table-column label="狀態" min-width="40" align="center">
 				<template slot-scope="{ row }">
-					<div v-if="row.PIState & 1 && row.FlowState == 0">待派工</div>
+					<div v-if="row.FlowState == 0">待派工</div>
 					<div v-else>{{ options.flowStateMap[row.FlowState] }}</div>
 					<span v-if="[1, 2].includes(row.FlowState)">({{ formatTime(row.FlowCreateAt) }})</span>
-					<span v-else-if="[3, 4].includes(row.FlowState) && row.FlowDesc">({{ row.FlowDesc }})</span>
+					<span v-else-if="[16].includes(row.FlowState) && row.FlowDesc">不須派工</span>
 				</template>
 			</el-table-column>
 			<el-table-column label="操作" align="center">
@@ -80,7 +80,7 @@
 					<span v-if="!(row.PIState & 1 || row.PIState & 16) && row.FlowState == 0">
 						<el-radio-group v-model="row.state" style="display: flex; flex-direction: column; align-items: flex-start;" @change="handleChange(row)" >
 							<el-radio :label="1">派工</el-radio>
-							<el-radio :label="3">不需派工
+							<el-radio :label="16">不需派工
 								<el-input v-model="row.reasonNoNeed" style="width: 200px" @change="handleChange(row)" />
 							</el-radio>
 							<!-- <el-radio :label="4">缺失改判
@@ -370,9 +370,7 @@ export default {
 				flowStateMap: {
 					0: '未審查',
 					1: '派工中',
-					2: '完工',
-					3: '不需施作',
-					4: '改判'
+					16: '不需施作'
 				}
 			}
 		};
@@ -594,90 +592,25 @@ export default {
 		setState(row) {
 			this.$confirm(`確定提交?`, "確認", { showClose: false }).then(() => {
 				this.scrollTop = document.documentElement.scrollTop;
-				if(row.state == 1) {
-					this.loading = true;
 
-					// TODO: V1 (之後拔掉)
-					setInsCaseList(row.SerialNo, {
-						PCIValue: row.PCIValue,
-						PIState: row.PIState += row.state,
-						PIStateNotes: row.PIStateNotes
-					}).then(response => {
-						// if (response.statusCode == 20000) {
-						// 	this.$message({
-						// 		message: "提交成功",
-						// 		type: "success",
-						// 	});
-						// 	this.getList();
-						// }
-					}).catch(err => {
-						console.log(err);
-						// this.getList();
-					})
-
-					// V2
-					setCaseTrackingFlow(row.SerialNo, {
-						flowState: row.state,
-						// flowDesc: ''
-					}).then(response => {
-						if (response.statusCode == 20000) {
-							this.$message({
-								message: "提交成功",
-								type: "success",
-							});
-							this.getList();
-						}
-					}).catch(err => {
-						console.log(err);
-						this.getList();
-					})
-
-					// 巡視判核 (派工, 不須派工)
-					setCarCaseList(row.SerialNo, {
-						flowState: row.state,
-						flowDesc: ''
-					}).then(response => {
-						if (response.statusCode == 20000) {
-							this.$message({
-								message: "提交成功",
-								type: "success",
-							});
-							this.getList();
-						}
-					}).catch(err => {
-						console.log(err);
-						this.getList();
-					})
-
-				} else {
-					if (
-						(row.state == 3 && (!row.reasonNoNeed || row.reasonNoNeed.length == 0))
-						||
-						(row.state == 4 && (!row.reasonChange || row.reasonChange.length == 0))
-					) {
+				this.loading = true;
+				// 巡視判核(主任審核)
+				setCarCaseList(row.SerialNo, {
+					flowState: row.state,
+					flowDesc: JSON.stringify({ "Director" : row.reasonNoNeed })
+				}).then(response => {
+					if (response.statusCode == 20000) {
 						this.$message({
-							message: "請輸入原因",
-							type: "error",
+							message: '提交成功',
+							type: 'success',
 						});
-					} else {
-						this.loading = true;
-						setInspectFlowList(row.SerialNo, {
-							flowState: row.state,
-							flowDesc: (row.state == 3) ? row.reasonNoNeed : row.reasonChange
-						}).then(response => {
-							if (response.statusCode == 20000) {
-								this.$message({
-									message: "提交成功",
-									type: "success",
-								});
-								this.getList();
-							}
-						}).catch(err => {
-							console.log(err);
-							this.getList();
-						})
+						this.getList();
 					}
-				}
+				}).catch(err => {
+					console.log(err);
+					this.getList();
+				})
+				
 			}).catch(err => console.log(err));
 		},
 		setPIState(row, result) {

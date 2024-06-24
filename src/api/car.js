@@ -53,6 +53,24 @@ export function delInspectionCase(data) {
 }
 
 // 1999
+export function carCaseList(query) {
+	return request({
+		url: '/car/caseList',
+		method: 'get',
+		params: query
+	})
+}
+
+// 巡視判核(主任審核)
+export function setCarCaseList(id, data) {
+	return request({
+		url: `/car/caseList/flow/${id}`,
+		method: 'put',
+		data
+	})
+}
+
+// 巡視歷程
 export function getCaseListLog(query) {
 	return request({
 		url: '/car/caseLog',
