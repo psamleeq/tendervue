@@ -208,6 +208,7 @@
 						<el-button v-if="deviceTypeNow != 4 && row.State == 1 && row.FlowState == 1" type="primary" size="mini"
 							@click="row.edit = true">編輯</el-button>
 						<el-button type="info" size="mini" @click="showDetail(row)">檢視</el-button>
+						<el-button type="danger" size="mini" @click="deleteInformTicket(row)">刪除</el-button>
 					</el-button-group>
 					<el-button-group v-else>
 						<el-button type="primary" size="mini" @click="applySpec(row, false)">確定</el-button>
@@ -366,7 +367,7 @@
 <script>
 import moment from "moment";
 import { getTenderGroup, getKitItemMap, getSCTypeItemMap } from "@/api/type";
-import { getApplyInform, confirmInform, setDispatchSpec, getTaskGroup, getTaskGroupDetail, getTaskReal } from "@/api/dispatch";
+import { getApplyInform, confirmInform, setDispatchSpec, getTaskGroup, getTaskGroupDetail, getTaskReal, delInformTicketList } from "@/api/dispatch";
 import TimePicker from "@/components/TimePicker";
 import Pagination from "@/components/Pagination";
 import CaseDetail from "@/components/CaseDetail";
@@ -965,6 +966,34 @@ export default {
 		showDetail(row) {
 			this.loading = true;
 			this.$refs.caseDetail.getDetail(row);
+		},
+		deleteInformTicket(row) {
+			this.$confirm(`確認刪除案件編號「${row.CaseNo}」?`, "確認", {
+				showClose: false,
+			}).then(() => {
+				this.loading = true;
+				
+				// 階段到施工前會勘可刪除(更改狀態)
+				delInformTicketList({
+					id: row.InformId,
+					informState: row.InformState
+				}).then(response => {
+					console.log('success id', row.InformId);
+					console.log('InformState', row.InformState);
+					if (response.statusCode == 20000) {
+						this.$message({
+							message: "提交成功",
+							type: "success",
+						});
+						this.getList();
+					}
+				}).catch(err => {
+					console.log(err);
+					console.log('fail id', row.InformId);
+					console.log('InformState', row.InformState);
+					this.getList();
+				})
+			}).catch(err => console.log(err));
 		},
 		formatter(row, column) {
 			if (column.property.indexOf("id") == -1 && column.property.indexOf("Id") == -1 && Number(row[column.property])) return row[column.property].toLocaleString();

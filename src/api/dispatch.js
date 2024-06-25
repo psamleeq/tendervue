@@ -140,6 +140,15 @@ export function setinformTicketList(id, data) {
 	})
 }
 
+// 通報單管理 施工前會勘刪除(修改)
+export function delInformTicketList(id, data) {
+	return request({
+		url: `/dispatch/informTicketState/${id}`,
+		method: 'put',
+		data
+	})
+}
+
 export function confirmInform(data) {
 	return request({
 		url: '/dispatch/applyInform',

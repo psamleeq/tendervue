@@ -37,7 +37,7 @@
 						<span>{{ options.deviceType[row.InformType] }}</span>
 					</span>
 					<span v-else-if="[ 'CaseNoArr' ].includes(column.property)">
-						<span v-if="Object.keys(row.CaseNoObj).length != 0">
+						<span v-if="Object.keys(row.CaseNoObj || {}).length != 0">
 							<span>{{ Object.keys(row.CaseNoObj).length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
 								<span slot="content">
