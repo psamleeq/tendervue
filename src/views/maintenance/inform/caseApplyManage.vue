@@ -37,7 +37,7 @@
 						<span>{{ options.deviceType[row.InformType] }}</span>
 					</span>
 					<span v-else-if="[ 'CaseNoArr' ].includes(column.property)">
-						<span v-if="Object.keys(row.CaseNoObj).length != 0">
+						<span v-if="Object.keys(row.CaseNoObj || {}).length != 0">
 							<span>{{ Object.keys(row.CaseNoObj).length }}</span>
 							<el-tooltip effect="dark" placement="bottom">
 								<span slot="content">
@@ -255,7 +255,6 @@ export default {
 						this.total = 0;
 					} else {
 						this.list = response.data.list;
-						console.log(this.list);
 						this.list.forEach(l => {
 							l.Create_At = this.formatDate(l.Create_At);
 							l.Bit1_At = this.formatDate(l.Bit1_At);
