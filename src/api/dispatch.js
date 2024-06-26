@@ -115,7 +115,7 @@ export function getApplyReviewList(query) {
 }
 
 //---------------------------------------
-// 養護通報
+// 養護通報 通報單管理
 export function getApplyInform(query) {
 	return request({
 		url: '/dispatch/applyInform',
@@ -127,6 +127,15 @@ export function getApplyInform(query) {
 export function getInformTicketList(query) {
 	return request({
 		url: '/dispatch/informTicketList',
+		method: 'get',
+		params: query
+	})
+}
+
+// 施工階段 路段表PDF
+export function getInformRoadPDF(query) {
+	return request({
+		url: '/dispatch/informRoadPDF',
 		method: 'get',
 		params: query
 	})
