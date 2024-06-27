@@ -167,7 +167,7 @@ export default {
 			infoWindow: null,
 			caseInfo: [],
 			activeVodName: "",
-			timeTabId: 0,
+			timeTabId: 5,
 			dateTimePickerVisible: false,
 			pickerOptions: {
 				firstDayOfWeek: 1,
@@ -564,12 +564,12 @@ export default {
 			this.timeTabId = index;
 
 			const DATE_OPTION = {
-				TODAY: 0,
-				YESTERDAY: 1,
-				DAYBEFOREYEST: 2,
-				DAYBEFOREYEST2: 3,
-				DAYBEFOREYEST3: 4,
-				DAYBEFOREYEST4: 5
+				TODAY: 5,
+				YESTERDAY: 4,
+				DAYBEFOREYEST: 3,
+				DAYBEFOREYEST2: 2,
+				DAYBEFOREYEST3: 1,
+				DAYBEFOREYEST4: 0
 			};
 
 			switch (index) {
