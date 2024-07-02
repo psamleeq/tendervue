@@ -1,12 +1,12 @@
 <template>
 	<div class="app-container inspection-progress" v-loading="loading">
-		<h2>1999</h2>
+		<h2>1999匯入</h2>
 		<!-- 搜尋 -->
 		<div class="filter-container">
 			<el-select v-model="listQuery.ContractId" placeholder="請選擇" style="width: 110px;">
-        <el-option label="全部" :value="99" />
-          <el-option v-for="(text, id) in team" :key="`ContractId${id}`" :label="text" :value="Number(id)" />
-        </el-select>
+				<el-option label="全部" :value="99" />
+					<el-option v-for="(text, id) in team" :key="`ContractId${id}`" :label="text" :value="Number(id)" />
+				</el-select>
 				<el-date-picker
 					style="margin-left: 10px;"
 					v-model="listQuery.dateRange"
@@ -19,9 +19,7 @@
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()" style="margin-left: 10px;">搜尋</el-button>
 			<el-button class="filter-item" type="success" @click="openCsvDialog()">匯入csv</el-button>
 		</div>
-
 		
-
 		<!-- 資料列表 -->
 		<el-table ref="multipleTable" empty-text="目前沒有資料" :data="list" border fit :header-cell-style="{ 'background-color': '#F2F6FC' }" style="width: 100%">
 			<el-table-column 
@@ -37,7 +35,7 @@
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
-    <el-dialog
+		<el-dialog
 			:visible.sync="csvVisible"
 			width="600px">
 			<el-form ref="file" label-width="120px">
@@ -61,7 +59,7 @@
 				<el-button type="primary" @click="importCsv">匯入</el-button>
 				<el-button @click="closeCsvDialog()">取消</el-button>
 			</span>
-    </el-dialog>
+		</el-dialog>
 			
 		<!-- csv匯入成功與失敗顯示 -->
 		<el-dialog
@@ -90,12 +88,10 @@ import moment from "moment";
 import { getCaseListLog, importCaseListLog, getAllCaseListLog } from "@/api/car";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
-import commonMixin from '@/mixins/common';
 import { parse } from 'csv-parse';
 import { Trans97 } from 'trans97';
 
 export default {
-	mixins: [commonMixin],
 	name: "caseListLog",
 	components: { TimePicker, Pagination },
 	data() {
@@ -109,11 +105,10 @@ export default {
 		total: 0,
 		successMap: [],
 		failMap: [],
-		// dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
 			filterType: 1,
-			dateRange: [],
-      ContractId: 1,
+			dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
+			ContractId: 1,
 			pageCurrent: 1,
 			pageSize: 50
 		},
@@ -133,71 +128,71 @@ export default {
 			116: '文山區',
 			999: '橋涵區'
 		},
-    team: {
-      1: '第一分隊',
-      2: '第二分隊',
-      3: '第三分隊',
-      4: '第四分隊',
-      5: '第五分隊',
-      6: '第六分隊'
-    },
+		team: {
+			1: '第一分隊',
+			2: '第二分隊',
+			3: '第三分隊',
+			4: '第四分隊',
+			5: '第五分隊',
+			6: '第六分隊'
+		},
 		list:[],
 		rowActive: {},
 		headers: {
 			CaseNo: {
-        name: '案件編號',
-        sortable: false,
+				name: '案件編號',
+				sortable: false,
 				width: 120
-      },
-      DateReport: {
-        name: '查報日期',
-        sortable: false,
+			},
+			DateReport: {
+				name: '查報日期',
+				sortable: false,
 				width: 100
-      },
-      ContractId: {
-        name: '標案ID',
-        sortable: false,
+			},
+			ContractId: {
+				name: '分隊',
+				sortable: false,
 				width: 100
-      },
-      ZipCode: {
-        name: '區號',
-        sortable: false,
+			},
+			ZipCode: {
+				name: '區域',
+				sortable: false,
 				width: 90
-      },
-      ReportUser: {
-        name: '登錄人員',
-        sortable: false,
+			},
+			ReportUser: {
+				name: '登錄人員',
+				sortable: false,
 				width: 120
-      },
-      ReceiveUser: {
-        name: '收件人員',
-        sortable: false,
+			},
+			ReceiveUser: {
+				name: '收件人員',
+				sortable: false,
 				width: 130
-      },
-      LocationReport: {
-        name: '查報地點',
-        sortable: false
-      },
-      DamageDesc: {
-        name: '損壞情形',
-        sortable: false,
+			},
+			LocationReport: {
+				name: '查報地點',
+				sortable: false
+			},
+			DamageDesc: {
+				name: '損壞情形',
+				sortable: false,
 				width: 140
-      },
-      DamageCondition: {
-        name: '損壞狀況',
-        sortable: false,
+			},
+			DamageCondition: {
+				name: '損壞狀況',
+				sortable: false,
 				width: 100
-      },
-      TemporaryFix: {
-        name: '臨時修補',
-        sortable: false,
+			},
+			TemporaryFix: {
+				name: '臨時修補',
+				sortable: false,
 				width: 90
-      },
-      CaseCondition: {
-        name: '案件狀態',
-        sortable: false,
+			},
+			CaseCondition: {
+				name: '案件狀態',
+				sortable: false,
 				width: 90
-      },
+			},
 
 		},
 		dialogVisible: false,
@@ -300,7 +295,7 @@ export default {
 			this.csvVisible = false;
 			this.$refs.upload.clearFiles();
 		},
-    handleChange(file) {
+		handleChange(file) {
 			this.file = file.raw;
 		},
 		async importCsv() {

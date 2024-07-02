@@ -234,6 +234,7 @@ export default {
 				},
 				caseInfo: {
 					id: "缺失Id",
+					type: "報案來源",
 					caseName: "缺失類型",
 					caseLevel: "缺失程度",
 					millingLength: "預估長", 
@@ -776,7 +777,9 @@ export default {
 						for(const code of codeArr2) {
 							caseSpec.imgfile = caseSpec.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
 						}
-					caseSpec.imgUrl =  /^https:\/\//.test(caseSpec.imgfile) ? caseSpec.imgfile : `http://center.bim-group.com${caseSpec.imgfile}`;
+					caseSpec.imgUrl =  
+						caseSpec.type == '1999' ? `https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${caseSpec.CaseNo}`
+							: /^https:\/\//.test(caseSpec.imgfile) ? caseSpec.imgfile : `http://center.bim-group.com${caseSpec.imgfile}`;
 					return caseSpec
 				});
 
@@ -810,13 +813,14 @@ export default {
 					let feature = {
 						"type": "Feature",
 						"properties": {
-							"id": caseSpec.serialno,
+							"id": caseSpec.type == '1999' ? caseSpec.CaseNo : caseSpec.serialno,
+							"type": caseSpec.type ? caseSpec.type : '',
 							"roadName": caseSpec.casename == '0' ? '' : caseSpec.casename,
 							"caseName": caseSpec.caseType,
-							"caseLevel": caseSpec.broketype ? this.options.caseLevelMap[caseSpec.broketype] : '',
+							"caseLevel": caseSpec.broketype ? this.options.caseLevelMap[caseSpec.broketype] : caseSpec.type == '1999' ? caseSpec.DamageCondition : '',
 							"millingLength": caseSpec.elength || 0, 
 							"millingWidth": caseSpec.blength || 0,
-							"status": caseSpec.reccontrol == 2 ? '已分案' : '未分案',
+							"status": caseSpec.type == '1999' ? '' : caseSpec.reccontrol == 2 ? '已分案' : '未分案',
 							"imgUrl": caseSpec.imgUrl
 						},
 						"geometry": {

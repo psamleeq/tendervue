@@ -248,7 +248,7 @@
 			@pagination="getList" />
 
 		<!-- Dialog: 計價套組-->
-		<el-dialog v-loading="loading" width="900px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
+		<el-dialog v-loading="loading" width="1000px" title="設計數量" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
 			<div v-if="deviceSubType == 3" class="filter-container">
 				<el-select class="filter-item" v-model.number="listQuery.groupSN" filterable placeholder="請選擇"
 					popper-class="type-select" style="width: 500px">
@@ -260,7 +260,7 @@
 			<el-table v-loading="loading" :key="deviceSubType" empty-text="目前沒有資料" :data="detailPlus[deviceSubType]" border fit highlight-current-row
 				:header-cell-style="{ 'background-color': '#F2F6FC' }" stripe style="width: 100%">
 				<el-table-column v-for="(value, key) in detailHeaders[deviceSubType]" :key="key" :prop="key"
-					:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30"
+					:min-width="['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 25 : 30"
 					:label="value.name" align="center" :sortable="value.sortable">
 					<template slot-scope="{ row, column }">
 						<span v-if="deviceSubType == 3">
@@ -776,7 +776,7 @@ export default {
 				Object.assign(rowActive, { TaskName: "", TaskUnit: "", TaskPrice: "" });
 
 				getKitItemMap({
-					tenderId: String(this.rowActive.SurveyId),
+					groupId: String(this.listQuery.groupId),
 					UnitSN: rowActive.UnitSN
 				}).then((response) => {
 					if (response.data.item == undefined) {

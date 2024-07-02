@@ -56,7 +56,7 @@ const carRouter = {
 			component: () => import('@/views/car/caseListLog'),
 			name: 'caseListLog',
 			meta: {
-				title: '1999',
+				title: '1999匯入',
 				roles: ['car.route'],
 				vTag: 'alpha'
 			}
