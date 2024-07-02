@@ -536,7 +536,7 @@ export default {
 				Object.assign(rowActive, { TaskName: "", TaskUnit: "", TaskPrice: "" });
 
 				getKitItemMap({
-					tenderId: this.listQuery.tenderId,
+					groupId: String(this.listQuery.groupId),
 					UnitSN: rowActive.UnitSN
 				}).then((response) => {
 					if (response.data.item == undefined) {
