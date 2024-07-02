@@ -103,7 +103,7 @@
 					</span>
 					<span v-else-if="row.InformState & 4">
 						<el-button class="btn-action" type="success" @click="informConfirm(row, 8)">完成</el-button>
-						<el-button class="btn-action" type="warning" @click="ApplyId = row.id; showInformRoadPDFDialog = true;">路段表PDF</el-button>
+						<el-button class="btn-action" type="warning" @click="ApplyId = row.id; GroupId = row.GroupId; showInformRoadPDFDialog = true;">施工PDF</el-button>
 					</span>
 					
 					<span v-else> - </span>
@@ -115,8 +115,11 @@
 						<i class="el-icon-check" style="color: #67C23A" />
 						<div v-if="row.Bit16_At">({{ row.Bit16_At }})</div>
 					</span>
-					<el-button v-else-if="row.InformState & 8" class="btn-action" type="success"
-						@click="informConfirm(row, 16)">完成</el-button>
+					<span v-else-if="row.InformState & 8">
+						<el-button class="btn-action" type="success" @click="informConfirm(row, 16)">完成</el-button>
+						<el-button>完工PDF</el-button>
+					</span>
+					
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
@@ -150,7 +153,7 @@
 
 		<!-- 施工階段 路段表PDF -->
 		<el-dialog :visible.sync="showInformRoadPDFDialog" title="路段表" width="1200px">
-			<inform-road-pdf :ApplyId="ApplyId" />
+			<inform-road-pdf :ApplyId="ApplyId" :GroupId="GroupId"/>
 		</el-dialog>
 		
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
@@ -168,10 +171,9 @@ import ApplyTicketPdf from "@/components/ApplyTicketPdf";
 import meetingPdf from "@/views/maintenance/inform/pdf/meetingPDF.vue";
 import informRoadPdf from '@/views/maintenance/informReport/pdf/informRoadPDF.vue';
 
-
 export default {
 	name: "caseApplyManage",
-	components: { ApplyTicketPdf, Pagination, meetingPdf,  informRoadPdf },
+	components: { ApplyTicketPdf, Pagination, meetingPdf, informRoadPdf },
 	data() {
 		return {
 			loading: false,
@@ -214,6 +216,7 @@ export default {
 			// detail: [],
 			tableSelect: [],
 			ApplyId: 0,
+			GroupId: 0, // Dteam
 			options: {
 				tenderGroup: {},
 				deviceType: {
@@ -244,7 +247,7 @@ export default {
 		getList(showMsg = true) {
 			this.loading = true;
 			this.list = [];
-
+			
 			getInformTicketList({
 				groupId: this.listQuery.groupId || 0,
 				caseSN: this.listQuery.filterStr,
@@ -259,7 +262,7 @@ export default {
 					this.total = 0;
 				} else {
 					this.list = response.data.list;
-					// console.log(this.list);
+					console.log(this.list);
 					this.list.forEach(l => {
 						l.Create_At = this.formatDate(l.Create_At);
 						l.Bit1_At = this.formatDate(l.Bit1_At);
@@ -272,6 +275,7 @@ export default {
 				}
 				this.loading = false;
 			}).catch(err => this.loading = false);
+			
 		},
 		applyTicketDetail(row) {
 			this.$router.push({

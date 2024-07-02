@@ -18,10 +18,19 @@ export default {
     ApplyId: {
       type: Number,
       required: true
-    }
+    },
+    GroupId: {
+      type: Number,
+      required: true
+    },
 	},
 	data() {
 		return {
+      groupName: '', // 契約名稱
+      groupSN: '', // 契約編號
+      total: 0, // 共幾筆 p47
+
+      // p47 道路預約式契約維護修繕工程
 			pdfContent: '',
       caseNo: [], // 道管系統案號
       dateCreate: [], // 查報日期
@@ -29,6 +38,30 @@ export default {
       place: [], // 地點
       distressName: [], // 損壞類別
       millingArea: [], // 面積m2
+
+      // p45 臺北市政府工務局新建工程處養護工程隊開口合約施工通知 / 回報單
+      unitSN: [], // 項次
+      taskName: [], // 主要項目
+      taskUnit: [], // 單位
+      taskNumber: [], // 數量
+      taskPrice: [], // 設計預估金額
+
+      // p46 臺北市政府工務局新建工程處
+      detailUnitSN: [],
+      detailTaskName: [],
+      detailTaskUnit: [],
+      detailTaskNumber: [],
+      detailTaskPrice: [],
+
+      // p48 道路預約式契約維護修繕工程 設計修繕設施路段表
+      designUnitSN: [],
+      designTaskName: [],
+      designTaskUnit: [],
+      designTaskNumber: [],
+      designTaskPrice: [],
+      designDetail: [], // 施作數量
+      designDesc: [], // 施工方式
+      designWorker: [], // 施作人力
 		}
 	},
   watch: {
@@ -68,15 +101,20 @@ export default {
     },
     createPDF() {
       return new Promise((resolve, reject) => {
+        this.pdfDoc.addPage();
+        while(this.pdfDoc.internal.getNumberOfPages() > 1) this.pdfDoc.deletePage(1);
         
         const { width, height } = this.pdfDoc.internal.pageSize;
+
+        // p47 道路預約式契約維護修繕工程
         this.pdfDoc.setFontSize(12);
-        this.pdfDoc.text(`112年度道路預約式契約維護修繕工程第2標`, width/2, height-280, { align: 'center' });
-        this.pdfDoc.text(`聖東營造申請維修道路路段表(第   次)`, width/2, height-270, { align: 'center' });
+        this.pdfDoc.text(`${this.groupName}`, width/2, height-280, { align: 'center' });
+        this.pdfDoc.text(`聖東營造申請維修道路路段表(第  次)`, width/2, height-270, { align: 'center' });
 
         this.pdfDoc.setFontSize(10);
-        this.pdfDoc.text(`工程地點：${this.place[0]}`, width -196, height-260);
-        this.pdfDoc.text(`頁次1/1`, width -27, height-260);
+        this.pdfDoc.text(`工程地點：(聖東-設施) ${this.place[0]}`, width -196, height-260);
+        this.pdfDoc.text(`等${this.total}處(設施)`, width -196, height-255);
+        this.pdfDoc.text(`頁次1/1`, width -27, height-255);
 
         const table1 = [
           ['項次', '道管系統案號', '查報日期', '預定完工日期', '地點', '損壞類別', '面積m2'],
@@ -86,12 +124,11 @@ export default {
           table1.push([i + 1, this.caseNo[i], this.dateCreate[i], this.dateDeadline[i], this.place[i], this.distressName[i], this.millingArea[i]]);
         }
         
-
         this.pdfDoc.autoTable({
           theme: 'plain',
           styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10 },
           body: table1,
-          startY: height - 257,
+          startY: height - 252,
           columnStyles: {
             0: { halign: 'center', valign: 'middle' },
             1: { halign: 'center', valign: 'middle' },
@@ -100,6 +137,287 @@ export default {
             4: { halign: 'center', valign: 'middle' },
             5: { halign: 'center', valign: 'middle' },
             6: { halign: 'center', valign: 'middle' },
+          },
+        });
+
+        this.pdfDoc.text(`廠商`, width -140, height -30);
+        this.pdfDoc.text(`監造`, width -80, height -30);
+
+        this.pdfDoc.addPage();
+
+        // p45 臺北市政府工務局新建工程處養護工程隊開口合約施工通知/回報單
+        this.pdfDoc.setFontSize(12);
+        this.pdfDoc.text(`臺北市政府工務局新建工程處養護工程隊開口合約施工通知/回報單`, width/2, height-280, { align: 'center' });
+
+        this.pdfDoc.setFontSize(10);
+        this.pdfDoc.text(`工程名稱：${this.groupName}`, width -196, height-270);
+        this.pdfDoc.text(`契約編號：${this.groupSN || ''}`, width -196, height-265);
+        this.pdfDoc.text(`第  次`, width -25, height-265);
+
+        const table2 = [
+          ['施工地點', { content: `(聖東-設施) ${this.place[0]}`, colSpan: 3 } ],
+          ['現場換勘日期', '', '實際會勘日期', ''],
+          ['預定開工日期', '', '實際完工日期', ''],
+          ['工  期', '', '工  期', ''],
+          ['預定完工日期', `${this.dateDeadline[0]}`, '逾期天數', ''],
+          [ { content: '設  計  數  量', colSpan: 2 }, { content: '完  成  數  量', colSpan: 2 } ],
+        ];
+
+        this.pdfDoc.autoTable({
+          theme: 'plain',
+          styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10, cellPadding: 0.1 },
+          body: table2,
+          startY: height - 263,
+          columnStyles: {
+            0: { cellWidth: 30, halign: 'center', valign: 'middle' },
+            1: { cellWidth: 61, halign: 'center', valign: 'middle' },
+            2: { cellWidth: 30, halign: 'center', valign: 'middle' },
+            3: { cellWidth: 61, halign: 'center', valign: 'middle' },
+          },
+          didDrawPage: (data) => {
+            this.lastTable2EndPos = data.cursor.y; // 抓table2的位置
+          }
+        });
+
+        const table3 = [
+          ['項次', { content: '主  要  項  目', styles: { halign: 'center' } }, '單位', '數量', '項次', { content: '主  要  項  目', styles: { halign: 'center' } }, '單位', '數量'],
+          ['壹', '道路改善工程費', '式', '', '壹', '道路改善工程費', '式', ''],
+          ['一', '道路維護工程費', '式', '', '一', '道路維護工程費', '式', '']
+        ];
+
+        
+        if (this.taskName.length != 0) {
+          for (let i = 0; i < this.taskName.length; i++) {
+            table3.push([this.unitSN[i], this.taskName[i], this.taskUnit[i], this.taskNumber[i], '', '', '', '']);
+          }
+        }
+
+        // 單純空3格
+        for (let i = 0; i < 3; i++) {
+          table3.push(['', '', '', '', '', '', '', '']);
+        }
+
+        table3.push(['二', '道路附屬設施工程費', '式', '', '二', '道路附屬設施工程費', '式', '']);
+
+        // 這裡少unitSN項目
+
+        // 單純空3格
+        for (let i = 0; i < 3; i++) {
+          table3.push(['', '', '', '', '', '', '', '']);
+        }
+
+        table3.push(['三', '人手孔改善工程費', '式', '', '三', '人手孔改善工程費', '式', '']);
+        table3.push(['四', '安全設施及交通維持費', '式', '', '四', '安全設施及交通維持費', '式', '']);
+        // 這裡少unitSN項目
+        table3.push(['五', '雜項工程費', '式', '', '五', '雜項工程費', '式', '']);
+        // 這裡少unitSN項目
+        table3.push(['六', '材料試驗費', '式', '', '六', '材料試驗費', '式', '']);
+        table3.push(
+          ['七', '職業安全衛生管理費(壹一~壹五)*2.9%', '式', '', '七', '職業安全衛生管理費(壹一~壹五)*2.9%', '式', ''],
+          ['(一)', '職業安全人員費用(壹一~壹五)*2.9%', '式', '', '(一)', '職業安全人員費用(壹一~壹五)*2.9%', '式', ''],
+          ['(二)', '職業安全衛生費用\n(飲水及休息設備)(壹一~一五)*1%', '式', '', '(二)', '職業安全衛生費用\n(飲水及休息設備)(壹一~一五)*1%', '式', ''],
+          ['八', '自主品管費(壹一~壹五)*1.1%', '式', '', '八', '自主品管費(壹一~壹五)*1.1%', '式', ''],
+          ['九', '道路巡查費', '式', '', '九', '道路巡查費', '式', ''],
+          ['一０', '材料代購費', '式', '', '一０', '材料代購費', '式', ''],
+          ['一一', '稅什費(壹一~壹十)*11.13%', '式', '', '一一', '稅什費(壹一~壹十)*11.13%', '式', ''],
+          ['一二', '義交', '式', '', '一二', '義交', '式', ''],
+          ['一三', '戶外型雲端管理型攝(錄)影', '式', '', '一三', '戶外型雲端管理型攝(錄)影', '式', ''],
+          [ { content: '(詳後附之詳細表)', colSpan: 4 }, { content: '(詳後附之詳細表)', colSpan: 4 } ],
+        );
+
+        this.pdfDoc.autoTable({
+          theme: 'plain',
+          styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10, cellPadding: 0.1 },
+          body: table3,
+          startY: this.lastTable2EndPos,
+          columnStyles: {
+            0: { cellWidth: 10, halign: 'center', valign: 'middle' },
+            1: { cellWidth: 58, valign: 'middle' },
+            2: { cellWidth: 8, halign: 'center', valign: 'middle' },
+            3: { cellWidth: 15, halign: 'center', valign: 'middle' },
+            4: { cellWidth: 10, halign: 'center', valign: 'middle' },
+            5: { cellWidth: 58, valign: 'middle' },
+            6: { cellWidth: 8, halign: 'center', valign: 'middle' },
+            7: { cellWidth: 15, halign: 'center', valign: 'middle' },
+          },
+          didDrawPage: (data) => {
+            this.lastTable3EndPos = data.cursor.y; // 抓table3的位置
+          }
+        });
+
+        const table4 = [
+          ['設計預估金額', '', '實際金額', ''],
+          [ { content: '設計概述：', colSpan: 2 }, { content: '施工概述：', colSpan: 2 } ],
+          [ { content: '設計概述：\n1.本工程主要項目數量：\n\n\n\n\n2.本數量為概括數量，結算時以實際施作數量為主。\n3.安全設施及交通維持費及雜項工程費，均以實作數量結算。', colSpan: 2 }, { content: '施工概述：\n1.本工程主要項目數量：\n\n\n2.本數量為概括數量，結算時以實際施工數量為主。\n\n\n', colSpan: 2 } ],
+          [ { content: '監造單位\n\n\n\n\n\n', colSpan: 2 }, { content: '監造單位\n\n\n\n\n\n', colSpan: 2 } ],
+        ];
+
+        this.pdfDoc.autoTable({
+          theme: 'plain',
+          styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10, cellPadding: 0.1 },
+          body: table4,
+          startY: this.lastTable3EndPos,
+          columnStyles: {
+            0: { cellWidth: 30 },
+            1: { cellWidth: 61 },
+            2: { cellWidth: 30 },
+            3: { cellWidth: 61 },
+          },
+        });
+
+        this.pdfDoc.addPage();
+
+        // 臺北市政府工務局新建工程處 詳細表(統計)
+        this.pdfDoc.setFontSize(12);
+        this.pdfDoc.text(`臺北市政府工務局新建工程處`, width/2, height-280, { align: 'center' });
+        this.pdfDoc.setFontSize(10);
+        this.pdfDoc.text(`詳細表 (設計)`, width/2, height-276, { align: 'center' });
+        
+        this.pdfDoc.text(`工程名稱：112年度道路預約式契約維護修繕工程第  標`, width -196, height-270);
+        this.pdfDoc.text(`施工地點：${this.place[0]}`, width -196, height-265);
+        this.pdfDoc.text(`第  次`, width -25, height-265);
+
+        const table5 = [
+          ['項次', '工程項目', '單位', '數量', '單價', '複價', '備註'],
+          ['壹', '道路改善工程費', '式', '', '', '', ''],
+          ['一', '道路維護工程費', '式', '', '', '', '']
+        ];
+
+        if (this.detailUnitSN.length != 0) {
+          for (let i = 0; i < this.detailUnitSN.length; i++) {
+            table5.push([this.detailUnitSN[i], this.detailTaskName[i], this.detailTaskUnit[i], this.detailTaskNumber[i], '單價沒資料', '複價還沒計算', '備註沒']);
+          }
+        }
+
+        table5.push(
+          ['', '', '', '', '小計', '複價加總', ''],
+          ['', '', '', '', '', '', ''],
+          ['二', '道路附屬設施工程費', '式', '', '', '', '']
+        );
+
+        // 道路附屬相關資料 需補
+
+        table5.push(
+          ['', '', '', '', '小計', '複價加總', ''],
+          ['', '', '', '', '', '', ''],
+          ['三', '人手孔改善工程費', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['四', '安全設施及交通維持費', '式', '', '', '', '']
+        );
+
+        // 安全設施及交通維持費相關資料 需補
+
+        table5.push(
+          ['', '', '', '', '小計', '複價加總', ''],
+          ['', '', '', '', '', '', ''],
+          ['五', '雜項工程費', '式', '', '', '', '']
+        );
+
+        // 雜項工程費相關資料 需補
+
+        table5.push(
+          ['', '', '', '', '小計', '複價加總', ''],
+          ['', '', '', '', '', '', ''],
+          ['六', '材料試驗費', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['七', '職業安全衛生管理費(壹一~壹五)*2.9%', '式', '', '', '', ''],
+          ['(一)', '職業安全人員費用(壹一~壹五)*1%', '式', '', '', '', ''],
+          ['(二)', '職業安全衛生費用(飲水及休息設備)(壹一~壹五)*1.9%', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['八', '自主品管費(壹一~壹五)*1.1%', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['九', '道路巡查費', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['一Ｏ', '材料代購費', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['一一', '稅什費(壹一~壹十)*11.13%', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['一二', '義交', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['一三', '戶外型雲端管理型攝(錄)影', '式', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['', '', '', '', '', '', ''],
+          ['陸', '總價(總計)', '式', '', '', '', '']
+        );
+
+        this.pdfDoc.autoTable({
+          theme: 'plain',
+          styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10, cellPadding: 0.1 },
+          body: table5,
+          startY: height - 263,
+          columnStyles: {
+            0: { cellWidth: 10, halign: 'center', valign: 'middle' },
+            1: { cellWidth: 80, halign: 'center', valign: 'middle' },
+            2: { cellWidth: 10, halign: 'center', valign: 'middle' },
+            3: { cellWidth: 15, halign: 'center', valign: 'middle' },
+            4: { cellWidth: 15, halign: 'center', valign: 'middle' },
+            5: { cellWidth: 20, halign: 'center', valign: 'middle' },
+            6: { cellWidth: 32, halign: 'center', valign: 'middle' },
+          },
+          didDrawPage: (data) => {
+            this.lastTable5EndPos = data.cursor.y; // 抓table5的位置
+          }
+        });
+
+        this.pdfDoc.text(`監造`, width -196, this.lastTable5EndPos + 10);
+
+        this.pdfDoc.addPage();
+        // page48
+        // 112年度道路預約式契約維護修繕工程第2標
+        // 沒資料 等有資料後排版在做編排
+
+        this.pdfDoc.setFontSize(12);
+        this.pdfDoc.text(`112年度道路預約式契約維護修繕工程第 標`, width/2, height-280, { align: 'center' });
+        this.pdfDoc.text(`設計修繕設施路段表`, width/2, height-274, { align: 'center' });
+        this.pdfDoc.setFontSize(8);
+        this.pdfDoc.text(`工程地點：${this.place[0]}`, width-196, height-265 );
+        this.pdfDoc.text(`1/5頁次`, width-25, height-265 );
+
+        const table6 = [
+          ['信義113-11-16', { content: `施工地點：${this.place[0]}`, colSpan: 5} ],
+          ['項次', '施  工  項  目', '單位', '數量', '單價', '複價']
+        ];
+
+        if (this.designUnitSN.length != 0) {
+          for (let i = 0; i < this.designUnitSN.length; i++) {
+            table6.push([this.designUnitSN[i], this.designTaskName[i], this.designTaskUnit[i], this.designTaskNumber[i], this.designTaskPrice[i], '複價']);
+          }
+        }
+
+        table6.push(['', '金額預估', '', '', '', '複價總計需計算']);
+
+        this.pdfDoc.autoTable({
+          theme: 'plain',
+          styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10 },
+          body: table6,
+          startY: height - 263,
+          columnStyles: {
+            0: { cellWidth: 15, halign: 'center', valign: 'middle' },
+            1: { cellWidth: 82, halign: 'center', valign: 'middle' },
+            2: { cellWidth: 15, halign: 'center', valign: 'middle' },
+            3: { cellWidth: 20, halign: 'center', valign: 'middle' },
+            4: { cellWidth: 20, halign: 'center', valign: 'middle' },
+            5: { cellWidth: 30, halign: 'center', valign: 'middle' },
+          },
+          didDrawPage: (data) => {
+            this.lastTable6EndPos = data.cursor.y; // 抓table6的位置
+          }
+        });
+
+        const table7 = [
+          ['(一)施作數量：', this.designDetail[0]],
+          ['(二)施工方式：', this.designDesc[0]],
+          ['(三)施作人力：', this.designWorker[0]],
+        ];
+
+        this.pdfDoc.autoTable({
+          theme: 'plain',
+          styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10 },
+          body: table7,
+          startY: this.lastTable6EndPos + 5,
+          columnStyles: {
+            0: { cellWidth: 30, halign: 'center', valign: 'middle' },
+            1: { cellWidth: 152, halign: 'center', valign: 'middle' },
           },
         });
         
@@ -113,17 +431,62 @@ export default {
       this.place = [];
       this.distressName = [];
       this.millingArea = [];
+      this.unitSN = [];
+      this.taskName = [];
+      this.taskUnit = [];
+      this.taskNumber = [];
+      this.taskPrice = [];
       // Fetch PDF data from API
-      await getInformRoadPDF({ id: this.ApplyId }).then(response => {
-        console.log(response.data.list);
-        response.data.list.forEach(item => {
-          this.caseNo.push(item.CaseNo);
-          this.dateCreate.push(moment(item.DateCreate).subtract(1911, 'years').format('YYYY-MM-DD'));
-          this.dateDeadline.push(moment(item.DateDeadline).subtract(1911, 'years').format('YYYY-MM-DD'));
-          this.place.push(item.Place);
-          this.distressName.push(item.DistressName);
-          this.millingArea.push(Math.round(item.MillingArea * 100) / 100);
-        });
+      await getInformRoadPDF({ id: this.ApplyId, GroupId: this.GroupId }).then(response => {
+        console.log(response.data);
+
+        this.groupName = response.data.list[0].groupName;
+        this.groupSN = response.data.list[0].groupSN;
+        this.total = response.data.res_count[0].total;
+
+        if (response.data.res != undefined) {
+          response.data.res.forEach(item => {
+            this.caseNo.push(item.CaseNo);
+            this.dateCreate.push(moment(item.DateCreate).subtract(1911, 'years').format('YYYY-MM-DD'));
+            this.dateDeadline.push(moment(item.DateDeadline).subtract(1911, 'years').format('YYYY-MM-DD'));
+            this.place.push(item.Place);
+            this.distressName.push(item.DistressName);
+            this.millingArea.push(Math.round(item.MillingArea * 100) / 100);
+          });
+        }
+        
+        if (response.data.res2 != undefined) {
+          response.data.res2.forEach(item => {
+            // 暫時註解PDF會爆掉
+            // this.unitSN.push(item.SerialNo);
+            this.taskName.push(item.TaskName);
+            this.taskUnit.push(item.TaskUnit);
+            // this.taskNumber.push(parseFloat(item.TaskNumber));
+            this.taskPrice.push(parseFloat(item.TaskPrice));
+          });
+        }
+
+        // if (response.data.res3 != undefined) {
+        //   response.data.res3.forEach(item => {
+        //     this.detailUnitSN.push(item.UnitSN);
+        //     this.detailTaskName.push(item.TaskName);
+        //     this.detailTaskUnit.push(item.TaskUnit);
+        //     this.detailTaskNumber.push(item.TaskNumber);
+        //   });
+        // }
+
+        // if (response.data.res4 != undefined) {
+        //   response.data.res4.forEach(item => {
+        //     this.designUnitSN.push(item.UnitSN);
+        //     this.designTaskName.push(item.TaskName);
+        //     this.designTaskUnit.push(item.TaskUnit);
+        //     this.designTaskNumber.push(item.TaskNumber);
+        //     this.designTaskPrice.push(item.TaskPrice);
+        //     this.designDetail.push(item.DesignDetail);
+        //     this.designDesc.push(item.DesignDesc);
+        //     this.designWorker.push(item.DesignWorker);
+        //   });
+        // }
 
         // Create PDF content
         this.createPDF().then(() => {
