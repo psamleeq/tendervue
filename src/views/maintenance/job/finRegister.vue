@@ -463,7 +463,7 @@
 		</el-dialog>
 
 		<!-- Dialog: 數量-->
-		<el-dialog width="900px" title="實際數量設計" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
+		<el-dialog width="1000px" title="實際數量設計" :visible.sync="showEdit" :close-on-click-modal="false" :close-on-press-escape="false" :before-close="() => cleanDetail()">
 			<el-row v-if="deviceTypeNow == 3" type="flex" align="middle" justify="center">
 				<el-col class="task-table-text" :span="1">設計數量</el-col>
 				<el-col :span="23">
@@ -989,7 +989,7 @@ export default {
 			}
 		},
 		tableMinWidth(key) {
-			if(this.deviceTypeNow == 3) return ['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 20 : 30;
+			if(this.deviceTypeNow == 3) return ['TaskName'].includes(key) ? 100 : ['UnitSN', 'TaskUnit', 'TaskPrice'].includes(key) ? 25 : 30;
 			else if(this.deviceTypeNow == 4) return ['MillingFormula'].includes(key) ? 90 : ['MillingArea'].includes(key) ? 20 : 55;
 			else return null;
 		},
