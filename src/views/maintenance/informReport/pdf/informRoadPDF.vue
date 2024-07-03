@@ -370,12 +370,14 @@ export default {
               ['項次', '施  工  項  目', '單位', '數量', '單價', '複價']
             ];
 
+            let estimatedAmount1 = 0; // 金額預估
             for (let j = 0; j < this.unitSN.length; j++) {
               const total = this.taskNumber[j] * this.taskPrice[j]; // 複價
               table6_1.push([this.unitSN[j], this.taskName[j], this.taskUnit[j], this.taskNumber[j], this.taskPrice[j], total]);
+              estimatedAmount1 += total; // 金額預估計算
             }
 
-            table6_1.push(['', '金額預估', '', '', '', '']);
+            table6_1.push(['', '金額預估', '', '', '', estimatedAmount1]);
 
             const table7_1 = [
               ['(一)施作數量：', this.designDetail[i]],
@@ -419,12 +421,14 @@ export default {
                 ['項次', '施  工  項  目', '單位', '數量', '單價', '複價']
               ];
 
+              let estimatedAmount2 = 0; // 金額預估
               for (let j = 0; j < this.unitSN.length; j++) {
                 const total = this.taskNumber[j] * this.taskPrice[j]; // 複價
                 table6_2.push([this.unitSN[j], this.taskName[j], this.taskUnit[j], this.taskNumber[j], this.taskPrice[j], total]);
+                estimatedAmount2 += total; // 金額預估計算
               }
 
-              table6_2.push(['', '金額預估', '', '', '', '']);
+              table6_2.push(['', '金額預估', '', '', '', estimatedAmount2]);
 
               const table7_2 = [
                 ['(一)施作數量：', this.designDetail[i + 1]],
