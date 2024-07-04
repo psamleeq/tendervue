@@ -117,7 +117,7 @@
 					</span>
 					<span v-else-if="row.InformState & 8">
 						<el-button class="btn-action" type="success" @click="informConfirm(row, 16)">完成</el-button>
-						<el-button>完工PDF</el-button>
+						<el-button class="btn-action" type="warning" @click="ApplyId = row.id; GroupId = row.GroupId; showCompleteRoadPDFDialog = true;">完工PDF</el-button>
 					</span>
 					
 					<span v-else> - </span>
@@ -152,8 +152,13 @@
 		</el-dialog>
 
 		<!-- 施工階段 路段表PDF -->
-		<el-dialog :visible.sync="showInformRoadPDFDialog" title="路段表" width="1200px">
+		<el-dialog :visible.sync="showInformRoadPDFDialog" title="施工階段" width="1200px">
 			<inform-road-pdf :ApplyId="ApplyId" :GroupId="GroupId"/>
+		</el-dialog>
+
+		<!-- 完工會勘 路段表PDF-->
+		<el-dialog :visible.sync="showCompleteRoadPDFDialog" title="完工會勘" width="1200px">
+			<complete-road-pdf :ApplyId="ApplyId" :GroupId="GroupId"/>
 		</el-dialog>
 		
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
@@ -170,16 +175,20 @@ import Pagination from "@/components/Pagination";
 import ApplyTicketPdf from "@/components/ApplyTicketPdf";
 import meetingPdf from "@/views/maintenance/inform/pdf/meetingPDF.vue";
 import informRoadPdf from '@/views/maintenance/informReport/pdf/informRoadPDF.vue';
+import completeRoadPdf from '@/views/maintenance/informReport/pdf/completeRoadPDF.vue';
 
 export default {
 	name: "caseApplyManage",
-	components: { ApplyTicketPdf, Pagination, meetingPdf, informRoadPdf },
+	components: { ApplyTicketPdf, Pagination, meetingPdf, informRoadPdf, completeRoadPdf },
 	data() {
 		return {
 			loading: false,
 			screenWidth: window.innerWidth,
 			showMeetingPDFDialog: true,
 			showInformRoadPDFDialog: true,
+			showCompleteRoadPDFDialog: true,
+			ApplyId: 0,
+			GroupId: 0, // Dteam
 			// timeTabId: 2,
 			// dateRange: [
 			// 	moment().startOf("month").toDate(),
@@ -215,8 +224,6 @@ export default {
 			list: [],
 			// detail: [],
 			tableSelect: [],
-			ApplyId: 0,
-			GroupId: 0, // Dteam
 			options: {
 				tenderGroup: {},
 				deviceType: {
@@ -241,6 +248,7 @@ export default {
 	mounted() {
 		this.showMeetingPDFDialog = false;
 		this.showInformRoadPDFDialog = false;
+		this.showCompleteRoadPDFDialog = false;
 	},
 	methods: {
 		checkPermission,

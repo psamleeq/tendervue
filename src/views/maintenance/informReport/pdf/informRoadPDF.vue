@@ -196,7 +196,6 @@ export default {
                 table3.push([sn, taskName[i], taskUnit[i], taskNumber[i], sn, taskName[i], taskUnit[i], '']);
               }
             });
-
             table3.push(['', '', '', '', '', '', '']);
           });
         };
@@ -494,7 +493,7 @@ export default {
       this.taskPrice = [];
       // Fetch PDF data from API
       await getInformRoadPDF({ id: this.ApplyId, GroupId: this.GroupId }).then(response => {
-        console.log('PDF data', response.data);
+        console.log('informRoad data', response.data);
 
         this.groupName = response.data.list[0].groupName;
         this.groupSN = response.data.list[0].groupSN;

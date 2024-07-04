@@ -132,10 +132,19 @@ export function getInformTicketList(query) {
 	})
 }
 
-// 施工階段 路段表PDF
+// 施工階段PDF
 export function getInformRoadPDF(query) {
 	return request({
 		url: '/dispatch/informRoadPDF',
+		method: 'get',
+		params: query
+	})
+}
+
+// 完工會勘PDF
+export function getCompleteRoadPDF(query) {
+	return request({
+		url: '/dispatch/completeRoadPDF',
 		method: 'get',
 		params: query
 	})
