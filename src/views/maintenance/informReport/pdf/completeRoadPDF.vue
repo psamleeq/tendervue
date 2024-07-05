@@ -131,64 +131,77 @@ export default {
         this.pdfDoc.text(`監造`, width -80, height -30);
 
         this.pdfDoc.addPage();
-
-        // 聖東營造修復回報單簡表
-        this.pdfDoc.setFontSize(12);
-        this.pdfDoc.text(`聖東營造修復回報單簡表`, width/2, height-280, { align: 'center' });
-        this.pdfDoc.setFontSize(8);
-
+        
         // 總頁數
-        const totalPages = this.place.length;
-        for (let i = 0; i < totalPages; i++) {
+        const totalPages = Math.ceil(this.place.length / 3);
+        let imgPage = 1; // 頁次初始化 
 
-          this.pdfDoc.text(`第1頁/共${totalPages}頁`, width-30, height-272);
+        for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+          // 聖東營造修復回報單簡表
+          this.pdfDoc.setFontSize(12);
+          this.pdfDoc.text(`聖東營造修復回報單簡表`, width / 2, height - 280, { align: 'center' });
+          this.pdfDoc.setFontSize(8);
+          this.pdfDoc.text(`第${imgPage}頁/共${totalPages}頁`, width - 30, height - 272);
 
-          const table2 = [
-            [`項次：${i + 1}`, `道管編號：${this.caseNo[i]}`, `損壞類別：${this.distressName[i]}`, `銑鋪完工：無資料`],
-            [ { content: `地點：(聖東-設施)${this.place[i]}`, colSpan: 3 }, `標線完工：0m`],
-          ];
+          for (let i = 0; i < 3; i++) {
+            const currentIndex = pageIndex * 3 + i;
+            if (currentIndex >= this.place.length) break; // 防止超出資料長度
 
-          this.pdfDoc.autoTable({
-            theme: 'plain',
-            styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10 },
-            body: table2,
-            startY: height - 270,
-            columnStyles: {
-              0: { halign: 'center', valign: 'middle' },
-              1: { halign: 'center', valign: 'middle' },
-              2: { halign: 'center', valign: 'middle' },
-              3: { halign: 'center', valign: 'middle' },
-            },
-            didDrawPage: (data) => {
-              this.lastTable2EndPos = data.cursor.y; // 抓table2的位置
-            }
-          });
+            const table2 = [
+              [`項次：${currentIndex + 1}`, `道管編號：${this.caseNo[currentIndex]}`, `損壞類別：${this.distressName[currentIndex]}`, `銑鋪完工：無資料`],
+              [{ content: `地點：(聖東-設施)${this.place[currentIndex]}`, colSpan: 3 }, `標線完工：0m`],
+            ];
 
-          // 這裡loop判斷還沒完成
-
-          const table3 = [
-            ['缺失地點相片', '修復地點相片'],
-            [ { content: '', styles: { minCellHeight: 40 } }, ''] // 空白要加圖片
-          ];
-
-          this.pdfDoc.autoTable({
-            theme: 'plain',
-            styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10 },
-            body: table3,
-            startY: this.lastTable2EndPos,
-            columnStyles: {
-              0: { halign: 'center', valign: 'middle' },
-              1: { halign: 'center', valign: 'middle' },
-            },
-            didDrawCell: (data) => {
-              if (data.row.index == 1 && data.column.index == 0) {
-                this.pdfDoc.addImage(this.imgZoomIn[i], 'JPEG', data.cell.x, data.cell.y, 91, 40);
-              } else if (data.row.index == 1 && data.column.index == 1 && this.postConstrImg[i] != undefined) {
-                this.pdfDoc.addImage(this.postConstrImg[i], 'JPEG', data.cell.x, data.cell.y, 91, 40);
+            this.pdfDoc.autoTable({
+              theme: 'plain',
+              styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10 },
+              body: table2,
+              startY: i === 0 ? height - 270 : this.lastTable3EndPos, // 第一筆資料從初始位置開始，後續資料從前一筆資料結束位置開始
+              columnStyles: {
+                0: { minCellWidth: 15, halign: 'center', valign: 'middle' },
+                1: { minCellWidth: 48.5, halign: 'center', valign: 'middle' },
+                2: { halign: 'center', valign: 'middle' },
+                3: { halign: 'center', valign: 'middle' },
+              },
+              didDrawPage: (data) => {
+                this.lastTable2EndPos = data.cursor.y; // 抓table2的位置
               }
-            }
-          });
+            });
+
+            const table3 = [
+              ['缺失地點相片', '修復地點相片'],
+              [{ content: '', styles: { minCellHeight: 55 } }, ''] // 空白要加圖片
+            ];
+
+            this.pdfDoc.autoTable({
+              theme: 'plain',
+              styles: { font: "edukai", fontSize: 8, lineWidth: 0.1, lineColor: 10 },
+              body: table3,
+              startY: this.lastTable2EndPos,
+              columnStyles: {
+                0: { halign: 'center', valign: 'middle' },
+                1: { halign: 'center', valign: 'middle' },
+              },
+              didDrawCell: (data) => {
+                if (data.row.index == 1 && data.column.index == 0) {
+                  this.pdfDoc.addImage(this.imgZoomIn[currentIndex], 'JPEG', data.cell.x + 1, data.cell.y + 1, 89, 53);
+                } else if (data.row.index == 1 && data.column.index == 1 && this.postConstrImg[currentIndex] != undefined) {
+                  this.pdfDoc.addImage(this.postConstrImg[currentIndex], 'JPEG', data.cell.x + 1, data.cell.y + 1, 89, 53);
+                }
+              },
+              didDrawPage: (data) => {
+                this.lastTable3EndPos = data.cursor.y; // 抓table3的位置
+              }
+            });
+          }
+
+          if (pageIndex < totalPages - 1) {
+            this.pdfDoc.addPage();
+            imgPage++;
+          }
         }
+
+
 
         this.pdfDoc.addPage();
 
