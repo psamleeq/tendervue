@@ -103,7 +103,7 @@
 					</span>
 					<span v-else-if="row.InformState & 4">
 						<el-button class="btn-action" type="success" @click="informConfirm(row, 8)">完成</el-button>
-						<el-button class="btn-action" type="warning" @click="ApplyId = row.id; GroupId = row.GroupId; showInformRoadPDFDialog = true;">施工PDF</el-button>
+						<el-button class="btn-action" type="warning" @click="informId = row.id; informGroupId = row.GroupId; showInformRoadPDFDialog = true;">施工PDF</el-button>
 					</span>
 					
 					<span v-else> - </span>
@@ -117,7 +117,7 @@
 					</span>
 					<span v-else-if="row.InformState & 8">
 						<el-button class="btn-action" type="success" @click="informConfirm(row, 16)">完成</el-button>
-						<el-button class="btn-action" type="warning" @click="ApplyId = row.id; GroupId = row.GroupId; showCompleteRoadPDFDialog = true;">完工PDF</el-button>
+						<el-button class="btn-action" type="warning" @click="completeId = row.id; completeGroupId = row.GroupId; showCompleteRoadPDFDialog = true;">完工PDF</el-button>
 					</span>
 					
 					<span v-else> - </span>
@@ -129,8 +129,10 @@
 						<i class="el-icon-check" style="color: #67C23A" />
 						<div v-if="row.Bit32_At">({{ row.Bit32_At }})</div>
 					</span>
-					<el-button v-else-if="row.InformState & 16" class="btn-action" type="success"
-						@click="informConfirm(row, 32)">結案</el-button>
+					<div v-else-if="row.InformState & 16">
+						<el-button class="btn-action" type="success" @click="informConfirm(row, 32)">結案</el-button>
+						<el-button class="btn-action" type="warning" @click="reportId = row.id; reportGroupId = row.GroupId; showReportRoadPDFDialog = true;">回報PDF</el-button>
+					</div>
 					<span v-else> - </span>
 				</template>
 			</el-table-column>
@@ -153,12 +155,17 @@
 
 		<!-- 施工階段 路段表PDF -->
 		<el-dialog :visible.sync="showInformRoadPDFDialog" title="施工階段" width="1200px">
-			<inform-road-pdf :ApplyId="ApplyId" :GroupId="GroupId"/>
+			<inform-road-pdf :ApplyId="informId" :GroupId="informGroupId"/>
 		</el-dialog>
 
-		<!-- 完工會勘 路段表PDF-->
+		<!-- 完工會勘 路段表PDF -->
 		<el-dialog :visible.sync="showCompleteRoadPDFDialog" title="完工會勘" width="1200px">
-			<complete-road-pdf :ApplyId="ApplyId" :GroupId="GroupId"/>
+			<complete-road-pdf :ApplyId="completeId" :GroupId="completeGroupId"/>
+		</el-dialog>
+
+		<!-- 回報市府 路段表PDF -->
+		<el-dialog :visible.sync="showReportRoadPDFDialog" title="回報市府" width="1200px">
+			<report-road-pdf :ApplyId="reportId" :GroupId="reportGroupId"/>
 		</el-dialog>
 		
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize"
@@ -176,10 +183,11 @@ import ApplyTicketPdf from "@/components/ApplyTicketPdf";
 import meetingPdf from "@/views/maintenance/inform/pdf/meetingPDF.vue";
 import informRoadPdf from '@/views/maintenance/informReport/pdf/informRoadPDF.vue';
 import completeRoadPdf from '@/views/maintenance/informReport/pdf/completeRoadPDF.vue';
+import reportRoadPdf from '@/views/maintenance/informReport/pdf/reportRoadPDF.vue';
 
 export default {
 	name: "caseApplyManage",
-	components: { ApplyTicketPdf, Pagination, meetingPdf, informRoadPdf, completeRoadPdf },
+	components: { ApplyTicketPdf, Pagination, meetingPdf, informRoadPdf, completeRoadPdf, reportRoadPdf },
 	data() {
 		return {
 			loading: false,
@@ -187,8 +195,15 @@ export default {
 			showMeetingPDFDialog: true,
 			showInformRoadPDFDialog: true,
 			showCompleteRoadPDFDialog: true,
-			ApplyId: 0,
+			showReportRoadPDFDialog: true,
+			ApplyId: 0, // 因為開啟一個PDF會連動到全部PDF的API 所以設立很多變數來分開
 			GroupId: 0, // Dteam
+			informId: 0, // 施工階段
+			completeId: 0, // 完工會勘
+			reportId: 0, // 回報市府
+			informGroupId: 0,
+			completeGroupId: 0,
+			reportGroupId: 0,
 			// timeTabId: 2,
 			// dateRange: [
 			// 	moment().startOf("month").toDate(),
@@ -249,6 +264,7 @@ export default {
 		this.showMeetingPDFDialog = false;
 		this.showInformRoadPDFDialog = false;
 		this.showCompleteRoadPDFDialog = false;
+		this.showReportRoadPDFDialog = false;
 	},
 	methods: {
 		checkPermission,

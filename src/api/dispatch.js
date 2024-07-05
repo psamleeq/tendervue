@@ -150,6 +150,14 @@ export function getCompleteRoadPDF(query) {
 	})
 }
 
+export function getReportRoadPDF(query) {
+	return request({
+		url: '/dispatch/reportRoadPDF',
+		method: 'get',
+		params: query
+	})
+}
+
 export function setinformTicketList(id, data) {
 	return request({
 		url: `/dispatch/informTicketList/${id}`,
