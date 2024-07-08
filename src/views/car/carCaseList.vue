@@ -223,7 +223,7 @@
 import moment from "moment";
 import { getTenderGroup, getDTypeMap } from "@/api/type";
 import { carCaseList, setCarCaseList } from "@/api/car";
-import { setCaseTrackingSpec, setCaseTrackingFlow } from "@/api/inspection";
+import { setCaseTrackingSpec } from "@/api/inspection";
 import { setInsCaseList } from "@/api/PI";
 import { setInspectFlowList } from "@/api/app";
 import Pagination from "@/components/Pagination";

@@ -105,12 +105,3 @@ export function getPothole(query) {
 		params: query
 	})
 }
-
-// 坑洞缺失 全部6個標
-export function getAllPothole(query) {
-	return request({
-		url: '/car/potholeAll',
-		method: 'get',
-		params: query
-	})
-}
