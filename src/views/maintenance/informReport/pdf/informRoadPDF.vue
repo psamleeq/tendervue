@@ -353,7 +353,7 @@ export default {
         // page48
         // 112年度道路預約式契約維護修繕工程第2標 設計修繕路段表
         let page = 1; // 頁次初始化
-
+        const totalPages = Math.ceil(this.place.length / 2);
         for (let i = 0; i < this.place.length; i++) {
           // 如果当前索引是偶数，添加页眉和第一页的表格
           if (i % 2 == 0) {
@@ -362,7 +362,7 @@ export default {
             this.pdfDoc.text(`設計修繕設施路段表`, width / 2, height - 274, { align: 'center' });
             this.pdfDoc.setFontSize(8);
             this.pdfDoc.text(`工程地點：${this.place[i]}`, width - 196, height - 265);
-            this.pdfDoc.text(`${page}/5頁次`, width - 25, height - 265);
+            this.pdfDoc.text(`${page}/${totalPages}頁次`, width - 25, height - 265);
 
             const table6_1 = [
               ['', { content: `施工地點：${this.place[i]}`, colSpan: 5 }],

@@ -208,7 +208,7 @@ export default {
         // p20 聖東回報修繕設施路段表
 
         let page = 1; // 頁次初始化
-
+        const totalPages2 = Math.ceil(this.place.length / 2);
         for (let i = 0; i < this.place.length; i++) {
           // 如果当前索引是偶数，添加页眉和第一页的表格
           if (i % 2 == 0) {
@@ -217,7 +217,7 @@ export default {
             this.pdfDoc.text(`聖東回報修繕設施路段表`, width / 2, height - 274, { align: 'center' });
             this.pdfDoc.setFontSize(8);
             this.pdfDoc.text(`工程地點：(聖東-設施)${this.place[i]}等${this.place.length}處(設施)`, width - 196, height - 265);
-            this.pdfDoc.text(`${page}/4頁次`, width - 25, height - 265);
+            this.pdfDoc.text(`${page}/${totalPages2}頁次`, width - 25, height - 265);
 
             const table6_1 = [
               ['', { content: `施工地點：${this.place[i]}`, colSpan: 5 }],
