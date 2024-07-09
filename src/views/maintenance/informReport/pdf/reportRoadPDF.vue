@@ -94,7 +94,7 @@ export default {
           this.pdfDoc.text(`修復地點：  ${this.place[i]}`, width-190, height-250, { align: 'left' });
           this.pdfDoc.text(`施工日期：  `, width-190, height-240, { align: 'left' });
           this.pdfDoc.text(`道管系統案號：  ${this.caseNo[i]}`, width-80, height-270, { align: 'left' });
-          this.pdfDoc.text(`座        標：  ${this.coordinateX[i]}\n                 ${this.coordinateY[i]}`, width-80, height-260, { align: 'left' });
+          this.pdfDoc.text(`座        標：  ${this.degreeToDMS(this.coordinateX[i])} E\n                 ${this.degreeToDMS(this.coordinateY[i])} N`, width-80, height-260, { align: 'left' });
           this.pdfDoc.text(`修 復  項 目：  ${this.designDetail[i] || ''}`, width-80, height-250, { align: 'left' });
           this.pdfDoc.text(`實 際  數 量：  ${this.designDesc[i] || ''}`, width-80, height-240, { align: 'left' });
 
@@ -195,6 +195,27 @@ export default {
       }).catch(error => {
         console.error('Error getting PDF data:', error);
       });
+    },
+    degreeToDMS(degrees) {
+      const d = Math.floor(degrees); // 度
+      const minFloat = (degrees - d) * 60;
+      const m = Math.floor(minFloat); // 分
+      const secFloat = (minFloat - m) * 60;
+      const s = Math.round(secFloat); // 秒
+
+      // 秒數60進位到分
+      if (s == 60) {
+        m += 1;
+        s = 0;
+      }
+
+      // 分鐘60進位到度
+      if (m == 60) {
+        d += 1;
+        m = 0;
+      }
+
+      return `${d}°${m}'${s}"`;
     }
   }
 }
