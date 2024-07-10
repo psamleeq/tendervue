@@ -410,7 +410,6 @@ export default {
 			}
 		},
     createCase() {
-
       if (this.contractId.length == 0 || this.zipCode.length == 0 || this.distressLevel.length == 0 || 
           this.millingLength == 0 || this.millingWidth == 0 || this.millingArea == 0 || 
           this.place.length == 0 || this.direction.length == 0 || this.lane.length == 0) {
@@ -434,7 +433,7 @@ export default {
           uploadForm.append('place', this.place);
           uploadForm.append('direction', parseInt(this.direction));
           uploadForm.append('lane', parseInt(this.lane));
-          uploadForm.append('position', { lng: longitude, lat: latitude });
+          uploadForm.append('position', JSON.stringify({ lng: longitude, lat: latitude }));
           uploadForm.append('img', await this.photoCompress(this.rowActive.ImgZoomIn[0].raw));
           
           importPotholeCase(uploadForm).then(response => {
