@@ -3,13 +3,18 @@
 		<h2>坑洞缺失</h2>
 		<!-- 搜尋 -->
 		<div class="filter-container">
-			<el-select v-model="listQuery.contractId" placeholder="請選擇" style="width: 110px;">
-        <el-option label="全部" :value="99" />
+			<el-select v-model="listQuery.contractId" class="filter-item" placeholder="請選擇" style="width: 110px;">
+				<el-option label="全部" :value="99" />
 				<el-option v-for="(text, id) in team" :key="`contractId${id}`" :label="text" :value="Number(id)" />
+			</el-select>
+
+			<el-select v-model="listQuery.insType" class="filter-item" placeholder="請選擇" style="width: 110px;">
+				<el-option label="臨補" :value="1" />
+				<el-option label="車巡" :value="2" />
 			</el-select>
 			
 			<el-date-picker
-				style="margin-left: 10px;"
+				class="filter-item" 
 				v-model="listQuery.dateRange"
 				type="daterange"
 				range-separator="至"
@@ -54,7 +59,7 @@
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
-    
+		
 	</div>
 </template>
 
@@ -81,11 +86,10 @@ export default {
 		imgUrl: [],
 		successMap: [],
 		failMap: [],
-		// dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
-			filterType: 1,
-      contractId: 1,
-			dateRange: [],
+			contractId: 1,
+			insType: 1,
+			dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 			pageCurrent: 1,
 			pageSize: 50
 		},
@@ -105,14 +109,14 @@ export default {
 			116: '文山區',
 			999: '橋涵區'
 		},
-    team: {
-      1: '第一分隊',
-      2: '第二分隊',
-      3: '第三分隊',
-      4: '第四分隊',
-      5: '第五分隊',
-      6: '第六分隊'
-    },
+		team: {
+			1: '第一分隊',
+			2: '第二分隊',
+			3: '第三分隊',
+			4: '第四分隊',
+			5: '第五分隊',
+			6: '第六分隊'
+		},
 		distressLevelMap: {
 			1: '輕',
 			2: '中',
@@ -122,29 +126,29 @@ export default {
 		rowActive: {},
 		headers: {
 			serialno: {
-        name: '缺失Id',
-        sortable: false,
-      },
-      broketype: {
-        name: '缺失程度',
-        sortable: false,
-      },
-      elength: {
-        name: '預估長',
-        sortable: false,
-      },
-      blength: {
-        name: '預估寬',
-        sortable: false,
-      },
+				name: '缺失Id',
+				sortable: false,
+			},
+			broketype: {
+				name: '缺失程度',
+				sortable: false,
+			},
+			elength: {
+				name: '預估長',
+				sortable: false,
+			},
+			blength: {
+				name: '預估寬',
+				sortable: false,
+			},
 			reportTime: {
 				name: '創建時間',
 				sortable: false,
 			},
-      casename: {
-        name: '地址',
-        sortable: false,
-      },
+			casename: {
+				name: '地址',
+				sortable: false,
+			},
 		},
 		dialogVisible: false,
 		InputNotes:'',
@@ -171,6 +175,7 @@ export default {
 
 			getPothole({
 				contractId: this.listQuery.contractId,
+				insType: this.listQuery.insType,
 				timeStart: formattedTimeStart,
 				timeEnd: formattedTimeEnd,
 				pageCurrent: this.listQuery.pageCurrent,
