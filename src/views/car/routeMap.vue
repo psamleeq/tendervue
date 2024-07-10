@@ -865,8 +865,8 @@ export default {
 					if(accFilter.length == 0) {
 						const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName.includes(cur.caseType) || (caseSpec.showName && cur.caseType.includes(caseSpec.showName)));
 						acc.push({ 
-							caseName: caseFilter.length == 0 ? [] : caseFilter[0].caseName,
-							showName: caseFilter.length == 0 || !caseFilter[0].showName ? '' : caseFilter[0].showName,
+							caseName: caseFilter.length == 0 ? [ cur.caseType ] : caseFilter[0].caseName,
+							showName: caseFilter.length == 0 || !caseFilter[0].showName ? cur.caseType : caseFilter[0].showName,
 							color: caseFilter.length == 0 ? '#1E90FF' : caseFilter[0].color,
 							icon: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
 							order: caseFilter.length == 0 ? 5 : caseFilter[0].order,
@@ -916,14 +916,25 @@ export default {
 			this.dataLayer.case.addGeoJson(geoJSON);
 			this.dataLayer.case.setStyle(feature => {
 				const caseName = feature.getProperty("caseName");
+				const type = feature.getProperty("type");
 				const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName.includes(caseName));
 
-				return { 
+				const styleObj = {
 					icon: { 
 						url: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
 						scaledSize: new google.maps.Size(30, 30),
 					}
 				};
+				
+				if(type) {
+					styleObj.label = { 
+						text: type, 
+						color: type == 1999 ? '#DC143C' : '#67C23A',
+						fontWeight: 'bold'
+					};
+				}
+
+				return styleObj;
 			})
 		},
 		caseFilter() { 

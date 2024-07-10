@@ -585,7 +585,7 @@ export default {
 			geoJSON_case.features.push({
 				"type": "Feature",
 				"properties": { },
-				"geometry": isPoint? row.CenterPt : row.Geometry
+				"geometry": isPoint ? row.CenterPt : row.Geometry
 			});
 
 			// console.log(geoJSON_case);
