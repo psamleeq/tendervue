@@ -1,21 +1,15 @@
 <template>
 	<div class="app-container inspect-fin-report" v-loading="loading">
 		<h2>坑洞回報
-			<el-checkbox-button v-model="listQuery.filter" :disabled="listQuery.tenderRound == null" @change="getList">
+			<el-checkbox-button v-model="listQuery.filter" @change="getList">
 				<span v-if="listQuery.filter">已完工</span>
 				<span v-else>未完工</span>
 			</el-checkbox-button>
 		</h2>
 		<div class="filter-container">
-			<div v-if="listQuery.tenderRound != -1" class="filter-item">
-				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
-					<el-select v-model.number="listQuery.tenderRound" class="tender-select" popper-class="type-select tender">
-						<el-option v-for="(val, type) in options.tenderRoundMap" :key="type" :label="val.name" :value="Number(type)">
-							<div :style="`color: #${Math.floor(val.tenderId*16777215).toString(16).substr(0, 8)}`">{{ val.name }}</div>
-						</el-option>
-					</el-select>
-				</div>
-			</div>
+			<el-select v-model="listQuery.contractId" placeholder="請選擇" style="width: 110px;">
+				<el-option v-for="(text, id) in options.ContractId" :key="`contractId${id}`" :label="text" :value="Number(id)" />
+			</el-select>
 
 			<div class="filter-item">
 				<div class="el-input el-input--mini el-input-group el-input-group--prepend">
@@ -31,39 +25,43 @@
 				</div>
 			</div>
 
-      <div class="filter-item">
+			<div class="filter-item">
 				<div class="el-input el-input--mini el-input-group el-input-group--prepend">
-          <el-date-picker
-            v-model="listQuery.dateRange"
-            type="datetimerange"
-            range-separator="-"
-            start-placeholder="開始日期"
-            end-placeholder="結束日期"
-            align="right">
-          </el-date-picker>
+					<el-date-picker
+						v-model="listQuery.dateRange"
+						type="datetimerange"
+						range-separator="至"
+						start-placeholder="開始日期"
+						end-placeholder="結束日期"
+						align="right">
+					</el-date-picker>
 				</div>
 			</div>
 
-      <div class="filter-item">
-        <el-button type="primary" @click="getList()">搜尋</el-button>
-        <el-button type="warning" @click="showImportCaseDialog = true">建立案件</el-button>
-      </div>
+			<div class="filter-item">
+				<el-button type="primary" @click="getList()">搜尋</el-button>
+				<el-button type="warning" @click="showImportCaseDialog = true">建立案件</el-button>
+			</div>
 		</div>
 		<div v-for="caseSpec in list" :key="caseSpec.id" class="case-list">
 			<el-row :gutter="10" type="flex" align="center" justify="center">
 				<el-col :span="8">
-					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.ImgZoomIn" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.ImgZoomOut, ...caseSpec.RestoredImage.map(file=>file.url)]" fit="cover" />
+					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.ImgZoomIn" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.RestoredImage.url]" fit="cover" />
 				</el-col>
-        <el-col :span="8">
-					<el-image v-if="caseSpec.RestoredImage.length > 0" class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.RestoredImage[0].url" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.ImgZoomOut, ...caseSpec.RestoredImage.map(file=>file.url)]" fit="cover" />
+				<el-col :span="8">
+					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.RestoredImage.url" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.RestoredImage.url]" fit="cover">
+						<div slot="error" class="image-slot">
+							<span>尚未上傳</span>
+						</div>
+					</el-image>
 				</el-col>
 				<el-col :span="16" :md="12" class="case-info">
 					<el-popover placement="right" :disabled="screenWidth >= 992">
 						<el-button-group>
 							<el-button type="info" size="mini" @click="showMapViewer(caseSpec, false)">地圖</el-button>
-							<el-button v-if="caseSpec.FlowState == 0" type="primary" size="mini" @click="setResult(caseSpec, 1)">完工</el-button>
+							<!-- <el-button v-if="caseSpec.FlowState == 0" type="primary" size="mini" @click="setResult(caseSpec, 1)">完工</el-button>
 							<el-button v-else size="mini" @click="setResult(caseSpec, 0)">撤銷</el-button>
-							<el-button v-if="caseSpec.FlowState == 0" :type="caseSpec.ImgZoomIn.length == 0 ? 'success' : ''" size="mini" @click="openImgUpload(caseSpec)">缺失照片</el-button> 
+							<el-button v-if="caseSpec.FlowState == 0" :type="caseSpec.ImgZoomIn.length == 0 ? 'success' : ''" size="mini" @click="openImgUpload(caseSpec)">缺失照片</el-button>  -->
 							<el-button v-if="caseSpec.FlowState == 0" :type="caseSpec.RestoredImage.length == 0 ? 'success' : ''" size="mini" @click="openRestoredImgUpload(caseSpec)">修復後照片</el-button> 
 						</el-button-group>
 						<span slot="reference">
@@ -89,11 +87,10 @@
 				<el-col :md="4" class="hidden-sm-and-down" style="display: flex; flex-direction: column; justify-content: space-evenly;">
 					<el-button type="info" @click="showMapViewer(caseSpec, false)">地圖</el-button>
 					<!-- <br> -->
-					<el-button v-if="caseSpec.FlowState == 0" type="primary" @click="setResult(caseSpec, 2)">完工</el-button>
-					<el-button v-else size="mini" @click="setResult(caseSpec, 0)">撤銷</el-button>
+					<!-- <el-button v-if="caseSpec.FlowState == 0" type="primary" @click="setResult(caseSpec, 2)">完工</el-button>
+					<el-button v-else size="mini" @click="setResult(caseSpec, 0)">撤銷</el-button> -->
 					<!-- <br> -->
-					<el-button v-if="caseSpec.FlowState == 0" :type="caseSpec.ImgZoomIn.length == 0 ? 'success' : ''" @click="openImgUpload(caseSpec)">缺失照片</el-button>
-          
+					<!-- <el-button v-if="caseSpec.FlowState == 0" :type="caseSpec.ImgZoomIn.length == 0 ? 'success' : ''" @click="openImgUpload(caseSpec)">缺失照片</el-button> -->
 					<el-button v-if="caseSpec.FlowState == 0" :type="caseSpec.RestoredImage.length == 0 ? 'success' : ''" @click="openRestoredImgUpload(caseSpec)">修復後照片</el-button>
 				</el-col>
 				</el-row>
@@ -101,115 +98,104 @@
 		</div>
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
-    <el-dialog v-loading="loading" width="360px" title="建立專案" :visible.sync="showImportCaseDialog">
-      <div>
-        <span>分隊</span>
-        <el-select v-model="contractId" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
-          <el-option 
-            v-for="(val, type) in options.ContractId" 
-            :key="type" 
-            :label="val" 
-            :value="type">
-          </el-option>
-        </el-select>
-      </div>
-      <div style="margin-top: 20px;">
-        <span>郵遞區號</span>
-        <el-input style="margin-left: 10px; width: 200px;" v-model="zipCode"></el-input>
-      </div>
-      <!-- <div style="margin-top: 20px;">
-        <span>通報日期</span>
-        <el-input style="margin-left: 10px; width: 200px;" v-model="reportTime" :disabled="true"></el-input>
-      </div> -->
-      <div style="margin-top: 20px;">
-        <span>缺失程度</span>
-        <el-select v-model="distressLevel" placeholder="請選擇" style="margin-left: 10px; width: 200px;">
-          <el-option 
-            v-for="(val, type) in options.DistressLevel" 
-            :key="type" 
-            :label="val" 
-            :value="type">
-          </el-option>
-        </el-select>
-      </div>
-      <div style="margin-top: 20px;">
-        <span>預估長度</span>
-        <el-input style="margin-left: 10px; width: 200px;" v-model="millingLength"></el-input>
-      </div>
-      <div style="margin-top: 20px;">
-        <span>預估寬度</span>
-        <el-input style="margin-left: 10px; width: 200px;" v-model="millingWidth"></el-input>
-      </div>
-      <div style="margin-top: 20px;">
-        <span>預估面積</span>
-        <el-input style="margin-left: 10px; width: 200px;" v-model="millingArea"></el-input>
-      </div>
-      <div style="margin-top: 20px;">
-        <span>地址</span>
-        <el-input style="margin-left: 37px; width: 200px;" v-model="place"></el-input>
-      </div>
-      <div style="margin-top: 20px;">
-        <span>路向</span>
-        <el-select v-model="direction" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
-          <el-option 
-            v-for="(val, type) in options.Direction" 
-            :key="type" 
-            :label="val" 
-            :value="type">
-          </el-option>
-        </el-select>
-      </div>
-      <div style="margin-top: 20px;">
-        <span>車道</span>
-        <el-select v-model="lane" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
-          <el-option 
-            v-for="(val, type) in options.Lane" 
-            :key="type" 
-            :label="val" 
-            :value="type">
-          </el-option>
-        </el-select>
-      </div>
-      <div style="margin-top: 20px;">
-        <span>圖片上傳</span>
-        <el-upload 
-          style="margin-top: 20px;" 
-          class="img-upload" 
-          action="#" 
-          accept="image/jpeg, image/jpg" 
-          :auto-upload="false" 
-          list-type="picture-card" 
-          :file-list="rowActive.ImgZoomIn" 
-          :limit = "1"
-          :on-change="handleChangeNew" 
-          :on-preview="handlePreviewNew" 
-          :on-remove="handleRemoveNew">
-          <i class="el-icon-plus avatar-uploader-icon"></i>
-          <div slot="tip" class="el-upload__tip">只能上傳jpg文件，且不超過500kb</div>
+		<el-dialog v-loading="loading" width="360px" title="建立專案" :visible.sync="showImportCaseDialog">
+			<div>
+				<span>分隊</span>
+				<el-select v-model="contractId" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
+					<el-option 
+						v-for="(val, type) in options.ContractId" 
+						:key="type" 
+						:label="val" 
+						:value="type">
+					</el-option>
+				</el-select>
+			</div>
+			<div v-if="contractId == 1" style="margin-top: 20px;">
+				<span>區域</span>
+				<el-select v-model="zipCode" style="margin-left: 37px; width: 200px;">
+					<el-option label="中山區" value="104" />
+					<el-option label="大同區" value="103" />
+				</el-select>
+			</div>
+			<!-- <div style="margin-top: 20px;">
+				<span>通報日期</span>
+				<el-input style="margin-left: 10px; width: 200px;" v-model="reportTime" :disabled="true"></el-input>
+			</div> -->
+			<div style="margin-top: 20px;">
+				<span>缺失程度</span>
+				<el-select v-model="distressLevel" placeholder="請選擇" style="margin-left: 10px; width: 200px;">
+					<el-option 
+						v-for="(val, type) in options.DistressLevel" 
+						:key="type" 
+						:label="val" 
+						:value="type">
+					</el-option>
+				</el-select>
+			</div>
+			<div style="margin-top: 20px;">
+				<span>預估長度</span>
+				<el-input style="margin-left: 10px; width: 200px;" v-model="millingLength"></el-input>
+			</div>
+			<div style="margin-top: 20px;">
+				<span>預估寬度</span>
+				<el-input style="margin-left: 10px; width: 200px;" v-model="millingWidth"></el-input>
+			</div>
+			<div style="margin-top: 20px;">
+				<span>預估面積</span>
+				<el-input style="margin-left: 10px; width: 200px;" v-model="millingArea"></el-input>
+			</div>
+			<div style="margin-top: 20px;">
+				<span>地址</span>
+				<el-input style="margin-left: 37px; width: 200px;" v-model="place"></el-input>
+			</div>
+			<div style="margin-top: 20px;">
+				<span>路向</span>
+				<el-select v-model="direction" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
+					<el-option 
+						v-for="(val, type) in options.Direction" 
+						:key="type" 
+						:label="val" 
+						:value="type">
+					</el-option>
+				</el-select>
+			</div>
+			<div style="margin-top: 20px;">
+				<span>車道</span>
+				<el-select v-model="lane" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
+					<el-option 
+						v-for="(val, type) in options.Lane" 
+						:key="type" 
+						:label="val" 
+						:value="type">
+					</el-option>
+				</el-select>
+			</div>
+			<div style="margin-top: 20px;">
+				<span>圖片上傳</span>
+				<el-upload 
+					style="margin-top: 20px;" 
+					class="img-upload" 
+					action="#" 
+					accept="image/jpeg, image/jpg" 
+					:auto-upload="false" 
+					list-type="picture-card" 
+					:file-list="rowActive.ImgZoomIn" 
+					:limit = "1"
+					:on-change="handleChangeNew" 
+					:on-preview="handlePreviewNew" 
+					:on-remove="handleRemoveNew">
+					<i class="el-icon-plus avatar-uploader-icon"></i>
+					<div slot="tip" class="el-upload__tip">只能上傳jpg文件，且不超過500kb</div>
 				</el-upload>
-      </div>
-      <div slot="footer" class="dialog-footer">
+			</div>
+			<div slot="footer" class="dialog-footer">
 				<el-button @click="showImportCaseDialog = false;">取消</el-button>
 				<el-button type="success" @click="createCase()">創建案件</el-button>
 			</div>
-    </el-dialog>
-
-		<!-- Dialog: 建立坑洞案件(上傳缺失照片) -->
-		<el-dialog v-loading="loading" width="360px" title="照片上傳(坑洞缺失)" :visible.sync="showImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
-			<el-row type="flex" align="middle">
-				<el-upload class="img-upload" action="#" accept="image/jpeg, image/jpg" :auto-upload="false" list-type="picture-card" :file-list="rowActive.Image" :on-change="handleChange" :on-preview="handlePreview" :on-remove="handleRemove">
-					<i class="el-icon-plus" />
-					<div slot="tip" class="el-upload__tip">只能上傳jpg文件，且不超過500kb</div>
-				</el-upload>
-			</el-row>
-			<div slot="footer" class="dialog-footer">
-				<el-button @click="showImgUploadDialog = false; getList();">取消</el-button>
-				<el-button type="success" @click="submitImgUpload()">上傳</el-button>
-			</div>
 		</el-dialog>
 
-    <!-- Dialog: 建立坑洞案件(上傳修補後照片) -->
-    <el-dialog v-loading="loading" width="360px" title="照片上傳(修補後)" :visible.sync="showRestoredImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
+		<!-- Dialog: 建立坑洞案件(上傳修補後照片) -->
+		<el-dialog v-loading="loading" width="360px" title="照片上傳(修補後)" :visible.sync="showRestoredImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
 			<el-row type="flex" align="middle">
 				<el-upload class="img-upload" action="#" accept="image/jpeg, image/jpg" :auto-upload="false" list-type="picture-card" :file-list="rowActive.RestoredImage" :on-change="handleChangeRestored" :on-preview="handlePreviewRestored" :on-remove="handleRemoveRestored">
 					<i class="el-icon-plus" />
@@ -241,13 +227,11 @@
 
 <script>
 import moment from "moment";
-import { getTenderRound, getDTypeMap } from "@/api/type";
-import { getinspectFlowPotholeList, setInspectFlowList, trackingImgUpload, restoredImgUpload, importPotholeCase } from "@/api/app";
+import { getDTypeMap } from "@/api/type";
+import { getInspectFlowPotholeList, setInspectFlowList, trackingImgUpload, restoredImgUpload, importPotholeCase } from "@/api/app";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
-
-
 
 export default {
 	name: "inspectFinReport",
@@ -258,30 +242,30 @@ export default {
 			dialogMapVisible: true,
 			showImgViewer: false,
 			showImgUploadDialog: false,
-      showRestoredImgUploadDialog: false,
-      showImportCaseDialog: false,
+			showRestoredImgUploadDialog: false,
+			showImportCaseDialog: false,
 			screenWidth: window.innerWidth,
 			listQuery: {
 				filter: false,
 				filterType: 1,
-				filterStr: "",
-				tenderRound: null,
-        dateRange: [],
+				filterStr: '',
+				contractId: 1,
+				dateRange: [ moment().startOf("day").toDate(), moment().endOf("day").toDate() ],
 				pageCurrent: 1,
 				pageSize: 50
 			},
-      contractId: "",
-      zipCode: 0,
-      // reportTime: moment().format('YYYY-MM-DD'),
-      // distressType: 15,
-      distressLevel: "",
-      millingLength: 0,
-      millingWidth: 0,
-      millingArea: 0,
+			contractId: "",
+			zipCode: 0,
+			// reportTime: moment().format('YYYY-MM-DD'),
+			// distressType: 15,
+			distressLevel: "",
+			millingLength: 0,
+			millingWidth: 0,
+			millingArea: 0,
 			place: "",
-      direction: "",
-      lane: "",
-      imgUrl: "",
+			direction: "",
+			lane: "",
+			imgUrl: "",
 			total: 0,
 			list: [],
 			rowActive: {},
@@ -291,67 +275,36 @@ export default {
 			},
 			map: {},
 			options: {
-				tenderRoundMap: {},
 				DistressTypeFlat: {},
 				DistressLevel: {
 					1: "輕",
 					2: "中",
 					3: "重"
 				},
-        Direction: {
-          0: "無",
-          1: "順",
-          2: "逆"
-        },
-        ContractId: {
-          1: "第一分隊",
-          2: "第二分隊",
-          3: "第三分隊",
-          4: "第四分隊",
-          5: "第五分隊",
-          6: "第六分隊"
-        },
-        Lane: {
-          1: "第一車道",
-          2: "第二車道"
-        }
+				Direction: {
+					0: "無",
+					1: "順",
+					2: "逆"
+				},
+				ContractId: {
+					1: "第一分隊",
+					2: "第二分隊",
+					3: "第三分隊",
+					4: "第四分隊",
+					5: "第五分隊",
+					6: "第六分隊"
+				},
+				Lane: {
+					1: "第一車道",
+					2: "第二車道",
+					3: "第三車道",
+					4: "第四車道",
+					5: "第五車道"
+				}
 			}
 		}
 	},
-	created() {
-		getTenderRound().then(response => {
-			this.options.tenderRoundMap = response.data.list.reduce((acc, cur) => {
-				if(cur.tenderId <= 1001) return acc;
-
-				let roundId = `${cur.tenderId}${String(cur.round).padStart(3, '0')}`;
-				if(cur.zipCodeSpec != 0) roundId += `${cur.zipCodeSpec}`;
-
-				let name = `${cur.tenderName}`;
-				if(cur.title.length != 0) name += `_${cur.title}`;
-
-				acc[roundId] = { 
-					id: cur.id,
-					name, 
-					tenderId: cur.tenderId, 
-					isMain: cur.zipCodeSpec == 0,
-					zipCode: cur.zipCodeSpec == 0 ? cur.zipCode : cur.zipCodeSpec, 
-					roundStart: cur.roundStart, 
-					roundEnd: cur.roundEnd
-				};
-				return acc;
-			}, {});
-
-			// if(Object.keys(this.options.tenderRoundMap).length > 0) {
-			// 	if(!Object.keys(this.options.tenderRoundMap).includes(String(this.listQuery.tenderRound))) {
-			// 		this.listQuery.tenderRound = this.$route.query.surveyId = Number(Object.keys(this.options.tenderRoundMap)[0]);
-			// 	}
-			// }
-			if(Object.keys(this.options.tenderRoundMap).length == 0) {
-				this.options.tenderRoundMap = { "-1": { id: -1 }};
-				this.listQuery.tenderRound = -1;
-			}
-		});
-
+	created() { 
 		getDTypeMap().then(response => {
 			this.options.DistressTypeFlat = Object.values(response.data.distressTypeMap).reduce((acc, cur) => {
 				for (const key in cur) acc[key] = cur[key];
@@ -364,25 +317,24 @@ export default {
 	},
 	methods: {
 		getList() {
-			if(this.listQuery.tenderRound == null || this.listQuery.dateRange.length == 0) {
+			if(this.listQuery.contractId == null || this.listQuery.dateRange.length == 0) {
 				this.$message({
-					message: "請選擇合約和時間",
+					message: "請選擇分隊和時間",
 					type: "error",
 				});
 			} else {
 				this.loading = true;
 				this.list = [];
-				const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 
-				getinspectFlowPotholeList({
+				getInspectFlowPotholeList({
 					filter: this.listQuery.filter,
-					surveyId: tenderRound.id,
+					contractId: this.listQuery.contractId,
 					roadName: (this.listQuery.filterType == 1 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
 					caseId: (this.listQuery.filterType == 2 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize,
-          timeStart: this.listQuery.dateRange[0],
-          timeEnd: this.listQuery.dateRange[1]
+					timeStart: this.listQuery.dateRange[0],
+					timeEnd: this.listQuery.dateRange[1]
 				}).then(response => {
 					if (response.data.list.length == 0) {
 						this.$message({
@@ -398,9 +350,8 @@ export default {
 							l.MillingLength = Math.round(l.MillingLength * 100) / 100;
 							l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 							l.MillingArea = Math.round(l.MillingArea * 100) / 100;
-							l.RestoredImage = JSON.parse(l.RestoredImage).map(url => ({ name: url.split("/").slice(-1), status: "success", url }));
+							l.RestoredImage = { name: l.RestoredImage.split("/").slice(-1), status: "success", url: l.RestoredImage };
 						})
-            // console.log(this.list[0].RestoredImage[0].url);
 
 						this.$nextTick(() => document.documentElement.scrollTop = this.scrollTop);
 					}
@@ -409,73 +360,57 @@ export default {
 				}).catch(err => this.loading = false);
 			}
 		},
-    createCase() {
-      if (this.contractId.length == 0 || this.zipCode.length == 0 || this.distressLevel.length == 0 || 
-          this.millingLength == 0 || this.millingWidth == 0 || this.millingArea == 0 || 
-          this.place.length == 0 || this.direction.length == 0 || this.lane.length == 0) {
-        this.$message({
-          message: '請輸入對應的資料',
-          type: 'warning',
-        });
-      } else {
-        
-        navigator.geolocation.getCurrentPosition( async (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-
-          let uploadForm = new FormData();
-          uploadForm.append('contractId', parseInt(this.contractId));
-          uploadForm.append('zipCode', parseInt(this.zipCode));
-          uploadForm.append('distressLevel', parseInt(this.distressLevel));
-          uploadForm.append('millingLength', parseInt(this.millingLength));
-          uploadForm.append('millingWidth', parseInt(this.millingWidth));
-          uploadForm.append('millingArea', parseInt(this.millingArea));
-          uploadForm.append('place', this.place);
-          uploadForm.append('direction', parseInt(this.direction));
-          uploadForm.append('lane', parseInt(this.lane));
-          uploadForm.append('position', JSON.stringify({ lng: longitude, lat: latitude }));
-          uploadForm.append('img', await this.photoCompress(this.rowActive.ImgZoomIn[0].raw));
-          
-          importPotholeCase(uploadForm).then(response => {
-            if ( response.statusCode == 20000 ) {
-              this.$message({
-                message: "提交成功",
-                type: "success",
-              });
-              
-              // this.getList();
-            } 
-          }).catch(err => {
-            console.log(err);
-            // this.getList();
-          });
-        });
-        
-      }
-    },
-		setResult(row, flowState) {
-			this.$confirm(`確定${ flowState ? '標記' : '撤銷'} 缺失ID ${row.id} 完工？`, "確認", {
-				showClose: false,
-			}).then(() => {
+		createCase() {
+			if (this.contractId == 0 || (this.contractId == 1 && this.zipCode == 0) || this.distressLevel == 0 || 
+					this.millingLength == 0 || this.millingWidth == 0 || this.millingArea == 0 || 
+					this.place.length == 0 || this.direction.length == 0 || this.lane.length == 0
+				) {
+				this.$message({
+					message: '請輸入對應的資料',
+					type: 'warning',
+				});
+			} else {
 				this.loading = true;
+				
+				navigator.geolocation.getCurrentPosition( async (position) => {
+					const latitude = position.coords.latitude;
+					const longitude = position.coords.longitude;
 
-				setInspectFlowList( row.SerialNo, {
-					flowState
-				}).then(response => {
-					if ( response.statusCode == 20000 ) {
-						this.$message({
-							message: "提交成功",
-							type: "success",
-						});
-						this.getList();
-					} 
-				}).catch(err => {
-					console.log(err);
-					this.getList();
-				})
-			})
+					let uploadForm = new FormData();
+					uploadForm.append('contractId', parseInt(this.contractId));
+					uploadForm.append('zipCode', parseInt(this.zipCode));
+					uploadForm.append('distressLevel', parseInt(this.distressLevel));
+					uploadForm.append('millingLength', parseInt(this.millingLength));
+					uploadForm.append('millingWidth', parseInt(this.millingWidth));
+					uploadForm.append('millingArea', parseInt(this.millingArea));
+					uploadForm.append('place', this.place);
+					uploadForm.append('direction', parseInt(this.direction));
+					uploadForm.append('lane', parseInt(this.lane));
+					uploadForm.append('position', JSON.stringify({ lng: longitude, lat: latitude }));
+					uploadForm.append('img', await this.photoCompress(this.rowActive.ImgZoomIn.raw));
+					
+					importPotholeCase(uploadForm).then(response => {
+						if ( response.statusCode == 20000 ) {
+							this.$message({
+								message: "建立成功",
+								type: "success",
+							});
+							
+							this.showImportCaseDialog = false;
+							this.getList();
+						} else {
+							this.$message({
+								message: "建立失敗",
+								type: "error",
+							});
+							this.loading = false;
+						}		
+					}).catch(err => this.loading = false);
+				});
+				
+			}
 		},
-		showMapViewer(row, isPoint=false) {
+		showMapViewer(row) {
 			// console.log("showMap");
 			this.map.data.forEach(feature => this.map.data.remove(feature));
 			this.place = row.Place;
@@ -491,7 +426,7 @@ export default {
 			geoJSON_case.features.push({
 				"type": "Feature",
 				"properties": { },
-				"geometry": isPoint? row.CenterPt : row.Geometry
+				"geometry": row.CenterPt
 			});
 
 			// console.log(geoJSON_case);
@@ -504,93 +439,44 @@ export default {
 				fillColor: '#F56C6C',
 				fillOpacity: 0.8
 			});
-
-			const depth = row.Geometry.type == "MultiLineString" ? 1 : 2;
-			const paths = row.Geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
-			const bounds = new google.maps.LatLngBounds();
-			paths.forEach(position => bounds.extend(position));
-			this.map.fitBounds(bounds);
+			this.map.setCenter({ lat: Number(row.lat), lng: Number(row.lng) });
 
 			const zoom = this.map.getZoom();
 			this.map.setZoom(zoom < 21 ? 21 : zoom);
 		},
-		openImgUpload(row) {
-			this.showImgUploadDialog = true;
-			this.rowActive = JSON.parse(JSON.stringify(row));
-			this.imgObj = { add: [], remove: [] };
-
-			// NOTE: 強制照片上傳
-			// this.$nextTick(() => {
-			// 	console.log(this.$el.querySelectorAll(".img-upload"));
-			// 	this.$el.querySelectorAll(".img-upload").forEach(el => {
-			// 		console.log(el);
-			// 		el.children[1].children[1].setAttribute('capture', 'environment');
-			// 	});
-			// })
-		},
-    openRestoredImgUpload(row) {
+		openRestoredImgUpload(row) {
 			this.showRestoredImgUploadDialog = true;
 			this.rowActive = JSON.parse(JSON.stringify(row));
-			this.imgObj = { add: [], remove: [] };
-
 		},
-    // 建立案件圖片
-    handleChangeNew(file, fileList) {
+		// 建立案件圖片
+		handleChangeNew(file, fileList) {
 			// console.log(file, fileList);
-      // if(fileList.length > 1) fileList.shift();
-			if(file.status == 'ready') this.imgObj.add.push(file);
-			this.rowActive.ImgZoomIn = fileList;
-			// this.imgPreviewUrls = fileList.map(file => file.url);
+			this.rowActive.ImgZoomIn = file;
 		},
 		handlePreviewNew(file) {
 			// console.log(file);
-			this.imgPreviewUrls = this.rowActive.ImgZoomIn.map(file => file.url)
+			this.imgPreviewUrls = this.rowActive.ImgZoomIn.url;
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
 		handleRemoveNew(file, fileList) {
 			// console.log(file, fileList);
-			if(file.status == 'success') this.imgObj.remove.push(file);
-			else if(file.status == 'ready') this.imgObj.add = this.imgObj.add.filter(img => img.uid != file.uid);
-			this.rowActive.ImgZoomIn = fileList;
+			this.rowActive.ImgZoomIn = fileList[0];
 		},
-    // 缺失照片
-		handleChange(file, fileList) {
+		// 修復後照片
+		handleChangeRestored(file, fileList) {
 			// console.log(file, fileList);
-			if(file.status == 'ready') this.imgObj.add.push(file);
-			this.rowActive.Image = fileList;
-			// this.imgPreviewUrls = fileList.map(file => file.url);
-		},
-		handlePreview(file) {
-			// console.log(file);
-			this.imgPreviewUrls = this.rowActive.Image.map(file => file.url)
-			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
-			this.showImgViewer = true;
-		},
-		handleRemove(file, fileList) {
-			// console.log(file, fileList);
-			if(file.status == 'success') this.imgObj.remove.push(file);
-			else if(file.status == 'ready') this.imgObj.add = this.imgObj.add.filter(img => img.uid != file.uid);
-			this.rowActive.Image = fileList;
-		},
-    // 修復後照片
-    handleChangeRestored(file, fileList) {
-			// console.log(file, fileList);
-			if(file.status == 'ready') this.imgObj.add.push(file);
-			this.rowActive.RestoredImage = fileList;
-			// this.imgPreviewUrls = fileList.map(file => file.url);
+			this.rowActive.RestoredImage = file;
 		},
 		handlePreviewRestored(file) {
 			// console.log(file);
-			this.imgPreviewUrls = this.rowActive.RestoredImage.map(file => file.url)
+			this.imgPreviewUrls = this.rowActive.RestoredImage.url;
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
 		handleRemoveRestored(file, fileList) {
 			// console.log(file, fileList);
-			if(file.status == 'success') this.imgObj.remove.push(file);
-			else if(file.status == 'ready') this.imgObj.add = this.imgObj.add.filter(img => img.uid != file.uid);
-			this.rowActive.RestoredImage = fileList;
+			this.rowActive.RestoredImage = fileList[0];
 		},
 		photoCompress(file) {
 			return new Promise(resolve => {
@@ -624,41 +510,12 @@ export default {
 				}
 			})
 		},
-		async submitImgUpload() {
+		async submitRestoredImgUpload() {
 			this.loading = true;
 
 			let uploadForm = new FormData();
-			uploadForm.append('serialNo', this.rowActive.SerialNo);
-
-			for(const file of this.imgObj.add.filter(f => (f.raw))) uploadForm.append('fileAddList', await this.photoCompress(file.raw));
-			for(const file of this.imgObj.remove.filter(f => (f.url))) uploadForm.append('fileRemoveList', file.url);
-
-			await trackingImgUpload(uploadForm).then(response => {
-				if ( response.statusCode == 20000 ) {
-					this.$message({
-						message: "更新成功",
-						type: "success",
-					});
-					this.showImgUploadDialog = false;
-					// this.rowActive[`${key}Img`] = response.imgList.map(url => ({ name: url.split("/").slice(-1), status: "success", url }));
-					this.getList();
-				} else {
-					this.$message({
-						message: "更新失敗",
-						type: "error",
-					});
-				}
-				this.loading = false;
-			}).catch(err => this.loading = false);	
-		},
-    async submitRestoredImgUpload() {
-			this.loading = true;
-
-			let uploadForm = new FormData();
-			uploadForm.append('serialNo', this.rowActive.SerialNo);
-
-			for(const file of this.imgObj.add.filter(f => (f.raw))) uploadForm.append('fileAddList', await this.photoCompress(file.raw));
-			for(const file of this.imgObj.remove.filter(f => (f.url))) uploadForm.append('fileRemoveList', file.url);
+			uploadForm.append('serialNo', this.rowActive.id);
+			uploadForm.append('img', await this.photoCompress(this.rowActive.RestoredImage.raw));
 
 			await restoredImgUpload(uploadForm).then(response => {
 				if ( response.statusCode == 20000 ) {
@@ -667,15 +524,14 @@ export default {
 						type: "success",
 					});
 					this.showRestoredImgUploadDialog = false;
-					// this.rowActive[`${key}Img`] = response.imgList.map(url => ({ name: url.split("/").slice(-1), status: "success", url }));
 					this.getList();
 				} else {
 					this.$message({
 						message: "更新失敗",
 						type: "error",
 					});
+					this.loading = false;
 				}
-				this.loading = false;
 			}).catch(err => this.loading = false);	
 		},
 		formatTime(time) {
@@ -718,6 +574,11 @@ export default {
 			.case-title
 				color: #444
 				margin-bottom: 2px
+		.image-slot
+			position: absolute
+			left: 50%
+			top: 50%
+			transform: translate(-50%, -50%)
 		.el-divider
 			margin: 8px 0
 		.el-button
