@@ -916,14 +916,25 @@ export default {
 			this.dataLayer.case.addGeoJson(geoJSON);
 			this.dataLayer.case.setStyle(feature => {
 				const caseName = feature.getProperty("caseName");
+				const type = feature.getProperty("type");
 				const caseFilter = this.options.caseMap.filter(caseSpec => caseSpec.caseName.includes(caseName));
 
-				return { 
+				const styleObj = {
 					icon: { 
 						url: caseFilter.length == 0 ? '/assets/icon/icon_blue.png' : caseFilter[0].icon,
 						scaledSize: new google.maps.Size(30, 30),
 					}
 				};
+				
+				if(type) {
+					styleObj.label = { 
+						text: type, 
+						color: type == 1999 ? '#DC143C' : '#67C23A',
+						fontWeight: 'bold'
+					};
+				}
+
+				return styleObj;
 			})
 		},
 		caseFilter() { 
