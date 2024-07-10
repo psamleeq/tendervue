@@ -203,7 +203,6 @@ export default {
 							item.imgfile = item.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
 						}
 						item.imgfile = /^https:\/\//.test(item.imgfile) ? item.imgfile : `http://center.bim-group.com${item.imgfile}`;
-						console.log(item.imgfile);
 					});
 				}
 				this.loading = false;
