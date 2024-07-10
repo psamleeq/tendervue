@@ -72,6 +72,16 @@ const carRouter = {
 			}
 		},
 		{
+			path: 'potholeReport',
+			component: () => import('@/views/car/potholeReport'),
+			name: 'potholeReport',
+			meta: {
+				title: '坑洞回報',
+				roles: ['car.route'],
+				vTag: 'alpha'
+			}
+		},
+		{
 			path: 'monitor',
 			component: () => import('@/views/car/monitor'),
 			name: 'carMonitor',
@@ -79,7 +89,8 @@ const carRouter = {
 				title: '巡視影像',
 				roles: ['car.viewer']
 			}
-		}
+		},
+
 	]
 }
 export default carRouter
