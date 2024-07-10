@@ -34,12 +34,19 @@
 				:sortable="value.sortable"
 				:width="value.width"
 			>
+				<template slot-scope="{ row, column }">
+					<span v-if="column.property == 'CaseNo'">
+						<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
+						<span v-else> - </span>
+					</span>
+					<span v-else-if="column.property == 'casename'">
+						<div>{{ row.casename }}</div>
+						<el-button class="btn-action" type="info" icon="el-icon-search" plain size="mini" round @click="showMapViewer(row)" />
+					</span>
+					<span v-else>{{ row[column.property] || "-" }}</span>
+				</template>
 			</el-table-column>
-			<el-table-column
-				prop="imgfile"
-				label="圖片"
-				align="center"
-			>
+			<el-table-column prop="imgfile" label="圖片" align="center">
 				<template slot-scope="scope">
 					<div class="demo-image__preview">
 						<el-image
@@ -59,7 +66,11 @@
 		</el-table>
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
-		
+
+		<!-- map -->
+		<el-dialog class="dialog-map" :visible.sync="dialogMapVisible" width="600px">
+			<map-viewer :map.sync="map"/>
+		</el-dialog>
 	</div>
 </template>
 
@@ -69,104 +80,92 @@ import { getPothole } from "@/api/car";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import commonMixin from '@/mixins/common';
+import MapViewer from "@/components/MapViewer";
 
 export default {
-	mixins: [commonMixin],
-	name: "caseListLog",
-	components: { TimePicker, Pagination },
+	mixins: [ commonMixin ],
+	name: "pothole",
+	components: { TimePicker, Pagination, MapViewer },
 	data() {
-	return {
-		loading: false,
-		dialogMapVisible: true,
-		csvVisible: false,
-		csvResultVisible: false,
-		file: null,
-		timeTabId: 1,
-		total: 0,
-		imgUrl: [],
-		successMap: [],
-		failMap: [],
-		listQuery: {
-			contractId: 1,
-			insType: 1,
-			dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
-			pageCurrent: 1,
-			pageSize: 50
-		},
-		area:{
-			0: "全部",
-			100: '中正區',
-			103: '大同區',
-			104: '中山區',
-			105: '松山區',
-			106: '大安區',
-			108: '萬華區',
-			110: '信義區',
-			111: '士林區',
-			112: '北投區',
-			114: '內湖區',
-			115: '南港區',
-			116: '文山區',
-			999: '橋涵區'
-		},
-		team: {
-			1: '第一分隊',
-			2: '第二分隊',
-			3: '第三分隊',
-			4: '第四分隊',
-			5: '第五分隊',
-			6: '第六分隊'
-		},
-		distressLevelMap: {
-			1: '輕',
-			2: '中',
-			3: '重'
-		},
-		list:[],
-		rowActive: {},
-		headers: {
-			serialno: {
-				name: '缺失Id',
-				sortable: false,
+		return {
+			loading: false,
+			dialogMapVisible: true,
+			csvVisible: false,
+			csvResultVisible: false,
+			map: {},
+			timeTabId: 1,
+			total: 0,
+			imgUrl: [],
+			successMap: [],
+			failMap: [],
+			listQuery: {
+				contractId: 1,
+				insType: 1,
+				dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
+				pageCurrent: 1,
+				pageSize: 50
 			},
-			broketype: {
-				name: '缺失程度',
-				sortable: false,
+			team: {
+				1: '第一分隊',
+				2: '第二分隊',
+				3: '第三分隊',
+				4: '第四分隊',
+				5: '第五分隊',
+				6: '第六分隊'
 			},
-			elength: {
-				name: '預估長',
-				sortable: false,
+			distressLevelMap: {
+				1: '輕',
+				2: '中',
+				3: '重'
 			},
-			blength: {
-				name: '預估寬',
-				sortable: false,
+			list:[],
+			rowActive: {},
+			headers: {
+				serialno: {
+					name: '缺失Id',
+					sortable: false,
+				},
+				CaseNo: {
+					name: '新工處案號',
+					sortable: false,
+				},
+				broketype: {
+					name: '缺失程度',
+					sortable: false,
+				},
+				elength: {
+					name: '預估長',
+					sortable: false,
+				},
+				blength: {
+					name: '預估寬',
+					sortable: false,
+				},
+				reportTime: {
+					name: '創建時間',
+					sortable: false,
+				},
+				casename: {
+					name: '地址',
+					sortable: false,
+				},
 			},
-			reportTime: {
-				name: '創建時間',
-				sortable: false,
-			},
-			casename: {
-				name: '地址',
-				sortable: false,
-			},
-		},
-		dialogVisible: false,
-		InputNotes:'',
-		options: {
-			tenderRoundMap: {},
-			districtMap: {},
-			districtOrder: [],
-		}
-	};
+			dialogVisible: false,
+			InputNotes:'',
+			options: {
+				tenderRoundMap: {},
+				districtMap: {},
+				districtOrder: [],
+			}
+		};
 	},
 	computed: {},
 	watch: {},
 	created() {},
-	mounted() {},
+	mounted() {
+		this.dialogMapVisible = false;
+	},
 	methods: {
-		formatTime(time) {
-			return time ? moment(time).format("YYYY/MM/DD") : "";
-		},
 		getList() {
 			this.loading = true;
 			const [ timeStart, timeEnd ] = this.listQuery.dateRange;
@@ -181,28 +180,72 @@ export default {
 				pageCurrent: this.listQuery.pageCurrent,
 				pageSize: this.listQuery.pageSize,
 			}).then(response => {
-				this.total = response.data.total;
-				this.list = response.data.list;
-				this.list.map(item => {
-					item.broketype = this.distressLevelMap[item.broketype];
-					item.reportTime = this.formatTime(item.reportTime);
+				if (response.data.list.length == 0) {
+					this.$message({
+						message: "查無資料",
+						type: "error",
+					});
+					this.total = 0;
+				} else {
+					this.total = response.data.total;
+					this.list = response.data.list;
+					this.list.map(item => {
+						item.broketype = this.distressLevelMap[item.broketype];
+						item.reportTime = this.formatTime(item.reportTime);
 
-					const codeArr = item.caseType.match(/&#(\d+);/g) || [];
-					if(codeArr.length > 0) {
-						item.caseType = String.fromCharCode(...codeArr.map(l => Number(l.replace(/[&#;]/g, ''))));
-					}
+						const codeArr = item.caseType.match(/&#(\d+);/g) || [];
+						if(codeArr.length > 0) {
+							item.caseType = String.fromCharCode(...codeArr.map(l => Number(l.replace(/[&#;]/g, ''))));
+						}
 
-					const codeArr2 = item.imgfile.match(/&#(\d+);/g) || [];
-					for(const code of codeArr2) {
-						item.imgfile = item.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
-					}
-					item.imgfile = /^https:\/\//.test(item.imgfile) ? item.imgfile : `http://center.bim-group.com${item.imgfile}`;
-					console.log(item.imgfile);
-				});
+						const codeArr2 = item.imgfile.match(/&#(\d+);/g) || [];
+						for(const code of codeArr2) {
+							item.imgfile = item.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
+						}
+						item.imgfile = /^https:\/\//.test(item.imgfile) ? item.imgfile : `http://center.bim-group.com${item.imgfile}`;
+						console.log(item.imgfile);
+					});
+				}
 				this.loading = false;
 			}).catch(err => { this.loading = false });
-			
 		},
+		showMapViewer(row) {
+			// console.log("showMap");
+			this.map.data.forEach(feature => this.map.data.remove(feature));
+			this.dialogMapVisible = true;
+
+			let geoJSON_case = { 
+				"type": "FeatureCollection",
+				"name": "polyJSON",
+				"features": []
+			};
+
+			geoJSON_case.features.push({
+				"type": "Feature",
+				"properties": { },
+				"geometry": {
+					"type": "Point",
+					"coordinates": [ Number(row.yy), Number(row.xx) ]
+				}
+			});
+
+			this.map.data.addGeoJson(geoJSON_case);
+			this.map.data.setStyle({ 
+				strokeColor: '#F56C6C',
+				strokeWeight: 3,
+				strokeOpacity: 0.9,
+				fillColor: '#F56C6C',
+				fillOpacity: 0.8
+			});
+
+			this.map.setCenter({ lat: Number(row.xx), lng: Number(row.yy) });
+
+			const zoom = this.map.getZoom();
+			this.map.setZoom(zoom < 21 ? 21 : zoom);
+		},
+		formatTime(time) {
+			return time ? moment(time).format("YYYY/MM/DD") : "";
+		}
 	}
 };
 </script>
