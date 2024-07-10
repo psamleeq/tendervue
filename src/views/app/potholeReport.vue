@@ -11,7 +11,7 @@
 				<el-option v-for="(text, id) in options.ContractId" :key="`contractId${id}`" :label="text" :value="Number(id)" />
 			</el-select>
 
-			<div class="filter-item">
+			<!-- <div class="filter-item">
 				<div class="el-input el-input--mini el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<el-select v-model.number="listQuery.filterType" popper-class="type-select tender" style="width: 80px">
@@ -23,20 +23,16 @@
 						<el-button slot="append" type="primary" size="mini" icon="el-icon-search" />
 					</el-input>
 				</div>
-			</div>
+			</div> -->
 
-			<div class="filter-item">
-				<div class="el-input el-input--mini el-input-group el-input-group--prepend">
-					<el-date-picker
-						v-model="listQuery.dateRange"
-						type="datetimerange"
-						range-separator="至"
-						start-placeholder="開始日期"
-						end-placeholder="結束日期"
-						align="right">
-					</el-date-picker>
-				</div>
-			</div>
+			<el-date-picker
+				v-model="listQuery.dateRange"
+				type="datetimerange"
+				class="filter-item"
+				range-separator="至"
+				start-placeholder="開始日期"
+				end-placeholder="結束日期"
+				align="right" />
 
 			<div class="filter-item">
 				<el-button type="primary" @click="getList()">搜尋</el-button>
@@ -557,12 +553,6 @@ export default {
 	.filter-container
 		.filter-item
 			margin-right: 5px
-			.el-select.tender-select
-				width: 250px
-				max-width: 80vw
-				.el-input__inner
-					padding-left: 10px
-					text-align: left
 	.case-list
 		margin-bottom: 0px
 		.el-row

@@ -36,8 +36,16 @@
 			>
 				<template slot-scope="{ row, column }">
 					<span v-if="column.property == 'CaseNo'">
-						<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
-						<span v-else> - </span>
+						<span v-if="row.edit">
+							<el-input  v-model="row.CaseNo" style="width: 80%" />
+							<el-button type="text" @click="editCaseNo(row)"><i class="el-icon-check" style="color: #67C23A"/></el-button>
+							<el-button type="text" style="margin-left: 5px" @click="row.edit=false"><i class="el-icon-close" style="color: #F56C6C" /></el-button> 
+						</span>
+						<span v-else>
+							<el-link v-if="row[column.property]" :href="`https://road.nco.taipei/RoadMis2/web/ViewDefectAllData.aspx?RDT_ID=${row[column.property]}`" target="_blank">{{ row[column.property] }}</el-link>
+							<span v-else> - </span>
+							<el-button v-if="insTypeNow == 1" type="text" style="margin-left: 10px" size="mini" @click="row.edit = true"><i class="el-icon-edit" /></el-button>
+						</span>
 					</span>
 					<span v-else-if="column.property == 'casename'">
 						<div>{{ row.casename }}</div>
@@ -76,7 +84,7 @@
 
 <script>
 import moment from "moment";
-import { getPothole } from "@/api/car";
+import { getPothole, setPotholeCN } from "@/api/car";
 import TimePicker from '@/components/TimePicker';
 import Pagination from "@/components/Pagination";
 import commonMixin from '@/mixins/common';
@@ -105,6 +113,7 @@ export default {
 				pageCurrent: 1,
 				pageSize: 50
 			},
+			insTypeNow: 0,
 			team: {
 				1: '第一分隊',
 				2: '第二分隊',
@@ -168,6 +177,7 @@ export default {
 	methods: {
 		getList() {
 			this.loading = true;
+			this.list = [];
 			const [ timeStart, timeEnd ] = this.listQuery.dateRange;
 			const formattedTimeStart = this.formatTime(timeStart);
 			const formattedTimeEnd = this.formatTime(timeEnd);
@@ -187,9 +197,10 @@ export default {
 					});
 					this.total = 0;
 				} else {
+					this.insTypeNow = this.listQuery.insType;
 					this.total = response.data.total;
 					this.list = response.data.list;
-					this.list.map(item => {
+					this.list.forEach(item => {
 						item.broketype = this.distressLevelMap[item.broketype];
 						item.reportTime = this.formatTime(item.reportTime);
 
@@ -203,10 +214,23 @@ export default {
 							item.imgfile = item.imgfile.replace(code, String.fromCharCode(Number(code.replace(/[&#;]/g, ''))));
 						}
 						item.imgfile = /^https:\/\//.test(item.imgfile) ? item.imgfile : `http://center.bim-group.com${item.imgfile}`;
+
+						this.$set(item, "edit", false);
 					});
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false });
+		},
+		editCaseNo(row){
+			setPotholeCN(row.serialno, {
+				caseNo: row.CaseNo
+			}).then(response => {
+				this.$message({
+					type: 'success',
+					message: `修改成功!`
+				})
+				this.getList();
+			}).catch(err => this.loading = false);
 		},
 		showMapViewer(row) {
 			// console.log("showMap");

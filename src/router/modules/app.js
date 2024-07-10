@@ -11,13 +11,21 @@ const appRouter = {
 		roles: ['app']
 	},
 	children: [
-		
 		{
 			path: 'inspectFinReport',
 			component: () => import('@/views/app/inspectFinReport'),
 			name: 'inspectFinReport',
 			meta: {
 				title: '巡查回報',
+				roles: ['app.inspector']
+			}
+		},
+		{
+			path: 'potholeReport',
+			component: () => import('@/views/app/potholeReport'),
+			name: 'potholeReport',
+			meta: {
+				title: '坑洞回報',
 				roles: ['app.inspector']
 			}
 		},

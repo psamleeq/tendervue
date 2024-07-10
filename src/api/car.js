@@ -105,3 +105,11 @@ export function getPothole(query) {
 		params: query
 	})
 }
+
+export function setPotholeCN(id, data) {
+	return request({
+		url: `/car/pothole/${id}`,
+		method: 'put',
+		data
+	})
+}
