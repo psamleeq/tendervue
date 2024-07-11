@@ -11,7 +11,7 @@
 				<el-option v-for="(text, id) in options.ContractId" :key="`contractId${id}`" :label="text" :value="Number(id)" />
 			</el-select>
 
-			<!-- <div class="filter-item">
+			<div class="filter-item">
 				<div class="el-input el-input--mini el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<el-select v-model.number="listQuery.filterType" popper-class="type-select tender" style="width: 80px">
@@ -23,7 +23,7 @@
 						<el-button slot="append" type="primary" size="mini" icon="el-icon-search" />
 					</el-input>
 				</div>
-			</div> -->
+			</div>
 
 			<el-date-picker
 				v-model="listQuery.dateRange"
@@ -224,7 +224,7 @@
 <script>
 import moment from "moment";
 import { getDTypeMap } from "@/api/type";
-import { getInspectFlowPotholeList, setInspectFlowList, trackingImgUpload, restoredImgUpload, importPotholeCase } from "@/api/app";
+import { getInspectFlowPotholeList, restoredImgUpload, importPotholeCase } from "@/api/app";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -325,7 +325,7 @@ export default {
 				getInspectFlowPotholeList({
 					filter: this.listQuery.filter,
 					contractId: this.listQuery.contractId,
-					roadName: (this.listQuery.filterType == 1 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
+					place: (this.listQuery.filterType == 1 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
 					caseId: (this.listQuery.filterType == 2 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize,
@@ -445,7 +445,7 @@ export default {
 			this.rowActive = JSON.parse(JSON.stringify(row));
 		},
 		// 建立案件圖片
-		handleChangeNew(file, fileList) {
+		handleChangeNew(file) {
 			// console.log(file, fileList);
 			this.rowActive.ImgZoomIn = file;
 		},
@@ -455,12 +455,12 @@ export default {
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
-		handleRemoveNew(file, fileList) {
+		handleRemoveNew(fileList) {
 			// console.log(file, fileList);
 			this.rowActive.ImgZoomIn = fileList[0];
 		},
 		// 修復後照片
-		handleChangeRestored(file, fileList) {
+		handleChangeRestored(file) {
 			// console.log(file, fileList);
 			this.rowActive.RestoredImage = file;
 		},
@@ -470,7 +470,7 @@ export default {
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
-		handleRemoveRestored(file, fileList) {
+		handleRemoveRestored(fileList) {
 			// console.log(file, fileList);
 			this.rowActive.RestoredImage = fileList[0];
 		},
@@ -495,7 +495,7 @@ export default {
 						const arr = dataUrl.split(',');
 						const mime = arr[0].match(/:(.*?);/)[1];
 						const byteStr = atob(arr[1], 'base64');
-						console.log(byteStr);
+						// console.log(byteStr);
 						let uint8arr = new Uint8Array(byteStr.length);
 						for(let i = 0; i <= byteStr.length; i++) uint8arr[i] = byteStr.charCodeAt(i);
 						const newFile = new File( [uint8arr], file.name, { type: mime });
