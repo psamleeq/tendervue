@@ -1,5 +1,5 @@
 <template>
-	<div class="app-container inspect-fin-report" v-loading="loading">
+	<div class="app-container pothole-report" v-loading="loading">
 		<h2>坑洞回報
 			<el-checkbox-button v-model="listQuery.filter" @change="getList">
 				<span v-if="listQuery.filter">已完工</span>
@@ -175,7 +175,7 @@
 					accept="image/jpeg, image/jpg" 
 					:auto-upload="false" 
 					list-type="picture-card" 
-					:file-list="rowActive.ImgZoomIn" 
+					:file-list="[ rowActive.ImgZoomIn ]" 
 					:limit = "1"
 					:on-change="handleChangeNew" 
 					:on-preview="handlePreviewNew" 
@@ -193,7 +193,7 @@
 		<!-- Dialog: 建立坑洞案件(上傳修補後照片) -->
 		<el-dialog v-loading="loading" width="360px" title="照片上傳(修補後)" :visible.sync="showRestoredImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
 			<el-row type="flex" align="middle">
-				<el-upload class="img-upload" action="#" accept="image/jpeg, image/jpg" :auto-upload="false" list-type="picture-card" :file-list="rowActive.RestoredImage" :on-change="handleChangeRestored" :on-preview="handlePreviewRestored" :on-remove="handleRemoveRestored">
+				<el-upload class="img-upload" action="#" accept="image/jpeg, image/jpg" :auto-upload="false" list-type="picture-card" :file-list="[ rowActive.RestoredImage ]" :on-change="handleChangeRestored" :on-preview="handlePreviewRestored" :on-remove="handleRemoveRestored">
 					<i class="el-icon-plus" />
 					<div slot="tip" class="el-upload__tip">只能上傳jpg文件，且不超過500kb</div>
 				</el-upload>
@@ -230,7 +230,7 @@ import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 export default {
-	name: "inspectFinReport",
+	name: "potholeReport",
 	components: { Pagination, MapViewer, ElImageViewer },
 	data() {
 		return {
@@ -346,7 +346,8 @@ export default {
 							l.MillingLength = Math.round(l.MillingLength * 100) / 100;
 							l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 							l.MillingArea = Math.round(l.MillingArea * 100) / 100;
-							l.RestoredImage = { name: l.RestoredImage.split("/").slice(-1), status: "success", url: l.RestoredImage };
+							l.ImgZoomIn = l.ImgZoomIn && l.ImgZoomIn.length > 0 ? { name: l.ImgZoomIn.split("/").slice(-1), status: "success", url: l.RestoredImage } : null;
+							l.RestoredImage = l.RestoredImage && l.RestoredImage.length > 0 ? { name: l.RestoredImage.split("/").slice(-1), status: "success", url: l.RestoredImage } : null;
 						})
 
 						this.$nextTick(() => document.documentElement.scrollTop = this.scrollTop);
@@ -538,7 +539,7 @@ export default {
 </script>
 
 <style lang="sass">
-.inspect-fin-report
+.pothole-report
 	margin-bottom: 16px
 	.el-checkbox-button
 		margin-right: 5px
