@@ -42,10 +42,10 @@
 		<div v-for="caseSpec in list" :key="caseSpec.id" class="case-list">
 			<el-row :gutter="10" type="flex" align="center" justify="center">
 				<el-col :span="8">
-					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.ImgZoomIn" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.RestoredImage.url]" fit="cover" />
+					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.ImgZoomIn" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.RestoredImage]" fit="cover" />
 				</el-col>
 				<el-col :span="8">
-					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.RestoredImage.url" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.RestoredImage.url]" fit="cover">
+					<el-image class="img-preview" style="width: 100%; height: 100%; cursor: pointer" :src="caseSpec.RestoredImage" :preview-src-list="[caseSpec.ImgZoomIn, caseSpec.RestoredImage]" fit="cover">
 						<div slot="error" class="image-slot">
 							<span>尚未上傳</span>
 						</div>
@@ -156,13 +156,12 @@
 				</el-form-item>
 				<el-form-item label="圖片上傳">
 					<el-upload 
+						:class="[ 'img-upload', { hide: showUpload } ]"
 						style="margin-top: 10px;"
-						class="img-upload"
 						action="#" 
 						accept="image/jpeg, image/jpg" 
 						:auto-upload="false" 
 						list-type="picture-card"
-						:file-list="[ rowActive.ImgZoomIn ]"
 						:limit = "1"
 						:on-change="handleChangeNew" 
 						:on-preview="handlePreviewNew" 
@@ -182,7 +181,7 @@
 		<!-- Dialog: 建立坑洞案件(上傳修補後照片) -->
 		<el-dialog v-loading="loading" width="300px" title="照片上傳(修補後)" :visible.sync="showRestoredImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
 			<el-row type="flex" align="middle">
-				<el-upload class="img-upload" action="#" accept="image/jpeg, image/jpg" :auto-upload="false" list-type="picture-card" :file-list="[ rowActive.RestoredImage ]" :on-change="handleChangeRestored" :on-preview="handlePreviewRestored" :on-remove="handleRemoveRestored">
+				<el-upload :class="[ 'img-upload', { hide: showUpload } ]" action="#" accept="image/jpeg, image/jpg" :auto-upload="false" list-type="picture-card" :limit = "1" :on-change="handleChangeRestored" :on-preview="handlePreviewRestored" :on-remove="handleRemoveRestored">
 					<i class="el-icon-plus" />
 					<div slot="tip" class="el-upload__tip">只能上傳jpg文件，且不超過500kb</div>
 				</el-upload>
@@ -226,9 +225,9 @@ export default {
 			loading: false,
 			dialogMapVisible: true,
 			showImgViewer: false,
-			showImgUploadDialog: false,
 			showRestoredImgUploadDialog: false,
 			showImportCaseDialog: false,
+			showUpload: false,
 			screenWidth: window.innerWidth,
 			listQuery: {
 				filter: false,
@@ -335,8 +334,8 @@ export default {
 							l.MillingLength = Math.round(l.MillingLength * 100) / 100;
 							l.MillingWidth = Math.round(l.MillingWidth * 100) / 100;
 							l.MillingArea = Math.round(l.MillingArea * 100) / 100;
-							l.ImgZoomIn = l.ImgZoomIn && l.ImgZoomIn.length > 0 ? { name: l.ImgZoomIn.split("/").slice(-1), status: "success", url: l.RestoredImage } : null;
-							l.RestoredImage = l.RestoredImage && l.RestoredImage.length > 0 ? { name: l.RestoredImage.split("/").slice(-1), status: "success", url: l.RestoredImage } : null;
+							// l.ImgZoomIn = { name: l.ImgZoomIn && l.ImgZoomIn.length > 0 ? l.ImgZoomIn.split("/").slice(-1) : '', status: "success", url: l.RestoredImage };
+							// l.RestoredImage = { name: l.RestoredImage && l.RestoredImage.length > 0 ? l.RestoredImage.split("/").slice(-1) : '', status: "success", url: l.RestoredImage };
 						})
 
 						this.$nextTick(() => document.documentElement.scrollTop = this.scrollTop);
@@ -437,6 +436,7 @@ export default {
 		// 建立案件圖片
 		handleChangeNew(file) {
 			// console.log(file, fileList);
+			this.showUpload = true;
 			this.rowActive.ImgZoomIn = file;
 		},
 		handlePreviewNew(file) {
@@ -445,13 +445,14 @@ export default {
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
-		handleRemoveNew(fileList) {
-			// console.log(file, fileList);
-			this.rowActive.ImgZoomIn = fileList[0];
+		handleRemoveNew() {
+			this.rowActive.ImgZoomIn = '';
+			this.showUpload = false;
 		},
 		// 修復後照片
 		handleChangeRestored(file) {
 			// console.log(file, fileList);
+			this.showUpload = true;
 			this.rowActive.RestoredImage = file;
 		},
 		handlePreviewRestored(file) {
@@ -460,9 +461,10 @@ export default {
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
-		handleRemoveRestored(fileList) {
+		handleRemoveRestored() {
 			// console.log(file, fileList);
-			this.rowActive.RestoredImage = fileList[0];
+			this.rowActive.RestoredImage = '';
+			this.showUpload = false;
 		},
 		photoCompress(file) {
 			return new Promise(resolve => {
@@ -569,6 +571,11 @@ export default {
 		// z-index: 3000 !important
 		.el-icon-circle-close
 			color: white
-	.el-upload-list__item 
-		transition-duration: 0.02s !important
+	.img-upload
+		.el-upload--picture-card
+			display: inline-block
+			.el-upload-list__item
+				transition-duration: 0.02s !important
+		&.hide .el-upload--picture-card
+			display: none
 </style>
