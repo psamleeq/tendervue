@@ -11,7 +11,7 @@
 				<el-option v-for="(text, id) in options.ContractId" :key="`contractId${id}`" :label="text" :value="Number(id)" />
 			</el-select>
 
-			<!-- <div class="filter-item">
+			<div class="filter-item">
 				<div class="el-input el-input--mini el-input-group el-input-group--prepend">
 					<div class="el-input-group__prepend">
 						<el-select v-model.number="listQuery.filterType" popper-class="type-select tender" style="width: 80px">
@@ -23,7 +23,7 @@
 						<el-button slot="append" type="primary" size="mini" icon="el-icon-search" />
 					</el-input>
 				</div>
-			</div> -->
+			</div>
 
 			<el-date-picker
 				v-model="listQuery.dateRange"
@@ -95,95 +95,84 @@
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
 		<el-dialog v-loading="loading" width="360px" title="建立專案" :visible.sync="showImportCaseDialog">
-			<div>
-				<span>分隊</span>
-				<el-select v-model="contractId" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
-					<el-option 
-						v-for="(val, type) in options.ContractId" 
-						:key="type" 
-						:label="val" 
-						:value="type">
-					</el-option>
-				</el-select>
-			</div>
-			<div v-if="contractId == 1" style="margin-top: 20px;">
-				<span>區域</span>
-				<el-select v-model="zipCode" style="margin-left: 37px; width: 200px;">
-					<el-option label="中山區" value="104" />
-					<el-option label="大同區" value="103" />
-				</el-select>
-			</div>
-			<!-- <div style="margin-top: 20px;">
-				<span>通報日期</span>
-				<el-input style="margin-left: 10px; width: 200px;" v-model="reportTime" :disabled="true"></el-input>
-			</div> -->
-			<div style="margin-top: 20px;">
-				<span>缺失程度</span>
-				<el-select v-model="distressLevel" placeholder="請選擇" style="margin-left: 10px; width: 200px;">
-					<el-option 
-						v-for="(val, type) in options.DistressLevel" 
-						:key="type" 
-						:label="val" 
-						:value="type">
-					</el-option>
-				</el-select>
-			</div>
-			<div style="margin-top: 20px;">
-				<span>預估長度</span>
-				<el-input style="margin-left: 10px; width: 200px;" v-model="millingLength"></el-input>
-			</div>
-			<div style="margin-top: 20px;">
-				<span>預估寬度</span>
-				<el-input style="margin-left: 10px; width: 200px;" v-model="millingWidth"></el-input>
-			</div>
-			<div style="margin-top: 20px;">
-				<span>預估面積</span>
-				<el-input style="margin-left: 10px; width: 200px;" v-model="millingArea"></el-input>
-			</div>
-			<div style="margin-top: 20px;">
-				<span>地址</span>
-				<el-input style="margin-left: 37px; width: 200px;" v-model="place"></el-input>
-			</div>
-			<div style="margin-top: 20px;">
-				<span>路向</span>
-				<el-select v-model="direction" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
-					<el-option 
-						v-for="(val, type) in options.Direction" 
-						:key="type" 
-						:label="val" 
-						:value="type">
-					</el-option>
-				</el-select>
-			</div>
-			<div style="margin-top: 20px;">
-				<span>車道</span>
-				<el-select v-model="lane" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
-					<el-option 
-						v-for="(val, type) in options.Lane" 
-						:key="type" 
-						:label="val" 
-						:value="type">
-					</el-option>
-				</el-select>
-			</div>
-			<div style="margin-top: 20px;">
-				<span>圖片上傳</span>
-				<el-upload 
-					style="margin-top: 20px;" 
-					class="img-upload" 
-					action="#" 
-					accept="image/jpeg, image/jpg" 
-					:auto-upload="false" 
-					list-type="picture-card" 
-					:file-list="[ rowActive.ImgZoomIn ]" 
-					:limit = "1"
-					:on-change="handleChangeNew" 
-					:on-preview="handlePreviewNew" 
-					:on-remove="handleRemoveNew">
-					<i class="el-icon-plus avatar-uploader-icon"></i>
-					<div slot="tip" class="el-upload__tip">只能上傳jpg文件，且不超過500kb</div>
-				</el-upload>
-			</div>
+			<el-form>
+				<el-form-item label="分隊">
+					<el-select v-model="contractId" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
+						<el-option 
+							v-for="(val, type) in options.ContractId" 
+							:key="type" 
+							:label="val" 
+							:value="type">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item v-if="contractId == 1" label="區域">
+					<el-select v-model="zipCode" style="margin-left: 37px; width: 200px;">
+						<el-option label="中山區" value="104" />
+						<el-option label="大同區" value="103" />
+					</el-select>
+				</el-form-item>
+				<el-form-item label="缺失程度">
+					<el-select v-model="distressLevel" placeholder="請選擇" style="margin-left: 10px; width: 200px;">
+						<el-option 
+							v-for="(val, type) in options.DistressLevel" 
+							:key="type" 
+							:label="val" 
+							:value="type">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item label="預估長度">
+					<el-input style="margin-left:10px; width: 200px;" v-model="millingLength"></el-input>
+				</el-form-item>
+				<el-form-item label="預估寬度">
+					<el-input style="margin-left:10px; width: 200px;" v-model="millingWidth"></el-input>
+				</el-form-item>
+				<el-form-item label="預估面積">
+					<el-input style="margin-left:10px; width: 200px;" v-model="millingArea"></el-input>
+				</el-form-item>
+				<el-form-item label="地址">
+					<el-input style="margin-left:38px; width: 200px;" v-model="place"></el-input>
+				</el-form-item>
+				<el-form-item label="路向">
+					<el-select v-model="direction" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
+						<el-option 
+							v-for="(val, type) in options.Direction" 
+							:key="type" 
+							:label="val" 
+							:value="type">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item label="車道">
+					<el-select v-model="lane" placeholder="請選擇" style="margin-left: 37px; width: 200px;">
+						<el-option 
+							v-for="(val, type) in options.Lane" 
+							:key="type" 
+							:label="val" 
+							:value="type">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item label="圖片上傳">
+					<el-upload 
+						style="margin-top: 10px;"
+						class="img-upload"
+						action="#" 
+						accept="image/jpeg, image/jpg" 
+						:auto-upload="false" 
+						list-type="picture-card"
+						:file-list="[ rowActive.ImgZoomIn ]"
+						:limit = "1"
+						:on-change="handleChangeNew" 
+						:on-preview="handlePreviewNew" 
+						:on-remove="handleRemoveNew">
+						<i class="el-icon-plus avatar-uploader-icon"></i>
+						<div slot="tip" class="el-upload__tip">只能上傳jpg文件，且不超過500kb</div>
+					</el-upload>
+				</el-form-item>
+			</el-form>
+
 			<div slot="footer" class="dialog-footer">
 				<el-button @click="showImportCaseDialog = false;">取消</el-button>
 				<el-button type="success" @click="createCase()">創建案件</el-button>
@@ -191,7 +180,7 @@
 		</el-dialog>
 
 		<!-- Dialog: 建立坑洞案件(上傳修補後照片) -->
-		<el-dialog v-loading="loading" width="360px" title="照片上傳(修補後)" :visible.sync="showRestoredImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
+		<el-dialog v-loading="loading" width="300px" title="照片上傳(修補後)" :visible.sync="showRestoredImgUploadDialog" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false">
 			<el-row type="flex" align="middle">
 				<el-upload class="img-upload" action="#" accept="image/jpeg, image/jpg" :auto-upload="false" list-type="picture-card" :file-list="[ rowActive.RestoredImage ]" :on-change="handleChangeRestored" :on-preview="handlePreviewRestored" :on-remove="handleRemoveRestored">
 					<i class="el-icon-plus" />
@@ -224,7 +213,7 @@
 <script>
 import moment from "moment";
 import { getDTypeMap } from "@/api/type";
-import { getInspectFlowPotholeList, setInspectFlowList, trackingImgUpload, restoredImgUpload, importPotholeCase } from "@/api/app";
+import { getInspectFlowPotholeList, restoredImgUpload, importPotholeCase } from "@/api/app";
 import Pagination from "@/components/Pagination";
 import MapViewer from "@/components/MapViewer";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -325,7 +314,7 @@ export default {
 				getInspectFlowPotholeList({
 					filter: this.listQuery.filter,
 					contractId: this.listQuery.contractId,
-					roadName: (this.listQuery.filterType == 1 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
+					place: (this.listQuery.filterType == 1 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
 					caseId: (this.listQuery.filterType == 2 && this.listQuery.filterStr.length != 0) ? this.listQuery.filterStr : null,
 					pageCurrent: this.listQuery.pageCurrent,
 					pageSize: this.listQuery.pageSize,
@@ -446,7 +435,7 @@ export default {
 			this.rowActive = JSON.parse(JSON.stringify(row));
 		},
 		// 建立案件圖片
-		handleChangeNew(file, fileList) {
+		handleChangeNew(file) {
 			// console.log(file, fileList);
 			this.rowActive.ImgZoomIn = file;
 		},
@@ -456,12 +445,12 @@ export default {
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
-		handleRemoveNew(file, fileList) {
+		handleRemoveNew(fileList) {
 			// console.log(file, fileList);
 			this.rowActive.ImgZoomIn = fileList[0];
 		},
 		// 修復後照片
-		handleChangeRestored(file, fileList) {
+		handleChangeRestored(file) {
 			// console.log(file, fileList);
 			this.rowActive.RestoredImage = file;
 		},
@@ -471,7 +460,7 @@ export default {
 			this.imgPreviewIndex = this.imgPreviewUrls.indexOf(file.url);
 			this.showImgViewer = true;
 		},
-		handleRemoveRestored(file, fileList) {
+		handleRemoveRestored(fileList) {
 			// console.log(file, fileList);
 			this.rowActive.RestoredImage = fileList[0];
 		},
@@ -496,7 +485,7 @@ export default {
 						const arr = dataUrl.split(',');
 						const mime = arr[0].match(/:(.*?);/)[1];
 						const byteStr = atob(arr[1], 'base64');
-						console.log(byteStr);
+						// console.log(byteStr);
 						let uint8arr = new Uint8Array(byteStr.length);
 						for(let i = 0; i <= byteStr.length; i++) uint8arr[i] = byteStr.charCodeAt(i);
 						const newFile = new File( [uint8arr], file.name, { type: mime });

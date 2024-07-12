@@ -41,7 +41,6 @@
 								placeholder="日期"
 								:picker-options="pickerOptions"
 								:clearable="false"
-								@change="timeTabId = -1"
 							/>
 							<el-button
 								:type="dateTimePickerVisible ? 'info' : 'primary'"
@@ -49,14 +48,15 @@
 								size="mini"
 								@click="dateTimePickerVisible = !dateTimePickerVisible"
 							>{{ dateTimePickerVisible ? '返回' : '進階' }}</el-button>
-							<el-button style="margin-left: 20px;" size="small" class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+							<el-button style="margin-left: 20px;" size="small" class="filter-item" type="primary" icon="el-icon-search" @click="getList(); daysTransferPeriod();">搜尋</el-button>
 							<el-switch style="margin-left: 10px;" v-show="timeTabId == 5" v-model="autoRefresh" size="small" active-text="自動" />
 						</span>
 					</div>
 
 					<span>
 						<span style="margin-left: 18px;">週期</span>
-						<el-button-group style="margin-left: 45px;">
+						<span>{{ periodCycle }}</span>
+						<!-- <el-button-group style="margin-left: 45px;">
 							<el-button
 								style="margin-left: 0"
 								v-for="(name, id) in options.inspectRound"
@@ -66,7 +66,7 @@
 								:value="Number(id)"
 								size="small"
 								plain>{{ name }}</el-button>
-						</el-button-group>
+						</el-button-group> -->
 
 						<!-- <el-select class="district-select" v-model="listQuery.inspectRound">
 							<el-option v-for="(name, id) in options.inspectRound" :key="id" :label="name" :value="Number(id)" />
@@ -168,6 +168,7 @@ export default {
 			caseInfo: [],
 			activeVodName: "",
 			timeTabId: 5,
+			periodCycle: '',
 			dateTimePickerVisible: false,
 			pickerOptions: {
 				firstDayOfWeek: 1,
@@ -563,6 +564,7 @@ export default {
 		},
 		dateShortcuts(index) {
 			this.timeTabId = index;
+		
 
 			const DATE_OPTION = {
 				TODAY: 5,
@@ -593,7 +595,31 @@ export default {
 					this.searchDate = moment().subtract(5, "d");
 					break;
 			}
+
+			// 日期轉換週期
+			this.daysTransferPeriod();
+			
 			this.getList();
+		},
+		daysTransferPeriod() {
+			// 日期自動轉換週期
+			const startOfYear = moment(this.searchDate).startOf('year');
+			const daysDifference = moment(this.searchDate).diff(startOfYear, 'days');
+			const daysTransferToCompletePeriod = daysDifference % 7; // 3, 4, 5, 6標 7天為一巡
+			const daysTranserToShortPeriod = daysDifference % 4; // 1, 2標 4天為一巡
+
+			if (this.listQuery.contractId == 1 || this.listQuery.contractId == 2) {
+				this.handleButton(daysTranserToShortPeriod);
+				this.periodCycle = daysTranserToShortPeriod + 1; // 顯示週期
+			} else if (this.listQuery.contractId == 3 || this.listQuery.contractId == 4 || this.listQuery.contractId == 5 || this.listQuery.contractId == 6) {
+				this.handleButton(daysTransferToCompletePeriod);
+				this.periodCycle = daysTransferToCompletePeriod + 1; // 顯示週期
+			} else {
+				// contractId = 99 全部 無法判定故不顯示週期
+				this.periodCycle = '';
+			}
+
+			// console.log(moment(this.searchDate).format('YYYY-MM-DD'));
 		},
 		setMapType() {
 			const mapKeyList = Object.keys(this.options.mapList);
