@@ -603,23 +603,31 @@ export default {
 		},
 		daysTransferPeriod() {
 			// 日期自動轉換週期
-			const startOfYear = moment(this.searchDate).startOf('year');
-			const daysDifference = moment(this.searchDate).diff(startOfYear, 'days');
-			const daysTransferToCompletePeriod = daysDifference % 7; // 3, 4, 5, 6標 7天為一巡
-			const daysTranserToShortPeriod = daysDifference % 4; // 1, 2標 4天為一巡
+			// const startOfYear = moment(this.searchDate).startOf('year');
+			// const daysDifference = moment(this.searchDate).diff(startOfYear, 'days');
+			// const daysTransferToCompletePeriod = daysDifference % 7; // 3, 4, 5, 6標 7天為一巡
+			// const daysTranserToShortPeriod = daysDifference % 4; // 1, 2標 4天為一巡
 
-			if (this.listQuery.contractId == 1 || this.listQuery.contractId == 2) {
-				this.handleButton(daysTranserToShortPeriod);
-				this.periodCycle = daysTranserToShortPeriod + 1; // 顯示週期
+			// 1-6標起始時間不一樣
+			// 1, 2標 4天為一巡
+			// 3, 4, 5, 6標 7天為一巡
+			if (this.listQuery.contractId == 1) {
+				const daysDifference1 = moment(this.searchDate).diff('2015/07/06', 'days');
+				this.handleButton(daysDifference1 % 4);
+				this.periodCycle = daysDifference1 % 4 + 1; // 顯示週期
+			} else if (this.listQuery.contractId == 2) {
+				const daysDifference2 = moment(this.searchDate).diff('2015/05/03', 'days');
+				this.handleButton(daysDifference2 % 4);
+				this.periodCycle = daysDifference2 % 4 + 1;
 			} else if (this.listQuery.contractId == 3 || this.listQuery.contractId == 4 || this.listQuery.contractId == 5 || this.listQuery.contractId == 6) {
-				this.handleButton(daysTransferToCompletePeriod);
-				this.periodCycle = daysTransferToCompletePeriod + 1; // 顯示週期
+				const daysDifference3 = moment(this.searchDate).diff('2024/06/03', 'days');
+				this.handleButton(daysDifference3 % 7);
+				this.periodCycle = daysDifference3 % 7 + 1;
 			} else {
 				// contractId = 99 全部 無法判定故不顯示週期
 				this.periodCycle = '';
 			}
 
-			// console.log(moment(this.searchDate).format('YYYY-MM-DD'));
 		},
 		setMapType() {
 			const mapKeyList = Object.keys(this.options.mapList);
