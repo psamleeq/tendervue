@@ -51,16 +51,16 @@ const carRouter = {
 				vTag: 'alpha'
 			}
 		},
-		{
-			path: 'caseListLog',
-			component: () => import('@/views/car/caseListLog'),
-			name: 'caseListLog',
-			meta: {
-				title: '1999匯入',
-				roles: ['car.route'],
-				vTag: 'alpha'
-			}
-		},
+		// {
+		// 	path: 'caseListLog',
+		// 	component: () => import('@/views/car/caseListLog'),
+		// 	name: 'caseListLog',
+		// 	meta: {
+		// 		title: '1999匯入',
+		// 		roles: ['car.route'],
+		// 		vTag: 'alpha'
+		// 	}
+		// },
 		{
 			path: 'pothole',
 			component: () => import('@/views/car/pothole'),

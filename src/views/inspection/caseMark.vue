@@ -265,7 +265,7 @@ export default {
 		panelStyle() {
 			return {
 				leftPanel: (this.panoramaInfo.streetViewList.length >= 0) ? "position: relative; width: 25%;" : "position: relative; width: 100%;",
-				rightPanel: (this.panoramaInfo.streetViewList.length >= 0) ?"position: relative; width: 75%;" : "position: relative; width: 0%;"
+				rightPanel: (this.panoramaInfo.streetViewList.length >= 0) ? "position: relative; width: 75%;" : "position: relative; width: 0%;"
 			}
 		}
 	},
@@ -680,7 +680,6 @@ export default {
 				if(this.listQuery.trackingId != 0) {
 					const bounds = new google.maps.LatLngBounds();
 					[...this.caseGeoJson.caseNow.features, ...this.caseGeoJson.casePrev.features].forEach(caseSpec => {
-						console.log(caseSpec);
 						const position = caseSpec.properties.CenterPt;
 						if(position.lat >= 22 && position.lat <= 26 && position.lng >= 120 && position.lng <= 122) bounds.extend(position);
 					});
@@ -981,7 +980,7 @@ export default {
 						resolve();
 					} else {
 						// console.log(caseSpec);
-						const depth = caseSpec.geometry.type == 'MultiLineString' ? 1 : 2;
+						const depth =  caseSpec.geometry.type == 'MultiLinePoint' ? 0 : caseSpec.geometry.type == 'MultiLineString' ? 1 : 2;
 						const paths = caseSpec.geometry.coordinates.flat(depth).map(point => ({ lat: point[1], lng: point[0] }));
 						const bounds = new google.maps.LatLngBounds();
 						paths.forEach(position => bounds.extend(position));
