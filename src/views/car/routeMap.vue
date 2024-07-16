@@ -562,7 +562,7 @@ export default {
 			// jsts
 			this.geometryFactory = new jsts.geom.GeometryFactory();
 		},
-		dateShortcuts(index) {
+		async dateShortcuts(index) {
 			this.timeTabId = index;
 		
 
@@ -597,9 +597,9 @@ export default {
 			}
 
 			// 日期轉換週期
-			this.daysTransferPeriod();
+			await this.getList();
+			await this.daysTransferPeriod();
 			
-			this.getList();
 		},
 		daysTransferPeriod() {
 			// 日期自動轉換週期
