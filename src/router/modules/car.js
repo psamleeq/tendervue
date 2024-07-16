@@ -19,7 +19,7 @@ const carRouter = {
 			name: 'carRoute',
 			meta: {
 				title: '巡視路線(車輛)',
-				roles: ['car.route']
+				roles: ['car.viewer']
 			}
 		},
 		{
