@@ -28,7 +28,7 @@ const carRouter = {
 			name: 'carRouteMap',
 			meta: {
 				title: '巡視路線(分隊)',
-				roles: ['car.route']
+				roles: ['car.viewer']
 			}
 		},
 		{
@@ -67,7 +67,7 @@ const carRouter = {
 			name: 'pothole',
 			meta: {
 				title: '坑洞缺失',
-				roles: ['car.route'],
+				roles: ['car.viewer'],
 				vTag: 'alpha'
 			}
 		},
