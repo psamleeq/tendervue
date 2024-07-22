@@ -3,7 +3,7 @@
 		<div class="header-bar">
 			<h2 class="route-title">巡視路線(分隊)
 				<!-- <span v-if="carId.length != 0" class="route-info">車號 {{ carId }} (路線 {{ listQuery.inspectionId }})</span> -->
-				<span v-if="carId.length != 0" class="route-info">{{ searchRange }}</span>
+				<span v-if="carTracks.length != 0" class="route-info">{{ searchRange }}</span>
 			</h2>
 			<el-card v-if="caseInfo.length != 0" class="info-box" shadow="never">
 				<el-row v-for="(info, index) in caseInfo" :key="`caseInfo_${info.showName}_${index}`" class="color-box" type="flex" :style="`background-color: ${info.active ? info.color : '#eee'}; cursor: pointer`" @click.native="info.active = !info.active; caseFilter();">
@@ -229,14 +229,6 @@ export default {
 				inspectionId: ""
 			},
 			headers: {
-				carInfo: {
-					// id: "路線",
-					pathId: "週期",
-					carId: "車號",
-					driverId: "駕駛",
-					modeId: "巡查方式",
-					createdAt: "開始時間"
-				},
 				caseInfo: {
 					id: "缺失Id",
 					type: "報案來源",
@@ -378,8 +370,6 @@ export default {
 				}
 			},
 			carList: [],
-			carVodList: [],
-			carInfo: [],
 			carTracks: [],
 			carTrackLastId: 0
 		};
@@ -643,8 +633,6 @@ export default {
 		getCarList() {
 			this.loading = true;
 			this.carList = [];
-			this.carInfo = {};
-			this.carVodList = [];
 			this.carTracks = [];
 			this.listQuery.inspectionId = "";
 			this.polyLines.forEach(polyLine => polyLine.setMap(null));
@@ -671,81 +659,7 @@ export default {
 
 					//NOTE: 因為一天只會有一次車巡，所以取第一筆
 					this.listQuery.inspectionId = this.carList[0].id;
-					this.getCarInfo();
-				}
-				// this.loading = false;
-			}).catch(err => { this.loading = false; });
-		},
-		getCarInfo() {			
-			getSpecInspection(this.listQuery.inspectionId).then(response => {
-				if (Object.keys(response.data).length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-					this.loading = false;
-				} else {
-					this.carInfo = response.data;
-					this.carInfo.modeId = this.options.modeId[this.carInfo.modeId];
-					this.carInfo.createdAt = this.formatTime(this.carInfo.createdAt);
-					this.carVodList.push({
-						label: "即時",
-						vodUrl: `${this.mediaAPIUrl}WebRTCAppEE/play.html?name=${this.carInfo.liveStreamId}`
-					});
-
 					this.getCarTrack();
-				}
-				// this.loading = false;
-			}).catch(err => { this.loading = false; });
-		},
-		getCarTrack(isFocusAll = true) {
-			if (isFocusAll) this.dataLayer.route.revertStyle();
-			const lastId = isFocusAll ? 0 : this.carTrackLastId;
-
-			getSpecInspectionTracks(this.listQuery.inspectionId, { lastId }).then(response => {
-				if (response.data.list.length == 0) {
-					this.$message({
-						message: "查無資料",
-						type: "error",
-					});
-					this.autoRefresh = false;
-					this.loading = false;
-				} else {
-					let lastPt = [];
-					if(this.carTracks.length != 0) {
-						const lastTracks = this.carTracks[this.carTracks.length - 1];
-						lastPt = [ lastTracks[0] ];
-					}
-					this.carTracks.push(response.data.list);
-					this.carTrackLastId = this.carTracks.length == 0 ? 0 : this.carTracks[this.carTracks.length - 1][0].id;
-
-					// 建立路線
-					const paths = [ ...this.carTracks[this.carTracks.length - 1], ...lastPt ].map(point => ({ lat: point.lat, lng: point.long }));
-					const polyLine = new google.maps.Polyline({
-						path: paths,
-						geodesic: true,
-						strokeColor: "#6158EA",
-						strokeOpacity: 0.8,
-						strokeWeight: 8,
-						map: this.map
-					})
-					this.polyLines.push(polyLine);
-
-					if(isFocusAll) {
-						const bounds = new google.maps.LatLngBounds();
-						paths.forEach(position => bounds.extend(position));
-						this.map.fitBounds(bounds);
-					} this.map.panTo(paths[0]);
-
-					if(isFocusAll) {
-						this.markers[`start${this.listQuery.contractId}${this.listQuery.carId}`].setPosition(paths[paths.length-1]);
-						this.markers[`start${this.listQuery.contractId}${this.listQuery.carId}`].setMap(this.map);
-					}
-
-					this.markers[`end${this.listQuery.contractId}${this.listQuery.carId}`].setPosition(paths[0]);
-					this.markers[`end${this.listQuery.contractId}${this.listQuery.carId}`].setMap(this.map);
-
-					if (this.showLayerAttach) this.intersectRoute();
 				}
 				// this.loading = false;
 			}).catch(err => { this.loading = false; });
@@ -753,8 +667,6 @@ export default {
 		getAllCarTrack() {
 			this.loading = true;
 			this.carList = [];
-			this.carInfo = {};
-			this.carVodList = [];
 			this.carTracks = [];
 			this.listQuery.inspectionId = "";
 			this.polyLines.forEach(polyLine => polyLine.setMap(null));
@@ -808,7 +720,6 @@ export default {
 		getCarTrack() {
 			this.loading = true;
 			this.carList = [];
-			this.carInfo = {};
 			this.carVodList = [];
 			this.carTracks = [];
 			this.listQuery.inspectionId = "";
@@ -851,6 +762,8 @@ export default {
 								this.markers[`start${this.listQuery.contractId}${carId}`].setMap(this.map);
 								this.markers[`end${this.listQuery.contractId}${carId}`].setPosition(paths[0]);
 								this.markers[`end${this.listQuery.contractId}${carId}`].setMap(this.map);
+
+								if(carId > 2) this.intersectRoute();
 							}
 						}).catch(err => { this.loading = false; });
 					}
@@ -1123,7 +1036,7 @@ export default {
 	.info-box
 		position: absolute
 		top: 18px
-		left: 248px
+		left: 288px
 		background-color: rgba(white, 0.1)
 		border: none
 		z-index: 1

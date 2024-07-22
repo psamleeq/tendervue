@@ -1018,7 +1018,7 @@ export default {
 	.info-box
 		position: absolute
 		top: 18px
-		left: 248px
+		left: 288px
 		background-color: rgba(white, 0.1)
 		border: none
 		z-index: 1
