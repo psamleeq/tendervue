@@ -410,9 +410,7 @@ export default {
 		// 初始化Google Map
 		loader.load().then(() => this.initMap()).catch(err => console.log("err: ", err));
 	},
-	mounted() {
-		// this.getCarList();
-	},
+	mounted() { },
 	watch: {
 		autoRefresh(newValue) {
 			if(newValue) {
@@ -563,8 +561,8 @@ export default {
 			this.geometryFactory = new jsts.geom.GeometryFactory();
 		},
 		async dateShortcuts(index) {
+			this.loading = true;
 			this.timeTabId = index;
-		
 
 			const DATE_OPTION = {
 				TODAY: 5,
@@ -695,24 +693,10 @@ export default {
 						vodUrl: `${this.mediaAPIUrl}WebRTCAppEE/play.html?name=${this.carInfo.liveStreamId}`
 					});
 
-					this.getCarVideo();
 					this.getCarTrack();
 				}
 				// this.loading = false;
 			}).catch(err => { this.loading = false; });
-		},
-		getCarVideo() {
-			fetch(`${this.mediaAPIUrl}WebRTCAppEE/rest/v2/vods/list/0/10?streamId=${this.carInfo.liveStreamId}&sort_by=date`).then((response) => (response.json()))
-				.then(response => {
-					// console.log(response);
-					this.carVodList.push(...response.sort((a,b) => (a.startTime - b.startTime)).map(vod => ({
-						time: vod.startTime,
-						label: this.formatTime(vod.startTime).split(" ")[1],
-						vodUrl: `${this.mediaGCSUrl}${vod.vodName}`
-					})));
-
-					// this.loading = false;
-				}).catch(err => { this.loading = false; });
 		},
 		getCarTrack(isFocusAll = true) {
 			if (isFocusAll) this.dataLayer.route.revertStyle();
@@ -763,7 +747,7 @@ export default {
 
 					if (this.showLayerAttach) this.intersectRoute();
 				}
-				this.loading = false;
+				// this.loading = false;
 			}).catch(err => { this.loading = false; });
 		},
 		getAllCarTrack() {
@@ -870,8 +854,7 @@ export default {
 							}
 						}).catch(err => { this.loading = false; });
 					}
-				}).catch(err => console.log(err))
-					.finally(() => this.loading = false);
+				}).catch(err => { console.log(err); this.loading = false; });xw
 			}
 		},
 		getCaseInfo() {
@@ -1048,7 +1031,7 @@ export default {
 						}
 						this.dataLayer.route.addGeoJson(geoJSON);
 					}
-					this.loading = false;
+					if(i == 1) this.intersectRoute();
 				}).catch(err => this.loading = false);
 			}
 		},
@@ -1056,7 +1039,6 @@ export default {
 		async handleButton(id) {
 			this.listQuery.inspectRound = id;
 			await this.getRouteList();
-			await this.intersectRoute();
 		},
 		clearRouteLayer() {
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
