@@ -763,7 +763,7 @@ export default {
 								this.markers[`end${this.listQuery.contractId}${carId}`].setPosition(paths[0]);
 								this.markers[`end${this.listQuery.contractId}${carId}`].setMap(this.map);
 
-								if(carId > 2) this.intersectRoute();
+								if(carId > 1) this.intersectRoute();
 							}
 						}).catch(err => { this.loading = false; });
 					}
