@@ -16,7 +16,7 @@
 			</div>
 			<el-button-group style="float: right;">
 				<el-button type="primary" @click="getAction">重整</el-button>
-				<el-button type="success" @click="showAddDialog = true">新增</el-button>
+				<el-button type="success" @click="showAddDialog = true; dialogType = 1;">新增</el-button>
 			</el-button-group>
 		</div>
 
@@ -76,12 +76,13 @@
 						<el-button class="btn-action" type="info" plain :disabled="isUpload" @click="uploadCase(row, 1, true)">重點</el-button>
 						<el-button class="btn-action" type="primary" plain :disabled="isUpload" @click="uploadCase(row, 1, false)">通報</el-button>
 						<el-button class="btn-action" type="warning" plain :disabled="isUpload" @click="uploadCase(row, 2, false)">PCI</el-button>
+						<el-button class="btn-action" type="danger" plain @click="handleData(row)">複製</el-button>
 					</el-button-group>
 				</template>
 			</el-table-column>
 		</el-table>
 
-		<el-dialog title="新增" :visible.sync="showAddDialog"	width="360px">
+		<el-dialog :title="dialogTitle" :visible.sync="showAddDialog"	width="360px">
 			<el-form ref="form" label-width="100px">
 				<el-form-item label="輪次">
 					<el-input-number v-model="newRoundForm.round" controls-position="right" :min="1" />
@@ -98,7 +99,8 @@
 			</el-form>
 			<span slot="footer" class="dialog-footer">
 				<el-button @click="showAddDialog = false">取消</el-button>
-				<el-button type="primary" @click="addRound()">確定</el-button>
+				<el-button v-if="dialogType == 1" type="primary" @click="addRound()">確定</el-button>
+				<el-button v-else type="primary" @click="importCaseDistress()">確定</el-button>
 			</span>
 		</el-dialog>
 	</div>
@@ -107,7 +109,7 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getTenderRound, addTenderRound, setTenderRound, getActionProcess } from "@/api/type";
-import { importAllInspectCase, uploadInspectionCaseNco } from "@/api/inspection";
+import { importAllInspectCase, uploadInspectionCaseNco, importCaseDistressCopy } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 
 export default {
@@ -117,6 +119,9 @@ export default {
 			loading: false,
 			isUpload: false,
 			showAddDialog: false,
+			dialogType: 1,
+			surveyId: 0,
+			tenderId: 0,
 			screenWidth: window.innerWidth,
 			listQuery: {
 				tenderId: 100,
@@ -152,7 +157,11 @@ export default {
 			}
 		};
 	},
-	computed: {},
+	computed: {
+		dialogTitle() {
+			return this.dialogType === 1 ? '新增' : '複製';
+		}
+	},
 	watch: {},
 	created() {
 		getTenderMap().then(response => {
@@ -187,7 +196,7 @@ export default {
 						roundStart: "",
 						roundEnd: ""
 					}
-
+					
 					this.list.forEach(l => {
 						l.roundStart = this.formatTime(l.roundStart);
 						l.roundEnd = this.formatTime(l.roundEnd);
@@ -323,6 +332,37 @@ export default {
 				console.log(err);
 			});
 
+		},
+		handleData(row) {
+			this.tenderId = row.tenderId;
+			this.surveyId = row.id;
+			this.dialogType = 2;
+			this.showAddDialog = true;
+		},
+		importCaseDistress() {
+			this.loading = true;
+			importCaseDistressCopy({ 
+				surveyId: this.surveyId,
+				tenderId: this.tenderId,
+				title: this.newRoundForm.title,
+				round: this.newRoundForm.round,
+				roundStart: this.newRoundForm.roundStart,
+				roundEnd: this.newRoundForm.roundEnd
+			}).then(response => {
+				if ( response.statusCode == 20000 ) {
+					const result = response.result;
+					this.$message({
+						message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件`,
+						type: "success",
+					});
+				} 
+				this.getList();
+				this.showAddDialog = false;
+				this.loading = false;
+			}).catch(err => {
+				console.log(err);
+				this.loading = false;
+			})
 		},
 		formatter(row, column) {
 			if (Number(row[column.property])) return row[column.property];

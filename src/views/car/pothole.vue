@@ -54,7 +54,7 @@
 					<span v-else>{{ row[column.property] || "-" }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column prop="imgfile" label="圖片" align="center">
+			<el-table-column prop="imgfile" label="修復前圖片" align="center">
 				<template slot-scope="scope">
 					<div class="demo-image__preview">
 						<el-image
@@ -63,6 +63,23 @@
 							fit="cover">
 						<div slot="error" class="image-slot">
 							<a :href="scope.row.imgfile" target="_blank">
+								<i class="el-icon-picture-outline"></i>
+							</a>
+						</div>
+						</el-image>
+					</div>
+					
+				</template>
+			</el-table-column>
+			<el-table-column prop="imgfile" label="修復後圖片" align="center">
+				<template slot-scope="scope">
+					<div class="demo-image__preview">
+						<el-image
+							:src="scope.row.ImageRestored"
+							:preview-src-list="[scope.row.ImageRestored]"
+							fit="cover">
+						<div slot="error" class="image-slot">
+							<a :href="scope.row.ImageRestored" target="_blank">
 								<i class="el-icon-picture-outline"></i>
 							</a>
 						</div>
