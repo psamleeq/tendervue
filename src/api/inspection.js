@@ -150,3 +150,12 @@ export function getCaseTrackingStaticTime(query) {
 		params: query
 	})
 }
+
+// 合約管理 缺失匯入
+export function importCaseDistressCopy(data) {
+	return request({
+		url: '/inspection/caseDistressCopy',
+		method: 'post',
+		data
+	})
+}
