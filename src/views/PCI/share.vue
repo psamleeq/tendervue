@@ -303,14 +303,21 @@ export default {
 		},
 		importPCIData() {
 			this.loading = true;
+			// 已經有資料的月份
 			this.list.forEach(item => {
-				this.monthArr.push(moment(item.datestar).format("YYYY/MM"));
+				this.monthArr.push(moment(item.datestar).format("YYYY-MM"));
 			});
-			const dateStart = moment(this.newForm.dateStart).format("YYYY/MM");
+			const dateStart = moment(this.newForm.dateStart).format("YYYY-MM");
 
 			if (this.monthArr.includes(dateStart)) {
 				this.$message({
 					message: '不能匯入重複月份資料',
+					type: 'warning'
+				});
+				this.loading = false;
+			} else if (dateStart >= moment().format('YYYY-MM')) {
+				this.$message({
+					message: '不能匯入當前或未來資料',
 					type: 'warning'
 				});
 				this.loading = false;
