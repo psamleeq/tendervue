@@ -8,6 +8,7 @@
 			</el-select>
 			<time-picker class="filter-item" :hasWeek="false" :timeTabId.sync="timeTabId" :dateRange.sync="dateRange" @search="getList"/>
 			<el-button class="filter-item" type="primary" icon="el-icon-search" @click="getList()">搜尋</el-button>
+			<el-button class="filter-item" type="success" icon="el-icon-aim" @click="showImportDialog = true">資料匯入</el-button>
 			<!-- <el-button
 				class="filter-item"
 				type="info"
@@ -52,6 +53,31 @@
 			/>
 		</el-table>
 
+		<el-dialog title="重複資料匯入" :visible.sync="showImportDialog" width="400px">
+			<el-form ref="form" label-width="100px">
+				<el-form-item label="行政區">
+					<el-select v-model="newForm.zipCode" placeholder="請選擇行政區">
+						<el-option 
+							v-for="(district, code) in options.districts"
+							:key="code"
+							:label="district"
+							:value="code"
+						/>
+					</el-select>
+				</el-form-item>
+				<el-form-item label="起始時間">
+					<el-date-picker v-model="newForm.dateStart" type="date" value-format="yyyy-MM-dd" placeholder="選擇日期" />
+				</el-form-item>
+				<el-form-item label="結束時間">
+					<el-date-picker v-model="newForm.dateEnd" type="date" value-format="yyyy-MM-dd" placeholder="選擇日期" />
+				</el-form-item>
+			</el-form>
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="showImportDialog = false">取消</el-button>
+				<el-button type="primary" @click="importPCIData">確定</el-button>
+			</span>
+		</el-dialog>
+
 	</div>
 </template>
 
@@ -61,7 +87,7 @@ import PieChart from "@/components/Charts/PieChart";
 import echarts from 'echarts/lib/echarts';
 require('echarts/theme/macarons');
 require('echarts/lib/chart/line');
-import { getPCIShare } from "@/api/pci";
+import { getPCIShare, updatePieChart } from "@/api/pci";
 import TimePicker from '@/components/TimePicker';
 import { dateWatcher } from "@/utils/pickerOptions";
 
@@ -132,12 +158,25 @@ export default {
 			loading: false,
 			timeTabId: 2,
 			dateTimePickerVisible: false,
+			showImportDialog: false,
 			screenWidth: window.innerWidth,
 			dateRange: [ moment().year(2022).month(5).startOf("month").toDate(), moment().endOf("year").toDate() ],
 			searchRange: "",
+			monthArr: [],
 			zipCodeNow: 104,
 			listQuery: {
 				zipCode: 104,
+			},
+			newForm: {
+				dateStart: "",
+				dateEnd: "",
+				zipCode: ""
+			},
+			options: {
+				districts: {
+					103: "大同區",
+					104: "中山區"
+				}
 			},
 			headers: {
 				month: {
@@ -241,6 +280,7 @@ export default {
 			let endDate = moment(this.dateRange[1]).format("YYYY-MM-DD");
 			this.searchRange = startDate + " - " + endDate;
 
+			this.monthArr = [];
 			this.list = [];
 			getPCIShare({
 				zipCode: this.listQuery.zipCode,
@@ -255,11 +295,52 @@ export default {
 				} else {
 					this.zipCodeNow = this.listQuery.zipCode;
 					this.list = response.data.list;
-					this.list.forEach((l, i) => l.month = moment(l.datestar).format("YYYY/MM"))
+					this.list.forEach((l, i) => l.month = moment(l.datestar).format("YYYY/MM"));
 					// this.setChartOptions();
 				}
 				this.loading = false;
 			}).catch(err => { this.loading = false; });
+		},
+		importPCIData() {
+			this.loading = true;
+			// 已經有資料的月份
+			this.list.forEach(item => {
+				this.monthArr.push(moment(item.datestar).format("YYYY-MM"));
+			});
+			const dateStart = moment(this.newForm.dateStart).format("YYYY-MM");
+
+			if (this.monthArr.includes(dateStart)) {
+				this.$message({
+					message: '不能匯入重複月份資料',
+					type: 'warning'
+				});
+				this.loading = false;
+			} else if (dateStart >= moment().format('YYYY-MM')) {
+				this.$message({
+					message: '不能匯入當前或未來資料',
+					type: 'warning'
+				});
+				this.loading = false;
+			} else {
+				updatePieChart({
+					dateStart: this.newForm.dateStart,
+					dateEnd: this.newForm.dateEnd,
+					zipCode: this.newForm.zipCode
+				}).then(response => {
+					this.$message({
+						message: 'PCI數據上傳成功',
+						type: 'success'
+					});
+					this.getList();
+					this.showImportDialog = false;
+					this.loading = false;
+				}).catch(err => {
+					console.log(err);
+					this.showImportDialog = false;
+					this.loading = false;
+				});
+			}
+			
 		},
 		formatter(row, column) {
 			if(Number(row[column.property])) return row[column.property].toLocaleString();

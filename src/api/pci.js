@@ -43,3 +43,12 @@ export function getCaseList(query) {
 		params: query
 	})
 }
+
+// PCI更新佔比統計(圓餅圖)
+export function updatePieChart(data) {
+	return request({
+		url: '/pci/updatePieChart',
+		method: 'post',
+		data
+	})
+}
