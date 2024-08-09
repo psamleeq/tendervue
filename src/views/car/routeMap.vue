@@ -1058,26 +1058,26 @@ export default {
 		},
 		// 3, 6標
 		async getRouteLists() {
-			// this.loading = true;
+			this.loading = true;
 			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
 			
 			this.blockList = [];
 			const daysDifference = moment(this.searchDate).diff('2024/06/03', 'days');
-			const round = [];
-			// 抓取包含今天(前4天)週期
-			for (let i = 0; i < 4; i++) {
-				if (daysDifference % 7 - i < 0) {
-					round.push(daysDifference % 7 - i + 8);
-				} else {
-					round.push(daysDifference % 7 - i + 1);
-				}
-			}
+			// const round = [];
+			// // 抓取包含今天(前4天)週期
+			// for (let i = 0; i < 4; i++) {
+			// 	if (daysDifference % 7 - i < 0) {
+			// 		round.push(daysDifference % 7 - i + 8);
+			// 	} else {
+			// 		round.push(daysDifference % 7 - i + 1);
+			// 	}
+			// }
 			
 			// 因為一個標 包含2個行政區 所以呼叫2次API
 			for (let i = 0; i < 2; i++) {
 				await getInspectionRoutes({
 					zipCode: this.options.contractIdToZipCode[this.listQuery.contractId][i],
-					inspectRound: round,
+					// inspectRound: round,
 					isCar: true
 				}).then(response => {
 					if (response.data.blockList.length == 0 && response.data.routeList.length == 0) {
