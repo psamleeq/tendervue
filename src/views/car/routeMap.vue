@@ -72,11 +72,11 @@
 							<el-option v-for="(name, id) in options.inspectRound" :key="id" :label="name" :value="Number(id)" />
 						</el-select> -->
 
-						<!-- <el-button-group style="margin-left:20px;">
-							<el-button type="primary" size="small" @click="getRouteList()">載入</el-button>
+						<el-button-group v-if="this.listQuery.contractId === 3 || this.listQuery.contractId === 6" style="margin-left:20px;">
+							<el-button type="primary" size="small" @click="getRouteLists()">載入</el-button>
 							<el-button type="success" size="small" @click="intersectRoute()">比對</el-button>
 							<el-button type="info" size="small" @click="clearRouteLayer()">清空</el-button>
-						</el-button-group> -->
+						</el-button-group>
 					</span>
 					<!-- <el-button :type="showLayerAttach ? 'primary' : 'info'" @click="showLayerAttach = !showLayerAttach">路線圖層</el-button> -->
 					<!-- <el-card v-if="showLayerAttach" :body-style="{ padding: '0 5px', backgroundColor: 'rgba(255, 255, 255, 0.5)' }">
@@ -127,7 +127,7 @@ import { Loader } from "@googlemaps/js-api-loader";
 import * as jsts from 'jsts/dist/jsts.min.js';
 import moment from 'moment';
 import { getInspectionList, getSpecInspection, getSpecInspectionTracks, getInspectionCase } from "@/api/car";
-import { getInspectionRoute } from "@/api/inspection";
+import { getInspectionRoute, getInspectionRoutes } from "@/api/inspection";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
@@ -318,10 +318,10 @@ export default {
 				contractIdToZipCode: {
 					1: [103, 104],
 					2: [105, 110],
-					3: [106, 116],
+					3: [100, 108],
 					4: [114, 115],
 					5: [111, 112],
-					6: [100, 108]
+					6: [106, 116]
 				},
 				carId: {
 					0: {
@@ -564,7 +564,6 @@ export default {
 		},
 		async dateShortcuts(index) {
 			this.timeTabId = index;
-		
 
 			const DATE_OPTION = {
 				TODAY: 5,
@@ -610,19 +609,24 @@ export default {
 
 			// 1-6標起始時間不一樣
 			// 1, 2標 4天為一巡
-			// 3, 4, 5, 6標 7天為一巡
+			// 4, 5標 7天為一巡
+			// 3, 6標 周期的前四天都要算在裡面(如日期周4, 則1,2,3,4要算在裡面)
 			if (this.listQuery.contractId == 1) {
 				const daysDifference1 = moment(this.searchDate).diff('2015/07/06', 'days');
-				this.handleButton(daysDifference1 % 4);
+				this.handleButton(daysDifference1 % 4 + 1);
 				this.periodCycle = daysDifference1 % 4 + 1; // 顯示週期
 			} else if (this.listQuery.contractId == 2) {
 				const daysDifference2 = moment(this.searchDate).diff('2015/05/03', 'days');
-				this.handleButton(daysDifference2 % 4);
+				this.handleButton(daysDifference2 % 4 + 1);
 				this.periodCycle = daysDifference2 % 4 + 1;
-			} else if (this.listQuery.contractId == 3 || this.listQuery.contractId == 4 || this.listQuery.contractId == 5 || this.listQuery.contractId == 6) {
+			} else if (this.listQuery.contractId == 4 || this.listQuery.contractId == 5) {
 				const daysDifference3 = moment(this.searchDate).diff('2024/06/03', 'days');
-				this.handleButton(daysDifference3 % 7);
+				this.handleButton(daysDifference3 % 7 + 1);
 				this.periodCycle = daysDifference3 % 7 + 1;
+			} else if (this.listQuery.contractId == 3 || this.listQuery.contractId == 6) {
+				const daysDifference4 = moment(this.searchDate).diff('2024/06/03', 'days');
+				// this.handleButton(daysDifference4 % 7);
+				this.periodCycle = daysDifference4 % 7 + 1;
 			} else {
 				// contractId = 99 全部 無法判定故不顯示週期
 				this.periodCycle = '';
@@ -1018,6 +1022,62 @@ export default {
 				await getInspectionRoute({
 					zipCode: this.options.contractIdToZipCode[this.listQuery.contractId][i],
 					inspectRound: this.listQuery.inspectRound,
+					isCar: true
+				}).then(response => {
+					if (response.data.blockList.length == 0 && response.data.routeList.length == 0) {
+						this.$message({
+							message: "查無資料",
+							type: "error",
+						});
+					} else {
+						// this.blockList = response.data.blockList;
+						this.blockList = this.blockList.concat(response.data.blockList);
+
+						let geoJSON = {
+							"type": "FeatureCollection",
+							"name": "blockJSON",
+							"features": []
+						};
+
+						for (const blockSpec of this.blockList) {
+							let feature = {
+								"type": "Feature",
+								"properties": {
+									"id": blockSpec.id,
+									"roadName": blockSpec.roadName
+								},
+								"geometry": JSON.parse(blockSpec.geometry)
+							};
+							geoJSON.features.push(feature);
+						}
+						this.dataLayer.route.addGeoJson(geoJSON);
+					}
+					this.loading = false;
+				}).catch(err => this.loading = false);
+			}
+		},
+		// 3, 6標
+		async getRouteLists() {
+			// this.loading = true;
+			this.dataLayer.route.forEach(feature => this.dataLayer.route.remove(feature));
+			
+			this.blockList = [];
+			const daysDifference = moment(this.searchDate).diff('2024/06/03', 'days');
+			const round = [];
+			// 抓取包含今天(前4天)週期
+			for (let i = 0; i < 4; i++) {
+				if (daysDifference % 7 - i < 0) {
+					round.push(daysDifference % 7 - i + 8);
+				} else {
+					round.push(daysDifference % 7 - i + 1);
+				}
+			}
+			
+			// 因為一個標 包含2個行政區 所以呼叫2次API
+			for (let i = 0; i < 2; i++) {
+				await getInspectionRoutes({
+					zipCode: this.options.contractIdToZipCode[this.listQuery.contractId][i],
+					inspectRound: round,
 					isCar: true
 				}).then(response => {
 					if (response.data.blockList.length == 0 && response.data.routeList.length == 0) {
