@@ -80,6 +80,15 @@ const carRouter = {
 				roles: ['car.viewer']
 			}
 		},
+		{
+			path: 'inspectionRoute',
+			component: () => import('@/views/car/caseInspectionRoute'),
+			name: 'inspectionRoute',
+			meta: {
+				title: '巡查路線(計畫)',
+				roles: ['car.viewer']
+			}
+		},
 	]
 }
 export default carRouter
