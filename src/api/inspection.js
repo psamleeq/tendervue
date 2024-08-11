@@ -34,6 +34,14 @@ export function setInspectionList(id, data) {
 	})
 }
 
+export function copyInspectionList(id, data) {
+	return request({
+		url: `/inspection/list/${id}/copy`,
+		method: 'put',
+		data
+	})
+}
+
 // 缺失標記
 export function getPanoramaJson(query) {
 	return request({

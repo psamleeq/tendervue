@@ -80,15 +80,17 @@
 						<span>{{ GetAreaName(row.ZipCode).area }}</span>
 					</span>
 					<span v-else>
-					<span>{{ row[column.property] || "-" }}</span>
+						<span>{{ row[column.property] || "-" }}</span>
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="checkPermission(['inspection.marker'])" label="操作" align="center" width="180">
+			<el-table-column v-if="checkPermission(['inspection.marker'])" label="操作" align="center" width="320">
 				<template slot-scope="{ row }">
 					<el-button-group>
 						<!-- <el-button v-if="!row.DateCompleted_At" class="btn-action" type="primary" plain size="mini" round @click="showMap(row)">檢視</el-button> -->
-						<el-button class="btn-action" type="info" plain size="mini" round @click="showList(row)">列表</el-button>
+						<el-button type="info" plain size="mini" round @click="showList(row)">列表</el-button>
+						<el-button v-if="checkPermission(['inspection.master'])" type="warning" plain size="mini" round @click="rowActive = row; dialogCopyVisible = true">複製</el-button>
+						<el-button v-if="checkPermission(['inspection.master'])" type="danger" plain size="mini" round @click="showDialog(row, -2)">刪除</el-button>
 						<el-button v-if="!row.DateCompleted_At" type="success" size="mini" round @click="showDialog(row, 2)">完成</el-button>
 					</el-button-group>
 				</template>
@@ -98,12 +100,35 @@
 		<!-- 確認 對話框 -->
 		<el-dialog title="確認" :visible.sync="dialogVisible" width="400px">
 			<span>是否確定
-				<span v-if="rowActive.state == -1" style="color: #F56C6C">撤銷</span>
-				<span v-else-if="rowActive.state == 2" style="color: #409EFF">提交</span> 完成?
+				<span v-if="rowActive.state == -2" style="color: #F56C6C">刪除</span>
+				<span v-else-if="rowActive.state == -1" style="color: #E6A23C">撤銷完成</span>
+				<span v-else-if=" rowActive.state == 2" style="color: #67C23A;">提交完成</span>
+				<span> 路線Id {{ rowActive.InspectId }}?</span>
 			</span>
 			<span slot="footer" class="dialog-footer">
 				<el-button @click="dialogVisible = false">取消</el-button>
 				<el-button type="primary" @click="dialogVisible = false; setResult(rowActive, rowActive.state);">確定</el-button>
+			</span>
+		</el-dialog>
+
+		<!-- 複製 對話框 -->
+		<el-dialog :visible.sync="dialogCopyVisible" width="400px">
+			<span slot="title">是否確定
+				<span style="color: #409EFF">複製</span> 路線Id {{ rowActive.InspectId }}?
+			</span>
+			<el-form>
+				<el-form-item label="行政區">
+					<el-select v-model.number="rowActive.ZipCode" placeholder="請選擇" popper-class="type-select" style="width: 100px">
+						<el-option v-for="zip in options.districtOrder.filter(zip => zip != 1001)" :key="zip" :label="options.districtMap[zip].district" :value="Number(zip)" />
+					</el-select>
+				</el-form-item>
+				<el-form-item label="備註">
+					<el-input v-model="rowActive.Notes" />
+				</el-form-item>
+			</el-form>
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="dialogCopyVisible = false">取消</el-button>
+				<el-button type="primary" @click="dialogCopyVisible = false; copyRoute();">確定</el-button>
 			</span>
 		</el-dialog>
 	</div>
@@ -112,7 +137,7 @@
 <script>
 import moment from "moment";
 import { getTenderRound, getDistMap } from "@/api/type";
-import { getInspectionList, setInspectionList } from "@/api/inspection";
+import { getInspectionList, setInspectionList, copyInspectionList } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 import TimePicker from '@/components/TimePicker';
 import commonMixin from '@/mixins/common'
@@ -124,7 +149,8 @@ export default {
 	data() {
 	return {
 		loading: false,
-		dialogMapVisible: true,
+		dialogVisible: false,
+		dialogCopyVisible: false,
 		timeTabId: 1,
 		dateRange: [ moment().startOf("week").add(1, 'day').toDate(), moment().endOf("week").add(1, 'day').toDate() ],
 		listQuery: {
@@ -316,6 +342,23 @@ export default {
 					// console.log(err);
 					this.getList();
 				})
+			})
+		},
+		copyRoute() {
+			copyInspectionList(this.rowActive.InspectId, {
+				zipCode: this.rowActive.ZipCode,
+				notes: this.rowActive.Notes,
+			}).then(response => {
+				if (response.statusCode == 20000) {
+					this.$message({
+						message: "複製成功",
+						type: "success",
+					});
+					this.getList();
+				} 
+			}).catch(err => {
+				// console.log(err);
+				this.getList();
 			})
 		}
 	}
