@@ -632,9 +632,17 @@ export default {
 					this.carInfo = response.data;
 					this.carInfo.modeId = this.options.modeId[this.carInfo.modeId];
 					this.carInfo.createdAt = this.formatTime(this.carInfo.createdAt);
+
+					let vodUrl = '';
+					if([3, 6].includes(this.listQuery.contractId)) {
+						const carLicense = this.options.carId[this.listQuery.contractId][this.listQuery.carId].split(" ")[0];
+						console.log(carLicense);
+						vodUrl = `https://www.gstech.com.tw/ec/FLTLMVideo.aspx?group=FL383&carid=${carLicense}&vno=0&type=fuho`;
+					} else vodUrl = `${this.mediaAPIUrl}WebRTCAppEE/play.html?name=${this.carInfo.liveStreamId}`;
+
 					this.carVodList.push({
 						label: "即時",
-						vodUrl: `${this.mediaAPIUrl}WebRTCAppEE/play.html?name=${this.carInfo.liveStreamId}`
+						vodUrl
 					});
 
 					this.getCarVideo();

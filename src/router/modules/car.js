@@ -14,6 +14,15 @@ const carRouter = {
 	},
 	children: [
 		{
+			path: 'inspectionRoute',
+			component: () => import('@/views/car/caseInspectionRoute'),
+			name: 'inspectionRoute',
+			meta: {
+				title: '巡查路線(計畫)',
+				roles: ['car.marker']
+			}
+		},
+		{
 			path: 'route',
 			component: () => import('@/views/car/route'),
 			name: 'carRoute',
@@ -79,16 +88,7 @@ const carRouter = {
 				title: '巡視影像',
 				roles: ['car.viewer']
 			}
-		},
-		{
-			path: 'inspectionRoute',
-			component: () => import('@/views/car/caseInspectionRoute'),
-			name: 'inspectionRoute',
-			meta: {
-				title: '巡查路線(計畫)',
-				roles: ['car.viewer']
-			}
-		},
+		}
 	]
 }
 export default carRouter
