@@ -9,9 +9,35 @@ export function getInspectionRoute(query) {
 	})
 }
 
+// 巡查路線3, 6標
+export function getInspectionRoutes(query) {
+	return request({
+		url: '/inspection/routes',
+		method: 'get',
+		params: query
+	})
+}
+
 export function setInspectionRoute(data) {
 	return request({
 		url: '/inspection/route',
+		method: 'post',
+		data
+	})
+}
+
+// 巡查路線copy
+export function getInspectionRoutePlan(query) {
+	return request({
+		url: '/inspection/routePlan',
+		method: 'get',
+		params: query
+	})
+}
+
+export function setInspectionRoutePlan(data) {
+	return request({
+		url: '/inspection/routePlan',
 		method: 'post',
 		data
 	})
