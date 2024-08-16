@@ -469,7 +469,7 @@ export default {
 		},
 		setCaseStatus(row, isActive) {
 			// console.log(this.currCaseId);
-			setRoadCase(row.id, { isActive }).then(response => {
+			setRoadCase(row.caseId, { isActive }).then(response => {
 				if ( response.statusCode == 20000 ) {
 					this.$message({
 						message: "修改成功",
