@@ -75,6 +75,15 @@ const PCIRouter = {
 					title: '案件分析', 
 					roles: ['PCIanalyst.viewer'] 
 				}
+			},
+			{
+				path: 'statistics',
+				component: () => import('@/views/PCI/statistics'),
+				name: 'statistics',
+				meta: {
+					title: '合約統計',
+					roles: ['PCIanalyst.viewer']
+				}
 			}
 		]
 	}
