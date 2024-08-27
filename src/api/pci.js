@@ -52,3 +52,21 @@ export function updatePieChart(data) {
 		data
 	})
 }
+
+// PCI等級分布數據
+export function getPCIScore(query) {
+	return request({
+		url: '/pci/score',
+		method: 'get',
+		params: query
+	})
+}
+
+// 調查缺失類型統計
+export function getDistressStatistics(query) {
+	return request({
+		url: '/pci/distressStatistics',
+		method: 'get',
+		params: query
+	})
+}
