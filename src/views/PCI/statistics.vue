@@ -53,7 +53,7 @@
 			<el-table-column label="操作" width="300" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group>
-            <el-button class="btn-action" type="warning" @click="exportPCI(row)" plain>PCI數據</el-button>
+            <el-button v-if="row.tenderId > 1000" class="btn-action" type="warning" @click="exportPCI(row)" plain>PCI數據</el-button>
             <el-button class="btn-action" type="success" @click="exportDistressType(row)" plain>缺失類型</el-button>
           </el-button-group>
 				</template>
@@ -210,7 +210,6 @@ export default {
 		exportPCI(row) {
 			// console.log(row);
 			getPCIScore({ block: `block_${row.tenderId}` }).then(response => {
-				// console.log(response.data.list);
 				if (response.data.list.length != 0) {
 					// 將數據轉換為 Excel 兼容格式
 					const worksheet = XLSX.utils.json_to_sheet(response.data.list);
@@ -225,7 +224,7 @@ export default {
 					const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 					const link = document.createElement('a');
 					link.href = URL.createObjectURL(blob);
-					link.download = `PCI數據統計${row.id}.xlsx`;
+					link.download = `PCI數據統計_BlockId_${row.tenderId}.xlsx`;
 					link.click();
 
 					this.$message({
@@ -261,7 +260,7 @@ export default {
 					const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 					const link = document.createElement('a');
 					link.href = URL.createObjectURL(blob);
-					link.download = `調查缺失類型統計${row.id}.xlsx`;
+					link.download = `調查缺失類型統計_SurveyId_${row.id}.xlsx`;
 					link.click();
 
 					this.$message({
