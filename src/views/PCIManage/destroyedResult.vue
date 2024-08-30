@@ -210,17 +210,9 @@ export default {
 			}
 		},
 		exportExcel() {
-			const data = this.densityAndDvList.data; // 密度 dv
+			const dv = this.densityAndDvList.data; // 密度 dv
 			const list = this.distressList.list; // 損壞類型 程度
 			// 缺失類別
-			// 1.龜裂 2.縱橫裂縫 3.塊狀裂縫 4.坑洞、人孔高差及薄層剝離 5.車轍
-			// 6.補綻及管線回填 7.推擠 8.隆起與凹陷 9.冒油 10.波浪狀鋪面
-			// 11.車道與路肩分離 12.滑溜裂縫 13.骨材剝落
-			// 21.凹陷 22.邊緣裂縫 23.反射裂縫 24.跨越鐵道 25.隆起 26.剝脫 27.老化
-
-			// for (let i = 0; i < data.length; i++) {
-			// 	console.log(data[i].density, data[i].dv);
-			// }
 			const distressTypeMap = {
 				'龜裂': 1,
 				'縱橫裂縫': 2,
@@ -246,6 +238,7 @@ export default {
 				'老化': 27
 			};
 
+			// 損壞程度
 			const severityLevelMap = {
 				'輕': 'L',
 				'中': 'M',
@@ -253,7 +246,7 @@ export default {
 			};
 
 			const distressData = {};
-
+			
 			for (let i = 0; i < list.length; i++) {
 				const { distressType, distressLevel, caseArea, caseLength } = list[i];
 
@@ -280,22 +273,38 @@ export default {
 
 			const table = [];
 
-			for (const [typeCode, levels] of Object.entries(distressData)) {
-				for (const [levelCode, data] of Object.entries(levels)) {
-					const areasTotal = data.areas.reduce((acc, cur) => acc + parseFloat(cur) || 0, 0);
-					const lengthsTotal = data.lengths.reduce((acc, cur) => acc + parseFloat(cur) || 0, 0);
-
-					if (data.areas.length > 0) {
-						table.push([`${typeCode}${levelCode}`, ...data.areas, areasTotal.toFixed(2)]);
-						// console.log(`${typeCode}${levelCode} ${data.areas}`);
-					}
-					if (data.lengths.length > 0) {
-						table.push([`${typeCode}${levelCode}`, ...data.lengths, lengthsTotal.toFixed(2)]);
-						// console.log(`${typeCode}${levelCode} ${data.lengths}`);
+			let maxLength = 0; // 缺失類型和嚴重程度
+			// 取出最大長度 (目的對其各項資料)
+			for (const [typeCode, level] of Object.entries(distressData)) {
+				for (const [levelCode, data] of Object.entries(level)) {
+					const currentMaxLength = Math.max(data.areas.length, data.lengths.length);
+					if (currentMaxLength > maxLength) {
+						maxLength = currentMaxLength;
 					}
 				}
 			}
-			console.log(table);
+
+			table.push(['破壞類型及\n嚴重程度', '數量', ...Array(maxLength - 1).fill(''), '總數', '密度(%)', '折減值']);
+
+			for (const [typeCode, level] of Object.entries(distressData)) {
+				for (const [levelCode, data] of Object.entries(level)) {
+					const areasTotal = data.areas.reduce((acc, cur) => acc + parseFloat(cur) || 0, 0);
+					const lengthsTotal = data.lengths.reduce((acc, cur) => acc + parseFloat(cur) || 0, 0);
+
+					dv.map(item => {
+						if (item.PCI_class == `${typeCode}${levelCode}`) {
+							if (data.areas.length > 0) {
+								table.push([`${typeCode}${levelCode}`, ...data.areas, ...Array(maxLength - data.areas.length).fill(''), areasTotal.toFixed(2), item.density.toFixed(2), item.dv.toFixed(2)]);
+							}
+							if (data.lengths.length > 0) {
+								table.push([`${typeCode}${levelCode}`, ...data.lengths, ...Array(maxLength - data.lengths.length).fill(''), lengthsTotal.toFixed(2), item.density.toFixed(2), item.dv.toFixed(2)]);
+							}
+						}
+					});
+
+				}
+			}
+			// console.log(table);
 			
 			
 			// 將數據轉換為 Excel 兼容格式
