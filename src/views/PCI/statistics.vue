@@ -1,22 +1,20 @@
 <template>
 	<div class="app-container contract" v-loading="loading">
 		<h2>合約統計</h2>
-		<div class="filter-container">
-			<div class="filter-item">
-				<div class="filter-item">
-					<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
-						<div class="el-input-group__prepend">
-							<span>合約</span>
-						</div>
-						<el-select v-model.number="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" @change="listQuery.pageCurrent = 1; getList();">
-							<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="Number(id)" :label="obj.tenderName" />
-						</el-select>
-						
+		<div class="filter-container" style="display: flex; align-items: center;">
+			<div class="filter-item" style="flex-grow: 1;">
+				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>合約</span>
 					</div>
+					<el-select v-model.number="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" @change="listQuery.pageCurrent = 1; getList();">
+						<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="Number(id)" :label="obj.tenderName" />
+					</el-select>
 				</div>
-				<el-button class="btn-action" style="float: right" type="primary" @click="exportAllAverage()" plain>全行政區總平均</el-button>
 			</div>
+			<el-button type="primary" @click="exportAllAverage()" style="margin-left: auto;">全行政區總平均</el-button>
 		</div>
+
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -213,17 +211,19 @@ export default {
 		exportPCI(row) {
 			// console.log(row);
 			getPCIScore({ block: `block_${row.tenderId}` }).then(response => {
+				const list = response.data.list;
+				const list2 = response.data.list2;
 
-				if (response.data.list.length != 0) {
+				if (list.length != 0) {
 					const table = [];
 					table.push(['PCI', '單元維護數', '路段數']);
-					table.push(['很好 (85-100)', `${response.data.list[0]["veryGood(85-100)"]}(${response.data.list[1]["veryGood(85-100)"]}%)`, `${response.data.list2[0]["veryGood(85-100)"]}(${response.data.list2[1]["veryGood(85-100)"]}%)`]);
-					table.push(['好 (70-85)', `${response.data.list[0]["good(70-85)"]}(${response.data.list[1]["good(70-85)"]}%)`, `${response.data.list2[0]["good(70-85)"]}(${response.data.list2[1]["good(70-85)"]}%)`]);
-					table.push(['尚可 (55-70)', `${response.data.list[0]["fair(55-70)"]}(${response.data.list[1]["fair(55-70)"]}%)`, `${response.data.list2[0]["fair(55-70)"]}(${response.data.list2[1]["fair(55-70)"]}%)`]);
-					table.push(['差 (40-55)', `${response.data.list[0]["poor(40-55)"]}(${response.data.list[1]["poor(40-55)"]}%)`, `${response.data.list2[0]["poor(40-55)"]}(${response.data.list2[1]["poor(40-55)"]}%)`]);
-					table.push(['很差 (25-40)', `${response.data.list[0]["veryPoor(25-40)"]}(${response.data.list[1]["veryPoor(25-40)"]}%)`, `${response.data.list2[0]["veryPoor(25-40)"]}(${response.data.list2[1]["veryPoor(25-40)"]}%)`]);
-					table.push(['嚴重 (10-25)', `${response.data.list[0]["serious(10-25)"]}(${response.data.list[1]["serious(10-25)"]}%)`, `${response.data.list2[0]["serious(10-25)"]}(${response.data.list2[1]["serious(10-25)"]}%)`]);
-					table.push(['不合格 (0-10)', `${response.data.list[0]["failed(0-10)"]}(${response.data.list[1]["failed(0-10)"]}%)`, `${response.data.list2[0]["failed(0-10)"]}(${response.data.list2[1]["failed(0-10)"]}%)`]);
+					table.push(['很好 (85-100)', `${list[0]["veryGood(85-100)"]}(${list[1]["veryGood(85-100)"]}%)`, `${list2[0]["veryGood(85-100)"]}(${list2[1]["veryGood(85-100)"]}%)`]);
+					table.push(['好 (70-85)', `${list[0]["good(70-85)"]}(${list[1]["good(70-85)"]}%)`, `${list2[0]["good(70-85)"]}(${list2[1]["good(70-85)"]}%)`]);
+					table.push(['尚可 (55-70)', `${list[0]["fair(55-70)"]}(${list[1]["fair(55-70)"]}%)`, `${list2[0]["fair(55-70)"]}(${list2[1]["fair(55-70)"]}%)`]);
+					table.push(['差 (40-55)', `${list[0]["poor(40-55)"]}(${list[1]["poor(40-55)"]}%)`, `${list2[0]["poor(40-55)"]}(${list2[1]["poor(40-55)"]}%)`]);
+					table.push(['很差 (25-40)', `${list[0]["veryPoor(25-40)"]}(${list[1]["veryPoor(25-40)"]}%)`, `${list2[0]["veryPoor(25-40)"]}(${list2[1]["veryPoor(25-40)"]}%)`]);
+					table.push(['嚴重 (10-25)', `${list[0]["serious(10-25)"]}(${list[1]["serious(10-25)"]}%)`, `${list2[0]["serious(10-25)"]}(${list2[1]["serious(10-25)"]}%)`]);
+					table.push(['不合格 (0-10)', `${list[0]["failed(0-10)"]}(${list[1]["failed(0-10)"]}%)`, `${list2[0]["failed(0-10)"]}(${list2[1]["failed(0-10)"]}%)`]);
 					// console.log(table);
 
 					// 將數據轉換為 Excel 兼容格式
