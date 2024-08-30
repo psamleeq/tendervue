@@ -31,7 +31,16 @@ const caseRouter = {
 				title: '路況查詢', 
 				roles: ['distress.inspector']
 			}
-		}
+		},
+		{
+			path: 'destroyedResult',
+			component: () => import('@/views/PCIManage/destroyedResult'),
+			name: 'destroyedResult',
+			meta: {
+				title: '破壞調查數值',
+				roles: ['PCIManage.base']
+			}
+		},
 	]
 }
 export default caseRouter
