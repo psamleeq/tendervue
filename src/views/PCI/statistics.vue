@@ -297,15 +297,12 @@ export default {
 			getRoadAverage({ block: `block_${row.tenderId}` }).then(response => {
 				if (response.data.list.length != 0) {
 					const list = response.data.list;
-					const list2 = response.data.list2;
 					const table = [];
 					table.push(['道路名稱', '平均PCI']);
 					for (let i = 0; i < list.length; i++) {
 						table.push([list[i]["道路名稱"], list[i]["average"]]);
 					}
-					table.push(['------', '------']);
-					table.push(['區域平均PCI', list2[0].overall_average]);
-					console.log(table);
+					// console.log(table);
 
 					// 將數據轉換為 Excel 兼容格式
 					const worksheet = XLSX.utils.aoa_to_sheet(table);
