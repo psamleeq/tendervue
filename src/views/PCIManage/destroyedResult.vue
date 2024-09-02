@@ -191,7 +191,7 @@ export default {
 			} else {
 				updatePCI({ tenderId: this.listQuery.tenderId, surveyId, pciValue, blockId }).then(response => {
 					if (response.statusCode == 20000 ) {
-						// console.log(response.data);
+						console.log(response.data);
 						this.densityAndDvList = response.data;
 						// this.densityAndDvList.push(response.data.densityAndDv);
 						const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '滿值';
@@ -212,6 +212,9 @@ export default {
 		exportExcel() {
 			const dv = this.densityAndDvList.data; // 密度 dv
 			const list = this.distressList.list; // 損壞類型 程度
+			const reductionVal = this.densityAndDvList.reductionVal[0]; // 折減值dv 加總tdv 修正折減值cdvDetails
+			console.log(reductionVal);
+			
 			// 缺失類別
 			const distressTypeMap = {
 				'龜裂': 1,
@@ -288,8 +291,8 @@ export default {
 
 			for (const [typeCode, level] of Object.entries(distressData)) {
 				for (const [levelCode, data] of Object.entries(level)) {
-					const areasTotal = data.areas.reduce((acc, cur) => acc + parseFloat(cur) || 0, 0);
-					const lengthsTotal = data.lengths.reduce((acc, cur) => acc + parseFloat(cur) || 0, 0);
+					const areasTotal = data.areas.reduce((acc, cur) => acc + parseFloat(cur) || 0, 0); // 面積總數
+					const lengthsTotal = data.lengths.reduce((acc, cur) => acc + parseFloat(cur) || 0, 0); // 長度總數
 
 					dv.map(item => {
 						if (item.PCI_class == `${typeCode}${levelCode}`) {
@@ -301,10 +304,16 @@ export default {
 							}
 						}
 					});
-
 				}
 			}
-			// console.log(table);
+
+			table.push([], []); // 空兩行
+			table.push(['折減值', ...Array(reductionVal.dvListArr[0].length - 1).fill(''), '加總', '修正折減值']);
+			for (let i = 0; i < reductionVal.dvListArr[0].length; i++) {
+				table.push([...reductionVal.dvListArr[i].map(num => num.toFixed(2)), reductionVal.tdvArr[i].toFixed(2), reductionVal.cdvDetails[i].toFixed(2)]);
+			}
+			
+			console.log(table);
 			
 			
 			// 將數據轉換為 Excel 兼容格式
@@ -324,24 +333,24 @@ export default {
 			link.click();
 			
 		},
-		calPCIRoad(surveyId, roadName, pciValue) {
-			if(roadName.length == 0) {
-				this.$message({
-					message: "請輸入路名",
-					type: "error",
-				});
-			} else {
-				updatePCIByName({ tenderId: this.listQuery.tenderId, surveyId, pciValue, roadName }).then(response => {
-					if (response.statusCode == 20000 ) {
-						const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '填滿';
-						this.$message({
-							message: `${action}成功`,
-							type: "success",
-						});
-					} 
-				}).catch(err => console.log(err))
-			}
-		},
+		// calPCIRoad(surveyId, roadName, pciValue) {
+		// 	if(roadName.length == 0) {
+		// 		this.$message({
+		// 			message: "請輸入路名",
+		// 			type: "error",
+		// 		});
+		// 	} else {
+		// 		updatePCIByName({ tenderId: this.listQuery.tenderId, surveyId, pciValue, roadName }).then(response => {
+		// 			if (response.statusCode == 20000 ) {
+		// 				const action = pciValue == 0 ? '重算' : pciValue == -1 ? '重置' : '填滿';
+		// 				this.$message({
+		// 					message: `${action}成功`,
+		// 					type: "success",
+		// 				});
+		// 			} 
+		// 		}).catch(err => console.log(err))
+		// 	}
+		// },
 		formatter(row, column) {
 			if (Number(row[column.property])) return row[column.property];
 			else return row[column.property] || "-";
