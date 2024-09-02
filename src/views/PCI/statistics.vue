@@ -53,9 +53,9 @@
 			<el-table-column label="操作" width="300" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group>
-            <el-button v-if="row.tenderId > 1000" class="btn-action" type="warning" @click="exportPCI(row)" plain>PCI數據</el-button>
+            <el-button v-if="![52, 53, 54, 55, 56, 1042, 99999].includes(row.tenderId)" class="btn-action" type="warning" @click="exportPCI(row)" plain>PCI數據</el-button>
             <el-button class="btn-action" type="success" @click="exportDistressType(row)" plain>缺失類型</el-button>
-            <el-button class="btn-action" type="danger" @click="exportRoadAverage(row)" plain>道路PCI平均</el-button>
+            <el-button v-if="![52, 53, 54, 55, 56, 1042, 99999].includes(row.tenderId)" class="btn-action" type="danger" @click="exportRoadAverage(row)" plain>道路PCI平均</el-button>
           </el-button-group>
 				</template>
 			</el-table-column>
@@ -210,9 +210,9 @@ export default {
 		},
 		exportPCI(row) {
 			// console.log(row);
-			getPCIScore({ block: `block_${row.tenderId}` }).then(response => {
-				const list = response.data.list;
-				const list2 = response.data.list2;
+			getPCIScore({ tenderId: row.tenderId }).then(response => {
+				const list = response.data.list; // 單元維護數
+				const list2 = response.data.list2; // 路段數
 
 				if (list.length != 0) {
 					const table = [];
@@ -294,7 +294,7 @@ export default {
 		},
 		exportRoadAverage(row) {
 			// console.log(row);
-			getRoadAverage({ block: `block_${row.tenderId}` }).then(response => {
+			getRoadAverage({ tenderId: row.tenderId }).then(response => {
 				if (response.data.list.length != 0) {
 					const list = response.data.list;
 					const table = [];
