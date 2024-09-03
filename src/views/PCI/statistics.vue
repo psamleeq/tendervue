@@ -1,20 +1,20 @@
 <template>
 	<div class="app-container contract" v-loading="loading">
 		<h2>合約統計</h2>
-		<div class="filter-container">
-			<div class="filter-item">
-				<div class="filter-item">
-					<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
-						<div class="el-input-group__prepend">
-							<span>合約</span>
-						</div>
-						<el-select v-model.number="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" @change="listQuery.pageCurrent = 1; getList();">
-							<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="Number(id)" :label="obj.tenderName" />
-						</el-select>
+		<div class="filter-container" style="display: flex; align-items: center;">
+			<div class="filter-item" style="flex-grow: 1;">
+				<div class="select-contract el-input el-input--medium el-input-group el-input-group--prepend">
+					<div class="el-input-group__prepend">
+						<span>合約</span>
 					</div>
+					<el-select v-model.number="listQuery.tenderId" class="tender-select" placeholder="請選擇" popper-class="type-select tender" @change="listQuery.pageCurrent = 1; getList();">
+						<el-option v-for="(obj, id) in options.tenderMap" :key="id" :value="Number(id)" :label="obj.tenderName" />
+					</el-select>
 				</div>
 			</div>
+			<el-button type="primary" @click="exportAllAverage()" style="margin-left: auto;">全行政區總平均</el-button>
 		</div>
+
 
 		<el-table
 			empty-text="目前沒有資料"
@@ -53,8 +53,9 @@
 			<el-table-column label="操作" width="300" align="center">
 				<template slot-scope="{ row }">
 					<el-button-group>
-            <el-button class="btn-action" type="warning" @click="exportPCI(row)" plain>PCI數據</el-button>
+            <el-button v-if="![52, 53, 54, 55, 56, 1042, 99999].includes(row.tenderId)" class="btn-action" type="warning" @click="exportPCI(row)" plain>PCI數據</el-button>
             <el-button class="btn-action" type="success" @click="exportDistressType(row)" plain>缺失類型</el-button>
+            <el-button v-if="![52, 53, 54, 55, 56, 1042, 99999].includes(row.tenderId)" class="btn-action" type="danger" @click="exportRoadAverage(row)" plain>道路PCI平均</el-button>
           </el-button-group>
 				</template>
 			</el-table-column>
@@ -66,9 +67,9 @@
 <script>
 import moment from "moment";
 import { getTenderMap, getTenderRound } from "@/api/type";
-import { getPCIScore, getDistressStatistics } from "@/api/pci";
+import { getPCIScore, getDistressStatistics, getRoadAverage, getAllAverage } from "@/api/pci";
 import checkPermission from '@/utils/permission';
-import XLSX from 'xlsx'
+import XLSX from 'xlsx';
 
 export default {
 	name: "contract",
@@ -209,11 +210,24 @@ export default {
 		},
 		exportPCI(row) {
 			// console.log(row);
-			getPCIScore({ block: `block_${row.tenderId}` }).then(response => {
-				// console.log(response.data.list);
-				if (response.data.list.length != 0) {
+			getPCIScore({ tenderId: row.tenderId }).then(response => {
+				const list = response.data.list; // 單元維護數
+				const list2 = response.data.list2; // 路段數
+
+				if (list.length != 0) {
+					const table = [];
+					table.push(['PCI', '單元維護數', '路段數']);
+					table.push(['很好 (85-100)', `${list[0]["veryGood(85-100)"]}(${list[1]["veryGood(85-100)"]}%)`, `${list2[0]["veryGood(85-100)"]}(${list2[1]["veryGood(85-100)"]}%)`]);
+					table.push(['好 (70-85)', `${list[0]["good(70-85)"]}(${list[1]["good(70-85)"]}%)`, `${list2[0]["good(70-85)"]}(${list2[1]["good(70-85)"]}%)`]);
+					table.push(['尚可 (55-70)', `${list[0]["fair(55-70)"]}(${list[1]["fair(55-70)"]}%)`, `${list2[0]["fair(55-70)"]}(${list2[1]["fair(55-70)"]}%)`]);
+					table.push(['差 (40-55)', `${list[0]["poor(40-55)"]}(${list[1]["poor(40-55)"]}%)`, `${list2[0]["poor(40-55)"]}(${list2[1]["poor(40-55)"]}%)`]);
+					table.push(['很差 (25-40)', `${list[0]["veryPoor(25-40)"]}(${list[1]["veryPoor(25-40)"]}%)`, `${list2[0]["veryPoor(25-40)"]}(${list2[1]["veryPoor(25-40)"]}%)`]);
+					table.push(['嚴重 (10-25)', `${list[0]["serious(10-25)"]}(${list[1]["serious(10-25)"]}%)`, `${list2[0]["serious(10-25)"]}(${list2[1]["serious(10-25)"]}%)`]);
+					table.push(['不合格 (0-10)', `${list[0]["failed(0-10)"]}(${list[1]["failed(0-10)"]}%)`, `${list2[0]["failed(0-10)"]}(${list2[1]["failed(0-10)"]}%)`]);
+					// console.log(table);
+
 					// 將數據轉換為 Excel 兼容格式
-					const worksheet = XLSX.utils.json_to_sheet(response.data.list);
+					const worksheet = XLSX.utils.aoa_to_sheet(table);
 					// 創建 Excel 工作簿
 					const workbook = XLSX.utils.book_new();
 					// 將工作表添加到工作簿中
@@ -225,7 +239,7 @@ export default {
 					const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 					const link = document.createElement('a');
 					link.href = URL.createObjectURL(blob);
-					link.download = `PCI數據統計${row.id}.xlsx`;
+					link.download = `PCI數據統計-${row.tenderName}.xlsx`;
 					link.click();
 
 					this.$message({
@@ -261,7 +275,7 @@ export default {
 					const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 					const link = document.createElement('a');
 					link.href = URL.createObjectURL(blob);
-					link.download = `調查缺失類型統計${row.id}.xlsx`;
+					link.download = `調查缺失類型統計-${row.tenderName}.xlsx`;
 					link.click();
 
 					this.$message({
@@ -276,7 +290,88 @@ export default {
 				}
 			}).catch(err => {
 				console.log(err);
-			})
+			});
+		},
+		exportRoadAverage(row) {
+			// console.log(row);
+			getRoadAverage({ tenderId: row.tenderId }).then(response => {
+				if (response.data.list.length != 0) {
+					const list = response.data.list;
+					const table = [];
+					table.push(['道路名稱', '平均PCI']);
+					for (let i = 0; i < list.length; i++) {
+						table.push([list[i]["道路名稱"], list[i]["average"]]);
+					}
+					// console.log(table);
+
+					// 將數據轉換為 Excel 兼容格式
+					const worksheet = XLSX.utils.aoa_to_sheet(table);
+					// 創建 Excel 工作簿
+					const workbook = XLSX.utils.book_new();
+					// 將工作表添加到工作簿中
+					XLSX.utils.book_append_sheet(workbook, worksheet, '道路平均統計');
+					// 生成 Excel 文件的二進制字符串
+					const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+					// 創建 Blob 並觸發文件下載
+					const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.download = `道路平均統計-${row.tenderName}.xlsx`;
+					link.click();
+
+					this.$message({
+						message: '資料匯出成功',
+						type: 'success'
+					});
+				} else {
+					this.$message({
+						message: '沒資料唷',
+						type: 'warning'
+					});
+				}
+			}).catch(err => {
+				console.log(err);
+			});
+		},
+		exportAllAverage() {
+			getAllAverage().then(response => {
+				const list = response.data.list;
+				const table = [];
+				let overall_average = 0; // 總平均計算
+				table.push(['區域名稱', 'PCI平均分數']);
+				
+				for (let i = 0; i < list.length; i++) {
+					table.push([list[i].area, list[i].average_pci]);
+					overall_average += list[i].average_pci;
+				}
+				
+				overall_average /= 12; // 總共12個區域
+				table.push(['總平均', overall_average]);
+				// console.log(table);
+
+				// 將數據轉換為 Excel 兼容格式
+				const worksheet = XLSX.utils.aoa_to_sheet(table);
+				// 創建 Excel 工作簿
+				const workbook = XLSX.utils.book_new();
+				// 將工作表添加到工作簿中
+				XLSX.utils.book_append_sheet(workbook, worksheet, '行政區PCI平均統計');
+				// 生成 Excel 文件的二進制字符串
+				const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+				// 創建 Blob 並觸發文件下載
+				const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.download = `全部行政區PCI平均統計.xlsx`;
+				link.click();
+
+				this.$message({
+					message: '資料匯出成功',
+					type: 'success'
+				});
+			});
+			
 		},
 		formatter(row, column) {
 			if (Number(row[column.property])) return row[column.property];

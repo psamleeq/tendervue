@@ -70,3 +70,21 @@ export function getDistressStatistics(query) {
 		params: query
 	})
 }
+
+// 各項道路名稱分數
+export function getRoadAverage(query) {
+	return request({
+		url: '/pci/roadAverage',
+		method: 'get',
+		params: query
+	})
+}
+
+// 全部行政區平均分數
+export function getAllAverage(query) {
+	return request({
+		url: '/pci/allAverage',
+		method: 'get',
+		params: query
+	})
+}
