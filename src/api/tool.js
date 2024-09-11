@@ -33,3 +33,11 @@ export function getAddress(query) {
 		params: query
 	})
 }
+
+export function updateCorrectGeoJson(data) {
+	return request({
+		url: '/tool/correctGeoJson',
+		method: 'put',
+		data
+	})
+}
