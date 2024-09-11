@@ -12,6 +12,7 @@
 					</el-select>
 				</div>
 			</div>
+			<el-button v-if="![52, 53, 54, 55, 56, 1042, 99999].includes(listQuery.tenderId)" type="warning" @click="fixCorrectGeoJson()" style="margin-right: 20px;" >修正地理格式</el-button>
 			<el-button type="primary" @click="exportAllAverage()" style="margin-left: auto;">全行政區總平均</el-button>
 		</div>
 
@@ -68,6 +69,7 @@
 import moment from "moment";
 import { getTenderMap, getTenderRound } from "@/api/type";
 import { getPCIScore, getDistressStatistics, getRoadAverage, getAllAverage } from "@/api/pci";
+import { updateCorrectGeoJson } from "@/api/tool";
 import checkPermission from '@/utils/permission';
 import XLSX from 'xlsx';
 
@@ -372,6 +374,15 @@ export default {
 				});
 			});
 			
+		},
+		fixCorrectGeoJson() {
+			// console.log(this.listQuery.tenderId);
+			updateCorrectGeoJson({ tenderId: this.listQuery.tenderId }).then(response => {
+				this.$message({
+					message: '資料已修正',
+					type: 'success'
+				});
+			}).catch(err => console.log(err));
 		},
 		formatter(row, column) {
 			if (Number(row[column.property])) return row[column.property];
