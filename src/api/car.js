@@ -113,3 +113,12 @@ export function setPotholeCN(id, data) {
 		data
 	})
 }
+
+// 坑洞缺失(磐碩3, 6標)
+export function getPothole36(query) {
+	return request({
+		url: '/car/pothole36',
+		method: 'get',
+		params: query
+	})
+}
