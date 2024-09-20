@@ -6,7 +6,7 @@
       :current-page.sync="pageCurrentProps"
       :page-sizes="pageSizes"
       :page-size.sync="pageSizeProps"
-      :layout="device == 'mobile' ? 'prev, slot, next' : 'sizes, prev, pager, next'"
+      :layout="device == 'mobile' ? 'prev, slot, next' : 'sizes, prev, pager, next, jumper'"
       :pager-count="5"
       :total="total"
       @size-change="handleSizeChange"

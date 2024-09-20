@@ -683,6 +683,7 @@ export default {
 					: moment(this.reportDate).day(1).subtract(8, 'hours').format("YYYY-MM-DD HH:mm:ss");
 				if(moment(timeStart).month() != moment(this.reportDate).month()) timeStart = moment(this.reportDate).startOf('month').subtract(8, 'hours').format("YYYY-MM-DD HH:mm:ss");
 				const timeEnd = moment(this.reportDate).startOf('day').add(1, "d").subtract(8, 'hours').format("YYYY-MM-DD HH:mm:ss");
+				timeStart = moment(timeStart).subtract(8, 'hours').format("YYYY-MM-DD HH:mm:ss");
 
 				getCaseWarrantyList({
 					zipCode: Number(this.inputs.zipCode),
