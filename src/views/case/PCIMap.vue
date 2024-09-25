@@ -1149,7 +1149,8 @@ export default {
 				}
 				this.pciId = feature.getProperty("pciId");
 				const orthoPath = this.options.tenderRoundMap[this.listQuery.tenderRound].orthoPath;
-				const url = `${orthoPath.replace("_jpg", "")}${this.blockInfo.id}.tif`;
+				const url = `${orthoPath}${this.blockInfo.id}.jpeg`;
+				
 				// fromUrl(url).then( async(geoTiffFile) => {
 				// 	const imageSpec = await geoTiffFile.getImage(0);
 				// 	// console.log(imageSpec);
