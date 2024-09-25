@@ -12,8 +12,9 @@
 					</el-select>
 				</div>
 			</div>
-			<el-button v-if="![52, 53, 54, 55, 56, 1042, 99999].includes(listQuery.tenderId)" type="warning" @click="fixCorrectGeoJson()" style="margin-right: 20px;" >修正地理格式</el-button>
-			<el-button type="primary" @click="exportAllAverage()" style="margin-left: auto;">全行政區總平均</el-button>
+			<el-button v-if="![52, 53, 54, 55, 56, 1042, 99999].includes(listQuery.tenderId)" type="warning" @click="fixCorrectGeoJson()" >修正地理格式</el-button>
+			<el-button type="primary" @click="exportAllAverage()">全行政區總平均</el-button>
+			<el-button type="danger" @click="exportAllPCI()">全部PCI數據(8-30)</el-button>
 		</div>
 
 
@@ -185,30 +186,74 @@ export default {
 			this.dialogType = 2;
 			this.showAddDialog = true;
 		},
-		importCaseDistress() {
-			this.loading = true;
-			importCaseDistressCopy({ 
-				surveyId: this.surveyId,
-				tenderId: this.tenderId,
-				title: this.newRoundForm.title,
-				round: this.newRoundForm.round,
-				roundStart: this.newRoundForm.roundStart,
-				roundEnd: this.newRoundForm.roundEnd
-			}).then(response => {
-				if ( response.statusCode == 20000 ) {
-					const result = response.result;
-					this.$message({
-						message: `上傳缺失結果(共 ${result.total}件): 成功 ${result.success}件`,
-						type: "success",
-					});
-				} 
-				this.getList();
-				this.showAddDialog = false;
-				this.loading = false;
+		exportAllPCI() {
+			const tenderMap = {
+				1002: '中正區(8-30)',
+				1052: '松山區(8-30)',
+				1062: '大安區(8-30)',
+				1082: '萬華區(8-30)',
+				1102: '信義區(8-30)',
+				1112: '士林區(8-30)',
+				1122: '北投區(8-30)',
+				1142: '內湖區(8-30)',
+				1152: '南港區(8-30)',
+				1162: '文山區(8-30)',
+				99921: '橋涵區1(8-30)',
+				99922: '橋涵區2(8-30)'
+			};
+
+			// 創建一個空的 Excel 工作簿
+			const workbook = XLSX.utils.book_new();
+
+			// 遍歷 tenderMap 的所有 key
+			const allTenderMap = Object.keys(tenderMap).map(tenderId => {
+				// 為每個 tenderId 調用 getPCIScore 並返回 Promise
+				return getPCIScore({ tenderId }).then(response => {
+					const list = response.data.list; // 單元維護數
+					const list2 = response.data.list2; // 路段數
+
+					if (list.length != 0) {
+						const table = [];
+						table.push(['PCI', '單元維護數', '路段數']);
+						table.push(['很好 (85-100)', `${list[0]["veryGood(85-100)"]}(${list[1]["veryGood(85-100)"]}%)`, `${list2[0]["veryGood(85-100)"]}(${list2[1]["veryGood(85-100)"]}%)`]);
+						table.push(['好 (70-85)', `${list[0]["good(70-85)"]}(${list[1]["good(70-85)"]}%)`, `${list2[0]["good(70-85)"]}(${list2[1]["good(70-85)"]}%)`]);
+						table.push(['尚可 (55-70)', `${list[0]["fair(55-70)"]}(${list[1]["fair(55-70)"]}%)`, `${list2[0]["fair(55-70)"]}(${list2[1]["fair(55-70)"]}%)`]);
+						table.push(['差 (40-55)', `${list[0]["poor(40-55)"]}(${list[1]["poor(40-55)"]}%)`, `${list2[0]["poor(40-55)"]}(${list2[1]["poor(40-55)"]}%)`]);
+						table.push(['很差 (25-40)', `${list[0]["veryPoor(25-40)"]}(${list[1]["veryPoor(25-40)"]}%)`, `${list2[0]["veryPoor(25-40)"]}(${list2[1]["veryPoor(25-40)"]}%)`]);
+						table.push(['嚴重 (10-25)', `${list[0]["serious(10-25)"]}(${list[1]["serious(10-25)"]}%)`, `${list2[0]["serious(10-25)"]}(${list2[1]["serious(10-25)"]}%)`]);
+						table.push(['不合格 (0-10)', `${list[0]["failed(0-10)"]}(${list[1]["failed(0-10)"]}%)`, `${list2[0]["failed(0-10)"]}(${list2[1]["failed(0-10)"]}%)`]);
+
+						// 將數據轉換為 Excel 兼容格式
+						const worksheet = XLSX.utils.aoa_to_sheet(table);
+						// 將工作表添加到工作簿中，名稱為 tenderMap[tenderId] 的值
+						XLSX.utils.book_append_sheet(workbook, worksheet, tenderMap[tenderId]);
+					}
+				});
+			});
+
+			// 等待所有的數據都加載完成
+			Promise.all(allTenderMap).then(() => {
+				// 生成 Excel 文件的二進制字符串
+				const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+				// 創建 Blob 並觸發文件下載
+				const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.download = '全部PCI數據統計(8-30).xlsx';
+				link.click();
+
+				this.$message({
+					message: '資料匯出成功',
+					type: 'success'
+				});
 			}).catch(err => {
 				console.log(err);
-				this.loading = false;
-			})
+				this.$message({
+					message: '匯出失敗',
+					type: 'error'
+				});
+			});
 		},
 		exportPCI(row) {
 			// console.log(row);
