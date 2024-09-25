@@ -23,6 +23,8 @@
 				:disabled="list.length == 0"
 				@click="handleDownload"
 			>輸出報表</el-button>
+
+			<el-button style="float: right;" type="warning" @click="showCaseNoDialog = true">案件編號同步</el-button>
 		</div>
 
 		<!-- 資訊列表 -->
@@ -223,6 +225,27 @@
 
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
+		<!-- 案件編號同步Dialog -->
+		<el-dialog
+			title="案件號碼同步"
+			:visible.sync="showCaseNoDialog"
+			width="350px"
+			center
+		>
+			<el-form label-width="80px">
+				<el-form-item label="分隊">
+					<span>第一分隊</span>
+				</el-form-item>
+				<el-form-item label="上傳時間">
+					<el-date-picker v-model="newForm.dateStart" type="date" value-format="yyyy-MM-dd" placeholder="選擇日期" />
+				</el-form-item>
+			</el-form>
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="showCaseNoDialog = false">取消</el-button>
+				<el-button type="primary" @click="updateCorrectCaseNo()">確定</el-button>
+			</span>
+		</el-dialog>
+
 		<!-- 抽查結果Dialog -->
 		<el-dialog
 			:visible.sync="showResultConfirm"
@@ -263,6 +286,7 @@
 import moment from "moment";
 import { getTypeMap, getTenderRound, getDTypeMap } from "@/api/type";
 import { getInsCaseList, setInsCaseList, getInsCaseCount } from "@/api/PI";
+import { updateCaseNo } from "@/api/inspection";
 import checkPermission from '@/utils/permission';
 import Pagination from "@/components/Pagination";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
@@ -275,10 +299,14 @@ export default {
 			loading: false,
 			showResultConfirm: false,
 			showImgViewer: false,
+			showCaseNoDialog: false,
 			listQuery: {
 				tenderRound: 91,
 				pageCurrent: 1,
 				pageSize: 50
+			},
+			newForm: {
+				dateStart: ""
 			},
 			resultHeader: {
 				CaseNo: {
@@ -606,6 +634,40 @@ export default {
 					this.loading = false;
 				});
 			})
+		},
+		updateCorrectCaseNo() {
+
+			if (this.newForm.dateStart != '') {
+				this.$message({
+					showClose: true,
+					message: '開始同步案件編號',
+					type: 'warning'
+				});
+
+				this.loading = true;
+
+				updateCaseNo({ timeStart: this.newForm.startDate }).then(response => {
+					this.$message({
+						showClose: true,
+						message: '同步案件成功',
+						type: 'success'
+					});
+					this.showCaseNoDialog = false;
+					this.loading = false;
+					this.getList();
+				}).catch(err => {
+					console.log(err);
+					this.showCaseNoDialog = false;
+					this.loading = false;
+				});
+			} else {
+				this.$message({
+					showClose: true,
+					message: '請輸入上傳時間',
+					type: 'warning'
+				});
+			}
+			
 		},
 		formatJson(filterVal, jsonData) {
 			return jsonData.map((v) => filterVal.map((j) => v[j]));
