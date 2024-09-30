@@ -736,7 +736,6 @@ export default {
 							message: "複製成功",
 							type: "success",
 						});
-						this.getList();
 					} else {
 						this.$message({
 							message: "複製失敗",
@@ -745,7 +744,6 @@ export default {
 					}
 				}).catch(err => {
 					console.log(err);
-					this.getList();
 				})
 			}
 			
