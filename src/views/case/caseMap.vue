@@ -129,7 +129,7 @@ export default {
 			},
 			headers: {
 				caseInfo: {
-					id: "缺失編號",
+					id: "distressID",
 					caseName: "缺失類型",
 					caseLevel: "損壞程度",
 					length: "長度(m)",
