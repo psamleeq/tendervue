@@ -87,7 +87,7 @@ import { mapGetters } from "vuex";
 import { Loader } from "@googlemaps/js-api-loader";
 import moment from "moment";
 import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
-import { getRoadCaseGeo, setRoadCase } from "@/api/road";
+import { getRoadCaseGeo, setRoadCase, addCaseGeoBridge } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
@@ -129,7 +129,8 @@ export default {
 			},
 			headers: {
 				caseInfo: {
-					id: "缺失編號",
+					id: "distressID",
+					orginalID: "orginalID",
 					caseName: "缺失類型",
 					caseLevel: "損壞程度",
 					length: "長度(m)",
@@ -417,6 +418,15 @@ export default {
 							this.showImgViewer = true;
 							infoScrnFullBtn.removeEventListener("click", clickHandle);
 						});
+					}
+
+					// 複製到橋梁
+					const infoCopyBtn = this.$el.querySelector('#map #info-copy-btn');
+					if (infoCopyBtn) {
+						const clickHandle = infoCopyBtn.addEventListener("click", () => {
+							this.copyToBridge();
+							infoCopyBtn.removeEventListener("click", clickHandle);
+						})
 					}
 				});
 				resolve();
@@ -712,6 +722,32 @@ export default {
 				})
 			})
 		},
+		copyToBridge() {
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound]
+			if (![98, 99, 100, 101, 102, 103, 104, 105].includes(tenderRound.id)) {
+				this.$message({
+					message: "只能複製113年第3季相關資料",
+					type: 'warning'
+				});
+			} else {
+				addCaseGeoBridge({ distressID: this.currId }).then(response => {
+					if ( response.statusCode == 20000 ) {
+						this.$message({
+							message: "複製成功",
+							type: "success",
+						});
+					} else {
+						this.$message({
+							message: "複製失敗",
+							type: "error",
+						});
+					}
+				}).catch(err => {
+					console.log(err);
+				})
+			}
+			
+		},
 		removeCaseStatus() {
 			// console.log(this.currId);
 			setRoadCase(this.currId, { isActive: false }).then(response => {
@@ -858,6 +894,7 @@ export default {
 			// 	contentText += `<img src="https://img.bellsgis.com/images/casepic_o/${img}" style="object-fit: scale-down;">`
 			// }
 			contentText += `<button type="button" id="info-del-btn" class="info-btn del el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">刪除</span></button>`;
+			contentText += `<button type="button" id="info-copy-btn" class="info-btn copy el-button el-button--default" style="height: 20px; width: 40px;"><span class="btn-text">複製</span></button>`;
 			// TODO: 缺失圖片需替換
 			contentText += `<img src="https://img.bellsgis.com/images/online_pic/${this.currId}.jpg" class="img" onerror="this.className='img hide-img'">`;
 			contentText += `<button type="button" id="info-scrn-full-btn" class="info-btn scrn-full el-button el-button--default" style="height: 30px; width: 30px;"><i class="el-icon-full-screen btn-text"></i></button></img>`;
@@ -998,10 +1035,17 @@ export default {
 			.info-btn
 				position: absolute
 				right: 30px
+				&.copy
+					top: 25px
+					right: 80px
+					background-color: rgba(#409EFF, 0.3)
+					border-color: #409EFF
+					color: #409EFF
 				&.del
 					top: 25px
 					background-color: rgba(#EF5350, 0.3)
 					border-color: #EF5350
+					color: #EF5350
 				&.scrn-full
 					padding: 0
 					bottom: 25px
@@ -1014,7 +1058,6 @@ export default {
 					transform: translate(-50%, -50%)
 					font-size: 14px
 					line-height: 20px
-					color: #EF5350
 					&.el-icon-full-screen
 						color:  #FFF
 						line-height: 30px

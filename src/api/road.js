@@ -147,3 +147,12 @@ export function getBlockCase(query) {
 		params: query
 	})
 }
+
+// 缺失地理資訊 - 複製到橋梁
+export function addCaseGeoBridge(data) {
+	return request({
+		url: '/road/caseGeoCopyToBridge',
+		method: 'post',
+		data
+	})
+}
