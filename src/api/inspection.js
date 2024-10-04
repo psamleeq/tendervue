@@ -193,3 +193,12 @@ export function importCaseDistressCopy(data) {
 		data
 	})
 }
+
+// 案件稽核(環景) 案件號碼同步
+// export function updateCaseNo(data) {
+// 	return request({
+// 		url: '/inspection/caseUploadNco',
+// 		method: 'post',
+// 		data
+// 	})
+// }
