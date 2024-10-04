@@ -194,12 +194,11 @@ export function importCaseDistressCopy(data) {
 	})
 }
 
-// 這一段很特別 取得新工處的caseNo 在同步更新caseDistress相關案件的caseNo
-// 缺失上傳至新工處(結果) - 案件編號同步
-export function updateCaseNo(query) {
-	return request({
-		url: '/inspection/caseUploadNco',
-		method: 'get',
-		params
-	})
-}
+// 案件稽核(環景) 案件號碼同步
+// export function updateCaseNo(data) {
+// 	return request({
+// 		url: '/inspection/caseUploadNco',
+// 		method: 'post',
+// 		data
+// 	})
+// }

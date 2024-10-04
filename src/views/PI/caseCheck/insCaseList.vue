@@ -24,7 +24,7 @@
 				@click="handleDownload"
 			>輸出報表</el-button>
 
-			<el-button style="float: right;" type="warning" @click="showCaseNoDialog = true">案件編號同步</el-button>
+			<!-- <el-button style="float: right;" type="warning" @click="showCaseNoDialog = true">案件編號同步</el-button> -->
 		</div>
 
 		<!-- 資訊列表 -->
@@ -226,7 +226,7 @@
 		<pagination :total="total" :pageCurrent.sync="listQuery.pageCurrent" :pageSize.sync="listQuery.pageSize" @pagination="getList" />
 
 		<!-- 案件編號同步Dialog -->
-		<el-dialog
+		<!-- <el-dialog
 			title="案件號碼同步"
 			:visible.sync="showCaseNoDialog"
 			width="350px"
@@ -234,17 +234,25 @@
 		>
 			<el-form label-width="80px">
 				<el-form-item label="分隊">
-					<span>第一分隊</span>
+					<el-select v-model.number="listQuery.team" style="width: 220px;">
+						<el-option v-for="(val, type) in options.team" :key="type" :label="val" :value="Number(type)" />
+					</el-select>
 				</el-form-item>
 				<el-form-item label="上傳時間">
-					<el-date-picker v-model="newForm.dateStart" type="date" value-format="yyyy-MM-dd" placeholder="選擇日期" />
+					<el-date-picker 
+						v-model="newForm.dateStart" 
+						type="date" 
+						value-format="yyyy-MM-dd"
+						placeholder="選擇日期"
+						style="width: 220px;"
+					/>
 				</el-form-item>
 			</el-form>
 			<span slot="footer" class="dialog-footer">
 				<el-button @click="showCaseNoDialog = false">取消</el-button>
 				<el-button type="primary" @click="updateCorrectCaseNo()">確定</el-button>
 			</span>
-		</el-dialog>
+		</el-dialog> -->
 
 		<!-- 抽查結果Dialog -->
 		<el-dialog
@@ -303,7 +311,11 @@ export default {
 			listQuery: {
 				tenderRound: 91,
 				pageCurrent: 1,
-				pageSize: 50
+				pageSize: 50,
+				team: 1
+			},
+			newForm: {
+				dateStart: ""
 			},
 			newForm: {
 				dateStart: ""
@@ -390,6 +402,14 @@ export default {
 					1: "輕",
 					2: "中",
 					3: "重"
+				},
+				team: {
+					1: "第一分隊",
+					2: "第二分隊",
+					3: "第三分隊",
+					4: "第四分隊",
+					5: "第五分隊",
+					6: "第六分隊"
 				},
 				// BrokeStatus: {
 				// 	1: "觀察", //輕度
@@ -635,40 +655,44 @@ export default {
 				});
 			})
 		},
-		updateCorrectCaseNo() {
-
-			if (this.newForm.dateStart != '') {
-				this.$message({
-					showClose: true,
-					message: '開始同步案件編號',
-					type: 'warning'
-				});
-
-				this.loading = true;
-
-				updateCaseNo({ timeStart: this.newForm.startDate }).then(response => {
-					this.$message({
-						showClose: true,
-						message: '同步案件成功',
-						type: 'success'
-					});
-					this.showCaseNoDialog = false;
-					this.loading = false;
-					this.getList();
-				}).catch(err => {
-					console.log(err);
-					this.showCaseNoDialog = false;
-					this.loading = false;
-				});
-			} else {
-				this.$message({
-					showClose: true,
-					message: '請輸入上傳時間',
-					type: 'warning'
-				});
-			}
+		// updateCorrectCaseNo() {
 			
-		},
+		// 	if (this.newForm.dateStart.length > 0) {
+		// 		this.$message({
+		// 			showClose: true,
+		// 			message: '開始同步案件編號',
+		// 			type: 'success'
+		// 		});
+
+		// 		this.loading = true;
+				
+				
+		// 		updateCaseNo({
+		// 			team: this.listQuery.team,
+		// 			timeStart: this.newForm.dateStart
+		// 		}).then(response => {
+		// 			this.$message({
+		// 				showClose: true,
+		// 				message: '同步案件成功',
+		// 				type: 'success'
+		// 			});
+		// 			this.showCaseNoDialog = false;
+		// 			this.loading = false;
+		// 			this.getList();
+		// 		}).catch(err => {
+		// 			console.log(err);
+		// 			this.showCaseNoDialog = false;
+		// 			this.loading = false;
+		// 		});
+		// 	} else {
+		// 		this.$message({
+		// 			showClose: true,
+		// 			message: '請輸入上傳時間',
+		// 			type: 'warning'
+		// 		});
+		// 	}
+			
+		// },
 		formatJson(filterVal, jsonData) {
 			return jsonData.map((v) => filterVal.map((j) => v[j]));
 		},

@@ -426,6 +426,7 @@ export default {
 						const clickHandle = infoCopyBtn.addEventListener("click", () => {
 							this.copyToBridge();
 							infoCopyBtn.removeEventListener("click", clickHandle);
+							this.infoWindow.close();
 						})
 					}
 				});
