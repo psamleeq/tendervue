@@ -1252,7 +1252,7 @@ export default {
 				this.roadScores = response.data.list.map(item => ({
 					no: i++,
 					pciID: item.pci_id,
-					roadArea: item.roadArea,
+					roadArea: Math.round(item.roadArea * 100) / 100,
 					pciScore: item.PCI_real
 				}));
 				this.showScoreList = true;
