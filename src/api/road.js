@@ -147,3 +147,12 @@ export function getBlockCase(query) {
 		params: query
 	})
 }
+
+// 查核地圖 - 個別道路資料(面積, PCI分數)
+export function getAreaAndPCI(query) {
+	return request({
+		url: '/road/areaAndPCI',
+		method: 'get',
+		params: query
+	})
+}
