@@ -26,6 +26,7 @@
 				</div>
 				<el-button class="filter-item" type="primary" size="small" icon="el-icon-search" @click="search()">搜尋</el-button>
 				<el-button class="filter-item" type="success" size="small" icon="el-icon-refresh" @click="getList()">載入</el-button>
+				<el-button class="filter-item" type="warning" size="small" icon="el-icon-no-smoking" @click="getRoadScore()">道路分數</el-button>
 				<el-button v-if="hasClearOverlay" class="filter-item" type="danger" size="small" icon="el-icon-delete" @click="clearOverlay()">清除正射</el-button>
 			</div>
 		</div>
@@ -86,6 +87,41 @@
 				/>
 			</el-table>
 		</el-dialog>
+
+		<!-- 道路分數Dialog -->
+		<el-dialog class="dialog-map" :visible.sync="showScoreList" width="521px">
+			<el-table
+				:data="roadScores"
+				border
+				fit
+				:show-summary="true"
+				:summary-method="getSummaries"
+				style="width: 100%"
+				:header-cell-style="{ textAlign: 'center' }"
+				:cell-style="{ textAlign: 'center' }"
+			>
+				<el-table-column
+					prop="no"
+					label="編號"
+					width="120">
+				</el-table-column>
+				<el-table-column
+					prop="pciID"
+					label="PCI ID"
+					width="120">
+				</el-table-column>
+				<el-table-column
+					prop="roadArea"
+					label="道路面積"
+					width="120">
+				</el-table-column>
+				<el-table-column
+					prop="pciScore"
+					label="PCI分數"
+					width="120">
+				</el-table-column>
+			</el-table>
+		</el-dialog>
 	</div>
 </template>
 
@@ -96,7 +132,7 @@ import { fromUrl, Pool } from "geotiff";
 import moment from "moment";
 import proj4 from 'proj4';
 import { getDistMap, getTenderRound, getBlockGeo } from "@/api/type";
-import { getBlockPCI, getBlockPCIArchive, getRoadCaseGeo, getBlockCase } from "@/api/road";
+import { getBlockPCI, getBlockPCIArchive, getRoadCaseGeo, getBlockCase, getAreaAndPCI } from "@/api/road";
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer';
 
 // 載入 Google Map API
@@ -129,6 +165,7 @@ export default {
 			hasClearOverlay: false,
 			blockSwitch: true,
 			caseSwitch: false,
+			showScoreList: false,
 			screenWidth: window.innerWidth,
 			blockInfo: {
 				id: 0,
@@ -143,6 +180,7 @@ export default {
 			// geoJSON: {},
 			caseInfo: [],
 			selectCase: {},
+			roadScores: [], // 道路分數資料
 			listQuery: {
 				tenderRound: null,
 				filterType: 1,
@@ -881,6 +919,8 @@ export default {
 			this.loading = true;
 			this.clearAll();
 
+			this.tenderId = this.options.tenderRoundMap[this.listQuery.tenderRound].tenderId;
+
 			// 載入case GeoJSON
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 			if(this.caseSwitch) await this.getCaseGeo();
@@ -1199,6 +1239,49 @@ export default {
 			if (!['caseId'].includes(column.property) && Number(row[column.property])) return row[column.property].toLocaleString();
 			else return row[column.property] || "-";
 		},
+		getRoadScore() {
+			this.search();
+			this.roadScores = [];
+			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
+
+			getAreaAndPCI({
+				tenderId: tenderRound.tenderId,
+				roadName: this.$route.query.roadName
+			}).then(response => {
+				let i = 1;
+				this.roadScores = response.data.list.map(item => ({
+					no: i++,
+					pciID: item.pci_id,
+					roadArea: Math.round(item.roadArea * 100) / 100,
+					pciScore: item.PCI_real
+				}));
+				this.showScoreList = true;
+			}).catch(err => console.log(err));
+			
+		},
+		getSummaries({ columns, data }) {
+			const sums = [];
+
+			columns.forEach((column, index) => {
+				if (index === 0) {
+					sums[index] = '總計';
+					return;
+				}
+				if (index === 2) {
+					const totalRoadArea = data.reduce((sum, item) => sum + (parseFloat(item.roadArea) || 0), 0);
+					sums[index] = totalRoadArea.toFixed(2);
+					return;
+				}
+				if (index === 3) {
+					const totalPCI = data.reduce((sum, item) => sum + (parseFloat(item.pciScore) || 0), 0);
+					const avgPCI = data.length ? (totalPCI / data.length).toFixed(2) : 0;
+					sums[index] = avgPCI;
+					return;
+				}
+			});
+
+			return sums;
+		}, 
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:mm");
 		}
@@ -1214,6 +1297,9 @@ export default {
 	position: relative
 	height: 100%
 	width: 100%
+	.el-table__footer-wrapper
+		.cell
+			text-align: center
 	.header-bar
 		position: absolute
 		top: 0

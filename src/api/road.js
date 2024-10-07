@@ -148,11 +148,21 @@ export function getBlockCase(query) {
 	})
 }
 
+
 // 缺失地理資訊 - 複製到橋梁
 export function addCaseGeoBridge(data) {
 	return request({
 		url: '/road/caseGeoCopyToBridge',
 		method: 'post',
 		data
+	})
+}
+
+// 查核地圖 - 個別道路資料(面積, PCI分數)
+export function getAreaAndPCI(query) {
+	return request({
+		url: '/road/areaAndPCI',
+		method: 'get',
+		params: query
 	})
 }
