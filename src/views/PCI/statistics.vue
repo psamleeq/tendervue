@@ -13,8 +13,13 @@
 				</div>
 			</div>
 			<el-button v-if="![52, 53, 54, 55, 56, 1042, 99999].includes(listQuery.tenderId)" type="warning" @click="fixCorrectGeoJson()" >修正地理格式</el-button>
-			<el-button type="primary" @click="exportAllAverage()">全行政區總平均</el-button>
-			<el-button type="danger" @click="exportAllPCI()">全部PCI數據(8-30)</el-button>
+		</div>
+
+		<div style="margin-bottom: 10px;">
+			<el-button type="primary" @click="exportAllAverage()">行政區PCI平均統計</el-button>
+			<el-button type="success" @click="exportAllPCI()">PCI數據(8-30)</el-button>
+			<el-button type="warning" @click="exportAllDistressType()">缺失類型數據(8-30)</el-button>
+			<el-button type="danger" @click="exportAllRoadAverage()">道路PCI平均(8-30)</el-button>
 		</div>
 
 
@@ -186,75 +191,6 @@ export default {
 			this.dialogType = 2;
 			this.showAddDialog = true;
 		},
-		exportAllPCI() {
-			const tenderMap = {
-				1002: '中正區(8-30)',
-				1052: '松山區(8-30)',
-				1062: '大安區(8-30)',
-				1082: '萬華區(8-30)',
-				1102: '信義區(8-30)',
-				1112: '士林區(8-30)',
-				1122: '北投區(8-30)',
-				1142: '內湖區(8-30)',
-				1152: '南港區(8-30)',
-				1162: '文山區(8-30)',
-				99921: '橋涵區1(8-30)',
-				99922: '橋涵區2(8-30)'
-			};
-
-			// 創建一個空的 Excel 工作簿
-			const workbook = XLSX.utils.book_new();
-
-			// 遍歷 tenderMap 的所有 key
-			const allTenderMap = Object.keys(tenderMap).map(tenderId => {
-				// 為每個 tenderId 調用 getPCIScore 並返回 Promise
-				return getPCIScore({ tenderId }).then(response => {
-					const list = response.data.list; // 單元維護數
-					const list2 = response.data.list2; // 路段數
-
-					if (list.length != 0) {
-						const table = [];
-						table.push(['PCI', '單元維護數', '路段數']);
-						table.push(['很好 (85-100)', `${list[0]["veryGood(85-100)"]}(${list[1]["veryGood(85-100)"]}%)`, `${list2[0]["veryGood(85-100)"]}(${list2[1]["veryGood(85-100)"]}%)`]);
-						table.push(['好 (70-85)', `${list[0]["good(70-85)"]}(${list[1]["good(70-85)"]}%)`, `${list2[0]["good(70-85)"]}(${list2[1]["good(70-85)"]}%)`]);
-						table.push(['尚可 (55-70)', `${list[0]["fair(55-70)"]}(${list[1]["fair(55-70)"]}%)`, `${list2[0]["fair(55-70)"]}(${list2[1]["fair(55-70)"]}%)`]);
-						table.push(['差 (40-55)', `${list[0]["poor(40-55)"]}(${list[1]["poor(40-55)"]}%)`, `${list2[0]["poor(40-55)"]}(${list2[1]["poor(40-55)"]}%)`]);
-						table.push(['很差 (25-40)', `${list[0]["veryPoor(25-40)"]}(${list[1]["veryPoor(25-40)"]}%)`, `${list2[0]["veryPoor(25-40)"]}(${list2[1]["veryPoor(25-40)"]}%)`]);
-						table.push(['嚴重 (10-25)', `${list[0]["serious(10-25)"]}(${list[1]["serious(10-25)"]}%)`, `${list2[0]["serious(10-25)"]}(${list2[1]["serious(10-25)"]}%)`]);
-						table.push(['不合格 (0-10)', `${list[0]["failed(0-10)"]}(${list[1]["failed(0-10)"]}%)`, `${list2[0]["failed(0-10)"]}(${list2[1]["failed(0-10)"]}%)`]);
-
-						// 將數據轉換為 Excel 兼容格式
-						const worksheet = XLSX.utils.aoa_to_sheet(table);
-						// 將工作表添加到工作簿中，名稱為 tenderMap[tenderId] 的值
-						XLSX.utils.book_append_sheet(workbook, worksheet, tenderMap[tenderId]);
-					}
-				});
-			});
-
-			// 等待所有的數據都加載完成
-			Promise.all(allTenderMap).then(() => {
-				// 生成 Excel 文件的二進制字符串
-				const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-
-				// 創建 Blob 並觸發文件下載
-				const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-				const link = document.createElement('a');
-				link.href = URL.createObjectURL(blob);
-				link.download = '全部PCI數據統計(8-30).xlsx';
-				link.click();
-
-				this.$message({
-					message: '資料匯出成功',
-					type: 'success'
-				});
-			}).catch(err => {
-				console.log(err);
-				this.$message({
-					message: '匯出失敗',
-					type: 'error'
-				});
-			});
-		},
 		exportPCI(row) {
 			// console.log(row);
 			getPCIScore({ tenderId: row.tenderId }).then(response => {
@@ -389,12 +325,12 @@ export default {
 				table.push(['區域名稱', 'PCI平均分數']);
 				
 				for (let i = 0; i < list.length; i++) {
-					table.push([list[i].area, list[i].average_pci]);
-					overall_average += list[i].average_pci;
+					table.push([list[i].area, Math.round(list[i].average_pci * 100) / 100]);
+					overall_average += Math.round(list[i].average_pci * 100) / 100;
 				}
 				
 				overall_average /= 12; // 總共12個區域
-				table.push(['總平均', overall_average]);
+				table.push(['總平均', Math.round(overall_average * 100) / 100]);
 				// console.log(table);
 
 				// 將數據轉換為 Excel 兼容格式
@@ -410,7 +346,7 @@ export default {
 				const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 				const link = document.createElement('a');
 				link.href = URL.createObjectURL(blob);
-				link.download = `全部行政區PCI平均統計.xlsx`;
+				link.download = `行政區PCI平均統計.xlsx`;
 				link.click();
 
 				this.$message({
@@ -419,6 +355,202 @@ export default {
 				});
 			});
 			
+		},
+		exportAllPCI() {
+			const tenderMap = {
+				1002: '中正區(8-30)',
+				1052: '松山區(8-30)',
+				1062: '大安區(8-30)',
+				1082: '萬華區(8-30)',
+				1102: '信義區(8-30)',
+				1112: '士林區(8-30)',
+				1122: '北投區(8-30)',
+				1142: '內湖區(8-30)',
+				1152: '南港區(8-30)',
+				1162: '文山區(8-30)',
+				99921: '橋涵區1(8-30)',
+				99922: '橋涵區2(8-30)'
+			};
+
+			// 創建一個空的 Excel 工作簿
+			const workbook = XLSX.utils.book_new();
+
+			// 遍歷 tenderMap 的所有 key
+			const allTenderMap = Object.keys(tenderMap).map(tenderId => {
+				// 為每個 tenderId 調用 getPCIScore 並返回 Promise
+				return getPCIScore({ tenderId }).then(response => {
+					const list = response.data.list; // 單元維護數
+					const list2 = response.data.list2; // 路段數
+
+					if (list.length != 0) {
+						const table = [];
+						table.push(['PCI', '單元維護數', '路段數']);
+						table.push(['很好 (85-100)', `${list[0]["veryGood(85-100)"]}(${list[1]["veryGood(85-100)"]}%)`, `${list2[0]["veryGood(85-100)"]}(${list2[1]["veryGood(85-100)"]}%)`]);
+						table.push(['好 (70-85)', `${list[0]["good(70-85)"]}(${list[1]["good(70-85)"]}%)`, `${list2[0]["good(70-85)"]}(${list2[1]["good(70-85)"]}%)`]);
+						table.push(['尚可 (55-70)', `${list[0]["fair(55-70)"]}(${list[1]["fair(55-70)"]}%)`, `${list2[0]["fair(55-70)"]}(${list2[1]["fair(55-70)"]}%)`]);
+						table.push(['差 (40-55)', `${list[0]["poor(40-55)"]}(${list[1]["poor(40-55)"]}%)`, `${list2[0]["poor(40-55)"]}(${list2[1]["poor(40-55)"]}%)`]);
+						table.push(['很差 (25-40)', `${list[0]["veryPoor(25-40)"]}(${list[1]["veryPoor(25-40)"]}%)`, `${list2[0]["veryPoor(25-40)"]}(${list2[1]["veryPoor(25-40)"]}%)`]);
+						table.push(['嚴重 (10-25)', `${list[0]["serious(10-25)"]}(${list[1]["serious(10-25)"]}%)`, `${list2[0]["serious(10-25)"]}(${list2[1]["serious(10-25)"]}%)`]);
+						table.push(['不合格 (0-10)', `${list[0]["failed(0-10)"]}(${list[1]["failed(0-10)"]}%)`, `${list2[0]["failed(0-10)"]}(${list2[1]["failed(0-10)"]}%)`]);
+
+						// 將數據轉換為 Excel 兼容格式
+						const worksheet = XLSX.utils.aoa_to_sheet(table);
+						// 將工作表添加到工作簿中，名稱為 tenderMap[tenderId] 的值
+						XLSX.utils.book_append_sheet(workbook, worksheet, tenderMap[tenderId]);
+					}
+				});
+			});
+
+			// 等待所有的數據都加載完成
+			Promise.all(allTenderMap).then(() => {
+				// 生成 Excel 文件的二進制字符串
+				const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+				// 創建 Blob 並觸發文件下載
+				const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.download = 'PCI數據統計(8-30).xlsx';
+				link.click();
+
+				this.$message({
+					message: '資料匯出成功',
+					type: 'success'
+				});
+			}).catch(err => {
+				console.log(err);
+				this.$message({
+					message: '匯出失敗',
+					type: 'error'
+				});
+			});
+		},
+		exportAllDistressType() {
+			const surveyIdMap = {
+				77: '萬華區(8-30)',
+				78: '中正區(8-30)',
+				79: '士林區(8-30)',
+				80: '北投區(8-30)',
+				81: '大安區(8-30)',
+				82: '信義區(8-30)',
+				83: '南港區(8-30)',
+				84: '文山區(8-30)',
+				85: '松山區(8-30)',
+				86: '內湖區(8-30)',
+				92: '橋涵區1(8-30)',
+				93: '橋涵區2(8-30)'
+			};
+
+			const surveyIdArr = Object.keys(surveyIdMap).map(Number);  // 取得所有 surveyId 的陣列
+
+			// 創建 Excel 工作簿
+			const workbook = XLSX.utils.book_new();
+			// 記錄是否有資料
+			let hasData = false;
+
+			// 使用 Promise.all 來並行處理所有 API 請求
+			Promise.all(
+				surveyIdArr.map(surveyId => 
+					getDistressStatistics({ surveyId }).then(response => {
+						if (response.data.list.length != 0) {
+							// 有資料則標記
+							hasData = true;
+							// 將數據轉換為 Excel 兼容格式
+							const worksheet = XLSX.utils.json_to_sheet(response.data.list);
+							// 取得對應的行政區名稱，並將工作表添加到工作簿中
+							const sheetName = surveyIdMap[surveyId];  // 使用 surveyIdMap 的值作為工作表名稱
+							XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+						}
+					})
+				)
+			).then(() => {
+				// 如果有資料，則生成並下載 Excel 文件
+				if (hasData) {
+					// 生成 Excel 文件的二進制字符串
+					const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+					// 創建 Blob 並觸發文件下載
+					const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.download = `調查缺失類型統計(8-30).xlsx`;
+					link.click();
+
+					this.$message({
+						message: '資料匯出成功',
+						type: 'success'
+					});
+				} else {
+					this.$message({
+						message: '沒資料唷',
+						type: 'warning'
+					});
+				}
+			}).catch(err => {
+				console.log(err);
+			});
+		},
+		exportAllRoadAverage() {
+			const tenderMap = {
+				1002: '中正區(8-30)',
+				1052: '松山區(8-30)',
+				1062: '大安區(8-30)',
+				1082: '萬華區(8-30)',
+				1102: '信義區(8-30)',
+				1112: '士林區(8-30)',
+				1122: '北投區(8-30)',
+				1142: '內湖區(8-30)',
+				1152: '南港區(8-30)',
+				1162: '文山區(8-30)',
+				99921: '橋涵區1(8-30)',
+				99922: '橋涵區2(8-30)'
+			};
+
+			// Create a new Excel workbook
+			const workbook = XLSX.utils.book_new();
+
+			// Use Promise.all to fetch data for all tender IDs concurrently
+			const allTenderPromises = Object.keys(tenderMap).map(tenderId => {
+				return getRoadAverage({ tenderId }).then(response => {
+					const list = response.data.list;
+
+					if (list.length !== 0) {
+						const table = [];
+						table.push(['道路名稱', '平均PCI']);
+						list.forEach(item => {
+							table.push([item["道路名稱"], item["average"]]);
+						});
+						// Convert data to Excel-compatible format
+						const worksheet = XLSX.utils.aoa_to_sheet(table);
+						// Add the worksheet to the workbook, named according to tenderMap
+						XLSX.utils.book_append_sheet(workbook, worksheet, tenderMap[tenderId]);
+					}
+				});
+			});
+
+			// Wait for all data to be fetched and processed
+			Promise.all(allTenderPromises).then(() => {
+				// Generate binary string for the Excel file
+				const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+				// Create Blob and trigger file download
+				const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.download = '道路平均PCI統計(8-30).xlsx';
+				link.click();
+
+				this.$message({
+					message: '資料匯出成功',
+					type: 'success'
+				});
+			}).catch(err => {
+				console.log(err);
+				this.$message({
+					message: '匯出失敗',
+					type: 'error'
+				});
+			});
 		},
 		fixCorrectGeoJson() {
 			// console.log(this.listQuery.tenderId);
