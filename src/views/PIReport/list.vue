@@ -514,84 +514,112 @@ export default {
 			this.showPdfDialog = true;
 		},
 		async fetchPdf_weekly() {
-			this.template = { "schemas": [], "basePdf": "" };
-			const add_pdfUint8_22 = await this.$refs.PI22.getPDF();
-			const add_pdfUint8_22Att1 = await this.$refs.PI22Att1.getPDF();
-			const add_arrayBuffer_22Att2 = await this.$refs.PI22Att2.getPDF();
-			const add_arrayBuffer_22Att3 = await this.$refs.PI22Att3.getPDF();
-			const add_pdfUint8_32 = await this.$refs.PI32.getPDF();
-			const add_arrayBuffer_32Att1 = await this.$refs.PI32Att1.getPDF();
-			
-			let add_pdfUint8_32Att2Arr = [ await this.$refs.PI32Att2.getPDF() ];
-			if(this.perfPagesObj[302] && this.perfPagesObj[302][2]) {
-				for (const caseSpec of this.perfPagesObj[302][2]) {
-					const { id, initPage, perfPages } = caseSpec;
-					await this.$refs.PI32Att2.setData(id, false, initPage, perfPages);
-					// await new Promise(r => setTimeout(r, 1500));
-					add_pdfUint8_32Att2Arr.push(await this.$refs.PI32Att2.getPDF());
-				}
-			}
-			// console.log(add_pdfUint8_32Att2Arr);
+    this.template = { "schemas": [], "basePdf": "" };
 
-			const add_pdfUint8_41 = await this.$refs.PI41.getPDF();
-			const add_pdfUint8_41Att1 = await this.$refs.PI41Att1.getPDF();
-			this.genPercentIndex = 3;
+    const add_pdfUint8_22 = await this.$refs.PI22.getPDF();
+    const add_pdfUint8_22Att1 = await this.$refs.PI22Att1.getPDF();
+    const add_arrayBuffer_22Att2 = await this.$refs.PI22Att2.getPDF();
+    const add_arrayBuffer_22Att3 = await this.$refs.PI22Att3.getPDF();
+    const add_pdfUint8_32 = await this.$refs.PI32.getPDF();
+    const add_arrayBuffer_32Att1 = await this.$refs.PI32Att1.getPDF();
 
-			const add_pdf_22 = await PDFDocument.load(add_pdfUint8_22.buffer);
-			const add_pdf_22Att1 = await PDFDocument.load(add_pdfUint8_22Att1.buffer);
-			const add_pdf_22Att2 = await PDFDocument.load(add_arrayBuffer_22Att2);
-			const add_pdf_22Att3 = await PDFDocument.load(add_arrayBuffer_22Att3);
-			const add_pdf_32 = await PDFDocument.load(add_pdfUint8_32.buffer);
-			const add_pdf_32Att1 = await PDFDocument.load(add_arrayBuffer_32Att1);
+    // 初始化空數組來存儲 PI32Att2 PDFs
+    let add_pdfUint8_32Att2Arr = [];
 
-			let add_pdf_32Att2Arr = [];
-			for(const add_pdfUint8_32Att2 of add_pdfUint8_32Att2Arr) add_pdf_32Att2Arr.push(await PDFDocument.load(add_pdfUint8_32Att2.buffer));
+    // 檢查 PI32Att2 是否存在
+    if (this.$refs.PI32Att2) {
+        try {
+            const firstPdf = await this.$refs.PI32Att2.getPDF();
+            add_pdfUint8_32Att2Arr.push(firstPdf);
 
-			const add_pdf_41 = await PDFDocument.load(add_pdfUint8_41);
-			const add_pdf_41Att1 = await PDFDocument.load(add_pdfUint8_41Att1.buffer);
-			this.genPercentIndex = 4;
+            // 檢查是否有額外的頁面需要處理
+            if (this.perfPagesObj[302] && this.perfPagesObj[302][2] && this.perfPagesObj[302][2].length > 0) {
+                for (const caseSpec of this.perfPagesObj[302][2]) {
+                    const { id, initPage, perfPages } = caseSpec;
+                    await this.$refs.PI32Att2.setData(id, false, initPage, perfPages);
+                    const additionalPDF = await this.$refs.PI32Att2.getPDF();
+                    add_pdfUint8_32Att2Arr.push(additionalPDF);
+                }
+            }
+        } catch (error) {
+            // 捕獲錯誤但不影響其他處理
+        }
+    }
 
-			const mergedPdf = await PDFDocument.create();
-			const add_copiedPage_22 = await mergedPdf.copyPages(add_pdf_22, add_pdf_22.getPageIndices());
-			const add_copiedPage_22Att1 = await mergedPdf.copyPages(add_pdf_22Att1, add_pdf_22Att1.getPageIndices());
-			const add_copiedPage_22Att2 = await mergedPdf.copyPages(add_pdf_22Att2, add_pdf_22Att2.getPageIndices());
-			const add_copiedPage_22Att3 = await mergedPdf.copyPages(add_pdf_22Att3, add_pdf_22Att3.getPageIndices());
-			const add_copiedPage_32 = await mergedPdf.copyPages(add_pdf_32, add_pdf_32.getPageIndices());
-			const add_copiedPage_32Att1 = await mergedPdf.copyPages(add_pdf_32Att1, add_pdf_32Att1.getPageIndices());
+    const add_pdfUint8_41 = await this.$refs.PI41.getPDF();
+    const add_pdfUint8_41Att1 = await this.$refs.PI41Att1.getPDF();
 
-			let add_copiedPage_32Att2Arr = [];
-			for(const add_pdf_32Att2 of add_pdf_32Att2Arr) add_copiedPage_32Att2Arr.push(await mergedPdf.copyPages(add_pdf_32Att2, add_pdf_32Att2.getPageIndices()));
+    this.genPercentIndex = 3;
 
-			const add_copiedPage_41 = await mergedPdf.copyPages(add_pdf_41, add_pdf_41.getPageIndices());
-			const add_copiedPage_41Att1 = await mergedPdf.copyPages(add_pdf_41Att1, add_pdf_41Att1.getPageIndices());
-			this.genPercentIndex = 5;
-			
-			for(const copiedPage of add_copiedPage_22) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_22Att1) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_22Att2) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_22Att3) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_32) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_32Att1) mergedPdf.addPage(copiedPage);
-			for(const add_copiedPage_32Att2 of add_copiedPage_32Att2Arr) for(const copiedPage of add_copiedPage_32Att2) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_41) mergedPdf.addPage(copiedPage);
-			for(const copiedPage of add_copiedPage_41Att1) mergedPdf.addPage(copiedPage);
+    // 加載所有的 PDF 文件
+    const add_pdf_22 = await PDFDocument.load(add_pdfUint8_22.buffer);
+    const add_pdf_22Att1 = await PDFDocument.load(add_pdfUint8_22Att1.buffer);
+    const add_pdf_22Att2 = await PDFDocument.load(add_arrayBuffer_22Att2);
+    const add_pdf_22Att3 = await PDFDocument.load(add_arrayBuffer_22Att3);
+    const add_pdf_32 = await PDFDocument.load(add_pdfUint8_32.buffer);
+    const add_pdf_32Att1 = await PDFDocument.load(add_arrayBuffer_32Att1);
 
-			const file = new File([await mergedPdf.save()], `${this.options.reportTypeMap[this.rowActive.reportType].name}_${this.formatDate(this.rowActive.reportDate)}.pdf`, { type: 'application/pdf' });
-			const link = document.createElement('a');
-			const url = URL.createObjectURL(file);
-			link.href = url;
-			link.download = file.name;
-			document.body.appendChild(link);
-			this.genPercent = this.genPercentArr[this.genPercentIndex];
-			clearInterval(this.timer);
+    let add_pdf_32Att2Arr = [];
+    for (const add_pdfUint8_32Att2 of add_pdfUint8_32Att2Arr) {
+        add_pdf_32Att2Arr.push(await PDFDocument.load(add_pdfUint8_32Att2.buffer));
+    }
 
-			link.click();
-			document.body.removeChild(link);
-			URL.revokeObjectURL(url);
+    const add_pdf_41 = await PDFDocument.load(add_pdfUint8_41);
+    const add_pdf_41Att1 = await PDFDocument.load(add_pdfUint8_41Att1.buffer);
 
-			this.loading = false;
-			this.genPDF = false;
-		},
+    this.genPercentIndex = 4;
+
+    // 合併 PDF
+    const mergedPdf = await PDFDocument.create();
+    const add_copiedPage_22 = await mergedPdf.copyPages(add_pdf_22, add_pdf_22.getPageIndices());
+    for (const copiedPage of add_copiedPage_22) mergedPdf.addPage(copiedPage);
+
+    const add_copiedPage_22Att1 = await mergedPdf.copyPages(add_pdf_22Att1, add_pdf_22Att1.getPageIndices());
+    for (const copiedPage of add_copiedPage_22Att1) mergedPdf.addPage(copiedPage);
+
+    const add_copiedPage_22Att2 = await mergedPdf.copyPages(add_pdf_22Att2, add_pdf_22Att2.getPageIndices());
+    for (const copiedPage of add_copiedPage_22Att2) mergedPdf.addPage(copiedPage);
+
+    const add_copiedPage_22Att3 = await mergedPdf.copyPages(add_pdf_22Att3, add_pdf_22Att3.getPageIndices());
+    for (const copiedPage of add_copiedPage_22Att3) mergedPdf.addPage(copiedPage);
+
+    const add_copiedPage_32 = await mergedPdf.copyPages(add_pdf_32, add_pdf_32.getPageIndices());
+    for (const copiedPage of add_copiedPage_32) mergedPdf.addPage(copiedPage);
+
+    const add_copiedPage_32Att1 = await mergedPdf.copyPages(add_pdf_32Att1, add_pdf_32Att1.getPageIndices());
+    for (const copiedPage of add_copiedPage_32Att1) mergedPdf.addPage(copiedPage);
+
+    for (const add_pdf_32Att2 of add_pdf_32Att2Arr) {
+        const add_copiedPage_32Att2 = await mergedPdf.copyPages(add_pdf_32Att2, add_pdf_32Att2.getPageIndices());
+        for (const copiedPage of add_copiedPage_32Att2) mergedPdf.addPage(copiedPage);
+    }
+
+    const add_copiedPage_41 = await mergedPdf.copyPages(add_pdf_41, add_pdf_41.getPageIndices());
+    for (const copiedPage of add_copiedPage_41) mergedPdf.addPage(copiedPage);
+
+    const add_copiedPage_41Att1 = await mergedPdf.copyPages(add_pdf_41Att1, add_pdf_41Att1.getPageIndices());
+    for (const copiedPage of add_copiedPage_41Att1) mergedPdf.addPage(copiedPage);
+
+    this.genPercentIndex = 5;
+
+    // 生成最終的 PDF 並觸發下載
+    const file = new File([await mergedPdf.save()], `${this.options.reportTypeMap[this.rowActive.reportType].name}_${this.formatDate(this.rowActive.reportDate)}.pdf`, { type: 'application/pdf' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(file);
+    link.href = url;
+    link.download = file.name;
+    document.body.appendChild(link);
+
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    this.loading = false;
+    this.genPDF = false;
+}
+
+
+,
 		handleDownload() {
 			this.$confirm(`<p>確定下載 ${this.formatDate(this.rowActive.reportDate)} ${this.options.reportTypeMap[this.rowActive.reportType].name}? <br/>(下載封存後將<span style="color: #F56C6C">無法修改</span>。)</p>`, "確認", { dangerouslyUseHTMLString: true, showClose: false }).then(() => {
 				this.showPdfDialog = false;
