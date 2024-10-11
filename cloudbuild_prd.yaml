@@ -1,11 +1,17 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia-east1-docker.pkg.dev/$PROJECT_ID/tender_vue:$BUILD_ID', '--build-arg', 'ENV_NAME=prod', '.']
+  args:
+    - 'build'
+    - '-t'
+    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$BUILD_ID'  # 构建时设置镜像标签
+    - '--build-arg'
+    - 'ENV_NAME=prod'
+    - '.'
 
 # 使用 CLOUD_LOGGING_ONLY 进行日志记录
 options:
   logging: CLOUD_LOGGING_ONLY
 
-# 推送镜像到 GCR
+# 指定要推送的镜像
 images:
-- 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$BUILD_ID'
+- 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$BUILD_ID'  # 确保推送的镜像名称与构建时的名称一致
