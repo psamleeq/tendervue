@@ -88,8 +88,53 @@
 			</el-table>
 		</el-dialog>
 
+		<el-drawer
+			:visible.sync="showScoreList"
+			:with-header="false"
+			direction="rtl"
+			:lock_scroll="false"
+			:close-on-click-modal="false"
+			size="418px">
+			<el-table
+				:data="roadScores"
+				border
+				fit
+				:show-summary="true"
+				:summary-method="getSummaries"
+				style="width: 100%"
+				:header-cell-style="{ textAlign: 'center' }"
+				:cell-style="{ textAlign: 'center' }"
+			>
+				<el-table-column
+					prop="no"
+					label="編號"
+					width="60">
+				</el-table-column>
+				<el-table-column
+					prop="pciID"
+					label="PCI ID"
+					width="120">
+				</el-table-column>
+				<el-table-column
+					prop="roadArea"
+					label="道路面積"
+					width="120">
+				</el-table-column>
+				<el-table-column
+					prop="pciScore"
+					label="PCI分數"
+					width="100">
+				</el-table-column>
+			</el-table>
+
+			<!-- 關閉按鈕 -->
+			<div style="text-align: right; padding: 10px;">
+				<el-button type="primary" @click="showScoreList = false">關閉</el-button>
+			</div>
+		</el-drawer>
+
 		<!-- 道路分數Dialog -->
-		<el-dialog class="dialog-map" :visible.sync="showScoreList" width="521px">
+		<!-- <el-dialog class="dialog-map" :visible.sync="showScoreList" width="521px">
 			<el-table
 				:data="roadScores"
 				border
@@ -121,7 +166,7 @@
 					width="120">
 				</el-table-column>
 			</el-table>
-		</el-dialog>
+		</el-dialog> -->
 	</div>
 </template>
 
@@ -1256,6 +1301,7 @@ export default {
 					pciScore: item.PCI_real
 				}));
 				this.showScoreList = true;
+
 			}).catch(err => console.log(err));
 			
 		},
@@ -1300,6 +1346,8 @@ export default {
 	.el-table__footer-wrapper
 		.cell
 			text-align: center
+	.el-drawer.rtl
+		overflow: scroll
 	.header-bar
 		position: absolute
 		top: 0
