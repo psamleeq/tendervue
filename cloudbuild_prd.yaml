@@ -1,0 +1,9 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/tender_vue:$BUILD_ID', '--build-arg', 'ENV_NAME=prod', '.']
+
+# 使用 CLOUD_LOGGING_ONLY 进行日志记录
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+
