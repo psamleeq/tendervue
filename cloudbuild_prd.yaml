@@ -3,7 +3,7 @@ steps:
   args:
     - 'build'
     - '-t'
-    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$BUILD_ID'  # 构建时设置镜像标签
+    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat package.json | jq -r .version)'  # 使用 package.json 的版本号
     - '--build-arg'
     - 'ENV_NAME=prod'
     - '.'
@@ -12,6 +12,6 @@ steps:
 options:
   logging: CLOUD_LOGGING_ONLY
 
-# 指定要推送的镜像
+# 推送镜像到 GCR
 images:
-- 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$BUILD_ID'  # 确保推送的镜像名称与构建时的名称一致
+- 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat package.json | jq -r .version)'  # 确保推送的镜像名称与构建时的名称一致
