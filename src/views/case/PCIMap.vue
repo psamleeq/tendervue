@@ -91,9 +91,8 @@
 		<el-drawer
 			:visible.sync="showScoreList"
 			:with-header="false"
+			:modal="false"
 			direction="rtl"
-			:lock_scroll="false"
-			:close-on-click-modal="false"
 			size="418px">
 			<el-table
 				:data="roadScores"
@@ -126,11 +125,6 @@
 					width="100">
 				</el-table-column>
 			</el-table>
-
-			<!-- 關閉按鈕 -->
-			<div style="text-align: right; padding: 10px;">
-				<el-button type="primary" @click="showScoreList = false">關閉</el-button>
-			</div>
 		</el-drawer>
 
 		<!-- 道路分數Dialog -->
@@ -1137,8 +1131,8 @@ export default {
 					// });
 
 					let featureList = [];
-					this.dataLayer.PCIBlock.forEach(feature =>{ 
-						if(feature.getProperty(key) == this.listQuery.filterId) featureList.push(feature);
+					this.dataLayer.PCIBlock.forEach(feature =>{
+						if(feature.getProperty(key) == this.listQuery.filterId.trim()) featureList.push(feature);
 					});
 
 					if(featureList.length == 0) {
@@ -1285,13 +1279,13 @@ export default {
 			else return row[column.property] || "-";
 		},
 		getRoadScore() {
-			this.search();
+			// this.search();
 			this.roadScores = [];
 			const tenderRound = this.options.tenderRoundMap[this.listQuery.tenderRound];
 
 			getAreaAndPCI({
 				tenderId: tenderRound.tenderId,
-				roadName: this.$route.query.roadName
+				roadName: this.$route.query.roadName.trim()
 			}).then(response => {
 				let i = 1;
 				this.roadScores = response.data.list.map(item => ({
@@ -1327,7 +1321,7 @@ export default {
 			});
 
 			return sums;
-		}, 
+		},
 		formatTime(time) {
 			return moment(time).format("YYYY-MM-DD HH:mm");
 		}
