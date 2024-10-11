@@ -6,4 +6,6 @@ steps:
 options:
   logging: CLOUD_LOGGING_ONLY
 
-
+# 推送镜像到 GCR
+images:
+- 'gcr.io/$PROJECT_ID/tender_vue:$BUILD_ID'
