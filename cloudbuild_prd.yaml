@@ -4,18 +4,21 @@ steps:
   args:
     - '-c'
     - |
-      export VERSION=$(node -p "require('./package.json').version") && \
-      echo "Version is $VERSION"
+      VERSION=$(node -p "require('./package.json').version") && \
+      echo "Version is $VERSION" && \
+      echo $VERSION > /workspace/version.txt  # 将版本号保存到文件
+
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'build'
+    - '-t'
+    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat /workspace/version.txt)'  # 从文件中读取版本号
+    - '.'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
 
 - name: 'gcr.io/cloud-builders/docker'
   args:
     - 'push'
-    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(jq -r .version package.json)'  # 推送镜像
-
-# 使用 CLOUD_LOGGING_ONLY 进行日志记录
-options:
-  logging: CLOUD_LOGGING_ONLY
-
-# 推送镜像到 GCR
-images:
-- 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(jq -r .version package.json)'  # 确保推送的镜像名称与构建时的名称一致
+    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat /workspace/version.txt)'  # 从文件中读取版本号并推送
