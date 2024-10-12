@@ -1,12 +1,11 @@
 steps:
-- name: 'alpine'
+- name: 'node:14-alpine'
   entrypoint: 'sh'
   args:
     - '-c'
     - |
-      VERSION=$(jq -r .version package.json) && \
-      echo "Building image with version: $VERSION" && \
-      docker build -t asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$VERSION . 
+      export VERSION=$(node -p "require('./package.json').version") && \
+      echo "Version is $VERSION"
 
 - name: 'gcr.io/cloud-builders/docker'
   args:
