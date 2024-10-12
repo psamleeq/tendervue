@@ -15,8 +15,8 @@ steps:
     - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat /workspace/version.txt)'  # 从文件中读取版本号
     - '.'
 
-options:
-  logging: CLOUD_LOGGING_ONLY
+- options:
+  logging: CLOUD_LOGGING_ONLY  # 确保 options 部分正确缩进
 
 - name: 'gcr.io/cloud-builders/docker'
   args:
