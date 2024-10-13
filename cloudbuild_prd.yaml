@@ -1,11 +1,17 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia-east1-docker.pkg.dev/$PROJECT_ID/tender_vue:$BUILD_ID', '--build-arg', 'ENV_NAME=prod', '.']
+  args:
+    - 'build'
+    - '-t'
+    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$BUILD_ID'
+    - '--build-arg'
+    - 'ENV_NAME=prod'
+    - '.'
 
 # 使用 CLOUD_LOGGING_ONLY 进行日志记录
 options:
   logging: CLOUD_LOGGING_ONLY
 
-# 推送镜像到 GCR
+# 推送镜像到 Artifact Registry
 images:
 - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$BUILD_ID'
