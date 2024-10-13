@@ -6,19 +6,19 @@ steps:
     - |
       VERSION=$(node -p "require('./package.json').version") && \
       echo "Version is $VERSION" && \
-      echo $VERSION > /workspace/version.txt  
+      echo $VERSION > /workspace/version.txt  # 将版本号保存到文件
 
 - name: 'gcr.io/cloud-builders/docker'
   args:
     - 'build'
     - '-t'
-    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat /workspace/version.txt)'  # 从文件中读取版本号
+    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat /workspace/version.txt)'  # 使用文件中的版本号
     - '.'
 
 - name: 'gcr.io/cloud-builders/docker'
   args:
     - 'push'
-    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat /workspace/version.txt)'  # 从文件中读取版本号并推送
+    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$(cat /workspace/version.txt)'  # 推送带版本号的镜像
 
 options:
   logging: CLOUD_LOGGING_ONLY
