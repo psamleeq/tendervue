@@ -6,7 +6,7 @@ steps:
     - |
       VERSION=$(node -p "require('./package.json').version") && \
       echo "Version is $VERSION" && \
-      echo $VERSION > /workspace/version.txt  # 将版本号保存到文件
+      echo $VERSION > /workspace/version.txt  
 
 - name: 'gcr.io/cloud-builders/docker'
   args:
