@@ -349,10 +349,10 @@ export default {
 				this.tableSelect.forEach(l => l.State = l.CaseType.reduce((acc, cur) => (acc +=cur)));
 				const caseList = JSON.parse(JSON.stringify(this.caseFilterList(this.tableSelect)));
 				caseList.forEach(caseSpec => {
-					caseSpec.CaseDate = moment(caseSpec.CaseDate).isValid() ? moment(caseSpec.CaseDate).utc().format("YYYY/MM/DD HH:mm:ss") : "";
-					caseSpec.DateDeadline = moment(caseSpec.DateDeadline).isValid() ? moment(caseSpec.DateDeadline).utc().format("YYYY/MM/DD HH:mm:ss") : "";
-					caseSpec.DateCompleted = moment(caseSpec.DateCompleted).isValid() ? moment(caseSpec.DateCompleted).utc().format("YYYY/MM/DD HH:mm:ss") : "";
-					caseSpec.DateWarranty = moment(caseSpec.DateWarranty).isValid() ? moment(caseSpec.DateWarranty).utc().format("YYYY/MM/DD HH:mm:ss") : "";
+					caseSpec.CaseDate = moment(caseSpec.CaseDate).isValid() ? moment(caseSpec.CaseDate).utcOffset(8).format("YYYY/MM/DD HH:mm:ss") : "";
+					caseSpec.DateDeadline = moment(caseSpec.DateDeadline).isValid() ? moment(caseSpec.DateDeadline).utcOffset(8).format("YYYY/MM/DD HH:mm:ss") : "";
+					caseSpec.DateCompleted = moment(caseSpec.DateCompleted).isValid() ? moment(caseSpec.DateCompleted).utcOffset(8).format("YYYY/MM/DD HH:mm:ss") : "";
+					caseSpec.DateWarranty = moment(caseSpec.DateWarranty).isValid() ? moment(caseSpec.DateWarranty).utcOffset(8).format("YYYY/MM/DD HH:mm:ss") : "";
 				})
 				
 				addCaseWarrantyList({
