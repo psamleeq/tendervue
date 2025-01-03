@@ -63,7 +63,7 @@
 					<span v-else style="color: #F56C6C">已封存 <br> ({{ formatTime(row.archiveTime) }})</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="/^1\d{2}1$/.test(listQuery.tenderId)" :key="listQuery.tenderId" label="上傳至新工" min-width="80" align="center">
+			<el-table-column :key="listQuery.tenderId" label="上傳至新工" min-width="80" align="center">
 				<template slot-scope="{ row }">
 					<el-button class="btn-action" type="warning" plain :disabled="isUpload" style="margin-bottom: 5px;" @click="uploadCase2NCO(row)">上傳</el-button>
 					<el-progress v-if="row.actionId" text-inside :stroke-width="16" :percentage="row.process" />
