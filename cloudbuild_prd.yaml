@@ -1,0 +1,15 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'build'
+    - '-t'
+    - 'asia-east1-docker.pkg.dev/$PROJECT_ID/dockers/tender_vue:$SHORT_SHA'
+    - '--build-arg'
+    - 'ENV_NAME=prod'
+    - '.'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+images:
+- 'asia.gcr.io/gis-prd/pbcadmin:v1.3.23'

@@ -1,0 +1,17 @@
+substitutions:
+  _ENV: prod
+  _PACKAGE_NAME: vue-project
+  _PACKAGE_VERSION: v999
+
+steps:
+- name: 'node:16'
+  args: ['npm', 'install']
+  
+- name: 'node:16'
+  args: ['npm', 'run', 'build:prod']
+
+- name: "gcr.io/cloud-builders/docker"
+  args: ['build', '--tag', 'asia.gcr.io/${PROJECT_ID}/${_PACKAGE_NAME}:${_PACKAGE_VERSION}', '--build-arg', 'ENV_NAME=${_ENV}', '.']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'asia.gcr.io/${PROJECT_ID}/${_PACKAGE_NAME}:${_PACKAGE_VERSION}']
