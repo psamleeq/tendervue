@@ -135,10 +135,10 @@ export default {
 					"name": "中山區",
 					"start": "2022/6/1"
 				},
-				// 105: {
-				// 	"name": "松山區",
-				// 	"engName": "Songshan"
-				// },
+				105: {
+					"name": "松山區",
+					"start": "2025/3/1"
+				},
 				// 106: {
 				// 	"name": "大安區",
 				// 	"engName": "Da’an"
@@ -147,10 +147,10 @@ export default {
 				// 	"name": "萬華區",
 				// 	"engName": "Wanhua",
 				// },
-				// 110: {
-				// 	"name": "信義區",
-				// 	"engName": "Xinyi"
-				// },
+				110: {
+					"name": "信義區",
+					"start": "2025/3/1"
+				},
 				// 111: {
 				// 	"name": "士林區",
 				// 	"engName": "Shilin"

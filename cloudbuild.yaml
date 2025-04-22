@@ -4,8 +4,11 @@ substitutions:
   _PACKAGE_VERSION: v999
 
 steps:
-# - name: 'ubuntu'
-#   args: ['echo', '${_ENV}, ${_PACKAGE_NAME}, ${_PACKAGE_VERSION}']
+- name: 'node:16'
+  args: ['npm', 'install']
+  
+- name: 'node:16'
+  args: ['npm', 'run', 'build:prod']
 
 - name: "gcr.io/cloud-builders/docker"
   args: ['build', '--tag', 'asia.gcr.io/${PROJECT_ID}/${_PACKAGE_NAME}:${_PACKAGE_VERSION}', '--build-arg', 'ENV_NAME=${_ENV}', '.']
