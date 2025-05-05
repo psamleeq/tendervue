@@ -390,45 +390,47 @@ export default {
 					lng: 121.5647688, // 緯度
 				};
 
-			// 建立地圖
-			this.map = new google.maps.Map(this.$refs.map, {
-				center: location, // 中心點座標
-				zoom: 13, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
-				minZoom: 13,
-				maxZoom: 19,
-				/*
-					roadmap 顯示默認道路地圖視圖。
-					satellite 顯示 Google 地球衛星圖像。
-					hybrid 顯示正常和衛星視圖的混合。
-					terrain 顯示基於地形信息的物理地圖。
-				*/
-				// mapTypeId: "roadmap",
-				fullscreenControl: false,
-				mapTypeControl: false,
-				streetViewControl: false,
-				rotateControl: false,
-				tilt: 0,
-				styles: [
-					{
-						stylers: [{ visibility: "on" }],
-					},
-					{
-						featureType: "poi",
-						elementType: "all",
-						stylers: [{ visibility: "off" }],
-					},
-					{
-						featureType: "transit",
-						elementType: "all",
-						stylers: [{ visibility: "off" }],
-					},
-					{
-						featureType: "road",
-						elementType: "labels",
-						stylers: [{ visibility: "off" }]
-					}
-				],
-			});				
+				// 建立地圖
+				this.map = new google.maps.Map(this.$refs.map, {
+					center: location, // 中心點座標
+					zoom: 13, // 1-20，數字愈大，地圖愈細：1是世界地圖，20就會到街道
+					minZoom: 13,
+					// maxZoom: 19,
+					/*
+						roadmap 顯示默認道路地圖視圖。
+						satellite 顯示 Google 地球衛星圖像。
+						hybrid 顯示正常和衛星視圖的混合。
+						terrain 顯示基於地形信息的物理地圖。
+					*/
+					// mapTypeId: "satellite",
+					fullscreenControl: false,
+					mapTypeControl: false,
+					streetViewControl: false,
+					rotateControl: false,
+					heading: 0,
+					tilt: 0,
+					mapId: process.env.VUE_APP_MAP_ID,
+					styles: [
+						{
+							stylers: [{ visibility: "on" }],
+						},
+						{
+							featureType: "poi",
+							elementType: "all",
+							stylers: [{ visibility: "off" }],
+						},
+						{
+							featureType: "transit",
+							elementType: "all",
+							stylers: [{ visibility: "off" }],
+						},
+						{
+							featureType: "road",
+							elementType: "labels",
+							stylers: [{ visibility: "off" }]
+						}
+					],
+				});
 
 				// NOTE: 設定路名在KML之上，只有在非開發模式才能載入多圖層
 				if(loaderOpt.apiKey.length != 0) {
