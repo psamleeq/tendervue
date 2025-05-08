@@ -413,25 +413,25 @@ export default {
 				});
 
 				// NOTE: 設定路名在KML之上，只有在非開發模式才能載入多圖層
-				if(loaderOpt.apiKey.length != 0) {
+				//if(loaderOpt.apiKey.length != 0) {
 					// NOTE: 疊上StyledMapType
-					const labelsMapType = new google.maps.StyledMapType(
-						[
-							{
-								stylers: [{ visibility: 'off'}]
-							}, 
-							{
-								featureType: "road",
-								elementType: 'labels',
-								stylers: [{ visibility: 'on' }]
-							}
-						], 
-						{
-							name: 'Labels'
-						}
-					);
-					this.map.overlayMapTypes.push(labelsMapType);
-				}
+					//const labelsMapType = new google.maps.StyledMapType(
+					//	[
+					//		{
+					//			stylers: [{ visibility: 'off'}]
+					//		}, 
+					//		{
+					//			featureType: "road",
+					//			elementType: 'labels',
+					//			stylers: [{ visibility: 'on' }]
+					//		}
+					//	], 
+					//	{
+					//		name: 'Labels'
+					//	}
+					//);
+					//this.map.overlayMapTypes.push(labelsMapType);
+				//}
 
 				// 載入區域GeoJson
 				this.dataLayer.district = new google.maps.Data({ map: this.map });
