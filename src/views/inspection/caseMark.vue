@@ -410,26 +410,6 @@ export default {
 					heading: 0,
 					tilt: 0,
 					mapId: process.env.VUE_APP_MAP_ID,
-					styles: [
-						{
-							stylers: [{ visibility: "on" }],
-						},
-						{
-							featureType: "poi",
-							elementType: "all",
-							stylers: [{ visibility: "off" }],
-						},
-						{
-							featureType: "transit",
-							elementType: "all",
-							stylers: [{ visibility: "off" }],
-						},
-						{
-							featureType: "road",
-							elementType: "labels",
-							stylers: [{ visibility: "off" }]
-						}
-					],
 				});
 
 				// NOTE: 設定路名在KML之上，只有在非開發模式才能載入多圖層
